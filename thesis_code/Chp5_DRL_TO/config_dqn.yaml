@@ -1,0 +1,51 @@
+# DQN Configuration for C-core Optimization
+# Deep Q-Network parameters
+
+# Environment Configuration
+environment:
+  name: "CcoreFemmEnv"
+  max_steps: 75
+  env_dim: [18, 35]
+  action_dim: 8
+  state_size: [8, 15, 22]  # 4 previous states and 2 channels
+  max_iron: 190
+  penalty: -10.0
+
+# Neural Network Architecture
+model:
+  hidden_size: [256, 128, 64]    # Deeper network for Q-value estimation
+  kernel_size: [3, 3]
+  filter_no: [16, 32]            # More filters for better feature extraction
+  strides: [1, 2]
+
+# Training Configuration
+training:
+  learning_rate: 0.0001          # Lower learning rate for DQN stability
+  batch_size: 64                 # Smaller batches for DQN
+  gamma: 0.99                    # High discount factor
+  epsilon_start: 1.0             # Initial exploration rate
+  epsilon_end: 0.01              # Final exploration rate
+  epsilon_decay: 0.995           # Exploration decay rate
+  target_update_freq: 1000       # Target network update frequency
+  buffer_size: 100000            # Replay buffer size
+  max_episodes: 1000             # More episodes for DQN
+  max_updates: 2000              # More training steps
+  warmup_steps: 5000             # Fill replay buffer before training
+  experience_length: 10000       # Large replay buffer
+  play_interval: 10              # Test less frequently
+  double_dqn: true               # Use Double DQN
+  dueling_dqn: true              # Use Dueling DQN architecture
+
+# Paths
+paths:
+  femm_path: "C:\\femm42"        # FEMM installation path
+  model_path: "results/models"   # Model save path
+  log_path: "results/logs"       # Log path
+  data_path: "results/data"      # Data save path
+
+# Logging and Visualization
+logging:
+  log_level: "INFO"
+  save_frequency: 20             # Save model every N episodes
+  render_training: false         # Render during training
+  render_evaluation: true        # Render during evaluation

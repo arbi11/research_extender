@@ -1,0 +1,78 @@
+\section{Artificial Neural Netyworks}
+
+A Multilayer perceptron models were originally inspired by neurophysiology and the interconnections between neurons, and they are often represented by a network diagram instead of an equation. The basic model form arranges neurons in layers. The first layer, called the input layer, connects to a layer of neurons called a hidden layer, which, in turn, connects to a final layer called the target or output layer. Each element in the diagram has a counterpart in the network equation. The blocks in the diagram correspond to inputs, hidden units, and target variables. The block interconnections correspond to the network equation weights.
+
+The biggest advantage of an ANN is their unlimited flexibility. A neural network is a universal approximator, which means that, with a sufficient number of hidden units and enough training, a neural network can model any input-output relationship, irrespective of the complexity. A relatively shallow NN permits elaborate associations
+between the inputs and the target. The question of how many layers and, in particular, how many neurons are needed in each layer for a given modeling task can involve some trial and error. The typical form of ANN can be considered as an extension of the regression model, as seen in the expression:
+
+\begin{align}
+    \hat{y} = \hat{W}_{00} + \hat{W}_{01} \dot H_1 + \hat{W}_{02} \dot H_2 + \hat{W}_{03} \dot H_3 \\
+    H_1 = \tanh(\hat{W}_{10} + \hat{W}_{11}x_1 + \hat{W}_{12}x_2)
+\end{align}
+
+After the weighted inputs and the bias have been combined, the neuron’s net input is passed through an activation function. Many of the defining hidden unit activation functions are members of the sigmoid family. Another activation function is the rectifier. The rectifier has now become the de facto standard in neural networks. Although many variants exist, the rectifier activation function is usually defined by
+the following equation:
+
+\begin{align}
+    y(x) = max(0,x)
+\end{align}
+
+It has been argued to be more biologically plausible than the widely used logistic sigmoid and its more practical counterpart, the hyperbolic tangent. A neuron using the rectifier activation function is called a rectified linear unit or, simply, a rectilinear unit (ReLU)
+
+Like regressions, neural networks predict cases using a mathematical equation involving the values of the input variables. A neural network can be thought of as a regression model on a set of derived inputs, called hidden units. In turn, the hidden units can be thought of as regressions on the original inputs. The hidden unit “regressions” include a default link function (in neural network language, an activation function), the hyperbolic tangent. The hyperbolic tangent is a shift and rescaling of the logistic function.
+
+The ability of universal approximation allows a properly trained NN to model virtually any continuous association between input and output variables. However, this flexibility can lead to overfitting when signal to noise ration in the training data is high. This can be kept in check through Early Stopping \parencite{geron2019hands}. Finding reasobale values for the weights is done by least squares estimation.
+
+There are three layers in the basic multilayer perceptron (MLP) neural network:
+\begin{enumerate}
+    \item An input layer contains a neuron/unit for each input variable. The input layer neurons have no adjustable parameters (weights). They simply pass the positive or negative input to the next layer.
+    \item A hidden layer has hidden units that perform a non-linear transformation of the weighted and summed input activations.
+    \item An output layer shapes and combines the nonlinear hidden layer activation values.
+\end{enumerate}
+
+The hidden and output layers must be connected by a nonlinear function in order to act as separate layers. Otherwise, the multilayer perceptron collapses into a linear perceptron.
+
+
+The question of the number of hidden units required is more difficult to answer than the required
+number of layers. If the network has too many hidden units, it will model random variation (noise) as
+well as the desired pattern (signal). This means that the model will fail to generalize. Conversely,
+having too few hidden units will fail to adequately capture the underlying signal. This means that the
+error value will tend to stabilize at a high value. Again, the model will fail to generalize.
+Unfortunately, the optimal number of hidden units is problem specific.
+However, there are guidelines. For example, Principe et al. (2000) suggest that the number of units
+in the first hidden layer should be about twice the number of input dimensions. This will reflect the
+number of discriminant functions in the input space. If a second hidden layer is required, then the
+number of hidden units in the second layer should reflect the number of distinct regions needed
+(Principe et al. 2000).
+
+
+For sequential input, we have choosen a RNN as the ideal network for creating a surrogate model for efficiency map prediction.
+
+% From https://www.sciencedirect.com/science/article/pii/B9780128161760000260
+Recurrent neural networks (RNNs) are a class of neural networks that are naturally suited to processing time-series data and other sequential data.
+
+In regular neural networks, all the inputs and the outputs are assumed to be independent but in RNNs the inputs and outputs can be dependent, which allows them to capture dependencies in the sequence based input. 
+
+recurrent neural networks as an extension to feedforward networks, in order to allow the processing of variable-length
+
+The transition from feedforward neural networks to recurrent neural networks is conceptually simple. Feedforward networks traditionally map from fixed-size inputs to fixed-size outputs, for example, to map from an image of fixed spatial extent to its class, or to a segmentation map of the same spatial extent. In contrast, recurrent neural networks naturally operate on variable-length input sequences and map to variable-length output sequences, for example, to map from an image to various sentences that describe that image. This capability is achieved by sharing parameters and transformations over time.
+
+% A detailed analysis on recent additions to the RNN can be studied at
+
+The word recurrent comes from the fact that it has cyclic connections and the same computation is performed on each element of the sequence. It allows it to learn part of the data to make predictions about the efficiency maps.
+
+[figure of a simple NN]
+[figure of a simple RNN with a loop]
+
+If we remove the loop, this would be the same as a traditional neural network. If the network is unrolled, it would look like this. The weights ($U, V \& W$) remain the same at each time step. Because of this, RNNs takes longer to train compared to similar sized feedforward networks [packt hands on math ML]. But the main question is why do these parameters same over the time steps. The reason is that the final prediction at each step of RNN is the efficiency values for the same underlying motor. Thus this sharing of parameters across the different time steps enables the network to deal with information that can occur at multiple positions. This shared statistical property is advantageous in comparison to the FNN because FNN would need to learn the language rules at every position independent of other rules. 
+
+\section{Properties of a Convolutional layer}\label{AppA:Props_CONV_layer}
+
+\begin{enumerate}
+\item Deep Learning algorithms are well-known for their high computational and memory demands. Traditional Neural Networks have interaction between each input and output. CNNs, on the other hand, have sparse interaction/ connectivity/ weights. This is achieved by making kernels (in the CONV layer) smaller than the input. Small sized kernels look for meaningful features (e.g., edges), which cover fewer pixels (in the range of a few tens). Thus reducing memory footprint and fewer computations.
+
+\item Another essential feature of CNN is parameter sharing. The 'Kernel' is shared and applied only in invalid regions. This also reduces the number of parameters needed for every convolutional layer. This concept is also known as 'tied' weights since the weight applied to an input is tied to the value of the common weight employed elsewhere in the same domain \cite{goodfellow2016deep}. 
+
+\item Parameter sharing introduces the property of equivariance in the CONV layer. The equivariance allows the network to generalize edge, texture, shape detection in different locations. For feature maps in convolutional networks to be useful, it is vital that features extracted in a CONV layer grow in complexity as the network goes deeper with stacked CONV layers. 
+
+\end{enumerate}

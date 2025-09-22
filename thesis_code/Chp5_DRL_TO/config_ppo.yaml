@@ -1,0 +1,51 @@
+# PPO Configuration for C-core Optimization
+# Proximal Policy Optimization parameters
+
+# Environment Configuration
+environment:
+  name: "CcoreFemmEnv"
+  max_steps: 75
+  env_dim: [18, 35]
+  action_dim: 8
+  state_size: [8, 15, 22]  # 4 previous states and 2 channels
+  max_iron: 190
+  penalty: -10.0
+
+# Neural Network Architecture
+model:
+  hidden_size: [256, 64]
+  kernel_size: [3, 3]
+  filter_no: [8, 16]
+  strides: [1, 2]
+
+# Training Configuration
+training:
+  learning_rate: 0.0003          # Lower than A2C for more stable training
+  batch_size: 2048               # Larger batch size for PPO
+  mini_batch_size: 512
+  gamma: 0.99                    # Higher discount factor for long-term rewards
+  gae_lambda: 0.95               # Generalized Advantage Estimation
+  clip_ratio: 0.2                # PPO clipping parameter
+  entropy_coefficient: 0.01      # Higher entropy for exploration
+  value_coefficient: 0.5         # Value loss weight
+  max_episodes: 500
+  max_updates: 1000              # More updates for PPO
+  warmup_steps: 1000             # Longer warmup
+  experience_length: 5000        # Larger experience buffer
+  play_interval: 5               # Test less frequently
+  ppo_epochs: 10                 # PPO optimization epochs
+  target_kl: 0.01                # Early stopping KL divergence
+
+# Paths
+paths:
+  femm_path: "C:\\femm42"        # FEMM installation path
+  model_path: "results/models"   # Model save path
+  log_path: "results/logs"       # Log path
+  data_path: "results/data"      # Data save path
+
+# Logging and Visualization
+logging:
+  log_level: "INFO"
+  save_frequency: 10             # Save model every N episodes
+  render_training: false         # Render during training
+  render_evaluation: true        # Render during evaluation

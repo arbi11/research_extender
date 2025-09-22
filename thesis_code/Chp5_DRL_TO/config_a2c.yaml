@@ -1,0 +1,47 @@
+# A2C Configuration for C-core Optimization
+# Based on the original A2C implementation parameters
+
+# Environment Configuration
+environment:
+  name: "CcoreFemmEnv"
+  max_steps: 75
+  env_dim: [18, 35]
+  action_dim: 8
+  state_size: [8, 15, 22]  # 4 previous states and 2 channels
+  max_iron: 190
+  penalty: -10.0
+
+# Neural Network Architecture
+model:
+  hidden_size: [256, 64]
+  kernel_size: [3, 3]
+  filter_no: [8, 16]
+  strides: [1, 2]
+
+# Training Configuration
+training:
+  learning_rate: 0.0007
+  batch_size: 1024
+  mini_batch_size: 512
+  gamma: 0.95                    # Discount factor
+  entropy_coefficient: 0.001     # Entropy regularization
+  value_coefficient: 0.5         # Value loss weight
+  max_episodes: 500
+  max_updates: 500
+  warmup_steps: 500
+  experience_length: 2500
+  play_interval: 2               # Test every N updates
+
+# Paths
+paths:
+  femm_path: "C:\\femm42"        # FEMM installation path
+  model_path: "results/models"   # Model save path
+  log_path: "results/logs"       # Log path
+  data_path: "results/data"      # Data save path
+
+# Logging and Visualization
+logging:
+  log_level: "INFO"
+  save_frequency: 10             # Save model every N episodes
+  render_training: false         # Render during training
+  render_evaluation: true        # Render during evaluation
