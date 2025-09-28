@@ -1,0 +1,2554 @@
+{
+  "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+  "language": "python",
+  "definitions": [
+    {
+      "name": "xpinn_model::class XPINN:\n    \"\"\"Extended Physics-Informed Neural Network implementation.\"\"\"\n\n    def __init__(self, layers1, layers2, mu1=1, mu2=1):\n        \"\"\"Initialize the XPINN model.\"\"\"\n        self.layers1 = layers1\n        self.layers2 = layers2\n        self.mu1 = mu1\n        self.mu2 = mu2\n\n        self.multiplier = 20\n        self.scaling_factor = 20\n\n        # Initialize neural networks\n        self.weights1, self.biases1, self.A1 = self.initialize_NN(layers1)\n        self.weights2, self.biases2, self.A2 = self.initialize_NN(layers2)\n\n        # TensorFlow session\n        self.sess = tf.Session()\n\n    def initialize_NN(self, layers):\n        \"\"\"Initialize neural network weights and biases.\"\"\"\n        weights = []\n        biases = []\n        A = []\n\n        num_layers = len(layers)\n        for l in range(0, num_layers-1):\n            W = self.xavier_init(size=[layers[l], layers[l+1]])\n            b = tf.Variable(tf.zeros([1, layers[l+1]], dtype=tf.float64), dtype=tf.float64)\n            a = tf.Variable(0.05, dtype=tf.float64)\n            weights.append(W)\n            biases.append(b)\n            A.append(a)\n\n        return weights, biases, A\n\n    def xavier_init(self, size):\n        \"\"\"Xavier initialization for weights.\"\"\"\n        in_dim = size[0]\n        out_dim = size[1]\n        xavier_stddev = np.sqrt(2/(in_dim + out_dim))\n        return tf.Variable(tf.to_double(tf.truncated_normal([in_dim, out_dim], stddev=xavier_stddev)), dtype=tf.float64)\n\n    def neural_net_tanh(self, X, weights, biases, A):\n        \"\"\"Neural network with tanh activation.\"\"\"\n        num_layers = len(weights) + 1\n\n        H = X\n        for l in range(0, num_layers-2):\n            W = weights[l]\n            b = biases[l]\n            H = tf.tanh(self.scaling_factor*A[l]*tf.add(tf.matmul(H, W), b))\n        W = weights[-1]\n        b = biases[-1]\n        Y = tf.add(tf.matmul(H, W), b)\n        return Y\n\n    def net_u1(self, x, y):\n        \"\"\"First sub-network for subdomain 1.\"\"\"\n        u = self.neural_net_tanh(tf.concat([x,y],1), self.weights1, self.biases1, self.A1)\n        return u\n\n    def net_u2(self, x, y):\n        \"\"\"Second sub-network for subdomain 2.\"\"\"\n        u = self.neural_net_tanh(tf.concat([x,y],1), self.weights2, self.biases2, self.A2)\n        return u\n\n    def net_f(self, x1, y1, x2, y2, xi1, yi1):\n        \"\"\"Compute physics-informed loss terms.\"\"\"\n        # Sub-Net1\n        u1 = self.net_u1(x1,y1)\n        u1_x = tf.gradients(u1, x1)[0]\n        u1_y = tf.gradients(u1, y1)[0]\n\n        d2 = tf.math.add(tf.math.square(u1_x), tf.math.square(u1_y))\n        d2 = tf.math.scalar_mul(0.05, d2)\n        d2 = tf.math.add(d2, 1)\n        d1 = tf.math.divide(5000, d2)\n        d1 = tf.math.add(d1, 200)\n        c = tf.math.divide(1, d2)\n\n        u1_x = tf.math.multiply(c, u1_x)\n        u1_y = tf.math.multiply(c, u1_y)\n\n        u1_xx = tf.gradients(u1_x, x1)[0]\n        u1_yy = tf.gradients(u1_y, y1)[0]\n\n        # Sub-Net2\n        u2 = self.net_u2(x2,y2)\n        u2_x = tf.gradients(u2, x2)[0]\n        u2_y = tf.gradients(u2, y2)[0]\n\n        u2_xx = tf.gradients(u2_x, x2)[0]\n        u2_yy = tf.gradients(u2_y, y2)[0]\n\n        # Sub-Net1, Interface 1\n        u1i1 = self.net_u1(xi1,yi1)\n        u1i1_x = tf.gradients(u1i1, xi1)[0]\n        u1i1_y = tf.gradients(u1i1, yi1)[0]\n\n        d2 = tf.math.add(tf.math.square(u1i1_x), tf.math.square(u1i1_y))\n        d2 = tf.math.scalar_mul(0.05, d2)\n        d2 = tf.math.add(d2, 1)\n        d1 = tf.math.divide(5000, d2)\n        d1 = tf.math.add(d1, 200)\n        c = tf.math.divide(1, d2)\n\n        u1i1_x = tf.math.multiply(c, u1i1_x)\n        u1i1_y = tf.math.multiply(c, u1i1_y)\n\n        u1i1_xx = tf.gradients(u1i1_x, xi1)[0]\n        u1i1_yy = tf.gradients(u1i1_y, yi1)[0]\n\n        # Sub-Net2, Interface 1\n        u2i1 = self.net_u2(xi1,yi1)\n        u2i1_x = tf.gradients(u2i1, xi1)[0]\n        u2i1_y = tf.gradients(u2i1, yi1)[0]\n\n        u2i1_xx = tf.gradients(u2i1_x, xi1)[0]\n        u2i1_yy = tf.gradients(u2i1_y, yi1)[0]\n\n        # Average value (Required for enforcing the average solution along the interface)\n        uavgi1 = (u1i1 + u2i1)/2\n\n        # Residuals\n        f1 = u1_xx + u1_yy - (tf.exp(x1) + tf.exp(y1))\n        f2 = u2_xx + u2_yy - (-1 + tf.exp(x2) + tf.exp(y2))\n\n        # Residual continuity conditions on the interfaces\n        fi1 = (u1i1_xx + u1i1_yy - (tf.exp(xi1) + tf.exp(yi1))) - (u2i1_xx + u2i1_yy - (-1 + tf.exp(xi1) + tf.exp(yi1)))\n\n        return f1, f2, fi1, uavgi1, u1i1, u2i1\n\n    def setup_training(self, X_ub, ub, X_f1, X_f2, X_fi, u_fi):\n        \"\"\"Setup training data and loss functions.\"\"\"\n        # Training data\n        self.x1_ub = X_ub[:,0:1]\n        self.y1_ub = X_ub[:,1:2]\n        self.ub1 = ub\n\n        self.x_f1 = X_f1[:,0:1]\n        self.y_f1 = X_f1[:,1:2]\n        self.x_f2 = X_f2[:,0:1]\n        self.y_f2 = X_f2[:,1:2]\n\n        self.x_fi1 = X_fi[:,0:1]\n        self.y_fi1 = X_fi[:,1:2]\n        self.u_fi = u_fi\n\n        # TensorFlow placeholders\n        self.x1_ub_tf = tf.placeholder(tf.float64, shape=[None, self.x1_ub.shape[1]])\n        self.y1_ub_tf = tf.placeholder(tf.float64, shape=[None, self.y1_ub.shape[1]])\n\n        self.x_f1_tf = tf.placeholder(tf.float64, shape=[None, self.x_f1.shape[1]])\n        self.y_f1_tf = tf.placeholder(tf.float64, shape=[None, self.y_f1.shape[1]])\n        self.x_f2_tf = tf.placeholder(tf.float64, shape=[None, self.x_f2.shape[1]])\n        self.y_f2_tf = tf.placeholder(tf.float64, shape=[None, self.y_f2.shape[1]])\n\n        self.x_fi1_tf = tf.placeholder(tf.float64, shape=[None, self.x_fi1.shape[1]])\n        self.y_fi1_tf = tf.placeholder(tf.float64, shape=[None, self.y_fi1.shape[1]])\n\n        # Predictions\n        self.ub1_pred = self.net_u1(self.x1_ub_tf, self.y1_ub_tf)\n        self.ub2_pred = self.net_u2(self.x_f2_tf, self.y_f2_tf)\n\n        self.f1_pred, self.f2_pred, self.fi1_pred, \\\n            self.uavgi1_pred, self.u1i1_pred, self.u2i1_pred = \\\n            self.net_f(self.x_f1_tf, self.y_f1_tf, self.x_f2_tf, self.y_f2_tf, self.x_fi1_tf, self.y_fi1_tf)\n\n        # Loss functions\n        self.loss1 = self.multiplier*tf.reduce_mean(tf.square(self.ub1 - self.ub1_pred)) \\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u_fi - self.u1i1_pred)) \\\n                        + tf.reduce_mean(tf.square(self.f1_pred)) + 1*tf.reduce_mean(tf.square(self.fi1_pred))\\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u1i1_pred-self.uavgi1_pred))\n\n        self.loss2 = tf.reduce_mean(tf.square(self.f2_pred)) + 1*tf.reduce_mean(tf.square(self.fi1_pred))\\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u_fi - self.u2i1_pred)) \\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u2i1_pred-self.uavgi1_pred))\n\n        # Optimizers\n        self.optimizer_Adam = tf.train.AdamOptimizer(0.0008)\n        self.train_op_Adam1 = self.optimizer_Adam.minimize(self.loss1)\n        self.train_op_Adam2 = self.optimizer_Adam.minimize(self.loss2)\n\n        # Initialize variables\n        init = tf.global_variables_initializer()\n        self.sess.run(init)\n\n    def train_step(self):\n        \"\"\"Perform one training step.\"\"\"\n        tf_dict = {self.x1_ub_tf: self.x1_ub, self.y1_ub_tf: self.y1_ub,\n                   self.x_f1_tf: self.x_f1, self.y_f1_tf: self.y_f1,\n                   self.x_f2_tf: self.x_f2, self.y_f2_tf: self.y_f2,\n                   self.x_fi1_tf: self.x_fi1, self.y_fi1_tf: self.y_fi1}\n\n        self.sess.run(self.train_op_Adam1, tf_dict)\n        self.sess.run(self.train_op_Adam2, tf_dict)\n\n    def predict(self, X_star1, X_star2):\n        \"\"\"Make predictions on test data.\"\"\"\n        u_star1 = self.sess.run(self.ub1_pred, {self.x1_ub_tf: X_star1[:,0:1], self.y1_ub_tf: X_star1[:,1:2]})\n        u_star2 = self.sess.run(self.ub2_pred, {self.x_f2_tf: X_star2[:,0:1], self.y_f2_tf: X_star2[:,1:2]})\n        return u_star1, u_star2\n\n    def get_loss(self):\n        \"\"\"Get current loss values.\"\"\"\n        tf_dict = {self.x1_ub_tf: self.x1_ub, self.y1_ub_tf: self.y1_ub,\n                   self.x_f1_tf: self.x_f1, self.y_f1_tf: self.y_f1,\n                   self.x_f2_tf: self.x_f2, self.y_f2_tf: self.y_f2,\n                   self.x_fi1_tf: self.x_fi1, self.y_fi1_tf: self.y_fi1}\n\n        loss1_value = self.sess.run(self.loss1, tf_dict)\n        loss2_value = self.sess.run(self.loss2, tf_dict)\n        return loss1_value, loss2_value",
+      "type": "classs",
+      "category": "definition",
+      "start_line": 10,
+      "end_line": 224,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "class XPINN:\n    \"\"\"Extended Physics-Informed Neural Network implementation.\"\"\"\n\n    def __init__(self, layers1, layers2, mu1=1, mu2=1):\n        \"\"\"Initialize the XPINN model.\"\"\"\n        self.layers1 = layers1\n        self.layers2 = layers2\n        self.mu1 = mu1\n        self.mu2 = mu2\n\n        self.multiplier = 20\n        self.scaling_factor = 20\n\n        # Initialize neural networks\n        self.weights1, self.biases1, self.A1 = self.initialize_NN(layers1)\n        self.weights2, self.biases2, self.A2 = self.initialize_NN(layers2)\n\n        # TensorFlow session\n        self.sess = tf.Session()\n\n    def initialize_NN(self, layers):\n        \"\"\"Initialize neural network weights and biases.\"\"\"\n        weights = []\n        biases = []\n        A = []\n\n        num_layers = len(layers)\n        for l in range(0, num_layers-1):\n            W = self.xavier_init(size=[layers[l], layers[l+1]])\n            b = tf.Variable(tf.zeros([1, layers[l+1]], dtype=tf.float64), dtype=tf.float64)\n            a = tf.Variable(0.05, dtype=tf.float64)\n            weights.append(W)\n            biases.append(b)\n            A.append(a)\n\n        return weights, biases, A\n\n    def xavier_init(self, size):\n        \"\"\"Xavier initialization for weights.\"\"\"\n        in_dim = size[0]\n        out_dim = size[1]\n        xavier_stddev = np.sqrt(2/(in_dim + out_dim))\n        return tf.Variable(tf.to_double(tf.truncated_normal([in_dim, out_dim], stddev=xavier_stddev)), dtype=tf.float64)\n\n    def neural_net_tanh(self, X, weights, biases, A):\n        \"\"\"Neural network with tanh activation.\"\"\"\n        num_layers = len(weights) + 1\n\n        H = X\n        for l in range(0, num_layers-2):\n            W = weights[l]\n            b = biases[l]\n            H = tf.tanh(self.scaling_factor*A[l]*tf.add(tf.matmul(H, W), b))\n        W = weights[-1]\n        b = biases[-1]\n        Y = tf.add(tf.matmul(H, W), b)\n        return Y\n\n    def net_u1(self, x, y):\n        \"\"\"First sub-network for subdomain 1.\"\"\"\n        u = self.neural_net_tanh(tf.concat([x,y],1), self.weights1, self.biases1, self.A1)\n        return u\n\n    def net_u2(self, x, y):\n        \"\"\"Second sub-network for subdomain 2.\"\"\"\n        u = self.neural_net_tanh(tf.concat([x,y],1), self.weights2, self.biases2, self.A2)\n        return u\n\n    def net_f(self, x1, y1, x2, y2, xi1, yi1):\n        \"\"\"Compute physics-informed loss terms.\"\"\"\n        # Sub-Net1\n        u1 = self.net_u1(x1,y1)\n        u1_x = tf.gradients(u1, x1)[0]\n        u1_y = tf.gradients(u1, y1)[0]\n\n        d2 = tf.math.add(tf.math.square(u1_x), tf.math.square(u1_y))\n        d2 = tf.math.scalar_mul(0.05, d2)\n        d2 = tf.math.add(d2, 1)\n        d1 = tf.math.divide(5000, d2)\n        d1 = tf.math.add(d1, 200)\n        c = tf.math.divide(1, d2)\n\n        u1_x = tf.math.multiply(c, u1_x)\n        u1_y = tf.math.multiply(c, u1_y)\n\n        u1_xx = tf.gradients(u1_x, x1)[0]\n        u1_yy = tf.gradients(u1_y, y1)[0]\n\n        # Sub-Net2\n        u2 = self.net_u2(x2,y2)\n        u2_x = tf.gradients(u2, x2)[0]\n        u2_y = tf.gradients(u2, y2)[0]\n\n        u2_xx = tf.gradients(u2_x, x2)[0]\n        u2_yy = tf.gradients(u2_y, y2)[0]\n\n        # Sub-Net1, Interface 1\n        u1i1 = self.net_u1(xi1,yi1)\n        u1i1_x = tf.gradients(u1i1, xi1)[0]\n        u1i1_y = tf.gradients(u1i1, yi1)[0]\n\n        d2 = tf.math.add(tf.math.square(u1i1_x), tf.math.square(u1i1_y))\n        d2 = tf.math.scalar_mul(0.05, d2)\n        d2 = tf.math.add(d2, 1)\n        d1 = tf.math.divide(5000, d2)\n        d1 = tf.math.add(d1, 200)\n        c = tf.math.divide(1, d2)\n\n        u1i1_x = tf.math.multiply(c, u1i1_x)\n        u1i1_y = tf.math.multiply(c, u1i1_y)\n\n        u1i1_xx = tf.gradients(u1i1_x, xi1)[0]\n        u1i1_yy = tf.gradients(u1i1_y, yi1)[0]\n\n        # Sub-Net2, Interface 1\n        u2i1 = self.net_u2(xi1,yi1)\n        u2i1_x = tf.gradients(u2i1, xi1)[0]\n        u2i1_y = tf.gradients(u2i1, yi1)[0]\n\n        u2i1_xx = tf.gradients(u2i1_x, xi1)[0]\n        u2i1_yy = tf.gradients(u2i1_y, yi1)[0]\n\n        # Average value (Required for enforcing the average solution along the interface)\n        uavgi1 = (u1i1 + u2i1)/2\n\n        # Residuals\n        f1 = u1_xx + u1_yy - (tf.exp(x1) + tf.exp(y1))\n        f2 = u2_xx + u2_yy - (-1 + tf.exp(x2) + tf.exp(y2))\n\n        # Residual continuity conditions on the interfaces\n        fi1 = (u1i1_xx + u1i1_yy - (tf.exp(xi1) + tf.exp(yi1))) - (u2i1_xx + u2i1_yy - (-1 + tf.exp(xi1) + tf.exp(yi1)))\n\n        return f1, f2, fi1, uavgi1, u1i1, u2i1\n\n    def setup_training(self, X_ub, ub, X_f1, X_f2, X_fi, u_fi):\n        \"\"\"Setup training data and loss functions.\"\"\"\n        # Training data\n        self.x1_ub = X_ub[:,0:1]\n        self.y1_ub = X_ub[:,1:2]\n        self.ub1 = ub\n\n        self.x_f1 = X_f1[:,0:1]\n        self.y_f1 = X_f1[:,1:2]\n        self.x_f2 = X_f2[:,0:1]\n        self.y_f2 = X_f2[:,1:2]\n\n        self.x_fi1 = X_fi[:,0:1]\n        self.y_fi1 = X_fi[:,1:2]\n        self.u_fi = u_fi\n\n        # TensorFlow placeholders\n        self.x1_ub_tf = tf.placeholder(tf.float64, shape=[None, self.x1_ub.shape[1]])\n        self.y1_ub_tf = tf.placeholder(tf.float64, shape=[None, self.y1_ub.shape[1]])\n\n        self.x_f1_tf = tf.placeholder(tf.float64, shape=[None, self.x_f1.shape[1]])\n        self.y_f1_tf = tf.placeholder(tf.float64, shape=[None, self.y_f1.shape[1]])\n        self.x_f2_tf = tf.placeholder(tf.float64, shape=[None, self.x_f2.shape[1]])\n        self.y_f2_tf = tf.placeholder(tf.float64, shape=[None, self.y_f2.shape[1]])\n\n        self.x_fi1_tf = tf.placeholder(tf.float64, shape=[None, self.x_fi1.shape[1]])\n        self.y_fi1_tf = tf.placeholder(tf.float64, shape=[None, self.y_fi1.shape[1]])\n\n        # Predictions\n        self.ub1_pred = self.net_u1(self.x1_ub_tf, self.y1_ub_tf)\n        self.ub2_pred = self.net_u2(self.x_f2_tf, self.y_f2_tf)\n\n        self.f1_pred, self.f2_pred, self.fi1_pred, \\\n            self.uavgi1_pred, self.u1i1_pred, self.u2i1_pred = \\\n            self.net_f(self.x_f1_tf, self.y_f1_tf, self.x_f2_tf, self.y_f2_tf, self.x_fi1_tf, self.y_fi1_tf)\n\n        # Loss functions\n        self.loss1 = self.multiplier*tf.reduce_mean(tf.square(self.ub1 - self.ub1_pred)) \\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u_fi - self.u1i1_pred)) \\\n                        + tf.reduce_mean(tf.square(self.f1_pred)) + 1*tf.reduce_mean(tf.square(self.fi1_pred))\\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u1i1_pred-self.uavgi1_pred))\n\n        self.loss2 = tf.reduce_mean(tf.square(self.f2_pred)) + 1*tf.reduce_mean(tf.square(self.fi1_pred))\\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u_fi - self.u2i1_pred)) \\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u2i1_pred-self.uavgi1_pred))\n\n        # Optimizers\n        self.optimizer_Adam = tf.train.AdamOptimizer(0.0008)\n        self.train_op_Adam1 = self.optimizer_Adam.minimize(self.loss1)\n        self.train_op_Adam2 = self.optimizer_Adam.minimize(self.loss2)\n\n        # Initialize variables\n        init = tf.global_variables_initializer()\n        self.sess.run(init)\n\n    def train_step(self):\n        \"\"\"Perform one training step.\"\"\"\n        tf_dict = {self.x1_ub_tf: self.x1_ub, self.y1_ub_tf: self.y1_ub,\n                   self.x_f1_tf: self.x_f1, self.y_f1_tf: self.y_f1,\n                   self.x_f2_tf: self.x_f2, self.y_f2_tf: self.y_f2,\n                   self.x_fi1_tf: self.x_fi1, self.y_fi1_tf: self.y_fi1}\n\n        self.sess.run(self.train_op_Adam1, tf_dict)\n        self.sess.run(self.train_op_Adam2, tf_dict)\n\n    def predict(self, X_star1, X_star2):\n        \"\"\"Make predictions on test data.\"\"\"\n        u_star1 = self.sess.run(self.ub1_pred, {self.x1_ub_tf: X_star1[:,0:1], self.y1_ub_tf: X_star1[:,1:2]})\n        u_star2 = self.sess.run(self.ub2_pred, {self.x_f2_tf: X_star2[:,0:1], self.y_f2_tf: X_star2[:,1:2]})\n        return u_star1, u_star2\n\n    def get_loss(self):\n        \"\"\"Get current loss values.\"\"\"\n        tf_dict = {self.x1_ub_tf: self.x1_ub, self.y1_ub_tf: self.y1_ub,\n                   self.x_f1_tf: self.x_f1, self.y_f1_tf: self.y_f1,\n                   self.x_f2_tf: self.x_f2, self.y_f2_tf: self.y_f2,\n                   self.x_fi1_tf: self.x_fi1, self.y_fi1_tf: self.y_fi1}\n\n        loss1_value = self.sess.run(self.loss1, tf_dict)\n        loss2_value = self.sess.run(self.loss2, tf_dict)\n        return loss1_value, loss2_value"
+    },
+    {
+      "name": "xpinn_model::XPINN::XPINN",
+      "type": "classs",
+      "category": "definition",
+      "start_line": 10,
+      "end_line": 10,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "XPINN"
+    },
+    {
+      "name": "xpinn_model::XPINN::def xavier_init(self, size):\n        \"\"\"Xavier initialization for weights.\"\"\"\n        in_dim = size[0]\n        out_dim = size[1]\n        xavier_stddev = np.sqrt(2/(in_dim + out_dim))\n        return tf.Variable(tf.to_double(tf.truncated_normal([in_dim, out_dim], stddev=xavier_stddev)), dtype=tf.float64)",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 47,
+      "end_line": 52,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "def xavier_init(self, size):\n        \"\"\"Xavier initialization for weights.\"\"\"\n        in_dim = size[0]\n        out_dim = size[1]\n        xavier_stddev = np.sqrt(2/(in_dim + out_dim))\n        return tf.Variable(tf.to_double(tf.truncated_normal([in_dim, out_dim], stddev=xavier_stddev)), dtype=tf.float64)"
+    },
+    {
+      "name": "xpinn_model::XPINN::def net_u1(self, x, y):\n        \"\"\"First sub-network for subdomain 1.\"\"\"\n        u = self.neural_net_tanh(tf.concat([x,y],1), self.weights1, self.biases1, self.A1)\n        return u",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 68,
+      "end_line": 71,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "def net_u1(self, x, y):\n        \"\"\"First sub-network for subdomain 1.\"\"\"\n        u = self.neural_net_tanh(tf.concat([x,y],1), self.weights1, self.biases1, self.A1)\n        return u"
+    },
+    {
+      "name": "xpinn_model::XPINN::def net_f(self, x1, y1, x2, y2, xi1, yi1):\n        \"\"\"Compute physics-informed loss terms.\"\"\"\n        # Sub-Net1\n        u1 = self.net_u1(x1,y1)\n        u1_x = tf.gradients(u1, x1)[0]\n        u1_y = tf.gradients(u1, y1)[0]\n\n        d2 = tf.math.add(tf.math.square(u1_x), tf.math.square(u1_y))\n        d2 = tf.math.scalar_mul(0.05, d2)\n        d2 = tf.math.add(d2, 1)\n        d1 = tf.math.divide(5000, d2)\n        d1 = tf.math.add(d1, 200)\n        c = tf.math.divide(1, d2)\n\n        u1_x = tf.math.multiply(c, u1_x)\n        u1_y = tf.math.multiply(c, u1_y)\n\n        u1_xx = tf.gradients(u1_x, x1)[0]\n        u1_yy = tf.gradients(u1_y, y1)[0]\n\n        # Sub-Net2\n        u2 = self.net_u2(x2,y2)\n        u2_x = tf.gradients(u2, x2)[0]\n        u2_y = tf.gradients(u2, y2)[0]\n\n        u2_xx = tf.gradients(u2_x, x2)[0]\n        u2_yy = tf.gradients(u2_y, y2)[0]\n\n        # Sub-Net1, Interface 1\n        u1i1 = self.net_u1(xi1,yi1)\n        u1i1_x = tf.gradients(u1i1, xi1)[0]\n        u1i1_y = tf.gradients(u1i1, yi1)[0]\n\n        d2 = tf.math.add(tf.math.square(u1i1_x), tf.math.square(u1i1_y))\n        d2 = tf.math.scalar_mul(0.05, d2)\n        d2 = tf.math.add(d2, 1)\n        d1 = tf.math.divide(5000, d2)\n        d1 = tf.math.add(d1, 200)\n        c = tf.math.divide(1, d2)\n\n        u1i1_x = tf.math.multiply(c, u1i1_x)\n        u1i1_y = tf.math.multiply(c, u1i1_y)\n\n        u1i1_xx = tf.gradients(u1i1_x, xi1)[0]\n        u1i1_yy = tf.gradients(u1i1_y, yi1)[0]\n\n        # Sub-Net2, Interface 1\n        u2i1 = self.net_u2(xi1,yi1)\n        u2i1_x = tf.gradients(u2i1, xi1)[0]\n        u2i1_y = tf.gradients(u2i1, yi1)[0]\n\n        u2i1_xx = tf.gradients(u2i1_x, xi1)[0]\n        u2i1_yy = tf.gradients(u2i1_y, yi1)[0]\n\n        # Average value (Required for enforcing the average solution along the interface)\n        uavgi1 = (u1i1 + u2i1)/2\n\n        # Residuals\n        f1 = u1_xx + u1_yy - (tf.exp(x1) + tf.exp(y1))\n        f2 = u2_xx + u2_yy - (-1 + tf.exp(x2) + tf.exp(y2))\n\n        # Residual continuity conditions on the interfaces\n        fi1 = (u1i1_xx + u1i1_yy - (tf.exp(xi1) + tf.exp(yi1))) - (u2i1_xx + u2i1_yy - (-1 + tf.exp(xi1) + tf.exp(yi1)))\n\n        return f1, f2, fi1, uavgi1, u1i1, u2i1",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 78,
+      "end_line": 142,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "def net_f(self, x1, y1, x2, y2, xi1, yi1):\n        \"\"\"Compute physics-informed loss terms.\"\"\"\n        # Sub-Net1\n        u1 = self.net_u1(x1,y1)\n        u1_x = tf.gradients(u1, x1)[0]\n        u1_y = tf.gradients(u1, y1)[0]\n\n        d2 = tf.math.add(tf.math.square(u1_x), tf.math.square(u1_y))\n        d2 = tf.math.scalar_mul(0.05, d2)\n        d2 = tf.math.add(d2, 1)\n        d1 = tf.math.divide(5000, d2)\n        d1 = tf.math.add(d1, 200)\n        c = tf.math.divide(1, d2)\n\n        u1_x = tf.math.multiply(c, u1_x)\n        u1_y = tf.math.multiply(c, u1_y)\n\n        u1_xx = tf.gradients(u1_x, x1)[0]\n        u1_yy = tf.gradients(u1_y, y1)[0]\n\n        # Sub-Net2\n        u2 = self.net_u2(x2,y2)\n        u2_x = tf.gradients(u2, x2)[0]\n        u2_y = tf.gradients(u2, y2)[0]\n\n        u2_xx = tf.gradients(u2_x, x2)[0]\n        u2_yy = tf.gradients(u2_y, y2)[0]\n\n        # Sub-Net1, Interface 1\n        u1i1 = self.net_u1(xi1,yi1)\n        u1i1_x = tf.gradients(u1i1, xi1)[0]\n        u1i1_y = tf.gradients(u1i1, yi1)[0]\n\n        d2 = tf.math.add(tf.math.square(u1i1_x), tf.math.square(u1i1_y))\n        d2 = tf.math.scalar_mul(0.05, d2)\n        d2 = tf.math.add(d2, 1)\n        d1 = tf.math.divide(5000, d2)\n        d1 = tf.math.add(d1, 200)\n        c = tf.math.divide(1, d2)\n\n        u1i1_x = tf.math.multiply(c, u1i1_x)\n        u1i1_y = tf.math.multiply(c, u1i1_y)\n\n        u1i1_xx = tf.gradients(u1i1_x, xi1)[0]\n        u1i1_yy = tf.gradients(u1i1_y, yi1)[0]\n\n        # Sub-Net2, Interface 1\n        u2i1 = self.net_u2(xi1,yi1)\n        u2i1_x = tf.gradients(u2i1, xi1)[0]\n        u2i1_y = tf.gradients(u2i1, yi1)[0]\n\n        u2i1_xx = tf.gradients(u2i1_x, xi1)[0]\n        u2i1_yy = tf.gradients(u2i1_y, yi1)[0]\n\n        # Average value (Required for enforcing the average solution along the interface)\n        uavgi1 = (u1i1 + u2i1)/2\n\n        # Residuals\n        f1 = u1_xx + u1_yy - (tf.exp(x1) + tf.exp(y1))\n        f2 = u2_xx + u2_yy - (-1 + tf.exp(x2) + tf.exp(y2))\n\n        # Residual continuity conditions on the interfaces\n        fi1 = (u1i1_xx + u1i1_yy - (tf.exp(xi1) + tf.exp(yi1))) - (u2i1_xx + u2i1_yy - (-1 + tf.exp(xi1) + tf.exp(yi1)))\n\n        return f1, f2, fi1, uavgi1, u1i1, u2i1"
+    },
+    {
+      "name": "xpinn_model::XPINN::def train_step(self):\n        \"\"\"Perform one training step.\"\"\"\n        tf_dict = {self.x1_ub_tf: self.x1_ub, self.y1_ub_tf: self.y1_ub,\n                   self.x_f1_tf: self.x_f1, self.y_f1_tf: self.y_f1,\n                   self.x_f2_tf: self.x_f2, self.y_f2_tf: self.y_f2,\n                   self.x_fi1_tf: self.x_fi1, self.y_fi1_tf: self.y_fi1}\n\n        self.sess.run(self.train_op_Adam1, tf_dict)\n        self.sess.run(self.train_op_Adam2, tf_dict)",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 199,
+      "end_line": 207,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "def train_step(self):\n        \"\"\"Perform one training step.\"\"\"\n        tf_dict = {self.x1_ub_tf: self.x1_ub, self.y1_ub_tf: self.y1_ub,\n                   self.x_f1_tf: self.x_f1, self.y_f1_tf: self.y_f1,\n                   self.x_f2_tf: self.x_f2, self.y_f2_tf: self.y_f2,\n                   self.x_fi1_tf: self.x_fi1, self.y_fi1_tf: self.y_fi1}\n\n        self.sess.run(self.train_op_Adam1, tf_dict)\n        self.sess.run(self.train_op_Adam2, tf_dict)"
+    },
+    {
+      "name": "xpinn_model::XPINN::def __init__(self, layers1, layers2, mu1=1, mu2=1):\n        \"\"\"Initialize the XPINN model.\"\"\"\n        self.layers1 = layers1\n        self.layers2 = layers2\n        self.mu1 = mu1\n        self.mu2 = mu2\n\n        self.multiplier = 20\n        self.scaling_factor = 20\n\n        # Initialize neural networks\n        self.weights1, self.biases1, self.A1 = self.initialize_NN(layers1)\n        self.weights2, self.biases2, self.A2 = self.initialize_NN(layers2)\n\n        # TensorFlow session\n        self.sess = tf.Session()",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 13,
+      "end_line": 28,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "def __init__(self, layers1, layers2, mu1=1, mu2=1):\n        \"\"\"Initialize the XPINN model.\"\"\"\n        self.layers1 = layers1\n        self.layers2 = layers2\n        self.mu1 = mu1\n        self.mu2 = mu2\n\n        self.multiplier = 20\n        self.scaling_factor = 20\n\n        # Initialize neural networks\n        self.weights1, self.biases1, self.A1 = self.initialize_NN(layers1)\n        self.weights2, self.biases2, self.A2 = self.initialize_NN(layers2)\n\n        # TensorFlow session\n        self.sess = tf.Session()"
+    },
+    {
+      "name": "xpinn_model::XPINN::def initialize_NN(self, layers):\n        \"\"\"Initialize neural network weights and biases.\"\"\"\n        weights = []\n        biases = []\n        A = []\n\n        num_layers = len(layers)\n        for l in range(0, num_layers-1):\n            W = self.xavier_init(size=[layers[l], layers[l+1]])\n            b = tf.Variable(tf.zeros([1, layers[l+1]], dtype=tf.float64), dtype=tf.float64)\n            a = tf.Variable(0.05, dtype=tf.float64)\n            weights.append(W)\n            biases.append(b)\n            A.append(a)\n\n        return weights, biases, A",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 30,
+      "end_line": 45,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "def initialize_NN(self, layers):\n        \"\"\"Initialize neural network weights and biases.\"\"\"\n        weights = []\n        biases = []\n        A = []\n\n        num_layers = len(layers)\n        for l in range(0, num_layers-1):\n            W = self.xavier_init(size=[layers[l], layers[l+1]])\n            b = tf.Variable(tf.zeros([1, layers[l+1]], dtype=tf.float64), dtype=tf.float64)\n            a = tf.Variable(0.05, dtype=tf.float64)\n            weights.append(W)\n            biases.append(b)\n            A.append(a)\n\n        return weights, biases, A"
+    },
+    {
+      "name": "xpinn_model::XPINN::def neural_net_tanh(self, X, weights, biases, A):\n        \"\"\"Neural network with tanh activation.\"\"\"\n        num_layers = len(weights) + 1\n\n        H = X\n        for l in range(0, num_layers-2):\n            W = weights[l]\n            b = biases[l]\n            H = tf.tanh(self.scaling_factor*A[l]*tf.add(tf.matmul(H, W), b))\n        W = weights[-1]\n        b = biases[-1]\n        Y = tf.add(tf.matmul(H, W), b)\n        return Y",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 54,
+      "end_line": 66,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "def neural_net_tanh(self, X, weights, biases, A):\n        \"\"\"Neural network with tanh activation.\"\"\"\n        num_layers = len(weights) + 1\n\n        H = X\n        for l in range(0, num_layers-2):\n            W = weights[l]\n            b = biases[l]\n            H = tf.tanh(self.scaling_factor*A[l]*tf.add(tf.matmul(H, W), b))\n        W = weights[-1]\n        b = biases[-1]\n        Y = tf.add(tf.matmul(H, W), b)\n        return Y"
+    },
+    {
+      "name": "xpinn_model::XPINN::def net_u2(self, x, y):\n        \"\"\"Second sub-network for subdomain 2.\"\"\"\n        u = self.neural_net_tanh(tf.concat([x,y],1), self.weights2, self.biases2, self.A2)\n        return u",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 73,
+      "end_line": 76,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "def net_u2(self, x, y):\n        \"\"\"Second sub-network for subdomain 2.\"\"\"\n        u = self.neural_net_tanh(tf.concat([x,y],1), self.weights2, self.biases2, self.A2)\n        return u"
+    },
+    {
+      "name": "xpinn_model::XPINN::def setup_training(self, X_ub, ub, X_f1, X_f2, X_fi, u_fi):\n        \"\"\"Setup training data and loss functions.\"\"\"\n        # Training data\n        self.x1_ub = X_ub[:,0:1]\n        self.y1_ub = X_ub[:,1:2]\n        self.ub1 = ub\n\n        self.x_f1 = X_f1[:,0:1]\n        self.y_f1 = X_f1[:,1:2]\n        self.x_f2 = X_f2[:,0:1]\n        self.y_f2 = X_f2[:,1:2]\n\n        self.x_fi1 = X_fi[:,0:1]\n        self.y_fi1 = X_fi[:,1:2]\n        self.u_fi = u_fi\n\n        # TensorFlow placeholders\n        self.x1_ub_tf = tf.placeholder(tf.float64, shape=[None, self.x1_ub.shape[1]])\n        self.y1_ub_tf = tf.placeholder(tf.float64, shape=[None, self.y1_ub.shape[1]])\n\n        self.x_f1_tf = tf.placeholder(tf.float64, shape=[None, self.x_f1.shape[1]])\n        self.y_f1_tf = tf.placeholder(tf.float64, shape=[None, self.y_f1.shape[1]])\n        self.x_f2_tf = tf.placeholder(tf.float64, shape=[None, self.x_f2.shape[1]])\n        self.y_f2_tf = tf.placeholder(tf.float64, shape=[None, self.y_f2.shape[1]])\n\n        self.x_fi1_tf = tf.placeholder(tf.float64, shape=[None, self.x_fi1.shape[1]])\n        self.y_fi1_tf = tf.placeholder(tf.float64, shape=[None, self.y_fi1.shape[1]])\n\n        # Predictions\n        self.ub1_pred = self.net_u1(self.x1_ub_tf, self.y1_ub_tf)\n        self.ub2_pred = self.net_u2(self.x_f2_tf, self.y_f2_tf)\n\n        self.f1_pred, self.f2_pred, self.fi1_pred, \\\n            self.uavgi1_pred, self.u1i1_pred, self.u2i1_pred = \\\n            self.net_f(self.x_f1_tf, self.y_f1_tf, self.x_f2_tf, self.y_f2_tf, self.x_fi1_tf, self.y_fi1_tf)\n\n        # Loss functions\n        self.loss1 = self.multiplier*tf.reduce_mean(tf.square(self.ub1 - self.ub1_pred)) \\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u_fi - self.u1i1_pred)) \\\n                        + tf.reduce_mean(tf.square(self.f1_pred)) + 1*tf.reduce_mean(tf.square(self.fi1_pred))\\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u1i1_pred-self.uavgi1_pred))\n\n        self.loss2 = tf.reduce_mean(tf.square(self.f2_pred)) + 1*tf.reduce_mean(tf.square(self.fi1_pred))\\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u_fi - self.u2i1_pred)) \\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u2i1_pred-self.uavgi1_pred))\n\n        # Optimizers\n        self.optimizer_Adam = tf.train.AdamOptimizer(0.0008)\n        self.train_op_Adam1 = self.optimizer_Adam.minimize(self.loss1)\n        self.train_op_Adam2 = self.optimizer_Adam.minimize(self.loss2)\n\n        # Initialize variables\n        init = tf.global_variables_initializer()\n        self.sess.run(init)",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 144,
+      "end_line": 197,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "def setup_training(self, X_ub, ub, X_f1, X_f2, X_fi, u_fi):\n        \"\"\"Setup training data and loss functions.\"\"\"\n        # Training data\n        self.x1_ub = X_ub[:,0:1]\n        self.y1_ub = X_ub[:,1:2]\n        self.ub1 = ub\n\n        self.x_f1 = X_f1[:,0:1]\n        self.y_f1 = X_f1[:,1:2]\n        self.x_f2 = X_f2[:,0:1]\n        self.y_f2 = X_f2[:,1:2]\n\n        self.x_fi1 = X_fi[:,0:1]\n        self.y_fi1 = X_fi[:,1:2]\n        self.u_fi = u_fi\n\n        # TensorFlow placeholders\n        self.x1_ub_tf = tf.placeholder(tf.float64, shape=[None, self.x1_ub.shape[1]])\n        self.y1_ub_tf = tf.placeholder(tf.float64, shape=[None, self.y1_ub.shape[1]])\n\n        self.x_f1_tf = tf.placeholder(tf.float64, shape=[None, self.x_f1.shape[1]])\n        self.y_f1_tf = tf.placeholder(tf.float64, shape=[None, self.y_f1.shape[1]])\n        self.x_f2_tf = tf.placeholder(tf.float64, shape=[None, self.x_f2.shape[1]])\n        self.y_f2_tf = tf.placeholder(tf.float64, shape=[None, self.y_f2.shape[1]])\n\n        self.x_fi1_tf = tf.placeholder(tf.float64, shape=[None, self.x_fi1.shape[1]])\n        self.y_fi1_tf = tf.placeholder(tf.float64, shape=[None, self.y_fi1.shape[1]])\n\n        # Predictions\n        self.ub1_pred = self.net_u1(self.x1_ub_tf, self.y1_ub_tf)\n        self.ub2_pred = self.net_u2(self.x_f2_tf, self.y_f2_tf)\n\n        self.f1_pred, self.f2_pred, self.fi1_pred, \\\n            self.uavgi1_pred, self.u1i1_pred, self.u2i1_pred = \\\n            self.net_f(self.x_f1_tf, self.y_f1_tf, self.x_f2_tf, self.y_f2_tf, self.x_fi1_tf, self.y_fi1_tf)\n\n        # Loss functions\n        self.loss1 = self.multiplier*tf.reduce_mean(tf.square(self.ub1 - self.ub1_pred)) \\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u_fi - self.u1i1_pred)) \\\n                        + tf.reduce_mean(tf.square(self.f1_pred)) + 1*tf.reduce_mean(tf.square(self.fi1_pred))\\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u1i1_pred-self.uavgi1_pred))\n\n        self.loss2 = tf.reduce_mean(tf.square(self.f2_pred)) + 1*tf.reduce_mean(tf.square(self.fi1_pred))\\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u_fi - self.u2i1_pred)) \\\n                        + self.multiplier*tf.reduce_mean(tf.square(self.u2i1_pred-self.uavgi1_pred))\n\n        # Optimizers\n        self.optimizer_Adam = tf.train.AdamOptimizer(0.0008)\n        self.train_op_Adam1 = self.optimizer_Adam.minimize(self.loss1)\n        self.train_op_Adam2 = self.optimizer_Adam.minimize(self.loss2)\n\n        # Initialize variables\n        init = tf.global_variables_initializer()\n        self.sess.run(init)"
+    },
+    {
+      "name": "xpinn_model::XPINN::def predict(self, X_star1, X_star2):\n        \"\"\"Make predictions on test data.\"\"\"\n        u_star1 = self.sess.run(self.ub1_pred, {self.x1_ub_tf: X_star1[:,0:1], self.y1_ub_tf: X_star1[:,1:2]})\n        u_star2 = self.sess.run(self.ub2_pred, {self.x_f2_tf: X_star2[:,0:1], self.y_f2_tf: X_star2[:,1:2]})\n        return u_star1, u_star2",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 209,
+      "end_line": 213,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "def predict(self, X_star1, X_star2):\n        \"\"\"Make predictions on test data.\"\"\"\n        u_star1 = self.sess.run(self.ub1_pred, {self.x1_ub_tf: X_star1[:,0:1], self.y1_ub_tf: X_star1[:,1:2]})\n        u_star2 = self.sess.run(self.ub2_pred, {self.x_f2_tf: X_star2[:,0:1], self.y_f2_tf: X_star2[:,1:2]})\n        return u_star1, u_star2"
+    },
+    {
+      "name": "xpinn_model::XPINN::def get_loss(self):\n        \"\"\"Get current loss values.\"\"\"\n        tf_dict = {self.x1_ub_tf: self.x1_ub, self.y1_ub_tf: self.y1_ub,\n                   self.x_f1_tf: self.x_f1, self.y_f1_tf: self.y_f1,\n                   self.x_f2_tf: self.x_f2, self.y_f2_tf: self.y_f2,\n                   self.x_fi1_tf: self.x_fi1, self.y_fi1_tf: self.y_fi1}\n\n        loss1_value = self.sess.run(self.loss1, tf_dict)\n        loss2_value = self.sess.run(self.loss2, tf_dict)\n        return loss1_value, loss2_value",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 215,
+      "end_line": 224,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "def get_loss(self):\n        \"\"\"Get current loss values.\"\"\"\n        tf_dict = {self.x1_ub_tf: self.x1_ub, self.y1_ub_tf: self.y1_ub,\n                   self.x_f1_tf: self.x_f1, self.y_f1_tf: self.y_f1,\n                   self.x_f2_tf: self.x_f2, self.y_f2_tf: self.y_f2,\n                   self.x_fi1_tf: self.x_fi1, self.y_fi1_tf: self.y_fi1}\n\n        loss1_value = self.sess.run(self.loss1, tf_dict)\n        loss2_value = self.sess.run(self.loss2, tf_dict)\n        return loss1_value, loss2_value"
+    },
+    {
+      "name": "xpinn_model::XPINN::__init__",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 13,
+      "end_line": 13,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "__init__"
+    },
+    {
+      "name": "xpinn_model::XPINN::initialize_NN",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 30,
+      "end_line": 30,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "initialize_NN"
+    },
+    {
+      "name": "xpinn_model::XPINN::xavier_init",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 47,
+      "end_line": 47,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "xavier_init"
+    },
+    {
+      "name": "xpinn_model::XPINN::neural_net_tanh",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 54,
+      "end_line": 54,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "neural_net_tanh"
+    },
+    {
+      "name": "xpinn_model::XPINN::net_u1",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 68,
+      "end_line": 68,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "net_u1"
+    },
+    {
+      "name": "xpinn_model::XPINN::net_u2",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 73,
+      "end_line": 73,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "net_u2"
+    },
+    {
+      "name": "xpinn_model::XPINN::net_f",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 78,
+      "end_line": 78,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "net_f"
+    },
+    {
+      "name": "xpinn_model::XPINN::setup_training",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 144,
+      "end_line": 144,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "setup_training"
+    },
+    {
+      "name": "xpinn_model::XPINN::train_step",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 199,
+      "end_line": 199,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "train_step"
+    },
+    {
+      "name": "xpinn_model::XPINN::predict",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 209,
+      "end_line": 209,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "predict"
+    },
+    {
+      "name": "xpinn_model::XPINN::get_loss",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 215,
+      "end_line": 215,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "get_loss"
+    }
+  ],
+  "references": [
+    {
+      "name": "import scipy.io",
+      "type": "imports",
+      "category": "reference",
+      "start_line": 7,
+      "end_line": 7,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "import scipy.io",
+      "calling_entity": "xpinn_model"
+    },
+    {
+      "name": "scipy",
+      "type": "imports",
+      "category": "reference",
+      "start_line": 7,
+      "end_line": 7,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "scipy",
+      "calling_entity": "xpinn_model"
+    },
+    {
+      "name": "io",
+      "type": "imports",
+      "category": "reference",
+      "start_line": 7,
+      "end_line": 7,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "io",
+      "calling_entity": "xpinn_model"
+    },
+    {
+      "name": "biases.append(b)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 42,
+      "end_line": 42,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "biases.append(b)",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "tf.to_double(tf.truncated_normal([in_dim, out_dim], stddev=xavier_stddev))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 52,
+      "end_line": 52,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.to_double(tf.truncated_normal([in_dim, out_dim], stddev=xavier_stddev))",
+      "calling_entity": "xpinn_model::XPINN::xavier_init"
+    },
+    {
+      "name": "tf.math.add(tf.math.square(u1_x), tf.math.square(u1_y))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 85,
+      "end_line": 85,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.add(tf.math.square(u1_x), tf.math.square(u1_y))",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.gradients(u2_y, y2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 104,
+      "end_line": 104,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u2_y, y2)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.gradients(u1i1, xi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 108,
+      "end_line": 108,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u1i1, xi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.exp(xi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 140,
+      "end_line": 140,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.exp(xi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.reduce_mean(tf.square(self.u_fi - self.u1i1_pred))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 182,
+      "end_line": 182,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.reduce_mean(tf.square(self.u_fi - self.u1i1_pred))",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.square(self.fi1_pred)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 186,
+      "end_line": 186,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.square(self.fi1_pred)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.concat([x,y],1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 75,
+      "end_line": 75,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.concat([x,y],1)",
+      "calling_entity": "xpinn_model::XPINN::net_u2"
+    },
+    {
+      "name": "tf.math.square(u1_y)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 85,
+      "end_line": 85,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.square(u1_y)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "self.initialize_NN(layers1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 24,
+      "end_line": 24,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.initialize_NN(layers1)",
+      "calling_entity": "xpinn_model::XPINN::__init__"
+    },
+    {
+      "name": "self.xavier_init(size=[layers[l], layers[l+1]])",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 38,
+      "end_line": 38,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.xavier_init(size=[layers[l], layers[l+1]])",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "self.neural_net_tanh(tf.concat([x,y],1), self.weights2, self.biases2, self.A2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 75,
+      "end_line": 75,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.neural_net_tanh(tf.concat([x,y],1), self.weights2, self.biases2, self.A2)",
+      "calling_entity": "xpinn_model::XPINN::net_u2"
+    },
+    {
+      "name": "tf.placeholder(tf.float64, shape=[None, self.x_fi1.shape[1]])",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 169,
+      "end_line": 169,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.placeholder(tf.float64, shape=[None, self.x_fi1.shape[1]])",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "self.net_u2(self.x_f2_tf, self.y_f2_tf)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 174,
+      "end_line": 174,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.net_u2(self.x_f2_tf, self.y_f2_tf)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.square(self.u_fi - self.u1i1_pred)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 182,
+      "end_line": 182,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.square(self.u_fi - self.u1i1_pred)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "self.sess.run(self.loss1, tf_dict)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 222,
+      "end_line": 222,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.sess.run(self.loss1, tf_dict)",
+      "calling_entity": "xpinn_model::XPINN::get_loss"
+    },
+    {
+      "name": "tf.gradients(u2i1, xi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 126,
+      "end_line": 126,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u2i1, xi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "range(0, num_layers-2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 59,
+      "end_line": 59,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "range(0, num_layers-2)",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "self.net_u1(x1,y1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 81,
+      "end_line": 81,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.net_u1(x1,y1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.gradients(u1i1_y, yi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 122,
+      "end_line": 122,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u1i1_y, yi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.math.divide(1, d2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 116,
+      "end_line": 116,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.divide(1, d2)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.square(self.ub1 - self.ub1_pred)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 181,
+      "end_line": 181,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.square(self.ub1 - self.ub1_pred)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "self.sess.run(self.ub1_pred, {self.x1_ub_tf: X_star1[:,0:1], self.y1_ub_tf: X_star1[:,1:2]})",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 211,
+      "end_line": 211,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.sess.run(self.ub1_pred, {self.x1_ub_tf: X_star1[:,0:1], self.y1_ub_tf: X_star1[:,1:2]})",
+      "calling_entity": "xpinn_model::XPINN::predict"
+    },
+    {
+      "name": "len(layers)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 36,
+      "end_line": 36,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "len(layers)",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "tf.Variable(tf.zeros([1, layers[l+1]], dtype=tf.float64), dtype=tf.float64)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 39,
+      "end_line": 39,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.Variable(tf.zeros([1, layers[l+1]], dtype=tf.float64), dtype=tf.float64)",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "np.sqrt(2/(in_dim + out_dim))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 51,
+      "end_line": 51,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "np.sqrt(2/(in_dim + out_dim))",
+      "calling_entity": "xpinn_model::XPINN::xavier_init"
+    },
+    {
+      "name": "tf.placeholder(tf.float64, shape=[None, self.x_f1.shape[1]])",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 164,
+      "end_line": 164,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.placeholder(tf.float64, shape=[None, self.x_f1.shape[1]])",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.math.square(u1_x)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 85,
+      "end_line": 85,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.square(u1_x)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.add(tf.matmul(H, W), b)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 65,
+      "end_line": 65,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.add(tf.matmul(H, W), b)",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "tf.gradients(u1_y, y1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 96,
+      "end_line": 96,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u1_y, y1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.gradients(u2, x2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 100,
+      "end_line": 100,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u2, x2)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.gradients(u2, y2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 101,
+      "end_line": 101,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u2, y2)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.gradients(u2i1_y, yi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 130,
+      "end_line": 130,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u2i1_y, yi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "self.net_f(self.x_f1_tf, self.y_f1_tf, self.x_f2_tf, self.y_f2_tf, self.x_fi1_tf, self.y_fi1_tf)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 178,
+      "end_line": 178,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.net_f(self.x_f1_tf, self.y_f1_tf, self.x_f2_tf, self.y_f2_tf, self.x_fi1_tf, self.y_fi1_tf)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "self.sess.run(self.ub2_pred, {self.x_f2_tf: X_star2[:,0:1], self.y_f2_tf: X_star2[:,1:2]})",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 212,
+      "end_line": 212,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.sess.run(self.ub2_pred, {self.x_f2_tf: X_star2[:,0:1], self.y_f2_tf: X_star2[:,1:2]})",
+      "calling_entity": "xpinn_model::XPINN::predict"
+    },
+    {
+      "name": "weights.append(W)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 41,
+      "end_line": 41,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "weights.append(W)",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "tf.add(tf.matmul(H, W), b)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 62,
+      "end_line": 62,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.add(tf.matmul(H, W), b)",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "self.neural_net_tanh(tf.concat([x,y],1), self.weights1, self.biases1, self.A1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 70,
+      "end_line": 70,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.neural_net_tanh(tf.concat([x,y],1), self.weights1, self.biases1, self.A1)",
+      "calling_entity": "xpinn_model::XPINN::net_u1"
+    },
+    {
+      "name": "tf.math.square(u1i1_y)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 111,
+      "end_line": 111,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.square(u1i1_y)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.math.scalar_mul(0.05, d2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 86,
+      "end_line": 86,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.scalar_mul(0.05, d2)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.gradients(u2i1_x, xi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 129,
+      "end_line": 129,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u2i1_x, xi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.reduce_mean(tf.square(self.fi1_pred))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 183,
+      "end_line": 183,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.reduce_mean(tf.square(self.fi1_pred))",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.square(self.u1i1_pred-self.uavgi1_pred)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 184,
+      "end_line": 184,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.square(self.u1i1_pred-self.uavgi1_pred)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.placeholder(tf.float64, shape=[None, self.x1_ub.shape[1]])",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 161,
+      "end_line": 161,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.placeholder(tf.float64, shape=[None, self.x1_ub.shape[1]])",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.exp(yi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 140,
+      "end_line": 140,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.exp(yi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.matmul(H, W)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 65,
+      "end_line": 65,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.matmul(H, W)",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "tf.concat([x,y],1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 70,
+      "end_line": 70,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.concat([x,y],1)",
+      "calling_entity": "xpinn_model::XPINN::net_u1"
+    },
+    {
+      "name": "tf.math.multiply(c, u1i1_x)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 118,
+      "end_line": 118,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.multiply(c, u1i1_x)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.square(self.f1_pred)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 183,
+      "end_line": 183,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.square(self.f1_pred)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "self.sess.run(self.train_op_Adam1, tf_dict)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 206,
+      "end_line": 206,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.sess.run(self.train_op_Adam1, tf_dict)",
+      "calling_entity": "xpinn_model::XPINN::train_step"
+    },
+    {
+      "name": "tf.exp(x1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 136,
+      "end_line": 136,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.exp(x1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.placeholder(tf.float64, shape=[None, self.y1_ub.shape[1]])",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 162,
+      "end_line": 162,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.placeholder(tf.float64, shape=[None, self.y1_ub.shape[1]])",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.exp(y1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 136,
+      "end_line": 136,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.exp(y1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.Variable(0.05, dtype=tf.float64)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 40,
+      "end_line": 40,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.Variable(0.05, dtype=tf.float64)",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "tf.matmul(H, W)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 62,
+      "end_line": 62,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.matmul(H, W)",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "tf.placeholder(tf.float64, shape=[None, self.y_f2.shape[1]])",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 167,
+      "end_line": 167,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.placeholder(tf.float64, shape=[None, self.y_f2.shape[1]])",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "self.net_u1(self.x1_ub_tf, self.y1_ub_tf)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 173,
+      "end_line": 173,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.net_u1(self.x1_ub_tf, self.y1_ub_tf)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.reduce_mean(tf.square(self.u2i1_pred-self.uavgi1_pred))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 188,
+      "end_line": 188,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.reduce_mean(tf.square(self.u2i1_pred-self.uavgi1_pred))",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.train.AdamOptimizer(0.0008)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 191,
+      "end_line": 191,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.train.AdamOptimizer(0.0008)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.gradients(u1i1_x, xi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 121,
+      "end_line": 121,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u1i1_x, xi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.exp(xi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 140,
+      "end_line": 140,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.exp(xi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.math.add(d1, 200)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 115,
+      "end_line": 115,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.add(d1, 200)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.math.divide(1, d2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 90,
+      "end_line": 90,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.divide(1, d2)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.math.scalar_mul(0.05, d2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 112,
+      "end_line": 112,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.scalar_mul(0.05, d2)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "self.initialize_NN(layers2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 25,
+      "end_line": 25,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.initialize_NN(layers2)",
+      "calling_entity": "xpinn_model::XPINN::__init__"
+    },
+    {
+      "name": "tf.tanh(self.scaling_factor*A[l]*tf.add(tf.matmul(H, W), b))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 62,
+      "end_line": 62,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.tanh(self.scaling_factor*A[l]*tf.add(tf.matmul(H, W), b))",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "tf.math.divide(5000, d2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 88,
+      "end_line": 88,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.divide(5000, d2)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.math.add(d2, 1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 113,
+      "end_line": 113,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.add(d2, 1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.math.multiply(c, u1_x)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 92,
+      "end_line": 92,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.multiply(c, u1_x)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.math.add(tf.math.square(u1i1_x), tf.math.square(u1i1_y))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 111,
+      "end_line": 111,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.add(tf.math.square(u1i1_x), tf.math.square(u1i1_y))",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.math.add(d2, 1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 87,
+      "end_line": 87,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.add(d2, 1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.math.add(d1, 200)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 89,
+      "end_line": 89,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.add(d1, 200)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.reduce_mean(tf.square(self.fi1_pred))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 186,
+      "end_line": 186,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.reduce_mean(tf.square(self.fi1_pred))",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.gradients(u1i1, yi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 109,
+      "end_line": 109,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u1i1, yi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.zeros([1, layers[l+1]], dtype=tf.float64)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 39,
+      "end_line": 39,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.zeros([1, layers[l+1]], dtype=tf.float64)",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "tf.gradients(u1_x, x1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 95,
+      "end_line": 95,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u1_x, x1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "self.net_u1(xi1,yi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 107,
+      "end_line": 107,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.net_u1(xi1,yi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.exp(y2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 137,
+      "end_line": 137,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.exp(y2)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.reduce_mean(tf.square(self.u1i1_pred-self.uavgi1_pred))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 184,
+      "end_line": 184,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.reduce_mean(tf.square(self.u1i1_pred-self.uavgi1_pred))",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "self.sess.run(init)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 197,
+      "end_line": 197,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.sess.run(init)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.math.multiply(c, u1i1_y)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 119,
+      "end_line": 119,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.multiply(c, u1i1_y)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.gradients(u2i1, yi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 127,
+      "end_line": 127,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u2i1, yi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.truncated_normal([in_dim, out_dim], stddev=xavier_stddev)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 52,
+      "end_line": 52,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.truncated_normal([in_dim, out_dim], stddev=xavier_stddev)",
+      "calling_entity": "xpinn_model::XPINN::xavier_init"
+    },
+    {
+      "name": "len(weights)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 56,
+      "end_line": 56,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "len(weights)",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "tf.exp(x2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 137,
+      "end_line": 137,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.exp(x2)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "self.net_u2(xi1,yi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 125,
+      "end_line": 125,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.net_u2(xi1,yi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.placeholder(tf.float64, shape=[None, self.x_f2.shape[1]])",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 166,
+      "end_line": 166,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.placeholder(tf.float64, shape=[None, self.x_f2.shape[1]])",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.reduce_mean(tf.square(self.ub1 - self.ub1_pred))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 181,
+      "end_line": 181,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.reduce_mean(tf.square(self.ub1 - self.ub1_pred))",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "self.sess.run(self.train_op_Adam2, tf_dict)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 207,
+      "end_line": 207,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.sess.run(self.train_op_Adam2, tf_dict)",
+      "calling_entity": "xpinn_model::XPINN::train_step"
+    },
+    {
+      "name": "tf.gradients(u1, y1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 83,
+      "end_line": 83,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u1, y1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.math.divide(5000, d2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 114,
+      "end_line": 114,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.divide(5000, d2)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.square(self.fi1_pred)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 183,
+      "end_line": 183,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.square(self.fi1_pred)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "self.sess.run(self.loss2, tf_dict)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 223,
+      "end_line": 223,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.sess.run(self.loss2, tf_dict)",
+      "calling_entity": "xpinn_model::XPINN::get_loss"
+    },
+    {
+      "name": "tf.square(self.f2_pred)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 186,
+      "end_line": 186,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.square(self.f2_pred)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.Session()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 28,
+      "end_line": 28,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.Session()",
+      "calling_entity": "xpinn_model::XPINN::__init__"
+    },
+    {
+      "name": "tf.Variable(tf.to_double(tf.truncated_normal([in_dim, out_dim], stddev=xavier_stddev)), dtype=tf.float64)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 52,
+      "end_line": 52,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.Variable(tf.to_double(tf.truncated_normal([in_dim, out_dim], stddev=xavier_stddev)), dtype=tf.float64)",
+      "calling_entity": "xpinn_model::XPINN::xavier_init"
+    },
+    {
+      "name": "A.append(a)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 43,
+      "end_line": 43,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "A.append(a)",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "tf.exp(yi1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 140,
+      "end_line": 140,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.exp(yi1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.gradients(u1, x1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 82,
+      "end_line": 82,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u1, x1)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.placeholder(tf.float64, shape=[None, self.y_fi1.shape[1]])",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 170,
+      "end_line": 170,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.placeholder(tf.float64, shape=[None, self.y_fi1.shape[1]])",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "self.optimizer_Adam.minimize(self.loss1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 192,
+      "end_line": 192,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.optimizer_Adam.minimize(self.loss1)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "range(0, num_layers-1)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 37,
+      "end_line": 37,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "range(0, num_layers-1)",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "self.net_u2(x2,y2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 99,
+      "end_line": 99,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.net_u2(x2,y2)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.math.square(u1i1_x)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 111,
+      "end_line": 111,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.square(u1i1_x)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.reduce_mean(tf.square(self.f2_pred))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 186,
+      "end_line": 186,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.reduce_mean(tf.square(self.f2_pred))",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.reduce_mean(tf.square(self.u_fi - self.u2i1_pred))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 187,
+      "end_line": 187,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.reduce_mean(tf.square(self.u_fi - self.u2i1_pred))",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.square(self.u2i1_pred-self.uavgi1_pred)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 188,
+      "end_line": 188,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.square(self.u2i1_pred-self.uavgi1_pred)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "self.optimizer_Adam.minimize(self.loss2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 193,
+      "end_line": 193,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "self.optimizer_Adam.minimize(self.loss2)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.gradients(u2_x, x2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 103,
+      "end_line": 103,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.gradients(u2_x, x2)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.placeholder(tf.float64, shape=[None, self.y_f1.shape[1]])",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 165,
+      "end_line": 165,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.placeholder(tf.float64, shape=[None, self.y_f1.shape[1]])",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.reduce_mean(tf.square(self.f1_pred))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 183,
+      "end_line": 183,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.reduce_mean(tf.square(self.f1_pred))",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.global_variables_initializer()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 196,
+      "end_line": 196,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.global_variables_initializer()",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tf.math.multiply(c, u1_y)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 93,
+      "end_line": 93,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.math.multiply(c, u1_y)",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "tf.square(self.u_fi - self.u2i1_pred)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 187,
+      "end_line": 187,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tf.square(self.u_fi - self.u2i1_pred)",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "initialize_NN",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 24,
+      "end_line": 24,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "initialize_NN",
+      "calling_entity": "xpinn_model::XPINN::__init__"
+    },
+    {
+      "name": "neural_net_tanh",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 70,
+      "end_line": 70,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "neural_net_tanh",
+      "calling_entity": "xpinn_model::XPINN::net_u1"
+    },
+    {
+      "name": "add",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 87,
+      "end_line": 87,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "add",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "add",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 111,
+      "end_line": 111,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "add",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "exp",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 137,
+      "end_line": 137,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "exp",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "reduce_mean",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 188,
+      "end_line": 188,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "reduce_mean",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "run",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 197,
+      "end_line": 197,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "run",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "tanh",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 62,
+      "end_line": 62,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "tanh",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 122,
+      "end_line": 122,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "reduce_mean",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 186,
+      "end_line": 186,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "reduce_mean",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "add",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 113,
+      "end_line": 113,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "add",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "reduce_mean",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 186,
+      "end_line": 186,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "reduce_mean",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "run",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 206,
+      "end_line": 206,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "run",
+      "calling_entity": "xpinn_model::XPINN::train_step"
+    },
+    {
+      "name": "square",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 85,
+      "end_line": 85,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "square",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 95,
+      "end_line": 95,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 108,
+      "end_line": 108,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "square",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 187,
+      "end_line": 187,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "square",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "divide",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 88,
+      "end_line": 88,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "divide",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "run",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 212,
+      "end_line": 212,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "run",
+      "calling_entity": "xpinn_model::XPINN::predict"
+    },
+    {
+      "name": "sqrt",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 51,
+      "end_line": 51,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "sqrt",
+      "calling_entity": "xpinn_model::XPINN::xavier_init"
+    },
+    {
+      "name": "net_u2",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 125,
+      "end_line": 125,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "net_u2",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "add",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 85,
+      "end_line": 85,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "add",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "divide",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 114,
+      "end_line": 114,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "divide",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "placeholder",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 167,
+      "end_line": 167,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "placeholder",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "minimize",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 192,
+      "end_line": 192,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "minimize",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "run",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 207,
+      "end_line": 207,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "run",
+      "calling_entity": "xpinn_model::XPINN::train_step"
+    },
+    {
+      "name": "Session",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 28,
+      "end_line": 28,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "Session",
+      "calling_entity": "xpinn_model::XPINN::__init__"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 96,
+      "end_line": 96,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 109,
+      "end_line": 109,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "add",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 89,
+      "end_line": 89,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "add",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "placeholder",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 166,
+      "end_line": 166,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "placeholder",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 126,
+      "end_line": 126,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "run",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 223,
+      "end_line": 223,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "run",
+      "calling_entity": "xpinn_model::XPINN::get_loss"
+    },
+    {
+      "name": "net_u1",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 81,
+      "end_line": 81,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "net_u1",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "add",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 115,
+      "end_line": 115,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "add",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "exp",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 136,
+      "end_line": 136,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "exp",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "exp",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 140,
+      "end_line": 140,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "exp",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "square",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 183,
+      "end_line": 183,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "square",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "reduce_mean",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 187,
+      "end_line": 187,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "reduce_mean",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "net_u2",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 99,
+      "end_line": 99,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "net_u2",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "placeholder",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 161,
+      "end_line": 161,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "placeholder",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "net_u1",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 173,
+      "end_line": 173,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "net_u1",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "concat",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 75,
+      "end_line": 75,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "concat",
+      "calling_entity": "xpinn_model::XPINN::net_u2"
+    },
+    {
+      "name": "divide",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 90,
+      "end_line": 90,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "divide",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "exp",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 140,
+      "end_line": 140,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "exp",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "net_f",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 178,
+      "end_line": 178,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "net_f",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "AdamOptimizer",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 191,
+      "end_line": 191,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "AdamOptimizer",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "run",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 222,
+      "end_line": 222,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "run",
+      "calling_entity": "xpinn_model::XPINN::get_loss"
+    },
+    {
+      "name": "initialize_NN",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 25,
+      "end_line": 25,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "initialize_NN",
+      "calling_entity": "xpinn_model::XPINN::__init__"
+    },
+    {
+      "name": "truncated_normal",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 52,
+      "end_line": 52,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "truncated_normal",
+      "calling_entity": "xpinn_model::XPINN::xavier_init"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 127,
+      "end_line": 127,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "placeholder",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 170,
+      "end_line": 170,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "placeholder",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "reduce_mean",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 183,
+      "end_line": 183,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "reduce_mean",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "len",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 56,
+      "end_line": 56,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "len",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "matmul",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 65,
+      "end_line": 65,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "matmul",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 82,
+      "end_line": 82,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "divide",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 116,
+      "end_line": 116,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "divide",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "exp",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 137,
+      "end_line": 137,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "exp",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "append",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 43,
+      "end_line": 43,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "append",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 100,
+      "end_line": 100,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "zeros",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 39,
+      "end_line": 39,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "zeros",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "multiply",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 92,
+      "end_line": 92,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "multiply",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "square",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 183,
+      "end_line": 183,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "square",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "add",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 65,
+      "end_line": 65,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "add",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 129,
+      "end_line": 129,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 83,
+      "end_line": 83,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "multiply",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 118,
+      "end_line": 118,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "multiply",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "placeholder",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 165,
+      "end_line": 165,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "placeholder",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "square",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 181,
+      "end_line": 181,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "square",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "square",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 184,
+      "end_line": 184,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "square",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "xavier_init",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 38,
+      "end_line": 38,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "xavier_init",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 101,
+      "end_line": 101,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "square",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 182,
+      "end_line": 182,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "square",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "to_double",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 52,
+      "end_line": 52,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "to_double",
+      "calling_entity": "xpinn_model::XPINN::xavier_init"
+    },
+    {
+      "name": "square",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 85,
+      "end_line": 85,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "square",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "multiply",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 93,
+      "end_line": 93,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "multiply",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "placeholder",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 164,
+      "end_line": 164,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "placeholder",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 130,
+      "end_line": 130,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "reduce_mean",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 181,
+      "end_line": 181,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "reduce_mean",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "reduce_mean",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 184,
+      "end_line": 184,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "reduce_mean",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "square",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 111,
+      "end_line": 111,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "square",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "multiply",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 119,
+      "end_line": 119,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "multiply",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "neural_net_tanh",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 75,
+      "end_line": 75,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "neural_net_tanh",
+      "calling_entity": "xpinn_model::XPINN::net_u2"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 103,
+      "end_line": 103,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "range",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 37,
+      "end_line": 37,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "range",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "len",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 36,
+      "end_line": 36,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "len",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "append",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 41,
+      "end_line": 41,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "append",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "exp",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 136,
+      "end_line": 136,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "exp",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "minimize",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 193,
+      "end_line": 193,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "minimize",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "run",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 211,
+      "end_line": 211,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "run",
+      "calling_entity": "xpinn_model::XPINN::predict"
+    },
+    {
+      "name": "concat",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 70,
+      "end_line": 70,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "concat",
+      "calling_entity": "xpinn_model::XPINN::net_u1"
+    },
+    {
+      "name": "square",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 188,
+      "end_line": 188,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "square",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "matmul",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 62,
+      "end_line": 62,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "matmul",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "net_u2",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 174,
+      "end_line": 174,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "net_u2",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "reduce_mean",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 182,
+      "end_line": 182,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "reduce_mean",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "Variable",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 39,
+      "end_line": 39,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "Variable",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "add",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 62,
+      "end_line": 62,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "add",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 104,
+      "end_line": 104,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "reduce_mean",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 183,
+      "end_line": 183,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "reduce_mean",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "square",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 186,
+      "end_line": 186,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "square",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "Variable",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 40,
+      "end_line": 40,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "Variable",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "scalar_mul",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 86,
+      "end_line": 86,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "scalar_mul",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "placeholder",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 169,
+      "end_line": 169,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "placeholder",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "global_variables_initializer",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 196,
+      "end_line": 196,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "global_variables_initializer",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "append",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 42,
+      "end_line": 42,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "append",
+      "calling_entity": "xpinn_model::XPINN::initialize_NN"
+    },
+    {
+      "name": "square",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 111,
+      "end_line": 111,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "square",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 121,
+      "end_line": 121,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "gradients",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "exp",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 140,
+      "end_line": 140,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "exp",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "placeholder",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 162,
+      "end_line": 162,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "placeholder",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "range",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 59,
+      "end_line": 59,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "range",
+      "calling_entity": "xpinn_model::XPINN::neural_net_tanh"
+    },
+    {
+      "name": "scalar_mul",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 112,
+      "end_line": 112,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "scalar_mul",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "square",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 186,
+      "end_line": 186,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "square",
+      "calling_entity": "xpinn_model::XPINN::setup_training"
+    },
+    {
+      "name": "exp",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 140,
+      "end_line": 140,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "exp",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    },
+    {
+      "name": "Variable",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 52,
+      "end_line": 52,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "Variable",
+      "calling_entity": "xpinn_model::XPINN::xavier_init"
+    },
+    {
+      "name": "net_u1",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 107,
+      "end_line": 107,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\physics_informed\\xpinn_model.py",
+      "code": "net_u1",
+      "calling_entity": "xpinn_model::XPINN::net_f"
+    }
+  ]
+}

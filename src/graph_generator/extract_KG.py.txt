@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""
+Batch AST Extraction Script
+
+Extract ASTs from C# files in a directory structure using enhanced CSharpASTExtractor
+with external dependency filtering.
+
+python extract_asts_with_structure.py pALM
+python extract_asts_with_structure.py test_files --output-folder test_pAST --no-copy-source
+
+python extract_asts_with_structure.py /path/to/files --output-folder custom_ast --no-copy-source
+
+# root_folder = r"T:\Bermuda ISA shared\AeBe ISA\01 Actuarial\2025\Q1'25\\2. pALM Input\Palm Workspace & environment\pALMLiability"
+
+"""
+
+import argparse
+import os
+import shutil
+import json
+from pathlib import Path
+from csharp_ast_extractor import CSharpASTExtractor
+
+def extract_asts_with_structure(root_folder, output_folder="pAST", copy_source=True, source_folder="pALM"):
+    root_path = Path(root_folder)
+    output_path = Path('.').absolute() / output_folder
+    source_copy_path = Path('.').absolute() / source_folder if copy_source else None
+
+    if not root_path.exists():
+        print(f"Error: {root_folder} does not exist")
+        return
+
+    # Create output directories
+    output_path.mkdir(exist_ok=True)
+    if copy_source:
+        source_copy_path.mkdir(exist_ok=True)
+
+    print(f"Extracting ASTs from: {root_path}")
+    print(f"AST output directory: {output_path.absolute()}")
+    if copy_source:
+        print(f"Source copy directory: {source_copy_path.absolute()}")
+    print("-" * 60)
+
+    # Initialize the new AST extractor
+    extractor = CSharpASTExtractor()
+
+    cs_files_found = []
+    total_definitions = 0
+    total_references = 0
+
+    # Find all C# files
+    for cs_file in root_path.rglob("*.cs"):
+        # Calculate relative path from root
+        relative_path = cs_file.relative_to(root_path)
+        cs_files_found.append((cs_file, relative_path))
+
+    print(f"Found {len(cs_files_found)} C# files")
+    print("-" * 60)
+
+    # Process each C# file
+    for i, (cs_file, relative_path) in enumerate(cs_files_found, 1):
+        print(f"[{i}/{len(cs_files_found)}] Processing: {relative_path}")
+
+        # Create corresponding directory structure in both output folders
+        output_file_path = output_path / relative_path.with_suffix('.json')
+        output_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if copy_source:
+            source_file_path = source_copy_path / relative_path
+            source_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Copy original C# file
+        if copy_source and cs_file != source_file_path:
+            shutil.copy2(cs_file, source_file_path)
+            print(f"   📄 Source copied: {source_file_path}")
+        elif copy_source:
+            print(f"   📄 Source already exists: {source_file_path}")
+
+        # Use the new AST extractor
+        result = extractor.extract_symbols_dict(str(cs_file))
+
+        # Clean result - remove symbols array and stats
+        definitions = result.get('definitions', [])
+        references = result.get('references', [])
+        
+        result_with_metadata = {
+            "file_path": str(cs_file),
+            "language": "csharp",
+            "definitions": definitions,
+            "references": references
+        }
+
+        # Save AST to JSON file
+        with open(output_file_path, 'w', encoding='utf-8') as f:
+            json.dump(result_with_metadata, f, indent=2, ensure_ascii=False)
+
+        print(f"   ✅ AST saved: {output_file_path}")
+        print(f"   📊 Definitions: {len(definitions)}, References: {len(references)}")
+        total_definitions += len(definitions)
+        total_references += len(references)
+
+
+    print("-" * 60)
+    print(f'Total definitions: {total_definitions}, Total references: {total_references}')
+    print(f"AST extraction complete! Check {output_path.absolute()}")
+    if copy_source:
+        print(f"Source files copied! Check {source_copy_path.absolute()}")
+
+def main():
+    parser = argparse.ArgumentParser(description="Extract ASTs from C# files with external dependency filtering")
+    parser.add_argument("root_folder", help="Root folder containing C# files")
+    parser.add_argument("--output-folder", default="pAST", help="Output folder for AST JSON files (default: pAST)")
+    parser.add_argument("--source-folder", default="pALM", help="Folder to copy source files (default: pALM)")
+    parser.add_argument("--no-copy-source", action="store_true", help="Don't copy source files")
+
+    args = parser.parse_args()
+
+    copy_source = not args.no_copy_source
+    
+    if Path(args.root_folder).is_absolute():
+      root_folder = Path(args.root_folder)
+    else:
+        root_folder = Path(__file__).parent.absolute() / args.root_folder
+
+    extract_asts_with_structure(
+        root_folder=root_folder,
+        output_folder=args.output_folder,
+        copy_source=copy_source,
+        source_folder=args.source_folder
+    )
+
+if __name__ == "__main__":
+    main()

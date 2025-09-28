@@ -1,0 +1,816 @@
+{
+  "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+  "language": "python",
+  "definitions": [
+    {
+      "name": "model::def get_model(img_size=(400, 400)):\n    \"\"\"Create the CNN model for field prediction.\"\"\"\n    inputs = keras.Input(shape=img_size + (1,))\n\n    inp = layers.BatchNormalization()(inputs)\n\n    x1 = layers.Conv2D(64, 3, activation=\"relu\", padding=\"same\")(inp)\n    x1 = layers.BatchNormalization()(x1)\n    x1 = layers.Dropout(0.5)(x1)\n\n    x2 = layers.Conv2D(64, 3, activation=\"relu\", padding=\"same\")(x1)\n    x2 = layers.BatchNormalization()(x2)\n    x2 = layers.Dropout(0.5)(x2)\n\n    x3 = layers.Conv2D(128, 3, activation=\"relu\", padding=\"same\")(x2)\n    x3 = layers.BatchNormalization()(x3)\n    x3 = layers.Dropout(0.5)(x3)\n\n    x4 = layers.Conv2D(128, 3, activation=\"relu\", padding=\"same\")(x3)\n    x4 = layers.BatchNormalization()(x4)\n    x4 = layers.Dropout(0.5)(x4)\n\n    x5 = layers.Conv2D(128, 3, padding=\"same\", activation=\"relu\")(x4)\n    x5 = layers.BatchNormalization()(x5)\n    x5 = layers.Dropout(0.5)(x5)\n\n    x_out_4 = layers.Conv2DTranspose(128, 3, activation=\"relu\", padding=\"same\")(x5)\n    x_out_4 = layers.BatchNormalization()(x_out_4)\n    x_out_4 = layers.Dropout(0.5)(x_out_4)\n    x_out_4 = layers.Add()([x_out_4, x5])\n\n    x_out_3 = layers.Conv2DTranspose(128, 3, activation=\"relu\", padding=\"same\")(x_out_4)\n    x_out_3 = layers.BatchNormalization()(x_out_3)\n    x_out_3 = layers.Dropout(0.5)(x_out_3)\n    x_out_3 = layers.Add()([x_out_3, x4])\n\n    x_out_2 = layers.Conv2DTranspose(128, 3, activation=\"relu\", padding=\"same\")(x_out_3)\n    x_out_2 = layers.BatchNormalization()(x_out_2)\n    x_out_2 = layers.Dropout(0.5)(x_out_2)\n    x_out_2 = layers.Add()([x_out_2, x3])\n\n    x_out_1 = layers.Conv2DTranspose(64, 3, activation=\"relu\", padding=\"same\")(x_out_2)\n    x_out_1 = layers.BatchNormalization()(x_out_1)\n    x_out_1 = layers.Dropout(0.5)(x_out_1)\n    x_out_1 = layers.Add()([x_out_1, x2])\n\n    x_out_0 = layers.Conv2DTranspose(64, 3, activation=\"relu\", padding=\"same\")(x_out_1)\n    x_out_0 = layers.Add()([x_out_0, x1])\n\n    outputs = layers.Conv2D(1, 1, activation=\"relu\", padding=\"same\")(x_out_0)\n\n    model = keras.Model(inputs, outputs)\n    return model",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 10,
+      "end_line": 62,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "def get_model(img_size=(400, 400)):\n    \"\"\"Create the CNN model for field prediction.\"\"\"\n    inputs = keras.Input(shape=img_size + (1,))\n\n    inp = layers.BatchNormalization()(inputs)\n\n    x1 = layers.Conv2D(64, 3, activation=\"relu\", padding=\"same\")(inp)\n    x1 = layers.BatchNormalization()(x1)\n    x1 = layers.Dropout(0.5)(x1)\n\n    x2 = layers.Conv2D(64, 3, activation=\"relu\", padding=\"same\")(x1)\n    x2 = layers.BatchNormalization()(x2)\n    x2 = layers.Dropout(0.5)(x2)\n\n    x3 = layers.Conv2D(128, 3, activation=\"relu\", padding=\"same\")(x2)\n    x3 = layers.BatchNormalization()(x3)\n    x3 = layers.Dropout(0.5)(x3)\n\n    x4 = layers.Conv2D(128, 3, activation=\"relu\", padding=\"same\")(x3)\n    x4 = layers.BatchNormalization()(x4)\n    x4 = layers.Dropout(0.5)(x4)\n\n    x5 = layers.Conv2D(128, 3, padding=\"same\", activation=\"relu\")(x4)\n    x5 = layers.BatchNormalization()(x5)\n    x5 = layers.Dropout(0.5)(x5)\n\n    x_out_4 = layers.Conv2DTranspose(128, 3, activation=\"relu\", padding=\"same\")(x5)\n    x_out_4 = layers.BatchNormalization()(x_out_4)\n    x_out_4 = layers.Dropout(0.5)(x_out_4)\n    x_out_4 = layers.Add()([x_out_4, x5])\n\n    x_out_3 = layers.Conv2DTranspose(128, 3, activation=\"relu\", padding=\"same\")(x_out_4)\n    x_out_3 = layers.BatchNormalization()(x_out_3)\n    x_out_3 = layers.Dropout(0.5)(x_out_3)\n    x_out_3 = layers.Add()([x_out_3, x4])\n\n    x_out_2 = layers.Conv2DTranspose(128, 3, activation=\"relu\", padding=\"same\")(x_out_3)\n    x_out_2 = layers.BatchNormalization()(x_out_2)\n    x_out_2 = layers.Dropout(0.5)(x_out_2)\n    x_out_2 = layers.Add()([x_out_2, x3])\n\n    x_out_1 = layers.Conv2DTranspose(64, 3, activation=\"relu\", padding=\"same\")(x_out_2)\n    x_out_1 = layers.BatchNormalization()(x_out_1)\n    x_out_1 = layers.Dropout(0.5)(x_out_1)\n    x_out_1 = layers.Add()([x_out_1, x2])\n\n    x_out_0 = layers.Conv2DTranspose(64, 3, activation=\"relu\", padding=\"same\")(x_out_1)\n    x_out_0 = layers.Add()([x_out_0, x1])\n\n    outputs = layers.Conv2D(1, 1, activation=\"relu\", padding=\"same\")(x_out_0)\n\n    model = keras.Model(inputs, outputs)\n    return model"
+    },
+    {
+      "name": "model::get_model",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 10,
+      "end_line": 10,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "get_model"
+    }
+  ],
+  "references": [
+    {
+      "name": "from tensorflow import keras",
+      "type": "importss",
+      "category": "reference",
+      "start_line": 6,
+      "end_line": 6,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "from tensorflow import keras",
+      "calling_entity": "model"
+    },
+    {
+      "name": "from tensorflow.keras import layers",
+      "type": "importss",
+      "category": "reference",
+      "start_line": 7,
+      "end_line": 7,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "from tensorflow.keras import layers",
+      "calling_entity": "model"
+    },
+    {
+      "name": "tensorflow",
+      "type": "importss",
+      "category": "reference",
+      "start_line": 6,
+      "end_line": 6,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "tensorflow",
+      "calling_entity": "model"
+    },
+    {
+      "name": "tensorflow",
+      "type": "importss",
+      "category": "reference",
+      "start_line": 7,
+      "end_line": 7,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "tensorflow",
+      "calling_entity": "model"
+    },
+    {
+      "name": "keras",
+      "type": "importss",
+      "category": "reference",
+      "start_line": 7,
+      "end_line": 7,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "keras",
+      "calling_entity": "model"
+    },
+    {
+      "name": "layers.BatchNormalization()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 14,
+      "end_line": 14,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.BatchNormalization()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Conv2D(64, 3, activation=\"relu\", padding=\"same\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 16,
+      "end_line": 16,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Conv2D(64, 3, activation=\"relu\", padding=\"same\")",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Conv2D(128, 3, activation=\"relu\", padding=\"same\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 24,
+      "end_line": 24,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Conv2D(128, 3, activation=\"relu\", padding=\"same\")",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.BatchNormalization()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 25,
+      "end_line": 25,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.BatchNormalization()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Conv2D(128, 3, padding=\"same\", activation=\"relu\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 32,
+      "end_line": 32,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Conv2D(128, 3, padding=\"same\", activation=\"relu\")",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Conv2D(128, 3, activation=\"relu\", padding=\"same\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 28,
+      "end_line": 28,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Conv2D(128, 3, activation=\"relu\", padding=\"same\")",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Dropout(0.5)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 26,
+      "end_line": 26,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Dropout(0.5)",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Add()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 39,
+      "end_line": 39,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Add()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Dropout(0.5)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 43,
+      "end_line": 43,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Dropout(0.5)",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Add()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 49,
+      "end_line": 49,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Add()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Conv2D(64, 3, activation=\"relu\", padding=\"same\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 20,
+      "end_line": 20,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Conv2D(64, 3, activation=\"relu\", padding=\"same\")",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.BatchNormalization()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 29,
+      "end_line": 29,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.BatchNormalization()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Conv2DTranspose(128, 3, activation=\"relu\", padding=\"same\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 41,
+      "end_line": 41,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Conv2DTranspose(128, 3, activation=\"relu\", padding=\"same\")",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Add()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 44,
+      "end_line": 44,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Add()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Conv2DTranspose(64, 3, activation=\"relu\", padding=\"same\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 51,
+      "end_line": 51,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Conv2DTranspose(64, 3, activation=\"relu\", padding=\"same\")",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Add()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 54,
+      "end_line": 54,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Add()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "keras.Model(inputs, outputs)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 61,
+      "end_line": 61,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "keras.Model(inputs, outputs)",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Dropout(0.5)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 18,
+      "end_line": 18,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Dropout(0.5)",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.BatchNormalization()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 17,
+      "end_line": 17,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.BatchNormalization()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Dropout(0.5)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 22,
+      "end_line": 22,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Dropout(0.5)",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Conv2DTranspose(128, 3, activation=\"relu\", padding=\"same\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 36,
+      "end_line": 36,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Conv2DTranspose(128, 3, activation=\"relu\", padding=\"same\")",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Dropout(0.5)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 30,
+      "end_line": 30,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Dropout(0.5)",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.BatchNormalization()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 42,
+      "end_line": 42,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.BatchNormalization()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Conv2DTranspose(128, 3, activation=\"relu\", padding=\"same\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 46,
+      "end_line": 46,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Conv2DTranspose(128, 3, activation=\"relu\", padding=\"same\")",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.BatchNormalization()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 52,
+      "end_line": 52,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.BatchNormalization()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Dropout(0.5)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 53,
+      "end_line": 53,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Dropout(0.5)",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Conv2DTranspose(64, 3, activation=\"relu\", padding=\"same\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 56,
+      "end_line": 56,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Conv2DTranspose(64, 3, activation=\"relu\", padding=\"same\")",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Conv2D(1, 1, activation=\"relu\", padding=\"same\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 59,
+      "end_line": 59,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Conv2D(1, 1, activation=\"relu\", padding=\"same\")",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "keras.Input(shape=img_size + (1,))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 12,
+      "end_line": 12,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "keras.Input(shape=img_size + (1,))",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.BatchNormalization()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 21,
+      "end_line": 21,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.BatchNormalization()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Dropout(0.5)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 34,
+      "end_line": 34,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Dropout(0.5)",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.BatchNormalization()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 33,
+      "end_line": 33,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.BatchNormalization()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.BatchNormalization()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 37,
+      "end_line": 37,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.BatchNormalization()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Dropout(0.5)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 38,
+      "end_line": 38,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Dropout(0.5)",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.BatchNormalization()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 47,
+      "end_line": 47,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.BatchNormalization()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Dropout(0.5)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 48,
+      "end_line": 48,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Dropout(0.5)",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "layers.Add()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 57,
+      "end_line": 57,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "layers.Add()",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Dropout",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 22,
+      "end_line": 22,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Dropout",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Add",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 39,
+      "end_line": 39,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Add",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Conv2D",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 59,
+      "end_line": 59,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Conv2D",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Model",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 61,
+      "end_line": 61,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Model",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Dropout",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 18,
+      "end_line": 18,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Dropout",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Conv2DTranspose",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 36,
+      "end_line": 36,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Conv2DTranspose",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "BatchNormalization",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 37,
+      "end_line": 37,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "BatchNormalization",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Add",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 54,
+      "end_line": 54,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Add",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Input",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 12,
+      "end_line": 12,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Input",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "BatchNormalization",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 17,
+      "end_line": 17,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "BatchNormalization",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Dropout",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 30,
+      "end_line": 30,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Dropout",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Add",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 49,
+      "end_line": 49,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Add",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Dropout",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 26,
+      "end_line": 26,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Dropout",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Dropout",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 43,
+      "end_line": 43,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Dropout",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Conv2DTranspose",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 46,
+      "end_line": 46,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Conv2DTranspose",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "BatchNormalization",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 47,
+      "end_line": 47,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "BatchNormalization",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "BatchNormalization",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 14,
+      "end_line": 14,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "BatchNormalization",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Conv2D",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 24,
+      "end_line": 24,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Conv2D",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "BatchNormalization",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 25,
+      "end_line": 25,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "BatchNormalization",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Dropout",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 38,
+      "end_line": 38,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Dropout",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Conv2DTranspose",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 41,
+      "end_line": 41,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Conv2DTranspose",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "BatchNormalization",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 42,
+      "end_line": 42,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "BatchNormalization",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Add",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 57,
+      "end_line": 57,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Add",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Conv2D",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 16,
+      "end_line": 16,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Conv2D",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Conv2D",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 20,
+      "end_line": 20,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Conv2D",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "BatchNormalization",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 21,
+      "end_line": 21,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "BatchNormalization",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Dropout",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 34,
+      "end_line": 34,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Dropout",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Dropout",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 53,
+      "end_line": 53,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Dropout",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Conv2DTranspose",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 56,
+      "end_line": 56,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Conv2DTranspose",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Conv2D",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 32,
+      "end_line": 32,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Conv2D",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "BatchNormalization",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 33,
+      "end_line": 33,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "BatchNormalization",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Dropout",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 48,
+      "end_line": 48,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Dropout",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Conv2DTranspose",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 51,
+      "end_line": 51,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Conv2DTranspose",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "BatchNormalization",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 52,
+      "end_line": 52,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "BatchNormalization",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Conv2D",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 28,
+      "end_line": 28,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Conv2D",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "BatchNormalization",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 29,
+      "end_line": 29,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "BatchNormalization",
+      "calling_entity": "model::get_model"
+    },
+    {
+      "name": "Add",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 44,
+      "end_line": 44,
+      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\model.py",
+      "code": "Add",
+      "calling_entity": "model::get_model"
+    }
+  ]
+}
