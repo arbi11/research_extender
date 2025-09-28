@@ -5,6 +5,16 @@ Batch AST Extraction Script for Python
 Extract ASTs from Python files in a directory structure.
 
 python extract_KG_python.py /path/to/python/project --output-folder pyAST --no-copy-source
+python src/graph_generator/extract_KG_python.py \
+    thesis_code/Chp2_MagneticFieldPredictor/magnetic_field_predictor \
+    --output-folder AST_code/AST_Chp2_FieldDistribution \
+    --no-copy-source
+
+
+python src/graph_generator/extract_KG_python.py thesis_codeChp2_MagneticFieldPredictor/magnetic_field_predictor --output-folder AST_code/AST_Chp2_FieldDistribution --no-copy-source
+uv run python extract_KG_python.py ../../thesis_code/Chp2_MagneticFieldPredictor/magnetic_field_predictor --output-folder ../../AST_code/AST_Chp2_FieldDistribution --no-copy-source
+
+
 
 """
 

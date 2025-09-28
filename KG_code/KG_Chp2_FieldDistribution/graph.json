@@ -1,0 +1,386 @@
+{
+  "entities": [
+    {
+      "entity_name": "main::run_deep_learning",
+      "entity_type": "functions",
+      "description": "Function run_deep_learning(results_dir) executes the project’s Deep Learning training workflow. It prints a start message, imports DLTrainer from src.deep_learning.trainer, creates a DLTrainer instance, calls its train(results_dir) method to run training (and save outputs to the provided directory), and then prints completion and results-location messages. The function’s side effects are console output and whatever DLTrainer.train performs (model training and saving results to results_dir).",
+      "source_id": "main"
+    },
+    {
+      "entity_name": "main::main",
+      "entity_type": "functions",
+      "description": "Command-line entry point that parses a required --method argument ('dl' or 'pinn'), prepares a timestamped results directory (results/YYYY_MonDD_HHMM_METHOD), configures logging to both a training.log file in that directory and the console, and then dispatches to either run_deep_learning(results_dir) or run_physics_informed(results_dir). It prints the results path, separators, and a completion message when the chosen routine finishes.",
+      "source_id": "main"
+    },
+    {
+      "entity_name": "main::run_physics_informed",
+      "entity_type": "functions",
+      "description": "Function that orchestrates running a Physics-Informed Neural Network (PINN) training pipeline. Given a results_dir path, it prints a start message, lazily imports PINNTrainer from src.physics_informed.trainer, instantiates the trainer, calls trainer.train(results_dir) to perform training (and save results), then prints completion and results directory messages. The function has no return value and relies on the trainer implementation to handle training and saving.",
+      "source_id": "main"
+    },
+    {
+      "entity_name": "main::unknown",
+      "entity_type": "functions",
+      "description": "This is the declaration of a function named run_deep_learning that accepts a single argument results_dir. The provided source snippet contains only the signature (no body or docstring), so its implementation is not available. Based on its name and parameter, it is intended to orchestrate a deep‑learning experiment or pipeline and use results_dir as the filesystem directory where outputs (trained models, logs, metrics, plots, etc.) are written or collected. The exact operations, inputs, and side effects cannot be determined from the available code.",
+      "source_id": "main"
+    },
+    {
+      "entity_name": "model::get_model",
+      "entity_type": "functions",
+      "description": "get_model(img_size=(400, 400)) builds and returns a Keras CNN that maps a single‑channel image of shape img_size+(1,) to a single‑channel output of the same spatial size. The network begins with an input and BatchNormalization, then a sequence of convolutional blocks (Conv2D -> BatchNormalization -> Dropout(0.5)) with channel sizes [64, 64, 128, 128, 128]. The decoder path uses Conv2DTranspose layers (also followed by BatchNormalization and Dropout where shown) and adds skip/residual connections by elementwise adding each transposed output to an earlier encoder activation (x5, x4, x3, x2, x1). All convolutions use ReLU and padding='same', so spatial resolution is preserved (no pooling/striding). The final layer is a 1x1 Conv2D producing a single output channel with ReLU. The function returns the Keras Model (uncompiled).",
+      "source_id": "src/deep_learning/model"
+    },
+    {
+      "entity_name": "model::unknown",
+      "entity_type": "functions",
+      "description": "A function named get_model that is defined to accept an optional img_size parameter (default (400, 400)). The source excerpt contains only the function signature and no docstring or body in the provided lines, so the exact behavior (what model it builds or returns) cannot be determined from the available implementation. Presumably it is intended to construct and return a deep-learning model configured for the given image size, but this is an inference rather than a statement of the actual code behavior.",
+      "source_id": "src/deep_learning/model"
+    },
+    {
+      "entity_name": "trainer::DLTrainer",
+      "entity_type": "classs",
+      "description": "DLTrainer is a small, self-contained class that prepares data and runs a custom TensorFlow training loop to predict magnetic field maps from simple coil geometry inputs. On initialization it loads configuration from a YAML file (or falls back to a built-in default) containing model, training and data settings. get_B_stats scans a list of CSV data files to compute the minimum and maximum B values. generate_geom_array builds a 400×400 image of a circular coil geometry (a constant-value mask) from domain size, coil radius and current magnitude parameters. data_feed produces training batches by: parsing coil parameters from CSV filenames, reading CSVs (expected columns x,y,B,mat), generating the geometry image, interpolating the measured B values onto a 400×400 grid using scipy.griddata, and returning X (geometry), y (interpolated field) and a scaled y_norm (y*1000). my_training configures the dataset path, obtains B statistics, constructs a model via get_model(img_size=(400,400)), and runs a custom training loop using tf.GradientTape and a Nadam optimizer for the specified epochs and inner iterations. train drives the end-to-end process using config values, calls my_training, saves the trained Keras model to results_dir/model/field_predictor_model.h5, and writes a training_metrics.json file. The implementation has several hard-coded assumptions (400×400 image size, specific data folder and CSV filename format) and depends on external functions/modules (get_model, TensorFlow, pandas, numpy, scipy.griddata).",
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "entity_name": "trainer::DLTrainer::unknown",
+      "entity_type": "classs",
+      "description": "The requested entity cannot be described because the actual implementation was not provided. The metadata shows a class named DLTrainer declared at line 19 of trainer.py but the code content is marked as \"unknown\" and there is no docstring or parameter information to inspect. I cannot infer reliable behavior from the missing implementation. If you provide the DLTrainer class source (the method and attribute definitions inside trainer.py), I can give a precise, line-level description. (As a note, classes named DLTrainer typically encapsulate deep-learning training logic such as model/optimizer setup, training/validation loops, checkpointing, and metric tracking — but this is only a general guess, not a description of the actual code in your file.)",
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "entity_name": "trainer::DLTrainer::data_feed",
+      "entity_type": "functions",
+      "description": "Method of DLTrainer that builds a single training batch from CSV data files. Given an index, a list of filenames, a folder path, and a batch_size, it (1) adjusts the index so the requested batch fits inside the file list, (2) selects batch_size files and allocates X and y arrays of shape (batch_size, 400, 400, 1), (3) for each selected CSV: parses coil_radius, domain_size and current_magnitude from the filename, reads the CSV (columns x, y, B, mat), calls self.generate_geom_array(domain_size, coil_radius, current_magnitude) to produce the input geometry map, interpolates the B values onto a 400x400 grid over [-domain_size, domain_size] using scipy.interpolate.griddata (linear), and stores the geometry in X and the interpolated field (transposed) in y, (4) creates y_norm by scaling y by 1000 and returns (X, y_norm, y). Notes: all arrays are numpy arrays; the function does no explicit error handling for interpolation NaNs or malformed filenames.",
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "entity_name": "trainer::DLTrainer::get_B_stats",
+      "entity_type": "functions",
+      "description": "Method that computes the minimum and maximum of the B-field across a list of CSV data files. For each filename in files it builds the path (folder_path / file), reads the CSV with pandas (no header), renames columns to ['x','y','B','mat'], and updates running B min and max values (initialized to min=1, max=0). It returns a tuple (min_B, max_B).",
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "entity_name": "trainer::DLTrainer::__init__",
+      "entity_type": "functions",
+      "description": "Constructor for DLTrainer. It accepts an optional config_path (default None), stores it on the instance as self.config_path, and immediately calls self.load_config() to load configuration settings.",
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "entity_name": "trainer::DLTrainer::load_config",
+      "entity_type": "functions",
+      "description": "Reads deep-learning trainer configuration into the instance. The method chooses a YAML config file named \"config_dl.yaml\" unless the instance provides self.config_path, then checks for the file’s existence. If present it opens the file and uses yaml.safe_load to parse it into self.config. If the file is missing, it assigns a built-in default configuration dictionary (model: img_size and channels; training: batch_size, epochs, learning_rate; data: normalization).",
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "entity_name": "trainer::DLTrainer::generate_geom_array",
+      "entity_type": "functions",
+      "description": "Creates a 400×400 NumPy array representing a filled circular region. The function builds an array of zeros (dtype float64) and computes a circle center at the array midpoint (cx = cy = 200). The circle radius is calculated as r = (cr * 200) / ds, and all array elements whose Euclidean distance from the center is strictly less than r are set to the value cm. (Note: ds = 0 would raise a division-by-zero error; the array size is fixed at 400×400.)",
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "entity_name": "trainer::DLTrainer::my_training",
+      "entity_type": "functions",
+      "description": "Method that implements a simple custom training loop for the DLTrainer. Given batch_size, epochs, no_iters and lr it: (1) locates CSV data files in ./data/raw/NL_Data2 and records data_size; (2) computes B_min and B_max via get_B_stats and stores norm_denom = B_max - B_min; (3) constructs a model with get_model(img_size=(400,400)); (4) creates a Nadam optimizer with the provided learning rate; (5) loops for the specified number of epochs and iterations, each iteration sampling a random starting index, loading a batch via data_feed, computing predictions, computing elementwise mean-squared-error loss inside a tf.GradientTape, computing gradients and applying them to model.trainable_variables; (6) prints epoch wall time and returns the trained tf.keras model. Notes: there is no explicit loss reduction/aggregation, validation, checkpointing or learning-rate scheduling; data loading is done from CSV files in the specified folder.",
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "entity_name": "trainer::DLTrainer::train",
+      "entity_type": "functions",
+      "description": "train(self, results_dir) is the main training routine. It reads training hyperparameters (batch_size, epochs, learning_rate) from self.config and computes no_iters = int(2 * (self.data_size // batch_size)). It calls self.my_training(batch_size, epochs, no_iters, lr) to perform training and expects a model object in return. The method then creates a \"model\" subdirectory under the provided results_dir (path-like), saves the returned model to field_predictor_model.h5 (using the model.save API), and writes a training_metrics.json file containing batch_size, epochs, learning_rate, data_size and a placeholder final_loss ('N/A'). The function prints progress messages but does not return a value and does not compute or record the final loss.",
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "entity_name": "trainer::PINNTrainer",
+      "entity_type": "classs",
+      "description": "PINNTrainer is a small driver class that configures, prepares data for, runs and saves a physics‑informed XPINN training run. On construction it loads configuration from a YAML file (or falls back to a built‑in default set of hyperparameters such as network layer sizes, mu values, learning rates and sample counts). generate_training_data() creates randomized training samples on the fixed 2D domain [-1,1]^2: boundary points, collocation points for two subdomains, and interface points placed at y=0 (interface values set to zero by default). train(results_dir) builds an XPINN instance (expects an external XPINN class), calls its setup method with the generated data, runs a training loop for the configured number of iterations (prints losses every 1000 steps and records a loss history), and then saves model weights, training metrics, and test predictions to JSON files in the provided results directory. The implementation assumes the model exposes methods/attributes like setup_training, train_step, get_loss, predict and TensorFlow session backed weight/bias tensors (weights1, biases1, A1, weights2, biases2, A2).",
+      "source_id": "src/physics_informed/trainer"
+    },
+    {
+      "entity_name": "trainer::PINNTrainer::unknown",
+      "entity_type": "classs",
+      "description": "PINNTrainer is a class declared in src/physics_informed/trainer.py that (by name and location) encapsulates the training logic for a physics‑informed neural network (PINN) used in the MagneticFieldPredictor project. The provided metadata only shows the class header (class PINNTrainer:) without the body, so the exact implementation is not available here. Typically, a PINNTrainer is responsible for: initializing the training run (receiving the model, data loaders or collocation points, physics/boundary condition specifications, and hyperparameters); creating and managing the optimizer, learning rate scheduler, and any regularizers; computing composite loss terms (data loss + physics loss + boundary loss), performing training/validation steps and backpropagation; checkpointing/saving and restoring model state; and logging/tracking metrics and progress. In this repository context it is intended to coordinate training of a PINN that predicts magnetic fields subject to physical constraints, but the specific methods and internal behavior cannot be described because the class body was not provided.",
+      "source_id": "src/physics_informed/trainer"
+    },
+    {
+      "entity_name": "trainer::PINNTrainer::__init__",
+      "entity_type": "functions",
+      "description": "Constructor for the PINNTrainer class. It accepts an optional config_path (default None), stores it on the instance as self.config_path, and then calls self.load_config() to load configuration settings.",
+      "source_id": "src/physics_informed/trainer"
+    },
+    {
+      "entity_name": "trainer::PINNTrainer::train",
+      "entity_type": "functions",
+      "description": "train(self, results_dir) is the main training routine for an XPINN model. It reads XPINN configuration (xpinn.layers1, xpinn.layers2, xpinn.mu1, xpinn.mu2) and training settings (training.max_iter, training.adam_lr, training.n_f1, training.n_f2, training.n_ub, training.n_i1), generates training data via self.generate_training_data(), constructs an XPINN instance, and calls its setup_training(...) method. It then runs a training loop for max_iter iterations calling model.train_step(), logging and recording total loss every 1000 iterations into loss_history and printing elapsed time. After training it saves the model weights by evaluating TensorFlow variables on model.sess into results_dir/model/xpinn_weights.json, writes training metrics (including final losses, timings and loss_history) to results_dir/training_metrics.json, generates N_test=100 random test inputs in [-1,1]^2, gets predictions via model.predict(...), and saves those predictions to results_dir/test_predictions.json. The function prints progress messages and returns None.",
+      "source_id": "src/physics_informed/trainer"
+    },
+    {
+      "entity_name": "trainer::PINNTrainer::load_config",
+      "entity_type": "functions",
+      "description": "Loads the trainer configuration into self.config. It chooses a YAML file named \"config_pinn.yaml\" by default or uses self.config_path if that attribute is set, checks for the file with Path(...).exists(), and if present reads and parses it with yaml.safe_load. If the file is missing, it populates self.config with a built-in default dictionary containing sections for 'xpinn' (network architectures and scaling parameters), 'training' (iteration counts, learning rate, sample sizes), and 'physics' (equation and domain decomposition). The method sets self.config in-place and does not return a value.",
+      "source_id": "src/physics_informed/trainer"
+    },
+    {
+      "entity_name": "trainer::PINNTrainer::generate_training_data",
+      "entity_type": "functions",
+      "description": "Generates training data for an XPINN setup by sampling random points and corresponding target values. Specifically, it:\n- Defines a 2D domain with fixed bounds lb=[-1.0, -1.0] and ub=[1.0, 1.0].\n- Samples N_ub uniformly distributed boundary points X_ub of shape (N_ub, 2) using self.config['training']['n_ub'] and returns ub as a zero-valued column vector of shape (N_ub, 1) (interpreted as boundary/Dirichlet values).\n- Samples collocation points X_f1 and X_f2 for two subdomains with sizes N_f1 and N_f2 taken from self.config['training']['n_f1'] and ['n_f2'] (each intended to be uniform in the domain, shape (N_f?, 2)).\n- Constructs N_i1 interface points X_i1 (shape (N_i1, 2), N_i1 from self.config['training']['n_i1']) located along the line y=0 with x given by np.random.rand(N_i1) and an interface solution vector u_i1 of zeros (shape (N_i1, 1)).\n\nNote: due to reuse/overwriting of the variable name ub (it is reassigned to zeros((N_ub,1)) after generating X_ub), the subsequent computations for X_f1 and X_f2 use that overwritten ub and therefore may produce incorrect or unintended sampling results. Also the interface x-coordinates are sampled in [0,1) (not remapped to the domain bounds).",
+      "source_id": "src/physics_informed/trainer"
+    },
+    {
+      "entity_name": "xpinn_model::XPINN",
+      "entity_type": "classs",
+      "description": "XPINN is an implementation of an Extended Physics‑Informed Neural Network (XPINN) built with TensorFlow 1.x. The class constructs two separate neural sub‑networks (layers1 and layers2) for two subdomains, each initialized with Xavier weights, biases and a per‑layer learnable scaling parameter A. The networks use a scaled tanh activation (scaling_factor * A * pre‑activation). net_f builds the PDE physics terms: it computes network outputs and derivatives (first and second derivatives) via tf.gradients, forms PDE residuals (f1 and f2) for two different forcing terms (exp(x)+exp(y) and -1+exp(x)+exp(y)), and an interface residual (fi1) enforcing continuity of the differential operator across a shared interface. The class also computes the average interface solution and applies L2 penalties to enforce boundary data, interface solution matching to the average, and residual continuity. setup_training creates placeholders, prediction tensors, composite loss1 and loss2 (with configurable multipliers), and Adam optimizers; train_step runs two Adam minimize steps sequentially. predict and get_loss provide inference and current loss values. Implementation details: uses double precision, a tf.Session, tf.placeholders, and explicit initialization of variables (TensorFlow 1 API).",
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "entity_name": "xpinn_model::XPINN::unknown",
+      "entity_type": "classs",
+      "description": "XPINN is a class that represents an extended physics‑informed neural network model. Although the concrete source for this entity is not provided here, its purpose is to encapsulate the full XPINN model logic: creating and holding the neural network(s) used for each decomposed subdomain, assembling the physics (PDE) residual and data/boundary/interface loss terms, configuring optimizers and training hyperparameters, and providing training and inference routines. Typical responsibilities of this class include building subdomain networks, computing residuals and gradients for PDE constraints, enforcing boundary and interfacial continuity conditions, performing optimization/training steps, and offering methods to evaluate or predict fields on new input points. The class acts as the top‑level container that organizes model components, loss computation, and training/prediction workflows for an XPINN implementation.",
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "entity_name": "xpinn_model::XPINN::xavier_init",
+      "entity_type": "functions",
+      "description": "Class method that creates and returns a TensorFlow variable initialized with Xavier/Glorot-style random values. It expects a size iterable where size[0] is the input dimension and size[1] is the output dimension, computes the Xavier standard deviation as sqrt(2/(in_dim + out_dim)), samples from a truncated normal with that stddev to form a matrix of shape [in_dim, out_dim], casts to double precision and returns a tf.Variable with dtype tf.float64. (Note: implementation uses tf.to_double and tf.truncated_normal.)",
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "entity_name": "xpinn_model::XPINN::net_u1",
+      "entity_type": "functions",
+      "description": "Method of the XPINN class that computes the predicted solution for subdomain 1. It concatenates the input tensors x and y along axis 1, passes the combined input through the class\u0002s neural_net_tanh using the parameters weights1, biases1 and A1, and returns the network output tensor u (the subdomain-1 prediction).",
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "entity_name": "xpinn_model::XPINN::net_f",
+      "entity_type": "functions",
+      "description": "Computes the physics-informed residuals and interface quantities for a two-subdomain XPINN. For given interior coordinates (x1,y1) in subdomain 1, (x2,y2) in subdomain 2 and interface coordinates (xi1,yi1), the method:  - evaluates the two neural nets self.net_u1 and self.net_u2 to get u1, u2 and their interface evaluations u1i1, u2i1 (TensorFlow tensors).  - computes first derivatives via tf.gradients and forms a gradient-dependent coefficient c = 1/(0.05*(u_x^2+u_y^2) + 1). (It also computes d1 = 5000/d2 + 200 but that value is not used.)  - multiplies the raw gradients by c and takes further gradients to obtain second derivatives (i.e. computes the divergence of c·grad(u) via u_xx + u_yy).  - builds the average interface value uavgi1 = (u1i1 + u2i1)/2.  - assembles PDE residuals for each subdomain: f1 = u1_xx + u1_yy - (exp(x1) + exp(y1)) and f2 = u2_xx + u2_yy - (-1 + exp(x2) + exp(y2)).  - assembles the interface residual fi1 as the difference between the subdomain residuals evaluated on the interface.  - returns the tensors (f1, f2, fi1, uavgi1, u1i1, u2i1).  In short, net_f constructs the nonlinear diffusion-type PDE residuals and the continuity/average interface quantities used in the XPINN loss.",
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "entity_name": "xpinn_model::XPINN::train_step",
+      "entity_type": "functions",
+      "description": "Runs one TensorFlow 1.x training iteration for the XPINN. It builds a feed dictionary that maps the model\u0002s input placeholders (boundary, collocation and interface point tensors like x1_ub, y1_ub, x_f1, y_f1, x_f2, y_f2, x_fi1, y_fi1) to the instance arrays, then executes two training operations (train_op_Adam1 and train_op_Adam2) on the session (self.sess) using that feed dict. The method performs the optimization updates but does not return a value.",
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "entity_name": "xpinn_model::XPINN::__init__",
+      "entity_type": "functions",
+      "description": "Constructor for the XPINN class. It stores the provided layer configurations (layers1, layers2) and penalty coefficients mu1 and mu2 (defaulting to 1), sets instance constants multiplier and scaling_factor to 20, initializes the neural-network parameters for the two subnetworks by calling initialize_NN(layers1) and initialize_NN(layers2) (assigning the returned weights, biases and A matrices to weights1/biases1/A1 and weights2/biases2/A2), and creates a TensorFlow (TF1-style) session (self.sess = tf.Session()).",
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "entity_name": "xpinn_model::XPINN::neural_net_tanh",
+      "entity_type": "functions",
+      "description": "A TensorFlow implementation of a feed‑forward neural network module that applies tanh activations on the hidden layers. Given an input tensor X, a list of weight matrices and bias vectors (weights, biases), and a per-layer multiplier array A, it iteratively computes hidden layer outputs H = tanh(scaling_factor * A[l] * (H @ W + b)) for each hidden layer, then applies a final linear output layer Y = H @ W_last + b_last. The method uses the instance attribute self.scaling_factor and TensorFlow ops (tf.matmul, tf.add, tf.tanh).",
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "entity_name": "xpinn_model::XPINN::initialize_NN",
+      "entity_type": "functions",
+      "description": "initialize_NN(self, layers) builds and returns the trainable parameters for a feed‑forward neural network given the layer sizes list `layers`. For each consecutive layer pair it: (1) creates a weight matrix W using self.xavier_init(size=[in, out]); (2) creates a bias variable b initialized to zeros with shape [1, out] and dtype tf.float64; and (3) creates a scalar tf.Variable a initialized to 0.05 (dtype tf.float64). It collects and returns three lists: weights, biases, and A (the scalar variables).",
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "entity_name": "xpinn_model::XPINN::net_u2",
+      "entity_type": "functions",
+      "description": "net_u2(self, x, y) computes the model output for the second subdomain. It concatenates the input tensors x and y along the feature axis (tf.concat([x, y], 1)) and passes the resulting input through the instance method neural_net_tanh using the subdomain-2 parameters self.weights2, self.biases2 and self.A2. The function returns the resulting tensor u (the network prediction for subdomain 2).",
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "entity_name": "xpinn_model::XPINN::setup_training",
+      "entity_type": "functions",
+      "description": "Prepares the model for training by wiring up the training data, TensorFlow placeholders, model predictions, loss functions, optimizers and variable initialization. Concretely, it: (1) extracts x/y coordinate columns and targets from the provided training arrays (boundary data X_ub/ub, collocation points X_f1/X_f2, and interface points X_fi/u_fi) and stores them on the instance; (2) creates double-precision TF placeholders for those inputs; (3) calls the instance networks (net_u1, net_u2, net_f) to produce predicted boundary values, PDE residuals and interface-related predictions (net_f returns f1, f2, fi1, uavgi1, u1i1, u2i1); (4) builds two loss terms (loss1 and loss2) that combine data-misfit, PDE residuals and interface-consistency terms with weighting via self.multiplier; (5) constructs Adam optimizer steps to minimize each loss (train_op_Adam1 and train_op_Adam2); and (6) initializes all TensorFlow global variables by running the initializer in the session (self.sess). Placeholders and computations use tf.float64, and the Adam learning rate is 0.0008.",
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "entity_name": "xpinn_model::XPINN::predict",
+      "entity_type": "functions",
+      "description": "Runs the trained TensorFlow session to compute model predictions on two sets of test points (presumably for two subdomains). It expects X_star1 and X_star2 as 2D arrays with x and y coordinates in columns. The method feeds the first column (x) and second column (y) of X_star1 to the placeholders x1_ub_tf and y1_ub_tf and evaluates ub1_pred, and feeds the columns of X_star2 to x_f2_tf and y_f2_tf and evaluates ub2_pred. It returns a tuple (u_star1, u_star2) containing the predicted outputs for each input array.",
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "entity_name": "xpinn_model::XPINN::get_loss",
+      "entity_type": "functions",
+      "description": "Builds a TensorFlow feed dictionary from the instance's stored training/evaluation data (placeholders like x1_ub_tf, y1_ub_tf, x_f1_tf, y_f1_tf, x_f2_tf, y_f2_tf, x_fi1_tf, y_fi1_tf mapped to their corresponding numpy arrays on the object) and uses self.sess.run to evaluate the two loss tensors self.loss1 and self.loss2. Returns the evaluated loss values as a tuple (loss1_value, loss2_value). No arguments; relies on the instance having the session, placeholder tensors and data arrays defined.",
+      "source_id": "src/physics_informed/xpinn_model"
+    }
+  ],
+  "relationships": [
+    {
+      "src_id": "main::main",
+      "tgt_id": "main::run_deep_learning",
+      "description": "The main function (main::main) directly invokes the run_deep_learning function (main::run_deep_learning). The call occurs at line 86 of main.py (file path provided), indicating main triggers the deep-learning routine by calling run_deep_learning by name.",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "main"
+    },
+    {
+      "src_id": "main::main",
+      "tgt_id": "main::run_physics_informed",
+      "description": "Direct call: the main::main function invokes main::run_physics_informed (a direct function call at line 88 of main.py). This indicates main delegates work to or triggers the run_physics_informed routine during program execution.",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "main"
+    },
+    {
+      "src_id": "main",
+      "tgt_id": "main::main",
+      "description": "The top-level module 'main' invokes the function 'main' defined in the same module (main::main) at line 97 of main.py — likely the script’s entry-point call (e.g., if __name__ == '__main__': main()).",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "main"
+    },
+    {
+      "src_id": "trainer::DLTrainer::__init__",
+      "tgt_id": "trainer::DLTrainer::load_config",
+      "description": "The DLTrainer constructor (__init__) invokes the instance method load_config to load or initialize the trainer's configuration during object construction (i.e., __init__ calls load_config).",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "src_id": "trainer::DLTrainer::my_training",
+      "tgt_id": "trainer::DLTrainer::data_feed",
+      "description": "The my_training method of trainer::DLTrainer invokes data_feed (a member of the same DLTrainer class) to obtain the training data/feed (call performed at line 134 of trainer.py). This is a direct call from the training routine to the data provider/generator.",
+      "keywords": "calls",
+      "weight": 0.98,
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "src_id": "trainer::DLTrainer::train",
+      "tgt_id": "trainer::DLTrainer::my_training",
+      "description": "In the DLTrainer class, the method train invokes the method my_training (an internal/instance method) at line 158 of trainer.py. This denotes a direct call from trainer::DLTrainer::train to trainer::DLTrainer::my_training within the same class/file.",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "src_id": "trainer::DLTrainer::my_training",
+      "tgt_id": "trainer::DLTrainer::get_B_stats",
+      "description": "Direct call: trainer::DLTrainer::my_training invokes the internal method trainer::DLTrainer::get_B_stats (call at line 119 in trainer.py) to retrieve/compute B-related statistics needed during the training routine. This is an intra-class method call used by the training procedure.",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "src_id": "trainer::DLTrainer::data_feed",
+      "tgt_id": "trainer::DLTrainer::generate_geom_array",
+      "description": "Intra-class call: the DLTrainer::data_feed method invokes DLTrainer::generate_geom_array (at/around line 96) to obtain or compute the geometry array as part of the data feeding/preprocessing workflow.",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "src/deep_learning/trainer"
+    },
+    {
+      "src_id": "trainer::PINNTrainer::__init__",
+      "tgt_id": "trainer::PINNTrainer::load_config",
+      "description": "Direct call from PINNTrainer.__init__ to PINNTrainer.load_config: the class constructor invokes load_config during object instantiation to load and apply configuration/settings (e.g., hyperparameters, file paths, and other initialization parameters) so the trainer’s internal state is initialized before further setup.",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "src/physics_informed/trainer"
+    },
+    {
+      "src_id": "trainer::PINNTrainer::train",
+      "tgt_id": "trainer::PINNTrainer::generate_training_data",
+      "description": "The PINNTrainer::train method calls its own generate_training_data method to produce the training dataset required by the training procedure. In other words, train invokes generate_training_data to prepare collocation points, boundary/initial condition samples and any labeled examples or inputs/targets that the training loop will use. This is an internal helper call within the PINNTrainer class to generate data before or during model training.",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "src/physics_informed/trainer"
+    },
+    {
+      "src_id": "xpinn_model::XPINN::setup_training",
+      "tgt_id": "xpinn_model::XPINN::net_f",
+      "description": "The setup_training method invokes the XPINN::net_f member (called at line 178) to obtain the network’s f-output (e.g., model predictions or PDE residuals) as part of configuring the training process (loss construction, gradients, or data flow). In other words, setup_training calls net_f to compute values needed when setting up training.",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "src_id": "xpinn_model::XPINN::net_f",
+      "tgt_id": "xpinn_model::XPINN::net_u1",
+      "description": "Within the XPINN class, the method/function xpinn_model::XPINN::net_f invokes the member/identifier xpinn_model::XPINN::net_u1 (i.e., net_f calls net_u1). This indicates net_f depends on or uses the net_u1 subnetwork (likely to obtain u1 predictions or to incorporate u1 in physics loss computations). The call is recorded at line 81 of xpinn_model.py.",
+      "keywords": "calls",
+      "weight": 0.9,
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "src_id": "xpinn_model::XPINN::net_f",
+      "tgt_id": "xpinn_model::XPINN::net_u2",
+      "description": "The member/function xpinn_model::XPINN::net_f makes a direct call/reference to xpinn_model::XPINN::net_u2 (identifier 'net_u2') at line 99 of xpinn_model.py. This indicates net_f depends on or invokes net_u2 (another network/component) during its execution.",
+      "keywords": "calls",
+      "weight": 0.9,
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "src_id": "xpinn_model::XPINN::setup_training",
+      "tgt_id": "xpinn_model::XPINN::net_u1",
+      "description": "The setup_training method of the XPINN class directly calls/uses the instance member 'net_u1' (the u1 network) at line 173. This indicates setup_training accesses or invokes the net_u1 model component as part of preparing or configuring the training process.",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "src_id": "xpinn_model::XPINN::net_u2",
+      "tgt_id": "xpinn_model::XPINN::neural_net_tanh",
+      "description": "The method xpinn_model::XPINN::net_u2 directly calls or invokes the neural_net_tanh entity (defined at line 75 in xpinn_model.py). In other words, net_u2 uses the neural_net_tanh network/constructor/function to build or evaluate the u2 neural network component.",
+      "keywords": "calls",
+      "weight": 0.9,
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "src_id": "xpinn_model::XPINN::__init__",
+      "tgt_id": "xpinn_model::XPINN::initialize_NN",
+      "description": "The XPINN class constructor (__init__) invokes the initialize_NN method during object construction to set up and configure the model's neural network components (e.g., building the network architecture, initializing weights and related NN parameters) required for the XPINN instance.",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "src_id": "xpinn_model::XPINN::initialize_NN",
+      "tgt_id": "xpinn_model::XPINN::xavier_init",
+      "description": "The initialize_NN method in the XPINN class calls the xavier_init routine to perform Xavier (Glorot) weight initialization for the neural network parameters. The call is made from XPINN::initialize_NN (referenced at line 38).",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "src_id": "xpinn_model::XPINN::net_f",
+      "tgt_id": "xpinn_model::XPINN::net_u1",
+      "description": "Within the XPINN class (xpinn_model::XPINN), the method net_f calls/uses the network/function net_u1 at line 107 of xpinn_model.py. net_f invokes net_u1 to obtain u1 network outputs (likely as part of computing physics residuals), so this is an internal method/function call from net_f to net_u1.",
+      "keywords": "calls",
+      "weight": 0.9,
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "src_id": "xpinn_model::XPINN::setup_training",
+      "tgt_id": "xpinn_model::XPINN::net_u2",
+      "description": "The setup_training method calls (accesses/invokes) the net_u2 component of the XPINN instance. In other words, during training setup the method references and uses net_u2 (presumably a neural-network submodule or callable) as part of configuring the training process (e.g., computing outputs, registering parameters, or creating optimizers).",
+      "keywords": "calls",
+      "weight": 0.9,
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "src_id": "xpinn_model::XPINN::net_f",
+      "tgt_id": "xpinn_model::XPINN::net_u2",
+      "description": "Within the XPINN class, the method/function net_f invokes the class member net_u2 (call at line 125). This indicates net_f relies on net_u2 to obtain the u2 network’s output (e.g., to evaluate u2 predictions or intermediate values) as part of computing the physics-informed quantity/residual handled by net_f. The call is an internal, intra-class dependency from net_f to net_u2.",
+      "keywords": "calls",
+      "weight": 0.85,
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "src_id": "xpinn_model::XPINN::__init__",
+      "tgt_id": "xpinn_model::XPINN::initialize_NN",
+      "description": "The XPINN class constructor (__init__) directly calls its own initialize_NN method (at line 24) to set up/configure the neural network components during object initialization.",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "src/physics_informed/xpinn_model"
+    },
+    {
+      "src_id": "xpinn_model::XPINN::net_u1",
+      "tgt_id": "xpinn_model::XPINN::neural_net_tanh",
+      "description": "The method xpinn_model::XPINN::net_u1 invokes the function/definition xpinn_model::XPINN::neural_net_tanh (a call to build/use a neural network with tanh activations) located at line 70 of xpinn_model.py.",
+      "keywords": "calls",
+      "weight": 0.95,
+      "source_id": "src/physics_informed/xpinn_model"
+    }
+  ]
+}

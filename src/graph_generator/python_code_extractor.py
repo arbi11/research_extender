@@ -85,9 +85,12 @@ def extract_symbols(code: str, file_path: str):
             def_capture_pairs.append((node, capture_name))
 
     for node, capture_name in def_capture_pairs:
-        entity_name = node.text.decode('utf8')
+        # Get the actual function/class name (not the entire body)
+        name_node = node.child_by_field_name('name')
+        entity_name = name_node.text.decode('utf8') if name_node else "unknown"
+
         entity_type = capture_name.split('.')[-1] + 's' # e.g., 'classes', 'functions'
-        
+
         # Build hierarchical name
         hierarchical_name = file_stem
         parent = node.parent
@@ -100,10 +103,40 @@ def extract_symbols(code: str, file_path: str):
                     hierarchical_name = f"{file_stem}::{parent_name_node.text.decode('utf8')}::{entity_name}"
                 break
             parent = parent.parent
-        
+
         if not is_method:
              hierarchical_name = f"{file_stem}::{entity_name}"
 
+        # Extract metadata
+        docstring = ""
+        parameters = []
+        function_signature = entity_name  # Default value
+
+        if capture_name == 'name.definition.function':
+            # Get function signature and parameters
+            lines = node.text.decode('utf8').split('\n')
+            if lines:
+                function_signature = lines[0].strip()
+
+            # Extract parameters
+            parameters_node = node.child_by_field_name('parameters')
+            if parameters_node:
+                for param in parameters_node.children:
+                    if param.type == 'identifier':
+                        parameters.append(param.text.decode('utf8'))
+
+            # Extract docstring (first string literal in function body)
+            body_node = node.child_by_field_name('body')
+            if body_node:
+                for child in body_node.children:
+                    if child.type == 'expression_statement':
+                        string_node = child.children[0] if child.children else None
+                        if string_node and string_node.type == 'string':
+                            docstring = string_node.text.decode('utf8').strip('"\'')
+
+        elif capture_name == 'name.definition.class':
+            # For classes, get just the class name
+            function_signature = entity_name
 
         definitions.append({
             "name": hierarchical_name,
@@ -112,7 +145,9 @@ def extract_symbols(code: str, file_path: str):
             "start_line": node.start_point[0] + 1,
             "end_line": node.end_point[0] + 1,
             "file_path": file_path,
-            "code": node.text.decode('utf8')
+            "code": function_signature,
+            "docstring": docstring,
+            "parameters": parameters
         })
 
     # --- Extract References ---
@@ -140,6 +175,14 @@ def extract_symbols(code: str, file_path: str):
             if name_node:
                 imported_names = [child.text.decode('utf8') for child in name_node.children if child.type == 'identifier']
                 ref_name = f"{ref_name}.{'.'.join(imported_names)}"
+
+        # For function calls, try to resolve to hierarchical names
+        if ref_type == 'call' and '.' not in ref_name:
+            # This might be a call to a local function - try to find the definition
+            for def_item in definitions:
+                if def_item['name'].endswith('::' + ref_name):
+                    ref_name = def_item['name']
+                    break
 
         # Determine the calling entity
         calling_entity = get_calling_entity(node, file_stem)

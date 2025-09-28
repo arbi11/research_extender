@@ -1,150 +1,182 @@
 {
-  "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+  "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
   "language": "python",
   "definitions": [
     {
-      "name": "trainer::class DLTrainer:\n    \"\"\"Deep Learning trainer for magnetic field prediction.\"\"\"\n\n    def __init__(self, config_path=None):\n        \"\"\"Initialize the trainer.\"\"\"\n        self.config_path = config_path\n        self.load_config()\n\n    def load_config(self):\n        \"\"\"Load configuration from YAML file.\"\"\"\n        import yaml\n\n        config_file = \"config_dl.yaml\" if not self.config_path else self.config_path\n        if Path(config_file).exists():\n            with open(config_file, 'r') as f:\n                self.config = yaml.safe_load(f)\n        else:\n            # Default configuration\n            self.config = {\n                'model': {'img_size': [400, 400], 'channels': 1},\n                'training': {'batch_size': 32, 'epochs': 100, 'learning_rate': 0.001},\n                'data': {'normalization': 'minmax'}\n            }\n\n    def get_B_stats(self, files, folder_path):\n        \"\"\"Get B-field statistics from data files.\"\"\"\n        B_stats = {'max': 0, 'min': 1}\n\n        for file in files:\n            file_path = folder_path / file\n            df = pd.read_csv(file_path, header=None)\n            df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)\n\n            if df['B'].min() < B_stats['min']:\n                B_stats['min'] = df['B'].min()\n\n            if df['B'].max() > B_stats['max']:\n                B_stats['max'] = df['B'].max()\n\n        return B_stats['min'], B_stats['max']\n\n    def generate_geom_array(self, ds, cr, cm):\n        \"\"\"Generate geometry array for given parameters.\"\"\"\n        x = np.arange(0, 400)\n        y = np.arange(0, 400)\n        arr = np.zeros((y.size, x.size))\n\n        cx = x.size/2\n        cy = y.size/2\n        r = (cr * 200) / ds\n\n        mask = (x[np.newaxis,:]-cx)**2 + (y[:,np.newaxis]-cy)**2 < r**2\n        arr[mask] = cm\n\n        return arr\n\n    def data_feed(self, index, files, folder_path, batch_size):\n        \"\"\"Generate data batch for training.\"\"\"\n        if (index + batch_size) >= len(files):\n            index = len(files) - batch_size - 1\n\n        batch_files = files[index : index + batch_size]\n\n        X = np.zeros([batch_size, 400, 400, 1])\n        y = np.zeros([batch_size, 400, 400, 1])\n\n        for inx, csv_file in enumerate(batch_files):\n            file_path = folder_path / csv_file\n\n            coil_radius = float(csv_file[3: csv_file.find('_ds_')])\n            domain_size = float(csv_file[csv_file.find('_ds_') + 4: csv_file.find('_cm_')])\n            current_magnitude = float(csv_file[csv_file.find('_cm_') + 4 : -4])\n\n            df = pd.read_csv(file_path, header=None)\n            df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)\n\n            # Generate geometry\n            arr = self.generate_geom_array(domain_size, coil_radius, current_magnitude)\n\n            # Generate B field plot\n            points = df[['x', 'y']].to_numpy()\n            values = df[['B']].to_numpy().squeeze()\n\n            grid_x, grid_y = np.mgrid[-domain_size:domain_size:400j, -domain_size:domain_size:400j]\n            grid_z1 = griddata(points, values, (grid_x, grid_y), method='linear')\n\n            X[inx, :, :, 0] = arr\n            y[inx, :, :, 0] = grid_z1.T\n\n        y_norm = y * 1000\n        return X, y_norm, y\n\n    def my_training(self, batch_size, epochs, no_iters, lr):\n        \"\"\"Custom training loop.\"\"\"\n        # Setup data\n        main_folder_path = Path('.')\n        folder_path = main_folder_path / 'data' / 'raw' / 'NL_Data2'\n        files = glob.glob1(folder_path, \"*.csv\")\n        self.data_size = len(files)\n\n        B_min, B_max = self.get_B_stats(files, folder_path)\n        self.norm_denom = B_max - B_min\n\n        # Create model\n        model = get_model(img_size=(400, 400))\n\n        # Setup optimizer\n        optimizer = tf.keras.optimizers.Nadam(learning_rate=lr)\n\n        # Training loop\n        for epoch in range(epochs):\n            start_time = time.time()\n\n            for i in range(no_iters):\n                index = np.random.randint(self.data_size - batch_size)\n                X, Y, _ = self.data_feed(index, files, folder_path, batch_size)\n\n                with tf.GradientTape() as tape:\n                    y_pred = model(X, training=True)\n                    loss_ = tf.keras.losses.mean_squared_error(Y, y_pred)\n\n                gradients = tape.gradient(loss_, model.trainable_variables)\n                optimizer.apply_gradients(zip(gradients, model.trainable_variables))\n\n            end_time = time.time()\n            print(f'Epoch: {epoch+1} | Time: {end_time - start_time}')\n\n        return model\n\n    def train(self, results_dir):\n        \"\"\"Main training function.\"\"\"\n        print(\"Setting up data...\")\n        batch_size = self.config['training']['batch_size']\n        epochs = self.config['training']['epochs']\n        lr = self.config['training']['learning_rate']\n\n        no_iters = int(2 * (self.data_size // batch_size))\n\n        print(\"Starting training...\")\n        model = self.my_training(batch_size, epochs, no_iters, lr)\n\n        # Save model\n        model_save_path = results_dir / \"model\"\n        model_save_path.mkdir(exist_ok=True)\n        model.save(str(model_save_path / \"field_predictor_model.h5\"))\n\n        print(f\"Model saved to: {model_save_path}\")\n\n        # Save training metrics\n        metrics = {\n            'batch_size': batch_size,\n            'epochs': epochs,\n            'learning_rate': lr,\n            'data_size': self.data_size,\n            'final_loss': 'N/A'  # Could be calculated if needed\n        }\n\n        import json\n        with open(results_dir / \"training_metrics.json\", 'w') as f:\n            json.dump(metrics, f, indent=2)\n\n        print(\"Training completed!\")",
+      "name": "trainer::DLTrainer",
       "type": "classs",
       "category": "definition",
       "start_line": 19,
       "end_line": 180,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "class DLTrainer:\n    \"\"\"Deep Learning trainer for magnetic field prediction.\"\"\"\n\n    def __init__(self, config_path=None):\n        \"\"\"Initialize the trainer.\"\"\"\n        self.config_path = config_path\n        self.load_config()\n\n    def load_config(self):\n        \"\"\"Load configuration from YAML file.\"\"\"\n        import yaml\n\n        config_file = \"config_dl.yaml\" if not self.config_path else self.config_path\n        if Path(config_file).exists():\n            with open(config_file, 'r') as f:\n                self.config = yaml.safe_load(f)\n        else:\n            # Default configuration\n            self.config = {\n                'model': {'img_size': [400, 400], 'channels': 1},\n                'training': {'batch_size': 32, 'epochs': 100, 'learning_rate': 0.001},\n                'data': {'normalization': 'minmax'}\n            }\n\n    def get_B_stats(self, files, folder_path):\n        \"\"\"Get B-field statistics from data files.\"\"\"\n        B_stats = {'max': 0, 'min': 1}\n\n        for file in files:\n            file_path = folder_path / file\n            df = pd.read_csv(file_path, header=None)\n            df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)\n\n            if df['B'].min() < B_stats['min']:\n                B_stats['min'] = df['B'].min()\n\n            if df['B'].max() > B_stats['max']:\n                B_stats['max'] = df['B'].max()\n\n        return B_stats['min'], B_stats['max']\n\n    def generate_geom_array(self, ds, cr, cm):\n        \"\"\"Generate geometry array for given parameters.\"\"\"\n        x = np.arange(0, 400)\n        y = np.arange(0, 400)\n        arr = np.zeros((y.size, x.size))\n\n        cx = x.size/2\n        cy = y.size/2\n        r = (cr * 200) / ds\n\n        mask = (x[np.newaxis,:]-cx)**2 + (y[:,np.newaxis]-cy)**2 < r**2\n        arr[mask] = cm\n\n        return arr\n\n    def data_feed(self, index, files, folder_path, batch_size):\n        \"\"\"Generate data batch for training.\"\"\"\n        if (index + batch_size) >= len(files):\n            index = len(files) - batch_size - 1\n\n        batch_files = files[index : index + batch_size]\n\n        X = np.zeros([batch_size, 400, 400, 1])\n        y = np.zeros([batch_size, 400, 400, 1])\n\n        for inx, csv_file in enumerate(batch_files):\n            file_path = folder_path / csv_file\n\n            coil_radius = float(csv_file[3: csv_file.find('_ds_')])\n            domain_size = float(csv_file[csv_file.find('_ds_') + 4: csv_file.find('_cm_')])\n            current_magnitude = float(csv_file[csv_file.find('_cm_') + 4 : -4])\n\n            df = pd.read_csv(file_path, header=None)\n            df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)\n\n            # Generate geometry\n            arr = self.generate_geom_array(domain_size, coil_radius, current_magnitude)\n\n            # Generate B field plot\n            points = df[['x', 'y']].to_numpy()\n            values = df[['B']].to_numpy().squeeze()\n\n            grid_x, grid_y = np.mgrid[-domain_size:domain_size:400j, -domain_size:domain_size:400j]\n            grid_z1 = griddata(points, values, (grid_x, grid_y), method='linear')\n\n            X[inx, :, :, 0] = arr\n            y[inx, :, :, 0] = grid_z1.T\n\n        y_norm = y * 1000\n        return X, y_norm, y\n\n    def my_training(self, batch_size, epochs, no_iters, lr):\n        \"\"\"Custom training loop.\"\"\"\n        # Setup data\n        main_folder_path = Path('.')\n        folder_path = main_folder_path / 'data' / 'raw' / 'NL_Data2'\n        files = glob.glob1(folder_path, \"*.csv\")\n        self.data_size = len(files)\n\n        B_min, B_max = self.get_B_stats(files, folder_path)\n        self.norm_denom = B_max - B_min\n\n        # Create model\n        model = get_model(img_size=(400, 400))\n\n        # Setup optimizer\n        optimizer = tf.keras.optimizers.Nadam(learning_rate=lr)\n\n        # Training loop\n        for epoch in range(epochs):\n            start_time = time.time()\n\n            for i in range(no_iters):\n                index = np.random.randint(self.data_size - batch_size)\n                X, Y, _ = self.data_feed(index, files, folder_path, batch_size)\n\n                with tf.GradientTape() as tape:\n                    y_pred = model(X, training=True)\n                    loss_ = tf.keras.losses.mean_squared_error(Y, y_pred)\n\n                gradients = tape.gradient(loss_, model.trainable_variables)\n                optimizer.apply_gradients(zip(gradients, model.trainable_variables))\n\n            end_time = time.time()\n            print(f'Epoch: {epoch+1} | Time: {end_time - start_time}')\n\n        return model\n\n    def train(self, results_dir):\n        \"\"\"Main training function.\"\"\"\n        print(\"Setting up data...\")\n        batch_size = self.config['training']['batch_size']\n        epochs = self.config['training']['epochs']\n        lr = self.config['training']['learning_rate']\n\n        no_iters = int(2 * (self.data_size // batch_size))\n\n        print(\"Starting training...\")\n        model = self.my_training(batch_size, epochs, no_iters, lr)\n\n        # Save model\n        model_save_path = results_dir / \"model\"\n        model_save_path.mkdir(exist_ok=True)\n        model.save(str(model_save_path / \"field_predictor_model.h5\"))\n\n        print(f\"Model saved to: {model_save_path}\")\n\n        # Save training metrics\n        metrics = {\n            'batch_size': batch_size,\n            'epochs': epochs,\n            'learning_rate': lr,\n            'data_size': self.data_size,\n            'final_loss': 'N/A'  # Could be calculated if needed\n        }\n\n        import json\n        with open(results_dir / \"training_metrics.json\", 'w') as f:\n            json.dump(metrics, f, indent=2)\n\n        print(\"Training completed!\")"
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "DLTrainer",
+      "docstring": "",
+      "parameters": []
     },
     {
-      "name": "trainer::DLTrainer::DLTrainer",
+      "name": "trainer::DLTrainer::unknown",
       "type": "classs",
       "category": "definition",
       "start_line": 19,
       "end_line": 19,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "DLTrainer"
-    },
-    {
-      "name": "trainer::DLTrainer::def get_B_stats(self, files, folder_path):\n        \"\"\"Get B-field statistics from data files.\"\"\"\n        B_stats = {'max': 0, 'min': 1}\n\n        for file in files:\n            file_path = folder_path / file\n            df = pd.read_csv(file_path, header=None)\n            df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)\n\n            if df['B'].min() < B_stats['min']:\n                B_stats['min'] = df['B'].min()\n\n            if df['B'].max() > B_stats['max']:\n                B_stats['max'] = df['B'].max()\n\n        return B_stats['min'], B_stats['max']",
-      "type": "functions",
-      "category": "definition",
-      "start_line": 43,
-      "end_line": 58,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "def get_B_stats(self, files, folder_path):\n        \"\"\"Get B-field statistics from data files.\"\"\"\n        B_stats = {'max': 0, 'min': 1}\n\n        for file in files:\n            file_path = folder_path / file\n            df = pd.read_csv(file_path, header=None)\n            df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)\n\n            if df['B'].min() < B_stats['min']:\n                B_stats['min'] = df['B'].min()\n\n            if df['B'].max() > B_stats['max']:\n                B_stats['max'] = df['B'].max()\n\n        return B_stats['min'], B_stats['max']"
-    },
-    {
-      "name": "trainer::DLTrainer::def data_feed(self, index, files, folder_path, batch_size):\n        \"\"\"Generate data batch for training.\"\"\"\n        if (index + batch_size) >= len(files):\n            index = len(files) - batch_size - 1\n\n        batch_files = files[index : index + batch_size]\n\n        X = np.zeros([batch_size, 400, 400, 1])\n        y = np.zeros([batch_size, 400, 400, 1])\n\n        for inx, csv_file in enumerate(batch_files):\n            file_path = folder_path / csv_file\n\n            coil_radius = float(csv_file[3: csv_file.find('_ds_')])\n            domain_size = float(csv_file[csv_file.find('_ds_') + 4: csv_file.find('_cm_')])\n            current_magnitude = float(csv_file[csv_file.find('_cm_') + 4 : -4])\n\n            df = pd.read_csv(file_path, header=None)\n            df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)\n\n            # Generate geometry\n            arr = self.generate_geom_array(domain_size, coil_radius, current_magnitude)\n\n            # Generate B field plot\n            points = df[['x', 'y']].to_numpy()\n            values = df[['B']].to_numpy().squeeze()\n\n            grid_x, grid_y = np.mgrid[-domain_size:domain_size:400j, -domain_size:domain_size:400j]\n            grid_z1 = griddata(points, values, (grid_x, grid_y), method='linear')\n\n            X[inx, :, :, 0] = arr\n            y[inx, :, :, 0] = grid_z1.T\n\n        y_norm = y * 1000\n        return X, y_norm, y",
-      "type": "functions",
-      "category": "definition",
-      "start_line": 75,
-      "end_line": 109,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "def data_feed(self, index, files, folder_path, batch_size):\n        \"\"\"Generate data batch for training.\"\"\"\n        if (index + batch_size) >= len(files):\n            index = len(files) - batch_size - 1\n\n        batch_files = files[index : index + batch_size]\n\n        X = np.zeros([batch_size, 400, 400, 1])\n        y = np.zeros([batch_size, 400, 400, 1])\n\n        for inx, csv_file in enumerate(batch_files):\n            file_path = folder_path / csv_file\n\n            coil_radius = float(csv_file[3: csv_file.find('_ds_')])\n            domain_size = float(csv_file[csv_file.find('_ds_') + 4: csv_file.find('_cm_')])\n            current_magnitude = float(csv_file[csv_file.find('_cm_') + 4 : -4])\n\n            df = pd.read_csv(file_path, header=None)\n            df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)\n\n            # Generate geometry\n            arr = self.generate_geom_array(domain_size, coil_radius, current_magnitude)\n\n            # Generate B field plot\n            points = df[['x', 'y']].to_numpy()\n            values = df[['B']].to_numpy().squeeze()\n\n            grid_x, grid_y = np.mgrid[-domain_size:domain_size:400j, -domain_size:domain_size:400j]\n            grid_z1 = griddata(points, values, (grid_x, grid_y), method='linear')\n\n            X[inx, :, :, 0] = arr\n            y[inx, :, :, 0] = grid_z1.T\n\n        y_norm = y * 1000\n        return X, y_norm, y"
-    },
-    {
-      "name": "trainer::DLTrainer::def __init__(self, config_path=None):\n        \"\"\"Initialize the trainer.\"\"\"\n        self.config_path = config_path\n        self.load_config()",
-      "type": "functions",
-      "category": "definition",
-      "start_line": 22,
-      "end_line": 25,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "def __init__(self, config_path=None):\n        \"\"\"Initialize the trainer.\"\"\"\n        self.config_path = config_path\n        self.load_config()"
-    },
-    {
-      "name": "trainer::DLTrainer::def generate_geom_array(self, ds, cr, cm):\n        \"\"\"Generate geometry array for given parameters.\"\"\"\n        x = np.arange(0, 400)\n        y = np.arange(0, 400)\n        arr = np.zeros((y.size, x.size))\n\n        cx = x.size/2\n        cy = y.size/2\n        r = (cr * 200) / ds\n\n        mask = (x[np.newaxis,:]-cx)**2 + (y[:,np.newaxis]-cy)**2 < r**2\n        arr[mask] = cm\n\n        return arr",
-      "type": "functions",
-      "category": "definition",
-      "start_line": 60,
-      "end_line": 73,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "def generate_geom_array(self, ds, cr, cm):\n        \"\"\"Generate geometry array for given parameters.\"\"\"\n        x = np.arange(0, 400)\n        y = np.arange(0, 400)\n        arr = np.zeros((y.size, x.size))\n\n        cx = x.size/2\n        cy = y.size/2\n        r = (cr * 200) / ds\n\n        mask = (x[np.newaxis,:]-cx)**2 + (y[:,np.newaxis]-cy)**2 < r**2\n        arr[mask] = cm\n\n        return arr"
-    },
-    {
-      "name": "trainer::DLTrainer::def load_config(self):\n        \"\"\"Load configuration from YAML file.\"\"\"\n        import yaml\n\n        config_file = \"config_dl.yaml\" if not self.config_path else self.config_path\n        if Path(config_file).exists():\n            with open(config_file, 'r') as f:\n                self.config = yaml.safe_load(f)\n        else:\n            # Default configuration\n            self.config = {\n                'model': {'img_size': [400, 400], 'channels': 1},\n                'training': {'batch_size': 32, 'epochs': 100, 'learning_rate': 0.001},\n                'data': {'normalization': 'minmax'}\n            }",
-      "type": "functions",
-      "category": "definition",
-      "start_line": 27,
-      "end_line": 41,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "def load_config(self):\n        \"\"\"Load configuration from YAML file.\"\"\"\n        import yaml\n\n        config_file = \"config_dl.yaml\" if not self.config_path else self.config_path\n        if Path(config_file).exists():\n            with open(config_file, 'r') as f:\n                self.config = yaml.safe_load(f)\n        else:\n            # Default configuration\n            self.config = {\n                'model': {'img_size': [400, 400], 'channels': 1},\n                'training': {'batch_size': 32, 'epochs': 100, 'learning_rate': 0.001},\n                'data': {'normalization': 'minmax'}\n            }"
-    },
-    {
-      "name": "trainer::DLTrainer::def my_training(self, batch_size, epochs, no_iters, lr):\n        \"\"\"Custom training loop.\"\"\"\n        # Setup data\n        main_folder_path = Path('.')\n        folder_path = main_folder_path / 'data' / 'raw' / 'NL_Data2'\n        files = glob.glob1(folder_path, \"*.csv\")\n        self.data_size = len(files)\n\n        B_min, B_max = self.get_B_stats(files, folder_path)\n        self.norm_denom = B_max - B_min\n\n        # Create model\n        model = get_model(img_size=(400, 400))\n\n        # Setup optimizer\n        optimizer = tf.keras.optimizers.Nadam(learning_rate=lr)\n\n        # Training loop\n        for epoch in range(epochs):\n            start_time = time.time()\n\n            for i in range(no_iters):\n                index = np.random.randint(self.data_size - batch_size)\n                X, Y, _ = self.data_feed(index, files, folder_path, batch_size)\n\n                with tf.GradientTape() as tape:\n                    y_pred = model(X, training=True)\n                    loss_ = tf.keras.losses.mean_squared_error(Y, y_pred)\n\n                gradients = tape.gradient(loss_, model.trainable_variables)\n                optimizer.apply_gradients(zip(gradients, model.trainable_variables))\n\n            end_time = time.time()\n            print(f'Epoch: {epoch+1} | Time: {end_time - start_time}')\n\n        return model",
-      "type": "functions",
-      "category": "definition",
-      "start_line": 111,
-      "end_line": 146,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "def my_training(self, batch_size, epochs, no_iters, lr):\n        \"\"\"Custom training loop.\"\"\"\n        # Setup data\n        main_folder_path = Path('.')\n        folder_path = main_folder_path / 'data' / 'raw' / 'NL_Data2'\n        files = glob.glob1(folder_path, \"*.csv\")\n        self.data_size = len(files)\n\n        B_min, B_max = self.get_B_stats(files, folder_path)\n        self.norm_denom = B_max - B_min\n\n        # Create model\n        model = get_model(img_size=(400, 400))\n\n        # Setup optimizer\n        optimizer = tf.keras.optimizers.Nadam(learning_rate=lr)\n\n        # Training loop\n        for epoch in range(epochs):\n            start_time = time.time()\n\n            for i in range(no_iters):\n                index = np.random.randint(self.data_size - batch_size)\n                X, Y, _ = self.data_feed(index, files, folder_path, batch_size)\n\n                with tf.GradientTape() as tape:\n                    y_pred = model(X, training=True)\n                    loss_ = tf.keras.losses.mean_squared_error(Y, y_pred)\n\n                gradients = tape.gradient(loss_, model.trainable_variables)\n                optimizer.apply_gradients(zip(gradients, model.trainable_variables))\n\n            end_time = time.time()\n            print(f'Epoch: {epoch+1} | Time: {end_time - start_time}')\n\n        return model"
-    },
-    {
-      "name": "trainer::DLTrainer::def train(self, results_dir):\n        \"\"\"Main training function.\"\"\"\n        print(\"Setting up data...\")\n        batch_size = self.config['training']['batch_size']\n        epochs = self.config['training']['epochs']\n        lr = self.config['training']['learning_rate']\n\n        no_iters = int(2 * (self.data_size // batch_size))\n\n        print(\"Starting training...\")\n        model = self.my_training(batch_size, epochs, no_iters, lr)\n\n        # Save model\n        model_save_path = results_dir / \"model\"\n        model_save_path.mkdir(exist_ok=True)\n        model.save(str(model_save_path / \"field_predictor_model.h5\"))\n\n        print(f\"Model saved to: {model_save_path}\")\n\n        # Save training metrics\n        metrics = {\n            'batch_size': batch_size,\n            'epochs': epochs,\n            'learning_rate': lr,\n            'data_size': self.data_size,\n            'final_loss': 'N/A'  # Could be calculated if needed\n        }\n\n        import json\n        with open(results_dir / \"training_metrics.json\", 'w') as f:\n            json.dump(metrics, f, indent=2)\n\n        print(\"Training completed!\")",
-      "type": "functions",
-      "category": "definition",
-      "start_line": 148,
-      "end_line": 180,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "def train(self, results_dir):\n        \"\"\"Main training function.\"\"\"\n        print(\"Setting up data...\")\n        batch_size = self.config['training']['batch_size']\n        epochs = self.config['training']['epochs']\n        lr = self.config['training']['learning_rate']\n\n        no_iters = int(2 * (self.data_size // batch_size))\n\n        print(\"Starting training...\")\n        model = self.my_training(batch_size, epochs, no_iters, lr)\n\n        # Save model\n        model_save_path = results_dir / \"model\"\n        model_save_path.mkdir(exist_ok=True)\n        model.save(str(model_save_path / \"field_predictor_model.h5\"))\n\n        print(f\"Model saved to: {model_save_path}\")\n\n        # Save training metrics\n        metrics = {\n            'batch_size': batch_size,\n            'epochs': epochs,\n            'learning_rate': lr,\n            'data_size': self.data_size,\n            'final_loss': 'N/A'  # Could be calculated if needed\n        }\n\n        import json\n        with open(results_dir / \"training_metrics.json\", 'w') as f:\n            json.dump(metrics, f, indent=2)\n\n        print(\"Training completed!\")"
-    },
-    {
-      "name": "trainer::DLTrainer::__init__",
-      "type": "functions",
-      "category": "definition",
-      "start_line": 22,
-      "end_line": 22,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "__init__"
-    },
-    {
-      "name": "trainer::DLTrainer::load_config",
-      "type": "functions",
-      "category": "definition",
-      "start_line": 27,
-      "end_line": 27,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "load_config"
-    },
-    {
-      "name": "trainer::DLTrainer::get_B_stats",
-      "type": "functions",
-      "category": "definition",
-      "start_line": 43,
-      "end_line": 43,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "get_B_stats"
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "unknown",
+      "docstring": "",
+      "parameters": []
     },
     {
       "name": "trainer::DLTrainer::data_feed",
       "type": "functions",
       "category": "definition",
       "start_line": 75,
-      "end_line": 75,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "data_feed"
+      "end_line": 109,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "data_feed",
+      "docstring": "",
+      "parameters": []
+    },
+    {
+      "name": "trainer::DLTrainer::get_B_stats",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 43,
+      "end_line": 58,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "get_B_stats",
+      "docstring": "",
+      "parameters": []
+    },
+    {
+      "name": "trainer::DLTrainer::__init__",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 22,
+      "end_line": 25,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "__init__",
+      "docstring": "",
+      "parameters": []
+    },
+    {
+      "name": "trainer::DLTrainer::load_config",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 27,
+      "end_line": 41,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "load_config",
+      "docstring": "",
+      "parameters": []
     },
     {
       "name": "trainer::DLTrainer::generate_geom_array",
       "type": "functions",
       "category": "definition",
       "start_line": 60,
-      "end_line": 60,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "generate_geom_array"
+      "end_line": 73,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "generate_geom_array",
+      "docstring": "",
+      "parameters": []
     },
     {
       "name": "trainer::DLTrainer::my_training",
       "type": "functions",
       "category": "definition",
       "start_line": 111,
-      "end_line": 111,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "my_training"
+      "end_line": 146,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "my_training",
+      "docstring": "",
+      "parameters": []
     },
     {
       "name": "trainer::DLTrainer::train",
       "type": "functions",
       "category": "definition",
       "start_line": 148,
+      "end_line": 180,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "train",
+      "docstring": "",
+      "parameters": []
+    },
+    {
+      "name": "trainer::DLTrainer::unknown",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 22,
+      "end_line": 22,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "__init__",
+      "docstring": "",
+      "parameters": []
+    },
+    {
+      "name": "trainer::DLTrainer::unknown",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 43,
+      "end_line": 43,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "get_B_stats",
+      "docstring": "",
+      "parameters": []
+    },
+    {
+      "name": "trainer::DLTrainer::unknown",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 75,
+      "end_line": 75,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "data_feed",
+      "docstring": "",
+      "parameters": []
+    },
+    {
+      "name": "trainer::DLTrainer::unknown",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 27,
+      "end_line": 27,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "load_config",
+      "docstring": "",
+      "parameters": []
+    },
+    {
+      "name": "trainer::DLTrainer::unknown",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 60,
+      "end_line": 60,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "generate_geom_array",
+      "docstring": "",
+      "parameters": []
+    },
+    {
+      "name": "trainer::DLTrainer::unknown",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 111,
+      "end_line": 111,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "my_training",
+      "docstring": "",
+      "parameters": []
+    },
+    {
+      "name": "trainer::DLTrainer::unknown",
+      "type": "functions",
+      "category": "definition",
+      "start_line": 148,
       "end_line": 148,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "train"
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "train",
+      "docstring": "",
+      "parameters": []
     }
   ],
   "references": [
@@ -154,7 +186,7 @@
       "category": "reference",
       "start_line": 7,
       "end_line": 7,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "from pathlib import Path",
       "calling_entity": "trainer"
     },
@@ -164,18 +196,8 @@
       "category": "reference",
       "start_line": 13,
       "end_line": 13,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "from tensorflow.keras import layers",
-      "calling_entity": "trainer"
-    },
-    {
-      "name": "from scipy.interpolate import griddata",
-      "type": "importss",
-      "category": "reference",
-      "start_line": 8,
-      "end_line": 8,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "from scipy.interpolate import griddata",
       "calling_entity": "trainer"
     },
     {
@@ -184,8 +206,18 @@
       "category": "reference",
       "start_line": 12,
       "end_line": 12,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "from tensorflow import keras",
+      "calling_entity": "trainer"
+    },
+    {
+      "name": "from scipy.interpolate import griddata",
+      "type": "importss",
+      "category": "reference",
+      "start_line": 8,
+      "end_line": 8,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "from scipy.interpolate import griddata",
       "calling_entity": "trainer"
     },
     {
@@ -194,7 +226,7 @@
       "category": "reference",
       "start_line": 7,
       "end_line": 7,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "pathlib",
       "calling_entity": "trainer"
     },
@@ -204,7 +236,7 @@
       "category": "reference",
       "start_line": 13,
       "end_line": 13,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "tensorflow",
       "calling_entity": "trainer"
     },
@@ -214,7 +246,7 @@
       "category": "reference",
       "start_line": 12,
       "end_line": 12,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "tensorflow",
       "calling_entity": "trainer"
     },
@@ -224,7 +256,7 @@
       "category": "reference",
       "start_line": 8,
       "end_line": 8,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "scipy",
       "calling_entity": "trainer"
     },
@@ -234,7 +266,7 @@
       "category": "reference",
       "start_line": 8,
       "end_line": 8,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "interpolate",
       "calling_entity": "trainer"
     },
@@ -244,7 +276,7 @@
       "category": "reference",
       "start_line": 13,
       "end_line": 13,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "keras",
       "calling_entity": "trainer"
     },
@@ -254,7 +286,7 @@
       "category": "reference",
       "start_line": 9,
       "end_line": 9,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "import glob",
       "calling_entity": "trainer"
     },
@@ -264,7 +296,7 @@
       "category": "reference",
       "start_line": 10,
       "end_line": 10,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "import time",
       "calling_entity": "trainer"
     },
@@ -274,7 +306,7 @@
       "category": "reference",
       "start_line": 176,
       "end_line": 176,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "import json",
       "calling_entity": "trainer::DLTrainer::train"
     },
@@ -284,7 +316,7 @@
       "category": "reference",
       "start_line": 29,
       "end_line": 29,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "import yaml",
       "calling_entity": "trainer::DLTrainer::load_config"
     },
@@ -294,18 +326,8 @@
       "category": "reference",
       "start_line": 9,
       "end_line": 9,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "glob",
-      "calling_entity": "trainer"
-    },
-    {
-      "name": "time",
-      "type": "imports",
-      "category": "reference",
-      "start_line": 10,
-      "end_line": 10,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "time",
       "calling_entity": "trainer"
     },
     {
@@ -314,7 +336,7 @@
       "category": "reference",
       "start_line": 176,
       "end_line": 176,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "json",
       "calling_entity": "trainer::DLTrainer::train"
     },
@@ -324,48 +346,38 @@
       "category": "reference",
       "start_line": 29,
       "end_line": 29,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "yaml",
       "calling_entity": "trainer::DLTrainer::load_config"
     },
     {
-      "name": "Path(config_file).exists()",
-      "type": "calls",
+      "name": "time",
+      "type": "imports",
       "category": "reference",
-      "start_line": 32,
-      "end_line": 32,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "Path(config_file).exists()",
-      "calling_entity": "trainer::DLTrainer::load_config"
+      "start_line": 10,
+      "end_line": 10,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "time",
+      "calling_entity": "trainer"
     },
     {
-      "name": "yaml.safe_load(f)",
+      "name": "df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)",
       "type": "calls",
       "category": "reference",
-      "start_line": 34,
-      "end_line": 34,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "yaml.safe_load(f)",
-      "calling_entity": "trainer::DLTrainer::load_config"
+      "start_line": 50,
+      "end_line": 50,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)",
+      "calling_entity": "trainer::DLTrainer::get_B_stats"
     },
     {
       "name": "df['B'].min()",
       "type": "calls",
       "category": "reference",
-      "start_line": 52,
-      "end_line": 52,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "start_line": 53,
+      "end_line": 53,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "df['B'].min()",
-      "calling_entity": "trainer::DLTrainer::get_B_stats"
-    },
-    {
-      "name": "df['B'].max()",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 55,
-      "end_line": 55,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "df['B'].max()",
       "calling_entity": "trainer::DLTrainer::get_B_stats"
     },
     {
@@ -374,17 +386,7 @@
       "category": "reference",
       "start_line": 83,
       "end_line": 83,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "np.zeros([batch_size, 400, 400, 1])",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "np.zeros([batch_size, 400, 400, 1])",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 82,
-      "end_line": 82,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "np.zeros([batch_size, 400, 400, 1])",
       "calling_entity": "trainer::DLTrainer::data_feed"
     },
@@ -394,478 +396,8 @@
       "category": "reference",
       "start_line": 88,
       "end_line": 88,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "float(csv_file[3: csv_file.find('_ds_')])",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "float(csv_file[csv_file.find('_cm_') + 4 : -4])",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 90,
-      "end_line": 90,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "float(csv_file[csv_file.find('_cm_') + 4 : -4])",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 93,
-      "end_line": 93,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "df[['B']].to_numpy().squeeze()",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 100,
-      "end_line": 100,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "df[['B']].to_numpy().squeeze()",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "tf.keras.optimizers.Nadam(learning_rate=lr)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 126,
-      "end_line": 126,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "tf.keras.optimizers.Nadam(learning_rate=lr)",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "tf.keras.losses.mean_squared_error(Y, y_pred)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 138,
-      "end_line": 138,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "tf.keras.losses.mean_squared_error(Y, y_pred)",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "print(\"Setting up data...\")",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 150,
-      "end_line": 150,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "print(\"Setting up data...\")",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "self.get_B_stats(files, folder_path)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 119,
-      "end_line": 119,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "self.get_B_stats(files, folder_path)",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "tf.GradientTape()",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 136,
-      "end_line": 136,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "tf.GradientTape()",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "model.save(str(model_save_path / \"field_predictor_model.h5\"))",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 163,
-      "end_line": 163,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "model.save(str(model_save_path / \"field_predictor_model.h5\"))",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "np.zeros((y.size, x.size))",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 64,
-      "end_line": 64,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "np.zeros((y.size, x.size))",
-      "calling_entity": "trainer::DLTrainer::generate_geom_array"
-    },
-    {
-      "name": "len(files)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 78,
-      "end_line": 78,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "len(files)",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "np.arange(0, 400)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 63,
-      "end_line": 63,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "np.arange(0, 400)",
-      "calling_entity": "trainer::DLTrainer::generate_geom_array"
-    },
-    {
-      "name": "df['B'].max()",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 56,
-      "end_line": 56,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "df['B'].max()",
-      "calling_entity": "trainer::DLTrainer::get_B_stats"
-    },
-    {
-      "name": "csv_file.find('_ds_')",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 88,
-      "end_line": 88,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "csv_file.find('_ds_')",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "csv_file.find('_ds_')",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 89,
-      "end_line": 89,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "csv_file.find('_ds_')",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "pd.read_csv(file_path, header=None)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 92,
-      "end_line": 92,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "pd.read_csv(file_path, header=None)",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "df[['x', 'y']].to_numpy()",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 99,
-      "end_line": 99,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "df[['x', 'y']].to_numpy()",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "Path('.')",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 114,
-      "end_line": 114,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "Path('.')",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "get_model(img_size=(400, 400))",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 123,
-      "end_line": 123,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "get_model(img_size=(400, 400))",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "zip(gradients, model.trainable_variables)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 141,
-      "end_line": 141,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "zip(gradients, model.trainable_variables)",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "print(f\"Model saved to: {model_save_path}\")",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 165,
-      "end_line": 165,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "print(f\"Model saved to: {model_save_path}\")",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "model_save_path.mkdir(exist_ok=True)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 162,
-      "end_line": 162,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "model_save_path.mkdir(exist_ok=True)",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "json.dump(metrics, f, indent=2)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 178,
-      "end_line": 178,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "json.dump(metrics, f, indent=2)",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "self.data_feed(index, files, folder_path, batch_size)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 134,
-      "end_line": 134,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "self.data_feed(index, files, folder_path, batch_size)",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "print(f'Epoch: {epoch+1} | Time: {end_time - start_time}')",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 144,
-      "end_line": 144,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "print(f'Epoch: {epoch+1} | Time: {end_time - start_time}')",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "self.my_training(batch_size, epochs, no_iters, lr)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 158,
-      "end_line": 158,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "self.my_training(batch_size, epochs, no_iters, lr)",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "enumerate(batch_files)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 85,
-      "end_line": 85,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "enumerate(batch_files)",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "np.arange(0, 400)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 62,
-      "end_line": 62,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "np.arange(0, 400)",
-      "calling_entity": "trainer::DLTrainer::generate_geom_array"
-    },
-    {
-      "name": "len(files)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 77,
-      "end_line": 77,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "len(files)",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "float(csv_file[csv_file.find('_ds_') + 4: csv_file.find('_cm_')])",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 89,
-      "end_line": 89,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "float(csv_file[csv_file.find('_ds_') + 4: csv_file.find('_cm_')])",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "self.generate_geom_array(domain_size, coil_radius, current_magnitude)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 96,
-      "end_line": 96,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "self.generate_geom_array(domain_size, coil_radius, current_magnitude)",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "griddata(points, values, (grid_x, grid_y), method='linear')",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 103,
-      "end_line": 103,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "griddata(points, values, (grid_x, grid_y), method='linear')",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "glob.glob1(folder_path, \"*.csv\")",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 116,
-      "end_line": 116,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "glob.glob1(folder_path, \"*.csv\")",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "len(files)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 117,
-      "end_line": 117,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "len(files)",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "range(epochs)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 129,
-      "end_line": 129,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "range(epochs)",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "model(X, training=True)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 137,
-      "end_line": 137,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "model(X, training=True)",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "open(results_dir / \"training_metrics.json\", 'w')",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 177,
-      "end_line": 177,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "open(results_dir / \"training_metrics.json\", 'w')",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "optimizer.apply_gradients(zip(gradients, model.trainable_variables))",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 141,
-      "end_line": 141,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "optimizer.apply_gradients(zip(gradients, model.trainable_variables))",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "np.random.randint(self.data_size - batch_size)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 133,
-      "end_line": 133,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "np.random.randint(self.data_size - batch_size)",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "self.load_config()",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 25,
-      "end_line": 25,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "self.load_config()",
-      "calling_entity": "trainer::DLTrainer::__init__"
-    },
-    {
-      "name": "Path(config_file)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 32,
-      "end_line": 32,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "Path(config_file)",
-      "calling_entity": "trainer::DLTrainer::load_config"
-    },
-    {
-      "name": "open(config_file, 'r')",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 33,
-      "end_line": 33,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "open(config_file, 'r')",
-      "calling_entity": "trainer::DLTrainer::load_config"
-    },
-    {
-      "name": "pd.read_csv(file_path, header=None)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 49,
-      "end_line": 49,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "pd.read_csv(file_path, header=None)",
-      "calling_entity": "trainer::DLTrainer::get_B_stats"
-    },
-    {
-      "name": "df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 50,
-      "end_line": 50,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)",
-      "calling_entity": "trainer::DLTrainer::get_B_stats"
-    },
-    {
-      "name": "df['B'].min()",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 53,
-      "end_line": 53,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "df['B'].min()",
-      "calling_entity": "trainer::DLTrainer::get_B_stats"
-    },
-    {
-      "name": "csv_file.find('_cm_')",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 89,
-      "end_line": 89,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "csv_file.find('_cm_')",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "csv_file.find('_cm_')",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 90,
-      "end_line": 90,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "csv_file.find('_cm_')",
       "calling_entity": "trainer::DLTrainer::data_feed"
     },
     {
@@ -874,7 +406,7 @@
       "category": "reference",
       "start_line": 130,
       "end_line": 130,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "time.time()",
       "calling_entity": "trainer::DLTrainer::my_training"
     },
@@ -884,19 +416,49 @@
       "category": "reference",
       "start_line": 132,
       "end_line": 132,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "range(no_iters)",
       "calling_entity": "trainer::DLTrainer::my_training"
     },
     {
-      "name": "str(model_save_path / \"field_predictor_model.h5\")",
+      "name": "np.random.randint(self.data_size - batch_size)",
       "type": "calls",
       "category": "reference",
-      "start_line": 163,
-      "end_line": 163,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "str(model_save_path / \"field_predictor_model.h5\")",
-      "calling_entity": "trainer::DLTrainer::train"
+      "start_line": 133,
+      "end_line": 133,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "np.random.randint(self.data_size - batch_size)",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "Path('.')",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 114,
+      "end_line": 114,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "Path('.')",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "self.data_feed(index, files, folder_path, batch_size)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 134,
+      "end_line": 134,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "self.data_feed(index, files, folder_path, batch_size)",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "time.time()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 143,
+      "end_line": 143,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "time.time()",
+      "calling_entity": "trainer::DLTrainer::my_training"
     },
     {
       "name": "print(\"Starting training...\")",
@@ -904,8 +466,28 @@
       "category": "reference",
       "start_line": 157,
       "end_line": 157,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "print(\"Starting training...\")",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "df[['x', 'y']].to_numpy()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 99,
+      "end_line": 99,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "df[['x', 'y']].to_numpy()",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "str(model_save_path / \"field_predictor_model.h5\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 163,
+      "end_line": 163,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "str(model_save_path / \"field_predictor_model.h5\")",
       "calling_entity": "trainer::DLTrainer::train"
     },
     {
@@ -914,7 +496,7 @@
       "category": "reference",
       "start_line": 180,
       "end_line": 180,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "print(\"Training completed!\")",
       "calling_entity": "trainer::DLTrainer::train"
     },
@@ -924,9 +506,119 @@
       "category": "reference",
       "start_line": 140,
       "end_line": 140,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "tape.gradient(loss_, model.trainable_variables)",
       "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "tf.keras.optimizers.Nadam(learning_rate=lr)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 126,
+      "end_line": 126,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "tf.keras.optimizers.Nadam(learning_rate=lr)",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "get_model(img_size=(400, 400))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 123,
+      "end_line": 123,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "get_model(img_size=(400, 400))",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "df['B'].min()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 52,
+      "end_line": 52,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "df['B'].min()",
+      "calling_entity": "trainer::DLTrainer::get_B_stats"
+    },
+    {
+      "name": "df['B'].max()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 55,
+      "end_line": 55,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "df['B'].max()",
+      "calling_entity": "trainer::DLTrainer::get_B_stats"
+    },
+    {
+      "name": "np.zeros([batch_size, 400, 400, 1])",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 82,
+      "end_line": 82,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "np.zeros([batch_size, 400, 400, 1])",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "csv_file.find('_ds_')",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 88,
+      "end_line": 88,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "csv_file.find('_ds_')",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "float(csv_file[csv_file.find('_ds_') + 4: csv_file.find('_cm_')])",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 89,
+      "end_line": 89,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "float(csv_file[csv_file.find('_ds_') + 4: csv_file.find('_cm_')])",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "csv_file.find('_ds_')",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 89,
+      "end_line": 89,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "csv_file.find('_ds_')",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "float(csv_file[csv_file.find('_cm_') + 4 : -4])",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 90,
+      "end_line": 90,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "float(csv_file[csv_file.find('_cm_') + 4 : -4])",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 93,
+      "end_line": 93,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "df.rename(columns={0: 'x', 1: 'y', 2: 'B', 3: 'mat'}, inplace=True)",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "df[['B']].to_numpy().squeeze()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 100,
+      "end_line": 100,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "df[['B']].to_numpy().squeeze()",
+      "calling_entity": "trainer::DLTrainer::data_feed"
     },
     {
       "name": "df[['B']].to_numpy()",
@@ -934,18 +626,358 @@
       "category": "reference",
       "start_line": 100,
       "end_line": 100,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "df[['B']].to_numpy()",
       "calling_entity": "trainer::DLTrainer::data_feed"
     },
     {
-      "name": "time.time()",
+      "name": "print(\"Setting up data...\")",
       "type": "calls",
       "category": "reference",
-      "start_line": 143,
-      "end_line": 143,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "time.time()",
+      "start_line": 150,
+      "end_line": 150,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "print(\"Setting up data...\")",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "model.save(str(model_save_path / \"field_predictor_model.h5\"))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 163,
+      "end_line": 163,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "model.save(str(model_save_path / \"field_predictor_model.h5\"))",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "tf.keras.losses.mean_squared_error(Y, y_pred)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 138,
+      "end_line": 138,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "tf.keras.losses.mean_squared_error(Y, y_pred)",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "self.get_B_stats(files, folder_path)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 119,
+      "end_line": 119,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "self.get_B_stats(files, folder_path)",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "tf.GradientTape()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 136,
+      "end_line": 136,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "tf.GradientTape()",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "self.load_config()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 25,
+      "end_line": 25,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "self.load_config()",
+      "calling_entity": "trainer::DLTrainer::__init__"
+    },
+    {
+      "name": "open(config_file, 'r')",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 33,
+      "end_line": 33,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "open(config_file, 'r')",
+      "calling_entity": "trainer::DLTrainer::load_config"
+    },
+    {
+      "name": "pd.read_csv(file_path, header=None)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 49,
+      "end_line": 49,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "pd.read_csv(file_path, header=None)",
+      "calling_entity": "trainer::DLTrainer::get_B_stats"
+    },
+    {
+      "name": "np.arange(0, 400)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 63,
+      "end_line": 63,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "np.arange(0, 400)",
+      "calling_entity": "trainer::DLTrainer::generate_geom_array"
+    },
+    {
+      "name": "np.zeros((y.size, x.size))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 64,
+      "end_line": 64,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "np.zeros((y.size, x.size))",
+      "calling_entity": "trainer::DLTrainer::generate_geom_array"
+    },
+    {
+      "name": "len(files)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 78,
+      "end_line": 78,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "len(files)",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "df['B'].max()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 56,
+      "end_line": 56,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "df['B'].max()",
+      "calling_entity": "trainer::DLTrainer::get_B_stats"
+    },
+    {
+      "name": "csv_file.find('_cm_')",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 89,
+      "end_line": 89,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "csv_file.find('_cm_')",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "csv_file.find('_cm_')",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 90,
+      "end_line": 90,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "csv_file.find('_cm_')",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "pd.read_csv(file_path, header=None)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 92,
+      "end_line": 92,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "pd.read_csv(file_path, header=None)",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "zip(gradients, model.trainable_variables)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 141,
+      "end_line": 141,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "zip(gradients, model.trainable_variables)",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "print(f\"Model saved to: {model_save_path}\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 165,
+      "end_line": 165,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "print(f\"Model saved to: {model_save_path}\")",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "json.dump(metrics, f, indent=2)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 178,
+      "end_line": 178,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "json.dump(metrics, f, indent=2)",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "print(f'Epoch: {epoch+1} | Time: {end_time - start_time}')",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 144,
+      "end_line": 144,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "print(f'Epoch: {epoch+1} | Time: {end_time - start_time}')",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "self.my_training(batch_size, epochs, no_iters, lr)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 158,
+      "end_line": 158,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "self.my_training(batch_size, epochs, no_iters, lr)",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "Path(config_file)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 32,
+      "end_line": 32,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "Path(config_file)",
+      "calling_entity": "trainer::DLTrainer::load_config"
+    },
+    {
+      "name": "yaml.safe_load(f)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 34,
+      "end_line": 34,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "yaml.safe_load(f)",
+      "calling_entity": "trainer::DLTrainer::load_config"
+    },
+    {
+      "name": "Path(config_file).exists()",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 32,
+      "end_line": 32,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "Path(config_file).exists()",
+      "calling_entity": "trainer::DLTrainer::load_config"
+    },
+    {
+      "name": "np.arange(0, 400)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 62,
+      "end_line": 62,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "np.arange(0, 400)",
+      "calling_entity": "trainer::DLTrainer::generate_geom_array"
+    },
+    {
+      "name": "enumerate(batch_files)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 85,
+      "end_line": 85,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "enumerate(batch_files)",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "len(files)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 77,
+      "end_line": 77,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "len(files)",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "self.generate_geom_array(domain_size, coil_radius, current_magnitude)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 96,
+      "end_line": 96,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "self.generate_geom_array(domain_size, coil_radius, current_magnitude)",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "griddata(points, values, (grid_x, grid_y), method='linear')",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 103,
+      "end_line": 103,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "griddata(points, values, (grid_x, grid_y), method='linear')",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "glob.glob1(folder_path, \"*.csv\")",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 116,
+      "end_line": 116,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "glob.glob1(folder_path, \"*.csv\")",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "len(files)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 117,
+      "end_line": 117,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "len(files)",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "open(results_dir / \"training_metrics.json\", 'w')",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 177,
+      "end_line": 177,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "open(results_dir / \"training_metrics.json\", 'w')",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "model_save_path.mkdir(exist_ok=True)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 162,
+      "end_line": 162,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "model_save_path.mkdir(exist_ok=True)",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "range(epochs)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 129,
+      "end_line": 129,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "range(epochs)",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "optimizer.apply_gradients(zip(gradients, model.trainable_variables))",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 141,
+      "end_line": 141,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "optimizer.apply_gradients(zip(gradients, model.trainable_variables))",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "model(X, training=True)",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 137,
+      "end_line": 137,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "model(X, training=True)",
       "calling_entity": "trainer::DLTrainer::my_training"
     },
     {
@@ -954,497 +986,27 @@
       "category": "reference",
       "start_line": 155,
       "end_line": 155,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "int(2 * (self.data_size // batch_size))",
       "calling_entity": "trainer::DLTrainer::train"
     },
     {
-      "name": "load_config",
+      "name": "trainer::DLTrainer::load_config",
       "type": "calls",
       "category": "reference",
       "start_line": 25,
       "end_line": 25,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "load_config",
       "calling_entity": "trainer::DLTrainer::__init__"
     },
     {
-      "name": "find",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 88,
-      "end_line": 88,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "find",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "griddata",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 103,
-      "end_line": 103,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "griddata",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "data_feed",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 134,
-      "end_line": 134,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "data_feed",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "apply_gradients",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 141,
-      "end_line": 141,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "apply_gradients",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "zip",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 141,
-      "end_line": 141,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "zip",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "print",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 150,
-      "end_line": 150,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "print",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "print",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 157,
-      "end_line": 157,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "print",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "print",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 165,
-      "end_line": 165,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "print",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "dump",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 178,
-      "end_line": 178,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "dump",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "open",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 177,
-      "end_line": 177,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "open",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "read_csv",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 49,
-      "end_line": 49,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "read_csv",
-      "calling_entity": "trainer::DLTrainer::get_B_stats"
-    },
-    {
-      "name": "arange",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 63,
-      "end_line": 63,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "arange",
-      "calling_entity": "trainer::DLTrainer::generate_geom_array"
-    },
-    {
-      "name": "zeros",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 83,
-      "end_line": 83,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "zeros",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "to_numpy",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 100,
-      "end_line": 100,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "to_numpy",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "Nadam",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 126,
-      "end_line": 126,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "Nadam",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "mean_squared_error",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 138,
-      "end_line": 138,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "mean_squared_error",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "my_training",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 158,
-      "end_line": 158,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "my_training",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "Path",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 32,
-      "end_line": 32,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "Path",
-      "calling_entity": "trainer::DLTrainer::load_config"
-    },
-    {
-      "name": "max",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 56,
-      "end_line": 56,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "max",
-      "calling_entity": "trainer::DLTrainer::get_B_stats"
-    },
-    {
-      "name": "arange",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 62,
-      "end_line": 62,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "arange",
-      "calling_entity": "trainer::DLTrainer::generate_geom_array"
-    },
-    {
-      "name": "len",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 78,
-      "end_line": 78,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "len",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "float",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 89,
-      "end_line": 89,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "float",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "rename",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 93,
-      "end_line": 93,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "rename",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "model",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 137,
-      "end_line": 137,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "model",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "int",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 155,
-      "end_line": 155,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "int",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "str",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 163,
-      "end_line": 163,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "str",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "max",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 55,
-      "end_line": 55,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "max",
-      "calling_entity": "trainer::DLTrainer::get_B_stats"
-    },
-    {
-      "name": "find",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 89,
-      "end_line": 89,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "find",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "time",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 130,
-      "end_line": 130,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "time",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "time",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 143,
-      "end_line": 143,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "time",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "open",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 33,
-      "end_line": 33,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "open",
-      "calling_entity": "trainer::DLTrainer::load_config"
-    },
-    {
-      "name": "min",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 52,
-      "end_line": 52,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "min",
-      "calling_entity": "trainer::DLTrainer::get_B_stats"
-    },
-    {
-      "name": "zeros",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 64,
-      "end_line": 64,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "zeros",
-      "calling_entity": "trainer::DLTrainer::generate_geom_array"
-    },
-    {
-      "name": "len",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 77,
-      "end_line": 77,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "len",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "enumerate",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 85,
-      "end_line": 85,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "enumerate",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "Path",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 114,
-      "end_line": 114,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "Path",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "len",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 117,
-      "end_line": 117,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "len",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "get_B_stats",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 119,
-      "end_line": 119,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "get_B_stats",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "range",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 129,
-      "end_line": 129,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "range",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "gradient",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 140,
-      "end_line": 140,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "gradient",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "exists",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 32,
-      "end_line": 32,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "exists",
-      "calling_entity": "trainer::DLTrainer::load_config"
-    },
-    {
-      "name": "rename",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 50,
-      "end_line": 50,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "rename",
-      "calling_entity": "trainer::DLTrainer::get_B_stats"
-    },
-    {
-      "name": "zeros",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 82,
-      "end_line": 82,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "zeros",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "glob1",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 116,
-      "end_line": 116,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "glob1",
-      "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "save",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 163,
-      "end_line": 163,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "save",
-      "calling_entity": "trainer::DLTrainer::train"
-    },
-    {
-      "name": "safe_load",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 34,
-      "end_line": 34,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "safe_load",
-      "calling_entity": "trainer::DLTrainer::load_config"
-    },
-    {
       "name": "float",
       "type": "calls",
       "category": "reference",
       "start_line": 88,
       "end_line": 88,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "float",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "float",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 90,
-      "end_line": 90,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "float",
       "calling_entity": "trainer::DLTrainer::data_feed"
     },
@@ -1452,30 +1014,10 @@
       "name": "find",
       "type": "calls",
       "category": "reference",
-      "start_line": 90,
-      "end_line": 90,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "start_line": 88,
+      "end_line": 88,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "find",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "read_csv",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 92,
-      "end_line": 92,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "read_csv",
-      "calling_entity": "trainer::DLTrainer::data_feed"
-    },
-    {
-      "name": "squeeze",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 100,
-      "end_line": 100,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "squeeze",
       "calling_entity": "trainer::DLTrainer::data_feed"
     },
     {
@@ -1484,7 +1026,7 @@
       "category": "reference",
       "start_line": 123,
       "end_line": 123,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "get_model",
       "calling_entity": "trainer::DLTrainer::my_training"
     },
@@ -1494,8 +1036,28 @@
       "category": "reference",
       "start_line": 132,
       "end_line": 132,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "range",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "trainer::DLTrainer::data_feed",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 134,
+      "end_line": 134,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "data_feed",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "apply_gradients",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 141,
+      "end_line": 141,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "apply_gradients",
       "calling_entity": "trainer::DLTrainer::my_training"
     },
     {
@@ -1504,8 +1066,378 @@
       "category": "reference",
       "start_line": 144,
       "end_line": 144,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "print",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "print",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 165,
+      "end_line": 165,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "print",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "dump",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 178,
+      "end_line": 178,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "dump",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "read_csv",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 49,
+      "end_line": 49,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "read_csv",
+      "calling_entity": "trainer::DLTrainer::get_B_stats"
+    },
+    {
+      "name": "arange",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 63,
+      "end_line": 63,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "arange",
+      "calling_entity": "trainer::DLTrainer::generate_geom_array"
+    },
+    {
+      "name": "zeros",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 83,
+      "end_line": 83,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "zeros",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "to_numpy",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 100,
+      "end_line": 100,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "to_numpy",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "Nadam",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 126,
+      "end_line": 126,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "Nadam",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "trainer::DLTrainer::my_training",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 158,
+      "end_line": 158,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "my_training",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "Path",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 32,
+      "end_line": 32,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "Path",
+      "calling_entity": "trainer::DLTrainer::load_config"
+    },
+    {
+      "name": "max",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 56,
+      "end_line": 56,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "max",
+      "calling_entity": "trainer::DLTrainer::get_B_stats"
+    },
+    {
+      "name": "arange",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 62,
+      "end_line": 62,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "arange",
+      "calling_entity": "trainer::DLTrainer::generate_geom_array"
+    },
+    {
+      "name": "float",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 89,
+      "end_line": 89,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "float",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "rename",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 93,
+      "end_line": 93,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "rename",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "griddata",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 103,
+      "end_line": 103,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "griddata",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "zip",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 141,
+      "end_line": 141,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "zip",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "print",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 150,
+      "end_line": 150,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "print",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "print",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 157,
+      "end_line": 157,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "print",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "open",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 177,
+      "end_line": 177,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "open",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "exists",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 32,
+      "end_line": 32,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "exists",
+      "calling_entity": "trainer::DLTrainer::load_config"
+    },
+    {
+      "name": "max",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 55,
+      "end_line": 55,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "max",
+      "calling_entity": "trainer::DLTrainer::get_B_stats"
+    },
+    {
+      "name": "find",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 89,
+      "end_line": 89,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "find",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "time",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 130,
+      "end_line": 130,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "time",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "min",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 52,
+      "end_line": 52,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "min",
+      "calling_entity": "trainer::DLTrainer::get_B_stats"
+    },
+    {
+      "name": "zeros",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 64,
+      "end_line": 64,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "zeros",
+      "calling_entity": "trainer::DLTrainer::generate_geom_array"
+    },
+    {
+      "name": "len",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 78,
+      "end_line": 78,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "len",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "float",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 90,
+      "end_line": 90,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "float",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "trainer::DLTrainer::get_B_stats",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 119,
+      "end_line": 119,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "get_B_stats",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "model",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 137,
+      "end_line": 137,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "model",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "time",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 143,
+      "end_line": 143,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "time",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "int",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 155,
+      "end_line": 155,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "int",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "str",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 163,
+      "end_line": 163,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "str",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "print",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 180,
+      "end_line": 180,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "print",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "safe_load",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 34,
+      "end_line": 34,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "safe_load",
+      "calling_entity": "trainer::DLTrainer::load_config"
+    },
+    {
+      "name": "rename",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 50,
+      "end_line": 50,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "rename",
+      "calling_entity": "trainer::DLTrainer::get_B_stats"
+    },
+    {
+      "name": "zeros",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 82,
+      "end_line": 82,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "zeros",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "glob1",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 116,
+      "end_line": 116,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "glob1",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "gradient",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 140,
+      "end_line": 140,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "gradient",
       "calling_entity": "trainer::DLTrainer::my_training"
     },
     {
@@ -1514,9 +1446,119 @@
       "category": "reference",
       "start_line": 162,
       "end_line": 162,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "mkdir",
       "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "save",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 163,
+      "end_line": 163,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "save",
+      "calling_entity": "trainer::DLTrainer::train"
+    },
+    {
+      "name": "open",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 33,
+      "end_line": 33,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "open",
+      "calling_entity": "trainer::DLTrainer::load_config"
+    },
+    {
+      "name": "len",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 77,
+      "end_line": 77,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "len",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "enumerate",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 85,
+      "end_line": 85,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "enumerate",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "find",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 90,
+      "end_line": 90,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "find",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "read_csv",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 92,
+      "end_line": 92,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "read_csv",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "squeeze",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 100,
+      "end_line": 100,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "squeeze",
+      "calling_entity": "trainer::DLTrainer::data_feed"
+    },
+    {
+      "name": "Path",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 114,
+      "end_line": 114,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "Path",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "len",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 117,
+      "end_line": 117,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "len",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "range",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 129,
+      "end_line": 129,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "range",
+      "calling_entity": "trainer::DLTrainer::my_training"
+    },
+    {
+      "name": "mean_squared_error",
+      "type": "calls",
+      "category": "reference",
+      "start_line": 138,
+      "end_line": 138,
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "code": "mean_squared_error",
+      "calling_entity": "trainer::DLTrainer::my_training"
     },
     {
       "name": "min",
@@ -1524,7 +1566,7 @@
       "category": "reference",
       "start_line": 53,
       "end_line": 53,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "min",
       "calling_entity": "trainer::DLTrainer::get_B_stats"
     },
@@ -1534,17 +1576,17 @@
       "category": "reference",
       "start_line": 89,
       "end_line": 89,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "find",
       "calling_entity": "trainer::DLTrainer::data_feed"
     },
     {
-      "name": "generate_geom_array",
+      "name": "trainer::DLTrainer::generate_geom_array",
       "type": "calls",
       "category": "reference",
       "start_line": 96,
       "end_line": 96,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "generate_geom_array",
       "calling_entity": "trainer::DLTrainer::data_feed"
     },
@@ -1554,7 +1596,7 @@
       "category": "reference",
       "start_line": 99,
       "end_line": 99,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "to_numpy",
       "calling_entity": "trainer::DLTrainer::data_feed"
     },
@@ -1564,7 +1606,7 @@
       "category": "reference",
       "start_line": 133,
       "end_line": 133,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "randint",
       "calling_entity": "trainer::DLTrainer::my_training"
     },
@@ -1574,19 +1616,9 @@
       "category": "reference",
       "start_line": 136,
       "end_line": 136,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
+      "file_path": "F:\\From_D_drive\\Code\\research_extender\\thesis_code\\Chp2_MagneticFieldPredictor\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
       "code": "GradientTape",
       "calling_entity": "trainer::DLTrainer::my_training"
-    },
-    {
-      "name": "print",
-      "type": "calls",
-      "category": "reference",
-      "start_line": 180,
-      "end_line": 180,
-      "file_path": "C:\\Users\\MK\\code\\thesis\\thesis_code\\Chp2_FieldDistribution\\magnetic_field_predictor\\src\\deep_learning\\trainer.py",
-      "code": "print",
-      "calling_entity": "trainer::DLTrainer::train"
     }
   ]
 }
