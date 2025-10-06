@@ -1,0 +1,284 @@
+[
+  {
+    "entity_name": "main::load_config",
+    "entity_type": "functions",
+    "description": "Opens the given file path, reads it as a YAML file and parses it with yaml.safe_load, returning the resulting Python object (typically a dict or list). The file is opened using a context manager so it is closed automatically; I/O or parsing errors are not caught and will propagate to the caller.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::create_results_directory",
+    "entity_type": "functions",
+    "description": "Creates a timestamped results directory and returns its Path. It builds a directory name using the current datetime formatted as YYYYMMDD_HHMMSS combined with the supplied model_type and data_type (results/<timestamp>_<model_type>_<data_type>), ensures the directory (and any parent folders) exist using pathlib.Path.mkdir(parents=True, exist_ok=True), and returns the Path object.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::run_attention_model",
+    "entity_type": "functions",
+    "description": "Runs end-to-end training and evaluation for an Attention model using provided configuration and data. Specifically, it: prints startup messages; creates a results directory for the given data_type and sets up logging; updates the config with TensorBoard and log directories; loads data via a DataLoader and prints data summary; constructs an AttentionModel from model settings in config; creates an AttentionTrainer with the model, data loader, and training settings; trains the model and evaluates it to obtain test loss (printed); optionally saves the trained model to the results folder if config['logging'].get('save_model', True) is true; prints completion messages and returns the trained model object and the results directory path.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::run_rnn_model",
+    "entity_type": "functions",
+    "description": "Runs an end-to-end RNN training pipeline using the provided configuration and dataset location. It creates a results directory and logging setup, updates the config with log/tensorboard paths, initializes a DataLoader for the specified data_type and prints dataset info, constructs an RNNModel from config parameters (bidirectional, input_dim, GRU and dense units), and wraps it in an RNNTrainer. The trainer trains the model, evaluates it (printing the final test loss), and — if configured — saves the trained model into the results directory. Returns the trained model and the path to the results directory.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::setup_logging",
+    "entity_type": "functions",
+    "description": "setup_logging(log_dir) prepares application logging: it converts log_dir to a pathlib.Path, creates the directory (including parents) if missing, builds a timestamped log filename like training_YYYYMMDD_HHMMSS.log inside that directory, configures the root logger with INFO level and a timestamped message format, and installs two handlers (a FileHandler writing to the timestamped log file and a StreamHandler for console output). It returns the Path to the created log file.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::main",
+    "entity_type": "functions",
+    "description": "Command-line entry point that parses arguments, loads and validates a configuration and data path, and runs a selected training pipeline. Specifically: it requires --model (\"rnn\" or \"attention\") and --data_type (\"efficiency\" or \"powerfactor\"), accepts optional --config (custom config file) and --data_path (override). It determines a config file (default config_{model}.yaml), verifies it exists, loads it via load_config, optionally overrides the data path, verifies the data directory exists, updates config['data']['data_type'], prints status info, then dispatches to run_rnn_model or run_attention_model. On success it prints the results directory and returns 0; on errors or missing files it prints helpful messages, logs the error, and returns 1. The function has side effects (printing, logging, loading config and invoking model-training functions).",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::unknown",
+    "entity_type": "functions",
+    "description": "load_config(config_path) is a function that (given a path to a configuration file) reads and parses that file and returns the parsed configuration for the program to use. The function’s single parameter, config_path, is the filesystem path to the config file. Typical implementations open the file, decode it (for example using JSON or YAML parsers) into a Python dict or similar object, and may raise an exception if the file is missing or the contents are invalid. The exact file format, parsing library, return type, and error-handling behavior cannot be determined because the function body is not present in the provided source.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "attention_model::AttentionModel",
+    "entity_type": "classs",
+    "description": "A TensorFlow Keras model implementing an encoder–decoder GRU with a dot-product attention mechanism to produce per-timestep scalar predictions. The model takes three inputs [input1, input2, mask]. input1 is passed through two Dense layers (hidden1 then out) to produce an initial hidden state for the encoder GRU(s). input2 is the sequence encoded by a GRU encoder (optionally bidirectional). The encoder final state (batch-normalized) is expanded and repeated across the time dimension to form the decoder input; the decoder GRU (optionally bidirectional) produces decoder hidden sequences. Attention weights are computed by a Dot product between decoder and encoder sequence outputs followed by softmax; a context vector is obtained via another Dot and batch normalization. The context is concatenated with decoder outputs and fed to a TimeDistributed Dense with sigmoid activation to produce a scalar output per time step. The model supports masking, optional bidirectional GRUs (bi=True), and exposes get_config/from_config for serialization. Notes: several attributes (gru_enc_2, bn4, context2 and the dropout parameter) are defined in the constructor but not used in the forward pass.",
+    "source_id": "src/attention_model"
+  },
+  {
+    "entity_name": "attention_model::AttentionModel::unknown",
+    "entity_type": "classs",
+    "description": "This entity is the AttentionModel class, a subclass of tf.keras.Model that encapsulates an attention‑based neural network architecture. As a Keras model it is responsible for: creating and holding the layers and weights needed for the model (typically in __init__ or build), implementing the forward pass (call) that computes outputs from inputs and applies the attention mechanism, and integrating with Keras training/evaluation (inheritance provides fit/evaluate/predict unless custom train_step/test_step are implemented). The class therefore packages the model configuration, forward computation, and any custom behavior (for example custom loss handling, masking, or attention specifics). The exact layer types, attention style (Bahdanau, additive, scaled dot‑product/multi‑head), input/output shapes and hyperparameters are defined in the class implementation; those details are not available here. To see precise behavior, inspect the attention_model.py source (the class __init__, call, and any custom train/test methods).",
+    "source_id": "src/attention_model"
+  },
+  {
+    "entity_name": "attention_model::AttentionModel::__init__",
+    "entity_type": "functions",
+    "description": "Constructor for the AttentionModel neural network. It initializes model hyperparameters (bi, input_dim, gru_units, dense_units, dropout) and builds all Keras layers used by the model: initial dense layers (hidden1 and out) to preprocess inputs, two encoder GRU layers (gru_enc_1 returns states; gru_enc_2 returns sequences) and one decoder GRU-like layer (gru_dec_1). If bi=True the GRUs are wrapped as Bidirectional. GRU activations use 'elu' and the out dense uses 'tanh'. BatchNormalization layers (bn1, bn2 or bn1 only, plus bn_con, bn4, context2) are created with momentum=0.6. An attention mechanism is assembled from a Dot layer (attention1 with axes=(2,2)) followed by a softmax activation (attention2), and context computation uses another Dot (context1 with axes=(2,1)) and a BatchNormalization. Final output is produced by a TimeDistributed Dense(1, activation='sigmoid'). The constructor only constructs and stores these layers; it does not perform any computation.",
+    "source_id": "src/attention_model"
+  },
+  {
+    "entity_name": "attention_model::AttentionModel::from_config",
+    "entity_type": "functions",
+    "description": "A simple factory classmethod that constructs and returns an AttentionModel instance from a configuration mapping. It expects config to be a dict-like object whose keys match the AttentionModel constructor parameters and simply calls cls(**config) to create the instance. It performs no validation or transformation of the config.",
+    "source_id": "src/attention_model"
+  },
+  {
+    "entity_name": "attention_model::AttentionModel::get_config",
+    "entity_type": "functions",
+    "description": "Method of the AttentionModel class that returns a dictionary of the model configuration for serialization. It collects and returns the instance attributes 'bi', 'input_dim', 'gru_units', 'dense_units', and 'dropout' so the model can be reconstructed or saved (following the common get_config pattern).",
+    "source_id": "src/attention_model"
+  },
+  {
+    "entity_name": "attention_model::AttentionModel::call",
+    "entity_type": "functions",
+    "description": "Performs the forward pass of an encoder–decoder attention model. Expects inputs = [input1, input2, mask]. It first projects input1 through self.hidden1 and self.out to produce initial encoder state(s). It runs a (possibly bidirectional) GRU encoder over input2 with the given mask, producing the encoder hidden-state sequence and final hidden(s). The final hidden(s) are batch-normalized (and concatenated if bidirectional) to produce encoder_last_h. That vector is expanded and repeated across time to form the decoder input and is also used as the decoder initial state (split into two states if bidirectional). The decoder GRU produces a decoder hidden sequence, which is fed together with the encoder sequence through two attention layers to compute attention weights; these weights are used with the encoder sequence to compute a context vector that is batch-normalized. The context and decoder outputs are concatenated and passed through a final dense layer (respecting the mask) to produce and return the model predictions. Handles both uni- and bi-directional encoder/decoder configurations via self.bi.",
+    "source_id": "src/attention_model"
+  },
+  {
+    "entity_name": "attention_trainer::AttentionTrainer",
+    "entity_type": "classs",
+    "description": "AttentionTrainer is a utility class that encapsulates training, evaluation, saving and loading for an attention-based RNN Keras model. It accepts an AttentionModel instance, a DataLoader-like object, and a config dict (epochs, learning_rate, batch_size, log_dir). The trainer uses a Nadam optimizer and MeanSquaredError loss, keeps a running tf.metrics.Mean for loss, and writes scalars and (attempted) weight histograms to TensorBoard.\n\nKey methods:\n- epoch_time: helper to format elapsed time.\n- train_step: performs a single forward/backward step using tf.GradientTape, applies gradients to model.trainable_variables and updates the mean loss metric. The model is called with [X_inp, X, mask].\n- train_epoch: runs many random mini-batch iterations per epoch (num_iters computed as int(num_batches / batch_size) * 2), obtains batches from data_loader.data_feed(index), normalizes targets by dividing by 100 and expanding the last dimension, constructs a boolean mask to handle variable-length sequences, calls train_step, and reports average loss for the epoch.\n- train: main loop over configured epochs; logs loss and attempts to log layer weight histograms to TensorBoard; performs a qualitative visualization step using data_loader.qualitative_measure on a sample batch; flushes TensorBoard and returns the trained model.\n- evaluate: runs the model in inference mode on up to 10 batches (optionally instantiating a test DataLoader from a provided path), applies the same target normalization and masking, and returns the average test loss.\n- save_model / load_model: wrappers around tf.keras.Model.save and tf.keras.models.load_model (load_model supplies a custom_objects entry for AttentionModel).\n\nNotes/assumptions from implementation: model expects inputs [X_inp, X, mask]; data_loader must expose names, data_feed, data_type and qualitative_measure; target normalization (Y/100.0) and expansion to shape (...,1) are applied internally; mask is computed by treating zero entries as padding. The class prints progress and warnings if TensorBoard logging or visualization fails.",
+    "source_id": "src/attention_trainer"
+  },
+  {
+    "entity_name": "attention_trainer::AttentionTrainer::unknown",
+    "entity_type": "classs",
+    "description": "No implementation is available in the provided source snippet: the tooling reports the entity as \"unknown\" for class AttentionTrainer (file src/attention_trainer.py, lines 14–14). Therefore its actual behavior cannot be determined from the supplied information. Based solely on the class name, AttentionTrainer is likely intended to encapsulate training logic for an attention-based model (e.g., constructing the model, running training/validation loops, handling datasets, loss and optimizer setup, checkpointing, and evaluation), but these responsibilities are speculative — the real implementation details, methods, parameters and behavior are not present in the provided code and cannot be described precisely.",
+    "source_id": "src/attention_trainer"
+  },
+  {
+    "entity_name": "attention_trainer::AttentionTrainer::train_epoch",
+    "entity_type": "functions",
+    "description": "Runs one training epoch: it performs a number of stochastic batch updates, accumulating losses and returning the epoch average loss. Specifically, it computes num_iters = int(num_batches / batch_size) * 2, then for each iteration samples a random batch index, obtains batch data (X_inp, X, Y, src_len) from the data loader, normalizes targets by dividing Y by 100 and adding a final channel dimension, builds a boolean time-step mask that marks non-padded sequence positions, and calls self.train_step(X_inp, X, Y, mask) to perform a training step. It collects per-step losses (converted to numpy), measures elapsed time for the epoch, prints a summary with elapsed minutes/seconds and average loss, and returns the average loss for the epoch.",
+    "source_id": "src/attention_trainer"
+  },
+  {
+    "entity_name": "attention_trainer::AttentionTrainer::epoch_time",
+    "entity_type": "functions",
+    "description": "Compute the elapsed time between start_time and end_time and return it as a tuple of whole minutes and whole seconds. The method subtracts start_time from end_time to get elapsed seconds, converts that to integer minutes and remaining seconds, and returns (elapsed_mins, elapsed_secs) as integers.",
+    "source_id": "src/attention_trainer"
+  },
+  {
+    "entity_name": "attention_trainer::AttentionTrainer::evaluate",
+    "entity_type": "functions",
+    "description": "Evaluate the trained attention model on test data and return the average loss. The method optionally constructs a new test data loader from test_data_path (using the same loader class and data_type and the trainer's batch_size); otherwise it reuses self.data_loader. It iterates over up to 10 batches (bounded by available samples computed from len(test_loader.names) and batch_size), fetches a batch with test_loader.data_feed(index), scales Y by 1/100 and expands its last dimension, builds a boolean mask from X, runs the model in inference mode (training=False) to get predictions, computes the batch loss with self.loss_fn, accumulates losses and counts batches, then prints and returns the average test loss (total_loss / num_batches). The method prints progress messages and the formatted average test loss.",
+    "source_id": "src/attention_trainer"
+  },
+  {
+    "entity_name": "attention_trainer::AttentionTrainer::__init__",
+    "entity_type": "functions",
+    "description": "Initializer for the AttentionTrainer class that stores the provided model, data_loader, and configuration, and prepares training-related state. It reads common training options from the config (epochs with default 30, learning_rate default 0.001, batch_size default 32, and log_dir default 'runs/attention_training'), constructs a Nadam optimizer using the configured learning rate, sets the loss function to MeanSquaredError, creates a Mean metric to track average loss, and creates a TensorBoard summary writer pointed at the configured log directory.",
+    "source_id": "src/attention_trainer"
+  },
+  {
+    "entity_name": "attention_trainer::AttentionTrainer::train",
+    "entity_type": "functions",
+    "description": "Main training loop for the AttentionTrainer class. It prints start messages, then iterates for self.epochs calling self.train_epoch(epoch) to perform an epoch and obtain the average loss. For each epoch it logs the loss (and attempts to log each model layer's weight arrays as histograms) to TensorBoard via self.summary_writer, with exceptions caught and warned. It also attempts a qualitative evaluation per epoch by sampling a random batch from self.data_loader (index chosen with np.random.randint), preparing inputs and a mask, normalizing Y by dividing by 100 and expanding its last dimension, running the model in inference mode to get predictions, and calling self.data_loader.qualitative_measure to produce a visualization; any failures in visualization are caught and warned. After finishing all epochs it flushes TensorBoard summaries, prints completion messages (including the log directory), and returns the trained model.",
+    "source_id": "src/attention_trainer"
+  },
+  {
+    "entity_name": "attention_trainer::AttentionTrainer::train_step",
+    "entity_type": "functions",
+    "description": "Performs a single training step for the model. Given inputs (X_inp, X, mask) and targets Y, it runs a forward pass through self.model with training=True to produce predictions y_pred, computes the loss via self.loss_fn(Y, y_pred), records gradients with a tf.GradientTape, applies those gradients to self.model.trainable_variables using self.optimizer.apply_gradients, updates the running loss metric self.mean_loss with the current loss, and returns the loss tensor and the predictions (loss, y_pred).",
+    "source_id": "src/attention_trainer"
+  },
+  {
+    "entity_name": "attention_trainer::AttentionTrainer::save_model",
+    "entity_type": "functions",
+    "description": "Instance method that saves the trainer's trained model to disk. It calls self.model.save(filepath) to persist the model at the given filepath and prints a confirmation message (including a disk emoji) showing where the model was saved. The method has the side effects of writing model files and printing to stdout.",
+    "source_id": "src/attention_trainer"
+  },
+  {
+    "entity_name": "attention_trainer::AttentionTrainer::load_model",
+    "entity_type": "functions",
+    "description": "Method of AttentionTrainer that loads a saved TensorFlow Keras model from the given filepath. It calls tf.keras.models.load_model with a custom_objects mapping to ensure a custom AttentionModel class is recognized, assigns the loaded model to self.model, prints a confirmation message showing the filepath, and returns the loaded model.",
+    "source_id": "src/attention_trainer"
+  },
+  {
+    "entity_name": "data_loader::DataLoader",
+    "entity_type": "classs",
+    "description": "DataLoader is a utility class that loads and batches time-sequence data and auxiliary HDF5 input data for two tasks: efficiency or powerfactor prediction. On initialization it configures file locations (text files and an HDF5 file) according to data_type, validates paths, reads sequence-length and input-dimension metadata from the text files, and attempts to start a MATLAB engine for visualization (eng stored or None on failure). Key attributes include batch_size, dim_x/dim_y, names, inp_dim, seq_len (and sorted ordering), and an efficiency threshold used for evaluation.\n\nPrimary methods:\n- get_sequence_len(): scans the TrainText/TrainTextPf directory, reads the first line of each text file to obtain sequence length and input dimension, and prepares sorted orderings for batching.\n- data_feed(index): builds a batch starting at the provided index by reading the appropriate text files and the '/DS_TrINP' dataset inside the configured HDF5 file. Text file rows after headers are parsed into a 3-D array (negative values clipped to 0). It returns (X_inp, X, Y, src_len) where X_inp has shape (batch_size, dim_x, dim_y) from HDF5 (skipping the first row), X contains sequence features (all columns except the last), Y contains the target (last column), and src_len is the list of source sequence lengths for the batch.\n- qualitative_measure(Nm, T, Tar, Pred, index): if MATLAB is available, stacks the provided arrays with an index column and calls a MATLAB function drawEffMap for visualization.\n- quantitative_measure(Tar, Pred, index): thresholds Tar and Pred at the configured eff_threshold to produce binary labels, computes a confusion matrix, writes TN/FP/FN/TP to a text file for the corresponding sample, and returns the confusion matrix.\n- get_data_info(): returns summary metadata (data_type, number of files, input_dimension, min/max/mean sequence lengths, and data_path).\n\nBehavioral details: text files are expected in a numbered format (1.txt, 2.txt, ...), data_feed skips the first two header lines of text files and skips the first row of the HDF5 per-sample array. The class enforces data_type to be either 'efficiency' or 'powerfactor' and raises FileNotFoundError if expected paths/files are missing.",
+    "source_id": "src/data_loader"
+  },
+  {
+    "entity_name": "data_loader::DataLoader::unknown",
+    "entity_type": "classs",
+    "description": "This entity is the class definition for DataLoader (class DataLoader) in src/data_loader.py. The provided metadata contains only the class header (no implementation or docstring was supplied), so the exact methods and behavior cannot be determined from the information available. Based on its name and the repository context (Chp3_PerformanceMapsPrediction), it is almost certainly intended to encapsulate dataset handling for the performance‑map prediction project — responsibilities typically include reading input files, parsing/validating raw data, applying preprocessing or normalization, producing train/validation/test splits, and exposing data in batches or as iterators to the model training code. To give a precise description of its API and behavior I need the class implementation (the methods and attributes inside class DataLoader).",
+    "source_id": "src/data_loader"
+  },
+  {
+    "entity_name": "data_loader::DataLoader::qualitative_measure",
+    "entity_type": "functions",
+    "description": "qualitative_measure prepares and sends data to a MATLAB visualization routine to produce a qualitative plot. If the instance does not have a MATLAB engine (self.eng is None) it prints a message and returns. Otherwise it: looks up a file identifier as file_number = self.seq_len_order[index + self.batch_size]; creates an index array the same length as Nm filled with that file_number; stacks Nm (speeds), T (torques), Tar (target values), Pred (predicted values) and the index array into a single 2D/3D array using numpy.dstack and squeezes it; converts the stacked data to a matlab.double and calls the MATLAB function drawEffMap(stack_mat) (no return value expected). The method therefore bridges Python data to MATLAB for visualization.",
+    "source_id": "src/data_loader"
+  },
+  {
+    "entity_name": "data_loader::DataLoader::data_feed",
+    "entity_type": "functions",
+    "description": "Reads a batch of sequence records and associated per-sample input arrays and returns them for training/inference. For a given starting index it:  \n- determines the maximum sequence length for the batch from self.seq_len_sorted, allocates a zero-padded buffer b of shape (batch_size, max_seq_len, inp_dim) and an array X_inp of shape (batch_size, dim_x, dim_y).  \n- Iterates batch_size times and for each sample selects a file index using self.seq_len_order and self.seq_len_sorted. It opens the corresponding text file (text_path/<file_number+1>.txt), skips the first two header lines, parses remaining whitespace-separated floats into a 2D array, replaces negative values with 0, and copies that sequence into the corresponding slice of b (leaving shorter sequences zero-padded). The sequence length is appended to src_len.  \n- For each sample it also opens the HDF5 file at self.hdf5_path, reads the dataset '/DS_TrINP' at the file index, skips the first row of that array and stores the rest into X_inp[i].  \n- After the loop it splits b into X (all columns except the last) and Y (the last column as the target), and returns (X_inp, X, Y, src_len).  \nReturned shapes (typical): X_inp: (batch_size, dim_x, dim_y), X: (batch_size, max_seq_len, inp_dim-1), Y: (batch_size, max_seq_len), src_len: list of per-sample sequence lengths.  \nBehavioral notes: sequences shorter than max_seq_len are zero-padded; negative values in text data are clipped to 0; the HDF5 per-sample array discards its first row before storing.",
+    "source_id": "src/data_loader"
+  },
+  {
+    "entity_name": "data_loader::DataLoader::__init__",
+    "entity_type": "functions",
+    "description": "Constructor for the DataLoader class. It accepts data_path and optional parameters (data_type='efficiency', batch_size=2, dim_x=14, dim_y=1), stores these on self, and derives file paths for the dataset: for data_type 'efficiency' it sets text_path to <data_path>/TrainText and hdf5_path to <data_path>/datasetEffMapText_xReal.h5; for 'powerfactor' it uses TrainTextPf and datasetPfMapText_xReal.h5. It validates that those paths exist (raising FileNotFoundError if not) and raises ValueError for an unsupported data_type. The constructor initializes several attributes (names, inp_dim, seq_len, seq_len_sorted, seq_len_order) and an efficiency threshold (eff_threshold=85), calls self.get_sequence_len() to populate sequence-length information, and attempts to start a MATLAB engine and add the data_path to its path. If MATLAB startup fails it prints a warning and sets self.eng to None.",
+    "source_id": "src/data_loader"
+  },
+  {
+    "entity_name": "data_loader::DataLoader::quantitative_measure",
+    "entity_type": "functions",
+    "description": "Converts continuous target (Tar) and prediction (Pred) arrays to binary labels using the instance attribute self.eff_threshold, computes the binary confusion matrix (TN, FP, FN, TP) via sklearn.metrics.confusion_matrix, writes the four counts to a text file named confusion_matrix_{file_number}.txt (where file_number is taken from self.seq_len_order[index + self.batch_size] under self.data_path) with a header 'TN FP FN TP', and returns the confusion matrix array. Tar, Pred and index are used for conversion/computation and to determine the output filename.",
+    "source_id": "src/data_loader"
+  },
+  {
+    "entity_name": "data_loader::DataLoader::get_sequence_len",
+    "entity_type": "functions",
+    "description": "Reads all .txt files in self.text_path (expects files named 1.txt, 2.txt, ...), extracts sequence metadata from the first line of each file, and populates several instance attributes. For each file it: appends the numeric file id to self.names, opens the file, parses the first line as integers (expected at least two values), appends the first integer to self.seq_len (sequence length) and sets self.inp_dim to the second integer (input dimension, overwritten for each file). After processing all files it produces a sorted order of sequence indices in self.seq_len_order (indices sorted by ascending sequence length) and a sorted list of lengths in self.seq_len_sorted to support efficient batching.",
+    "source_id": "src/data_loader"
+  },
+  {
+    "entity_name": "data_loader::DataLoader::get_data_info",
+    "entity_type": "functions",
+    "description": "Returns a dictionary with summary information about the currently loaded dataset. The dictionary contains: 'data_type' (self.data_type), 'num_files' (number of entries in self.names), 'input_dimension' (self.inp_dim), 'sequence_lengths' (a nested dict with 'min', 'max', and 'mean' computed from self.seq_len, with the mean computed via numpy), and 'data_path' (string form of self.data_path).",
+    "source_id": "src/data_loader"
+  },
+  {
+    "entity_name": "rnn_model::RNNModel",
+    "entity_type": "classs",
+    "description": "RNNModel is a custom tf.keras.Model that produces per-timestep scalar predictions (sigmoid) from a sequence input. It is designed for efficiency/power-factor style prediction and is configurable to use bidirectional RNN layers. Key behaviors:\n\n- Constructor args: bi (bool, default False) to enable bidirectional GRUs, input_dim (unused in layers here, default 14), gru_units (default 128) and dense_units (default 64).\n- Input expectations: call(inputs) expects a list/tuple [input1, input2, mask]:\n  - input1 is run through two dense layers (Dense(dense_units) followed by Dense(gru_units, activation='tanh')) to produce an initial hidden state h.\n  - input2 is the time-series sequence fed to the GRU layers.\n  - mask is forwarded to the GRU layers and the final output layer.\n- Architecture: an initial pair of Dense layers processes input1 to form initial state h; GRU 1 (GRU or Bidirectional(GRU)) runs with return_sequences=True and return_state=True using h as initial_state; GRU 2 (single or Bidirectional) reduces units by half and returns sequences. The final layer is TimeDistributed(Dense(1, activation='sigmoid')) producing a scalar prediction per time step.\n- Serialization: implements get_config and from_config to recreate the model from the stored parameters (bi, input_dim, gru_units, dense_units).\n\nNotes: the model passes the computed dense output as the initial state to the first GRU and propagates a mask through RNN and output layers to handle variable-length sequences.",
+    "source_id": "src/rnn_model"
+  },
+  {
+    "entity_name": "rnn_model::RNNModel::unknown",
+    "entity_type": "classs",
+    "description": "This entity is the class definition for RNNModel that subclasses tf.keras.Model. The actual implementation body is not available in the provided source snippet (marked as \"unknown\"), so the concrete constructor, attributes (layers), and methods (e.g., call, build, training/validation steps) cannot be determined from the data given. Based on its name and inheritance, RNNModel is intended to implement a recurrent neural-network model (sequence model) within the Keras API — typically it would define RNN layers (LSTM/GRU), any dense/output layers, and the forward pass logic for sequence prediction — but the exact architecture and behavior are not present in the supplied code fragment.",
+    "source_id": "src/rnn_model"
+  },
+  {
+    "entity_name": "rnn_model::RNNModel::__init__",
+    "entity_type": "functions",
+    "description": "Constructor for the RNNModel Keras model. It initializes model hyperparameters (bi-directional flag, input_dim, gru_units, dense_units) with defaults (bi=False, input_dim=14, gru_units=128, dense_units=64) and calls the parent initializer. It creates: 1) two initial dense layers for processing input features: hidden1 (Dense with default linear activation, units=dense_units) and out (Dense with units=gru_units, activation='tanh'); 2) two GRU layers whose configuration depends on self.bi: if bi is True, gru_1 and gru_2 are wrapped in Bidirectional(), where gru_1 is a Bidirectional GRU with gru_units units, activation='elu', return_sequences=True and return_state=True, and gru_2 is a Bidirectional GRU with int(gru_units/2) units, activation='elu', return_sequences=True. If bi is False, gru_1 is a regular GRU with the same settings (returning sequences and state) and gru_2 is a regular GRU with half the units returning sequences. 3) a final TimeDistributed output layer (Dense(1, activation='sigmoid')) for per-time-step binary/score outputs. The constructor only builds and registers these layers; it does not perform any forward computation.",
+    "source_id": "src/rnn_model"
+  },
+  {
+    "entity_name": "rnn_model::RNNModel::call",
+    "entity_type": "functions",
+    "description": "Performs the model forward pass. It expects inputs to be a list [input1, input2, mask]. It first processes input1 through the layers self.hidden1 and self.out to produce an initial state h. If the model is configured as bidirectional (self.bi is True) it creates an initial_state = [h, h] and calls self.gru_1(input2, initial_state=initial_state, mask=mask) (unpacking three returned values); otherwise it uses initial_state = h and calls self.gru_1(input2, initial_state=initial_state, mask=mask) (unpacking two returned values). The output sequence x from gru_1 is then passed through self.gru_2 (with the same mask) and finally through self.dense (mask forwarded) to produce and return the model predictions. The training argument is accepted but not used in this implementation.",
+    "source_id": "src/rnn_model"
+  },
+  {
+    "entity_name": "rnn_model::RNNModel::get_config",
+    "entity_type": "functions",
+    "description": "Method that returns a serializable configuration dictionary for an RNNModel instance. It collects and returns the model attributes 'bi' (bidirectionality flag), 'input_dim', 'gru_units', and 'dense_units' as a dict, intended for use in model serialization.",
+    "source_id": "src/rnn_model"
+  },
+  {
+    "entity_name": "rnn_model::RNNModel::from_config",
+    "entity_type": "functions",
+    "description": "A simple constructor helper that returns a new RNNModel instance by unpacking the provided configuration mapping into the class constructor. Implementation: return cls(**config). It performs no validation or transformation of the config — the config must be a dict-like object whose keys match the RNNModel __init__ parameters (otherwise object construction will raise an exception).",
+    "source_id": "src/rnn_model"
+  },
+  {
+    "entity_name": "rnn_trainer::RNNTrainer",
+    "entity_type": "classs",
+    "description": "RNNTrainer is a convenience trainer class that encapsulates training, evaluation, logging and model persistence for a TensorFlow RNN model. On initialization it stores the provided model, data_loader and config, sets default training hyperparameters (epochs, learning_rate, batch_size), constructs a Nadam optimizer, MSE loss, a Mean metric and a TensorBoard summary writer.\n\nKey methods:\n- train_step(X_inp, X, Y, mask): runs a single forward/backward pass with tf.GradientTape, applies gradients, updates the running mean loss and returns the batch loss and predictions.\n- train_epoch(epoch): runs a number of random minibatch iterations (determined from data_loader.names and batch_size), normalizes targets (divides Y by 100 and expands dims), builds a mask for variable-length sequences, calls train_step, accumulates losses and prints epoch timing and average loss.\n- train(): top-level training loop for self.epochs that calls train_epoch each epoch, logs scalar loss and layer weight histograms to TensorBoard, attempts a qualitative visualization using the data_loader.qualitative_measure callback, flushes logs and returns the trained model. It also prints progress and where logs are written.\n- evaluate(test_data_path=None): runs inference on up to 10 batches from either the provided test path (re-constructing the data_loader) or the existing data_loader, computes average MSE test loss and prints/returns it.\n- save_model(filepath) / load_model(filepath): convenience wrappers to save and load the Keras model (load uses custom_objects with 'RNNModel').\n\nOperational assumptions and side effects: the trainer expects the model to accept inputs [X_inp, X, mask] and the data_loader to provide .names, .data_feed(index) returning (X_inp, X, Y, src_len), and .qualitative_measure for visualization. It normalizes Y by dividing by 100 and uses numpy-based masking. The class prints progress to stdout and writes TensorBoard logs to the configured log_dir. Note: the implementation contains some idiosyncrasies (e.g. num_iters calculation, reliance on RNNModel in load_model) and a formatting bug in the evaluate print statement that may raise an error at runtime.",
+    "source_id": "src/rnn_trainer"
+  },
+  {
+    "entity_name": "rnn_trainer::RNNTrainer::unknown",
+    "entity_type": "classs",
+    "description": "Implementation not available in the provided source snippet (code reported as \"unknown\"). Based on its name and typical usage, RNNTrainer is a class intended to encapsulate the training lifecycle for a recurrent neural network: initializing with a model, data loaders/datasets and training hyperparameters; running training and validation loops over epochs; computing loss and performance metrics; updating parameters via an optimizer; and providing utilities such as checkpointing/saving/loading models, logging, early stopping and evaluation. Concrete behavior, constructor signature and method details cannot be determined from the provided metadata—inspect src/rnn_trainer.py to see the actual implementation.",
+    "source_id": "src/rnn_trainer"
+  },
+  {
+    "entity_name": "rnn_trainer::RNNTrainer::train_epoch",
+    "entity_type": "functions",
+    "description": "Runs one training epoch: it repeatedly samples random mini-batches from the data loader, prepares inputs/targets and a variable-length sequence mask, performs a training step, accumulates losses, and returns the average loss for the epoch. Implementation details: num_batches is taken from len(data_loader.names) and num_iters is computed as int(num_batches / batch_size) * 2. For each iteration it calls data_loader.data_feed(index) to get X_inp, X, Y, src_len; normalizes Y by dividing by 100 and expands its last dimension; builds a boolean mask marking valid timesteps (True where not all features are zero); calls self.train_step(X_inp, X, Y, mask) to get loss and predictions and stores loss.numpy(). At the end it computes elapsed time, prints an epoch summary (epoch number, time, average loss) and returns the average loss.",
+    "source_id": "src/rnn_trainer"
+  },
+  {
+    "entity_name": "rnn_trainer::RNNTrainer::epoch_time",
+    "entity_type": "functions",
+    "description": "Method that computes the elapsed time between a start_time and end_time (assumed in seconds) and returns it as a tuple of integer minutes and seconds. It calculates elapsed_time = end_time - start_time, elapsed_mins = int(elapsed_time / 60), and elapsed_secs = int(elapsed_time - (elapsed_mins * 60)).",
+    "source_id": "src/rnn_trainer"
+  },
+  {
+    "entity_name": "rnn_trainer::RNNTrainer::evaluate",
+    "entity_type": "functions",
+    "description": "evaluate(self, test_data_path=None) runs an evaluation pass of the trained RNN model and returns the average test loss. It prints a start message, then either constructs a new data loader from test_data_path or uses the trainer's existing data_loader. The method iterates up to 10 batches (or fewer if the dataset is smaller), fetches a batch via data_feed, scales the ground-truth Y by 1/100 and adds a channel dimension, builds a boolean timestep mask (marks timesteps that are not all-zero), obtains predictions from self.model([X_inp, X, mask], training=False), computes the batch loss with self.loss_fn, accumulates losses and finally computes and returns the average loss. It also attempts to print the average loss. Note: the f-string used to print the average loss appears to be malformed in the shown code (likely intended as f\"{avg_test_loss:.6f}\").",
+    "source_id": "src/rnn_trainer"
+  },
+  {
+    "entity_name": "rnn_trainer::RNNTrainer::__init__",
+    "entity_type": "functions",
+    "description": "Initializer for the RNNTrainer class. It stores the provided model, data_loader, and config, then reads training settings from config with defaults (epochs default 50, learning_rate default 0.001, batch_size default 32). It creates a Nadam optimizer using the learning rate, sets the loss function to mean squared error, initializes a Mean metric to track average loss, and prepares a TensorBoard summary writer pointing at the configured log directory (default 'runs/rnn_training').",
+    "source_id": "src/rnn_trainer"
+  },
+  {
+    "entity_name": "rnn_trainer::RNNTrainer::train",
+    "entity_type": "functions",
+    "description": "Runs the main RNN training loop. It prints start messages, then for each epoch calls self.train_epoch(epoch) to perform one epoch and obtain an average loss. It logs that loss to TensorBoard (using self.summary_writer and tf.summary.scalar) and attempts to log each model layer\u0002s weight arrays as histograms (catching and warning on errors). After logging, it performs a qualitative evaluation by sampling a batch from self.data_loader, normalizing the target Y, creating a mask of valid timesteps, running the model in inference mode to get predictions, and calling data_loader.qualitative_measure to generate a visualization (exceptions are caught and warned). After all epochs it flushes TensorBoard summaries, prints completion and the log directory, and returns the trained model object.",
+    "source_id": "src/rnn_trainer"
+  },
+  {
+    "entity_name": "rnn_trainer::RNNTrainer::train_step",
+    "entity_type": "functions",
+    "description": "Performs a single training step for the RNN model. It runs a forward pass by calling self.model([X_inp, X, mask], training=True), computes the loss with self.loss_fn(Y, y_pred) inside a tf.GradientTape, computes gradients of the loss w.r.t. the model's trainable variables, applies those gradients via self.optimizer.apply_gradients, updates the running loss metric self.mean_loss(loss), and returns the computed loss and the model predictions (y_pred).",
+    "source_id": "src/rnn_trainer"
+  },
+  {
+    "entity_name": "rnn_trainer::RNNTrainer::save_model",
+    "entity_type": "functions",
+    "description": "Method that saves the trainer's model to disk. It calls self.model.save(filepath) with the provided filepath and prints a confirmation message including the filepath (prints an emoji and the saved path). Assumes self.model implements a save(filepath) method.",
+    "source_id": "src/rnn_trainer"
+  },
+  {
+    "entity_name": "rnn_trainer::RNNTrainer::load_model",
+    "entity_type": "functions",
+    "description": "Instance method that loads a saved TensorFlow Keras model from the given filepath into the RNNTrainer. It calls tf.keras.models.load_model with a custom_objects mapping for the RNNModel class, assigns the resulting model to self.model, prints a confirmation message with the filepath, and returns the loaded model.",
+    "source_id": "src/rnn_trainer"
+  }
+]

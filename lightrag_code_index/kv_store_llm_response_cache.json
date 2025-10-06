@@ -1,0 +1,44 @@
+{
+  "hybrid:keywords:1a74c1f9f819095d3198e77665d67623": {
+    "return": "{\"high_level_keywords\": [\"convolutional neural networks\", \"magnetic field distribution\", \"neural network application\"], \"low_level_keywords\": [\"CNN\", \"magnetic field\", \"field distribution\", \"deep learning model\"]}",
+    "cache_type": "keywords",
+    "chunk_id": null,
+    "original_prompt": "how to use convolutional neural nets for magnetic field ndistribution",
+    "queryparam": {
+      "mode": "hybrid",
+      "response_type": "Multiple Paragraphs",
+      "top_k": 40,
+      "chunk_top_k": 20,
+      "max_entity_tokens": 6000,
+      "max_relation_tokens": 8000,
+      "max_total_tokens": 30000,
+      "user_prompt": "",
+      "enable_rerank": true
+    },
+    "create_time": 1759708369,
+    "update_time": 1759708369,
+    "_id": "hybrid:keywords:1a74c1f9f819095d3198e77665d67623"
+  },
+  "hybrid:query:f4628fba382941ebafd7266dfa7554ab": {
+    "return": "# Using Convolutional Neural Networks for Magnetic Field Distribution\n\nBased on the provided documentation, here's a comprehensive guide on using CNNs for magnetic field prediction:\n\n## Model Architecture\n\nThe system implements a **U-Net style CNN** with skip connections for predicting magnetic field distributions from geometry inputs:\n\n### Key Components:\n\n**1. Input Processing**\n- Input shape: (400, 400, 1) - single-channel geometry images\n- Initial BatchNormalization layer for input stabilization\n\n**2. Encoder Path**\n- Progressive feature extraction with increasing channel depth (64 → 128)\n- Each block contains:\n  - Conv2D layer with 3×3 kernels, ReLU activation\n  - BatchNormalization\n  - Dropout (0.5) for regularization\n- All convolutions use `padding='same'` to preserve spatial dimensions\n\n**3. Decoder Path**\n- Conv2DTranspose layers for upsampling\n- Skip connections that add encoder features to corresponding decoder stages (residual/U-Net style)\n- Maintains channel depths: 128 → 64\n- Each block includes BatchNormalization and Dropout\n\n**4. Output Layer**\n- 1×1 Conv2D producing single-channel field map\n- ReLU activation ensures non-negative outputs\n\n## Training Process\n\n### Data Preparation\n\nThe training pipeline processes data from CSV files containing:\n- Coil geometry parameters (radius, domain size, current magnitude)\n- Scattered magnetic field measurements (x, y, B coordinates)\n\n**For each training sample:**\n1. Parse geometry parameters from filename\n2. Generate input geometry array (400×400 grid with circular coil representation)\n3. Interpolate scattered B-field values onto regular 400×400 grid using `scipy.interpolate.griddata` (linear method)\n4. Normalize targets by dividing by 1000\n\n### Training Configuration\n\n```python\nbatch_size = config['training']['batch_size']\nepochs = config['training']['epochs']\nlearning_rate = config['training']['learning_rate']\noptimizer = tf.keras.optimizers.Nadam(learning_rate=lr)\nloss = tf.keras.losses.mean_squared_error\n```\n\nThe training loop randomly samples batches and performs gradient descent updates on the MSE loss between predicted and ground-truth field distributions.\n\n## Practical Usage\n\nTo train the model, run:\n```bash\npython main.py --method dl\n```\n\nThis will:\n- Create timestamped results directory\n- Configure logging to file and console\n- Initialize the DLTrainer\n- Execute training with the specified configuration\n- Save trained model to `results/<TIMESTAMP>_DL/model/field_predictor_model.h5`\n- Record training metrics in JSON format\n\nThe heavy dropout (0.5 throughout) helps prevent overfitting, while the skip connections enable effective gradient flow and feature reuse across scales, making the architecture well-suited for spatial field prediction tasks.\n\n### References\n* [1] custom_kg",
+    "cache_type": "query",
+    "chunk_id": null,
+    "original_prompt": "how to use convolutional neural nets for magnetic field ndistribution",
+    "queryparam": {
+      "mode": "hybrid",
+      "response_type": "Multiple Paragraphs",
+      "top_k": 40,
+      "chunk_top_k": 20,
+      "max_entity_tokens": 6000,
+      "max_relation_tokens": 8000,
+      "max_total_tokens": 30000,
+      "hl_keywords": "convolutional neural networks, magnetic field distribution, neural network application",
+      "ll_keywords": "CNN, magnetic field, field distribution, deep learning model",
+      "user_prompt": "",
+      "enable_rerank": true
+    },
+    "create_time": 1759708392,
+    "update_time": 1759708392,
+    "_id": "hybrid:query:f4628fba382941ebafd7266dfa7554ab"
+  }
+}

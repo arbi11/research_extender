@@ -1,0 +1,170 @@
+[
+  {
+    "entity_name": "main::create_results_directory",
+    "entity_type": "functions",
+    "description": "Creates a timestamped results directory and returns its Path. By default it uses a base directory named \"results\" (overrideable via base_dir). It builds a subdirectory named with the current local timestamp in the format YYYYMMDD_HHMMSS, ensures the directory (and any needed parent directories) exist (mkdir with parents=True, exist_ok=True), and returns the pathlib.Path for the created directory.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::run_q_learning",
+    "entity_type": "functions",
+    "description": "run_q_learning(environment_name, config, results_dir) is a top-level routine that starts and runs a Q‑Learning optimization session. It selects and constructs the environment (case‑insensitively) as SynRMEnvironment for \"synrm\" or CCoreEnvironment for \"ccore\" and raises a ValueError for unknown names. It then creates a QLearningTrainer with that environment and the provided config, calls trainer.train(results_dir) to perform training and save results, and prints start/completion messages (including the results directory). The function has no return value and operates via side effects (training and file output).",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::run_comparison",
+    "entity_type": "functions",
+    "description": "Orchestrates and runs a comparison between two methods (Q-Learning and a Genetic Algorithm) on two predefined environments ('synrm' and 'ccore'). For each environment it initializes results[env_name] = {} (assumes a global results dict), then for each method it prints status messages and calls either run_q_learning(env_name, config, results_dir / f\"{env_name}_{method_name}\") or run_genetic_algorithm(...) depending on the method. It expects a Path-like results_dir to build per-run output directories, produces console logging at start and end, modifies the global results mapping, invokes the external runner functions for side effects (e.g., saving outputs), and does not return a value.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::load_config",
+    "entity_type": "functions",
+    "description": "load_config(config_path='config.yaml') opens the specified YAML file (default 'config.yaml'), reads its contents and returns the parsed Python object produced by yaml.safe_load. It simply returns the loaded configuration (commonly a dict/list) and does not perform validation or error handling—file I/O or YAML parse errors will propagate.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::run_genetic_algorithm",
+    "entity_type": "functions",
+    "description": "Orchestrates and runs a Genetic Algorithm optimization. Given an environment_name (case-insensitive), a config object, and a results_dir path, it prints a start message, constructs the corresponding environment (SynRMEnvironment for \"synrm\" or CCoreEnvironment for \"ccore\"), raises a ValueError for unknown names, instantiates GeneticAlgorithm with the environment and config, calls its optimize(results_dir) method, and then prints completion and results-location messages.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::setup_logging",
+    "entity_type": "functions",
+    "description": "Configures Python logging to write detailed logs to a file and filtered logs to the console. Given results_dir and an optional log_level (default \"INFO\"), it creates a log file path results_dir / \"training.log\", sets up a file handler (DEBUG level) with a formatter that includes timestamp, logger name, level and message, and sets up a console (stream) handler with a simpler formatter (level and message) at the specified log_level. It then sets the root logger to DEBUG and attaches both handlers. Note: it adds handlers to the root logger (does not remove existing handlers), so calling it multiple times may attach duplicate handlers.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::main",
+    "entity_type": "functions",
+    "description": "Entry point for the MDP Topology Optimizer CLI. It parses command-line arguments (required --method: 'ql', 'ga', or 'compare'; optional --environment: 'synrm' or 'ccore'), loads configuration, creates a results directory, and sets up logging. Based on --method it dispatches to the appropriate workflow: run_q_learning or run_genetic_algorithm (each requiring --environment) or run_comparison. It prints progress messages, logs startup details, and informs the user where results are saved. Uses helper functions load_config, create_results_directory, setup_logging, run_q_learning, run_genetic_algorithm, and run_comparison.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::unknown",
+    "entity_type": "functions",
+    "description": "Defines a function load_config(config_path=\"config.yaml\") in the main module. The function is intended to load an application configuration from the given YAML file path (defaulting to \"config.yaml\"). The actual implementation body is not present in the provided source excerpt, so its exact behavior is not visible; typically such a function would open and parse the YAML file and return a configuration mapping (e.g., a dict), and may raise I/O or parsing errors if the file is missing or invalid.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "agent::QLearningAgent",
+    "entity_type": "classs",
+    "description": "QLearningAgent is a lightweight Q-learning implementation for topology optimization that maintains a sparse Q-table (defaultdict mapping tuple(state) -> np.array of action Q-values) and a visit-count table (q_count). It initializes Q-learning hyperparameters (learning_rate, gamma) and an epsilon-greedy exploration schedule (epsilon initialized from epsilon_max with epsilon_min and epsilon_decay). Action selection (choose_action) uses epsilon-greedy: with probability epsilon it explores by sampling an action according to normalized Q-values (normalize_q_values maps Q-values to a probability distribution, handling constant or degenerate ranges), otherwise it exploits by taking argmax. Learning updates (update_q_table) apply the standard Q-learning update target = reward + gamma * max_next_Q and increment the visit count for the (state, action) pair. Utility methods include decay_epsilon (multiplicative decay using 1 - epsilon_decay, floored at epsilon_min), get_best_action (exploitation argmax), save_q_table/load_q_table (np.savez/np.load with allow_pickle to persist q_table, q_count and epsilon), and get_statistics (returns counts and current hyperparameters). States are stored as tuples for dictionary keys, and a logger is available for instrumenting behavior.",
+    "source_id": "src/q_learning/agent"
+  },
+  {
+    "entity_name": "agent::QLearningAgent::unknown",
+    "entity_type": "classs",
+    "description": "No implementation was available for this entity in the provided source snippet (the code field is \"unknown\"). Based on its name and typical usage, QLearningAgent is expected to be a class implementing a tabular Q‑learning agent. Responsibilities would typically include: holding a Q‑table (mapping state×action to values), storing hyperparameters (learning rate α, discount factor γ, exploration rate ε and possibly ε scheduling), providing an action selection method (commonly ε‑greedy), updating Q‑values via the Q‑learning update rule given (state, action, reward, next_state), and utility methods such as reset, save/load of learned Q values, and optionally support for state/action encoding. Because the actual source for this class was not provided, the above describes the expected behavior rather than the concrete implementation.",
+    "source_id": "src/q_learning/agent"
+  },
+  {
+    "entity_name": "agent::QLearningAgent::choose_action",
+    "entity_type": "functions",
+    "description": "Implements an epsilon-greedy action selection for the QLearningAgent. It converts the input state to a tuple key, looks up the Q-values for that state in self.q_table and then either explores or exploits based on self.epsilon: if random.random() < self.epsilon it explores by normalizing the Q-values with self.normalize_q_values and drawing an action from a categorical distribution over self.action_size using numpy.random.choice; otherwise it exploits by returning the index of the maximum Q-value via np.argmax. The method returns the chosen action index (integer). It assumes the state's entry exists in self.q_table and that self.action_size and self.normalize_q_values are defined.",
+    "source_id": "src/q_learning/agent"
+  },
+  {
+    "entity_name": "agent::QLearningAgent::decay_epsilon",
+    "entity_type": "functions",
+    "description": "Updates the agent's exploration rate (self.epsilon) by multiplying it by (1 - self.epsilon_decay), but clamps it to not fall below self.epsilon_min. It performs the update in place and returns None (no parameters).",
+    "source_id": "src/q_learning/agent"
+  },
+  {
+    "entity_name": "agent::QLearningAgent::save_q_table",
+    "entity_type": "functions",
+    "description": "save_q_table(self, filepath): Saves the agent's Q-learning state to a NumPy .npz file at the given filepath. It writes three entries into the archive: 'q_table' (converted to a plain dict from self.q_table), 'q_count' (converted to a plain dict from self.q_count), and 'epsilon' (the current exploration rate). The method uses numpy.savez and does not return a value.",
+    "source_id": "src/q_learning/agent"
+  },
+  {
+    "entity_name": "agent::QLearningAgent::__init__",
+    "entity_type": "functions",
+    "description": "Constructor for QLearningAgent that initializes the agent's internal state and Q‑learning parameters. It accepts state_size (int), action_size (int) and a config dictionary, then stores those values and extracts Q‑learning hyperparameters from config['q_learning'] (learning_rate, gamma, epsilon_max→epsilon, epsilon_min, epsilon_decay). It creates a sparse Q-table and an action visit counter using defaultdicts that return numpy arrays of length action_size, initializes an empty list to track visited states and a current_episode counter (0), and sets up a logger for the module. The Q-table is represented as defaultdict(lambda: np.zeros(action_size)), enabling on‑demand state entries.",
+    "source_id": "src/q_learning/agent"
+  },
+  {
+    "entity_name": "agent::QLearningAgent::normalize_q_values",
+    "entity_type": "functions",
+    "description": "Takes an array of Q-values for the current state and converts them into a probability distribution for exploration. If all Q-values are identical (or the max equals the min) it returns a uniform distribution of length self.action_size. Otherwise it linearly rescales the Q-values to the [0,1] range by subtracting the minimum and dividing by the range (max-min), then normalizes the rescaled values so they sum to 1. The result is a numpy array of probabilities.",
+    "source_id": "src/q_learning/agent"
+  },
+  {
+    "entity_name": "agent::QLearningAgent::update_q_table",
+    "entity_type": "functions",
+    "description": "Performs the Q-Learning update for a single transition. The method accepts a current state, action index, received reward, and next state; converts states to tuple keys to index into self.q_table and self.q_count; reads the current Q-value for (state, action) and the maximum Q-value for the next state (using numpy.max); computes the target Q = reward + gamma * max_next_Q and the temporal-difference error = target - current_Q; updates the stored Q-value by adding learning_rate * td_error; and increments the visit count for that (state, action). It depends on self.q_table, self.q_count, self.learning_rate, and self.gamma.",
+    "source_id": "src/q_learning/agent"
+  },
+  {
+    "entity_name": "agent::QLearningAgent::get_best_action",
+    "entity_type": "functions",
+    "description": "Converts the given state to a tuple key, looks up the corresponding Q-values in the agent's q_table, and returns the index of the action with the highest Q-value (uses numpy.argmax). The state must be iterable/convertible to a tuple and present in q_table; ties are broken by returning the first maximum index. Returns an int representing the best action (pure exploitation).",
+    "source_id": "src/q_learning/agent"
+  },
+  {
+    "entity_name": "agent::QLearningAgent::load_q_table",
+    "entity_type": "functions",
+    "description": "Loads a saved Q-learning state from a NumPy file and applies it to the agent. The method opens the file at filepath with np.load(allow_pickle=True) and expects entries named 'q_table', 'q_count', and 'epsilon'. It updates the agent's internal q_table and q_count dictionaries with the loaded dictionaries (using .item() on the loaded objects) and sets the agent's epsilon attribute to the loaded value. Note: it updates existing dicts rather than replacing them and will raise an error if the expected keys are not present in the file.",
+    "source_id": "src/q_learning/agent"
+  },
+  {
+    "entity_name": "agent::QLearningAgent::get_statistics",
+    "entity_type": "functions",
+    "description": "Method of QLearningAgent that returns a dictionary of runtime statistics. It computes total_states_visited as the number of entries in self.q_table, total_actions_taken as the sum of the lengths of the action collections stored in self.q_count, and includes the agent's current exploration parameter (current_epsilon), learning_rate, and discount factor (gamma). The result is returned as a dict with keys: 'total_states_visited', 'total_actions_taken', 'current_epsilon', 'learning_rate', and 'gamma'.",
+    "source_id": "src/q_learning/agent"
+  },
+  {
+    "entity_name": "trainer::QLearningTrainer",
+    "entity_type": "classs",
+    "description": "QLearningTrainer is a training manager for a tabular Q‑learning agent applied to a topology‑optimization environment. It encapsulates the training loop, logging, checkpointing and result saving. Key responsibilities and behavior:\n\n- Initialization: stores environment and config, reads training parameters from config['q_learning'] (episodes, max_steps), builds an agent using env.get_agent_class() with a flattened state size and env action size, and prepares a history dict and logger.\n\n- train(results_dir): runs the main training loop for the configured number of episodes using tqdm. For each episode it calls run_episode(), records episode reward/length/exploration count, updates best topology if reward improves, decays the agent epsilon, logs progress every 10 episodes, and writes checkpoints every 50 episodes. At the end it saves final results.\n\n- run_episode(): runs one episode by resetting the environment, selecting actions using epsilon‑greedy (random sample from env.action_space when exploring, agent.choose_action otherwise), stepping the env, calling agent.update_q_table(state, action, reward, next_state), and returning total reward, episode length and exploration count.\n\n- test_agent(results_dir, num_episodes=5): evaluates the agent using greedy actions (agent.get_best_action) for a given number of episodes, logs and writes test_results.json with rewards, lengths and final topologies.\n\n- save_checkpoint(results_dir, episode) and save_results(results_dir): persist agent Q table (agent.save_q_table), training history, agent statistics (agent.get_statistics), and best topology to JSON/.npz files in the provided results directory.\n\n- get_training_summary(): computes and returns summary statistics (total episodes, best/average/final reward, average length, total steps, convergence episode) from the recorded history.\n\nEnvironment and agent interface expectations (required methods/attributes):\n- Environment: get_state_shape(), get_action_size(), get_agent_class(), reset(), step(action) -> (next_state, reward, done, info), action_space.sample(), get_current_topology().\n- Agent: constructor(state_size, action_size, config), attributes/methods: epsilon, choose_action(state), get_best_action(state), update_q_table(state, action, reward, next_state), decay_epsilon(), save_q_table(path), get_statistics().\n\nFiles produced: checkpoint agent .npz and history JSONs, training_history.json, final_agent.npz, agent_statistics.json, best_topology.json (if available), and test_results.json.",
+    "source_id": "src/q_learning/trainer"
+  },
+  {
+    "entity_name": "trainer::QLearningTrainer::unknown",
+    "entity_type": "classs",
+    "description": "No implementation available in the provided snippet: the source for trainer::QLearningTrainer was not included (the code field is \"unknown\"). Therefore a precise description of its methods, attributes and behavior cannot be determined from the given data. \n\nLikely intent (speculative): QLearningTrainer is expected to be a class that orchestrates training of a Q‑learning agent — e.g. managing the training loop over episodes, interacting with an environment, selecting actions (commonly with an exploration strategy such as epsilon‑greedy), applying the Q‑learning update rule (using a learning rate and discount factor), tracking episode rewards/metrics, handling episode termination, and providing hooks for logging, checkpointing/saving learned Q values, and configuring hyperparameters. This speculative summary should not be treated as a substitute for the actual implementation.",
+    "source_id": "src/q_learning/trainer"
+  },
+  {
+    "entity_name": "trainer::QLearningTrainer::run_episode",
+    "entity_type": "functions",
+    "description": "Runs one training episode for a Q-learning agent using the trainer's environment and parameters. The method resets the environment, then for up to self.max_steps it selects actions with an epsilon-greedy policy (using np.random.random() < self.agent.epsilon; exploratory actions sampled from self.env.action_space and counted in exploration_count, otherwise chosen by self.agent.choose_action), steps the environment, updates the agent's Q-table via self.agent.update_q_table(state, action, reward, next_state), accumulates total_reward, and stops early if the environment signals done. It returns a tuple (total_reward, episode_length, exploration_count) where episode_length is the number of steps executed (step index + 1) and exploration_count is the number of random/exploratory actions taken.",
+    "source_id": "src/q_learning/trainer"
+  },
+  {
+    "entity_name": "trainer::QLearningTrainer::save_checkpoint",
+    "entity_type": "functions",
+    "description": "Writes a training checkpoint to disk under a \"checkpoints\" subdirectory of the given results_dir. It ensures the directory exists, saves the agent's Q-table to a file named agent_episode_{episode}.npz by calling self.agent.save_q_table(...), and writes the trainer's history dictionary to history_episode_{episode}.json (pretty-printed with indent=2). The method expects results_dir to be a Path and uses the provided episode number to name the files.",
+    "source_id": "src/q_learning/trainer"
+  },
+  {
+    "entity_name": "trainer::QLearningTrainer::__init__",
+    "entity_type": "functions",
+    "description": "Constructor for QLearningTrainer that initializes trainer state from an environment and a configuration dict. It stores the provided environment and config, reads training parameters episodes and max_steps from config['q_learning'], computes state_size as the product of env.get_state_shape() and action_size from env.get_action_size(), and instantiates an agent using env.get_agent_class()(state_size, action_size, config). It also initializes training history tracking (episode_rewards, episode_lengths, episode_exploration, best_reward initialized to -inf, and best_topology None) and sets up a logger for the module.",
+    "source_id": "src/q_learning/trainer"
+  },
+  {
+    "entity_name": "trainer::QLearningTrainer::test_agent",
+    "entity_type": "functions",
+    "description": "Runs a set of evaluation episodes using the trained agent (exploitation only) and records per-episode rewards, lengths, and final environment topologies. For each of num_episodes (default 5) it resets the environment, steps up to self.max_steps using self.agent.get_best_action, accumulates reward and step count, and stops on done. It logs each episode's reward and length, collects final topologies via self.env.get_current_topology(), writes the results to results_dir/test_results.json, and returns a dictionary with keys 'episode_rewards', 'episode_lengths', and 'final_topologies'.",
+    "source_id": "src/q_learning/trainer"
+  },
+  {
+    "entity_name": "trainer::QLearningTrainer::train",
+    "entity_type": "functions",
+    "description": "Runs the main training loop for a Q-learning agent. Given a results directory (created if needed), it iterates self.episodes times (with a tqdm progress bar), calls self.run_episode() each episode to obtain episode reward, length and exploration count, and appends those to self.history. It tracks and saves the best observed reward and corresponding environment topology (via env.get_current_topology()), decays the agent’s exploration rate each episode (self.agent.decay_epsilon()), logs average reward and current epsilon every 10 episodes, and writes a checkpoint every 50 episodes (self.save_checkpoint). After finishing all episodes it saves final results (self.save_results) and logs completion. The method does not return a value.",
+    "source_id": "src/q_learning/trainer"
+  },
+  {
+    "entity_name": "trainer::QLearningTrainer::save_results",
+    "entity_type": "functions",
+    "description": "Method of QLearningTrainer that writes final training outputs into the given results_dir (a Path). It saves the training history as JSON (training_history.json), exports the agent Q-table via self.agent.save_q_table to final_agent.npz, and writes agent statistics (from self.agent.get_statistics()) to agent_statistics.json. If a best topology was recorded in self.history['best_topology'], it also writes best_topology.json containing the topology and its associated reward. All JSON files are written with indent=2. The method performs I/O and returns nothing.",
+    "source_id": "src/q_learning/trainer"
+  },
+  {
+    "entity_name": "trainer::QLearningTrainer::get_training_summary",
+    "entity_type": "functions",
+    "description": "Produces a compact training summary dictionary from the trainer's history. If no episode rewards are recorded it returns an empty dict. Otherwise it converts history['episode_rewards'] and history['episode_lengths'] to NumPy arrays and returns: total_episodes (count), best_reward (max reward as float), average_reward (mean reward as float), final_reward (last episode reward as float), average_length (mean episode length as float), total_steps (sum of episode lengths as int), and convergence_episode (1-based index of the episode with the highest reward, computed as argmax(rewards)+1). The function uses NumPy for the statistics and casts results to Python float/int types.",
+    "source_id": "src/q_learning/trainer"
+  }
+]

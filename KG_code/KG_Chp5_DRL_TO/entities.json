@@ -1,0 +1,350 @@
+[
+  {
+    "entity_name": "main::run_a2c",
+    "entity_type": "functions",
+    "description": "run_a2c(config: dict, results_dir: Path) starts and runs an Advantage Actor-Critic (A2C) training session. It prints a startup message, imports and constructs an A2CTrainer with the given config and results directory, invokes trainer.train() to perform training, and then calls trainer.close(). After training it prints completion and summary statistics extracted from the returned results dict (expects keys: final_performance.mean_reward_last_10, final_performance.best_reward, total_episodes, training_time). The function has no return value and produces console output as its primary side effect.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::run_dqn",
+    "entity_type": "functions",
+    "description": "run_dqn is a placeholder function intended to run a DQN training run. In its current implementation it only prints startup and explanatory messages: it announces that DQN training is starting, then reports that the DQN trainer is not yet implemented and suggests using A2C or implementing the trainer. The function performs no training work and returns None.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::load_config",
+    "entity_type": "functions",
+    "description": "Opens the given file path for reading and parses its contents as YAML using yaml.safe_load, returning the resulting Python object (typically a dict) representing the configuration. It performs no additional validation or error handling.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::main",
+    "entity_type": "functions",
+    "description": "This is the program entry point that parses command-line arguments, loads a method-specific YAML configuration, prepares a results directory and logging, validates a FEMM install path, and dispatches execution to one of three RL training routines (a2c, ppo, or dqn). Behavior details: it requires --method (choices: a2c, ppo, dqn), accepts optional --config (path to a custom config file), --results-dir, and --verbose. If --config is omitted it uses config_{method}.yaml. It aborts with an error if the config file does not exist or fails to load. It creates a timestamped results folder (unless overridden), initializes logging to a file (results_dir/main.log) and console (DEBUG if --verbose else config log level), warns if the configured FEMM path is missing, then calls run_a2c/run_ppo/run_dqn accordingly. It handles KeyboardInterrupt and other exceptions (logging errors and exiting on failure), prints summary information and paths to results, logs completion, and returns no value.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::run_ppo",
+    "entity_type": "functions",
+    "description": "run_ppo is a placeholder function intended to start PPO training. In its current implementation it only prints status messages: a startup message \"🚀 Starting PPO (Proximal Policy Optimization) training...\", followed by two messages indicating the PPO trainer is not implemented and suggesting to use A2C or implement the PPO trainer. The function accepts a config (dict) and results_dir (Path) parameter but does not use them and returns None.",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "main::unknown",
+    "entity_type": "functions",
+    "description": "Runs a Proximal Policy Optimization (PPO) experiment using the provided configuration and output directory. The function accepts a configuration dictionary (hyperparameters, environment and training options) and a Path for where to write experiment artifacts. It is responsible for setting up the environment and policy/agent, executing the PPO training and evaluation loop, logging metrics and progress, and saving checkpoints and final results into results_dir (typically returns None).",
+    "source_id": "main"
+  },
+  {
+    "entity_name": "agent::ProbabilityDistribution",
+    "entity_type": "classs",
+    "description": "A small tf.keras.Model subclass that implements stochastic categorical action sampling. Its call(logits) method treats the input as logits over discrete actions, draws one sample per batch row via tf.random.categorical(logits, 1), and removes the singleton trailing dimension with tf.squeeze. The result is a 1-D tensor of sampled action indices (one index per batch entry, typically dtype int64). Expects logits shaped [batch_size, num_actions] and performs nondeterministic sampling.",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CModel",
+    "entity_type": "classs",
+    "description": "A2CModel is a TensorFlow Keras Model implementing an Advantage Actor-Critic (A2C) network with a small convolutional feature extractor and separate actor and critic heads. On construction it builds two Conv2D layers (parameters taken from the provided config: filter_no, kernel_size, strides), a flattening layer, per-head dense hidden layers (actor_hidden and critic_hidden using config['hidden_size']), and two output heads: policy_head (num_actions logits) and value_head (single scalar value). The call(inputs) method converts inputs to a float32 tensor, runs them through the conv layers and flatten, splits into actor and critic paths, and returns (policy_logits, value_estimates) where policy_logits has shape (batch, num_actions) and value_estimates has shape (batch, 1). The action_value(observation) helper prepares a single observation (adds a batch dim if needed), runs model prediction, samples an action via a ProbabilityDistribution instance (self.dist), and returns the sampled action and the value estimate with singleton dimensions squeezed. The model is named 'a2c_model' and logs via a module logger.",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CAgent",
+    "entity_type": "classs",
+    "description": "A2CAgent implements an Advantage Actor-Critic (A2C) agent wrapper around a TensorFlow/Keras model (A2CModel). It stores training hyperparameters (gamma, entropy coefficient, value coefficient, learning rate) from a config, builds and compiles the model with RMSprop and two custom losses (policy and value). Key methods:\n- get_action(observation): returns a selected action and the model's value estimate for a single observation.\n- train_step(observations, actions, returns, advantages): runs a single train_on_batch call on the model; it packs actions and advantages together for the policy loss and returns total, policy and value loss scalars.\n- compute_returns_and_advantages(rewards, values, dones, next_value=0.0): computes discounted returns (respecting episode done flags and an optional bootstrap next state value) and advantages as returns minus baseline values.\n- _policy_loss(actions_and_advantages, logits): custom policy loss using sparse categorical cross-entropy weighted by advantages with an entropy regularization term.\n- _value_loss(returns, values): mean-squared error scaled by value_coeff.\n- save_model/load_model: save and load model weights; get_model_summary: returns the model summary.\nOverall, the class encapsulates experience-to-gradient logic for A2C: action/value inference, return/advantage computation, and batched policy/value optimization using the compiled Keras model.",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::ProbabilityDistribution::unknown",
+    "entity_type": "classs",
+    "description": "ProbabilityDistribution is a small tf.keras.Model subclass that serves as the agent's probability-distribution abstraction in the A2C implementation. It provides the interface and common behavior for concrete distribution objects produced by the policy (for example methods to sample actions, compute log-probabilities, entropy, mode, etc.). In this codebase it acts as the base/interface class that distribution implementations used by the agent should extend (wrapping the policy network outputs into a distribution object suitable for sampling and likelihood calculations).",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CModel::unknown",
+    "entity_type": "classs",
+    "description": "A2CModel is a tf.keras.Model subclass that implements the neural network used by the Advantage Actor‑Critic (A2C) agent. It encapsulates a shared feature extractor with separate actor and critic heads, and provides the forward functionality to map environment observations to policy outputs (logits or action probabilities) and a scalar state‑value estimate. The model is used by the agent for action selection, value prediction, and computing the actor/critic losses during training.",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CAgent::unknown",
+    "entity_type": "classs",
+    "description": "No implementation text is available for this entity in the provided data (the extracted code is listed as \"unknown\" at the given location). Because the source for A2CAgent::unknown was not included, I cannot determine its behavior or purpose from the actual implementation. If you provide the relevant lines or the full class definition from src/a2c/agent.py (around the reported location), I can produce a precise description. (If you intended the A2CAgent class itself: typically it implements an Advantage Actor-Critic agent—managing policy/value networks, action selection, loss computation, optimization steps, and save/load utilities—but this is a general expectation, not a description of the missing implementation.)",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CAgent::train_step",
+    "entity_type": "functions",
+    "description": "Performs one training update for the A2C agent. Given batches of observations, actions, discounted returns and advantage estimates (all numpy arrays), it concatenates each action with its corresponding advantage into a two-column target array, then calls the agent's model.train_on_batch with the observations as input and a two-element target list [actions_and_advantages, returns] (policy and value targets). It expects train_on_batch to return [total_loss, policy_loss, value_loss] and returns these as a dict mapping 'total_loss', 'policy_loss' and 'value_loss' to the corresponding float values.",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CAgent::_policy_loss",
+    "entity_type": "functions",
+    "description": "Computes the A2C policy loss with entropy regularization. The method expects a single tensor actions_and_advantages whose last dimension concatenates actions and their corresponding advantages; it splits this tensor into actions and advantages (equal halves) and casts actions to int32. It then computes a weighted sparse categorical cross-entropy (negative log-probability) of the taken actions under the policy logits using the advantages as sample weights (policy_loss). Entropy is estimated by calling categorical_crossentropy with the logits passed as both label and prediction (from_logits=True), and the final returned loss is policy_loss minus entropy_coeff times that entropy term (the subtraction increases entropy because the optimizer minimizes the returned value). The returned tensor is the combined policy loss used for optimization.",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CAgent::save_model",
+    "entity_type": "functions",
+    "description": "Saves the agent's neural network weights to the given file path. It calls self.model.save_weights(filepath) and then writes an informational log entry (via self.logger.info) indicating the file path where the model was saved.",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::ProbabilityDistribution::call",
+    "entity_type": "functions",
+    "description": "Method of ProbabilityDistribution that samples categorical actions from provided logits using TensorFlow. Given logits (unnormalized log-probabilities) of shape [..., num_classes], it draws one sample per batch with tf.random.categorical(logits, 1) and removes the trailing sample dimension via tf.squeeze(..., axis=-1). The result is a tensor of integer class indices (dtype int64) with shape [...] (e.g. [batch_size] for a 2-D input).",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CAgent::__init__",
+    "entity_type": "functions",
+    "description": "Constructor for the A2CAgent that initializes the agent from a configuration dictionary. It stores the config and a module logger, reads training hyperparameters (gamma, entropy_coefficient, value_coefficient, learning_rate) from config['training'], and the action dimension from config['environment']. It creates an A2CModel using the provided model config and number of actions, compiles it with an RMSprop optimizer (using the configured learning rate) and two custom losses (self._policy_loss and self._value_loss), and logs that the agent was initialized.",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CModel::__init__",
+    "entity_type": "functions",
+    "description": "Initializes an A2C neural network model instance. It stores the number of actions and model configuration, calls the superclass initializer with the name 'a2c_model', and constructs the network submodules: two convolutional layers (conv1 and conv2) for feature extraction, a flatten layer, separate dense hidden layers for the actor and critic (actor_hidden and critic_hidden), and output heads for state value (value_head) and policy logits (policy_head). Layer sizes, kernel sizes, stride and other hyperparameters are taken from the provided config dictionary (expects keys like 'filter_no', 'kernel_size', 'strides', and 'hidden_size'). It also creates a ProbabilityDistribution object for sampling actions and sets up a logger for the module.",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CModel::action_value",
+    "entity_type": "functions",
+    "description": "Computes an action and a value estimate for a single environment observation. If the given observation has shape (H,W,C) it adds a leading batch dimension, then calls self.predict(observation) to obtain policy logits and the value estimate. It uses self.dist.predict(logits) to produce an action from the logits. Finally it removes the extra singleton dimension(s) by squeezing the last axis from both the action and value and returns the tuple (action, value_estimate).",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CModel::call",
+    "entity_type": "functions",
+    "description": "A TensorFlow Keras-style forward method for an Advantage Actor-Critic model. It converts the input to a tf.float32 tensor (expected shape [batch, channels, height, width]), runs a small convolutional feature extractor (conv1 -> conv2 -> flatten), then splits into two separate branches: actor_hidden for the policy and critic_hidden for the value. The actor branch is fed to policy_head to produce policy logits (for the action distribution) and the critic branch is fed to value_head to produce value estimates. Returns a tuple (policy_logits, value_estimates).",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CAgent::get_action",
+    "entity_type": "functions",
+    "description": "Calls the agent's model to obtain a selected action and a value estimate for a given observation. It accepts a NumPy ndarray observation, invokes self.model.action_value(observation), and returns the action cast to int and the value cast to float as a (action, value_estimate) tuple (the action typically being a discrete action index and the value a state-value estimate).",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CAgent::compute_returns_and_advantages",
+    "entity_type": "functions",
+    "description": "Given sequences of rewards, value estimates and done flags (numpy arrays) and an optional next-state value, this method computes time-discounted returns and simple advantages. It allocates float32 arrays for returns and advantages, bootstraps the final return with next_value when the final step is not terminal, then iterates backward to compute returns[t] = rewards[t] + gamma * returns[t+1] * (1 - dones[t]). Advantages are computed as returns - values. The function preserves input shapes, uses the agent's gamma, treats dones as episode boundaries (preventing bootstrapping past terminals), and implements plain Monte‑Carlo/TD-style returns (no GAE or lambda).",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CAgent::_value_loss",
+    "entity_type": "functions",
+    "description": "Instance method that computes the critic (value-function) loss for the A2C agent. It calculates the mean squared error between the target returns and the predicted values using kls.mean_squared_error, then scales that MSE by the agent's value_coeff. The method returns the resulting loss tensor (used as the value loss term in training).",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CAgent::load_model",
+    "entity_type": "functions",
+    "description": "A method of the A2CAgent class that loads saved model weights from the provided filepath. It calls self.model.load_weights(filepath) to restore the weights and writes an informational log entry confirming the load. The method takes a single string argument (filepath) and does not return a value; any exceptions from load_weights will propagate.",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "agent::A2CAgent::get_model_summary",
+    "entity_type": "functions",
+    "description": "Calls and returns the agent's model.summary() method to obtain the model architecture summary. In practice this invokes the underlying model's summary (e.g., a Keras model), which typically prints the layer/parameter overview to stdout and may return None or a string depending on the model implementation.",
+    "source_id": "src/a2c/agent"
+  },
+  {
+    "entity_name": "trainer::A2CTrainer",
+    "entity_type": "classs",
+    "description": "A2CTrainer is a training manager for an Advantage Actor-Critic (A2C) agent. It is initialized with a configuration dictionary and a results directory, sets up logging, creates a CcoreFemmEnv environment and an A2CAgent, and configures training parameters (max episodes/updates, batch size, evaluation and save frequencies). The train() method runs the main loop: it repeatedly collects experience batches (_collect_batch), trains the agent on those batches (_train_agent), logs episode-level metrics, periodically evaluates the agent in a separate evaluation environment (_evaluate_agent), and saves model checkpoints. Collected batch data includes observations, actions, rewards, values, dones, next value and terminal info used to compute returns and advantages for training. The trainer accumulates episode rewards/lengths, per-update training metrics and evaluation results, compiles a final results dictionary (_compile_results), serializes it to JSON (_save_results using _make_serializable), and exposes close() to clean up the environment. In short, this class orchestrates experience collection, agent training, evaluation, checkpointing, logging and result serialization for an A2C workflow.",
+    "source_id": "src/a2c/trainer"
+  },
+  {
+    "entity_name": "trainer::A2CTrainer::unknown",
+    "entity_type": "classs",
+    "description": "A2CTrainer is a class that encapsulates the training logic for an Advantage Actor‑Critic (A2C) reinforcement‑learning agent. It typically manages the actor (policy) and critic (value) networks and their optimizers, interacts with the environment to collect rollouts/trajectories for a configured number of steps, computes discounted returns and advantages, forms the policy (actor) and value (critic) losses (including entropy regularization), performs gradient updates (optionally with gradient clipping), and provides utilities for logging, evaluation and checkpointing. The precise fields, hyperparameters (e.g. gamma, entropy coeff, value coeff, n_steps) and method names (e.g. train, collect_rollout, compute_returns_and_advantages, update, save/load) depend on the concrete implementation; I cannot read the source file provided, so this description is an inferred summary of the class’ intended responsibilities rather than a line‑by‑line extraction.",
+    "source_id": "src/a2c/trainer"
+  },
+  {
+    "entity_name": "trainer::A2CTrainer::_train_agent",
+    "entity_type": "functions",
+    "description": "Trains the A2C agent on a single collected experience batch. It expects batch_data to contain keys 'rewards', 'values', 'dones', 'next_value', 'observations', and 'actions'. The method computes returns and advantages via self.agent.compute_returns_and_advantages(rewards, values, dones, next_value), calls self.agent.train_step(observations, actions, returns, advantages) to perform the update, then augments the returned training metrics with aggregated statistics ('mean_reward', 'mean_value', 'mean_advantage') and 'batch_size' (number of observations). Returns the metrics dictionary (Dict[str, float]).",
+    "source_id": "src/a2c/trainer"
+  },
+  {
+    "entity_name": "trainer::A2CTrainer::train",
+    "entity_type": "functions",
+    "description": "The train method is the main A2C training loop. It initializes the environment and then repeatedly collects experience batches (via _collect_batch), trains the agent on each non-empty batch (via _train_agent), and tracks update and episode counts. When a batch ends an episode it logs and records episode reward and length and resets the environment; otherwise it continues from the next observation. Periodically (every play_interval updates) it runs evaluation (via _evaluate_agent) and appends results, and it checkpoints the model every save_frequency episodes (via _save_checkpoint). After reaching the episode or update limits it runs a final evaluation, compiles and saves results (via _compile_results and _save_results), logs total training time, and returns a dictionary of training results and metrics. The method produces side effects (logging, appending metrics, saving checkpoints/results) and depends on instance attributes such as env, logger, max_episodes, max_updates, play_interval, and save_frequency.",
+    "source_id": "src/a2c/trainer"
+  },
+  {
+    "entity_name": "trainer::A2CTrainer::_save_checkpoint",
+    "entity_type": "functions",
+    "description": "Private helper that saves the agent model to a checkpoint file. It ensures a \"checkpoints\" subdirectory exists under self.results_dir, builds a filename using the provided episode and update numbers (model_ep{episode}_up{update}.h5), calls self.agent.save_model with the checkpoint path as a string, and logs an info message. The method does not return a value.",
+    "source_id": "src/a2c/trainer"
+  },
+  {
+    "entity_name": "trainer::A2CTrainer::_save_results",
+    "entity_type": "functions",
+    "description": "Writes the provided training results dictionary to a JSON file named 'training_results.json' inside the trainer's results_dir. Before saving it calls the instance method _make_serializable to convert non-JSON-serializable objects (e.g., NumPy arrays) into serializable forms, then opens/overwrites the file and dumps the data with indentation (json.dump(..., indent=2)). After writing, it logs an informational message with the file path. The method has no return value.",
+    "source_id": "src/a2c/trainer"
+  },
+  {
+    "entity_name": "trainer::A2CTrainer::__init__",
+    "entity_type": "functions",
+    "description": "Constructor for the A2CTrainer class. It accepts a configuration dictionary and a Path for result storage, ensures the results directory exists, and sets up logging to both a file (results_dir/training.log) and the console using the configured log level. It initializes the environment (CcoreFemmEnv) and the A2C agent (A2CAgent) using values from the config, reads and stores key training parameters (max_episodes, max_updates, batch_size, play_interval, save_frequency), and prepares containers for tracking metrics (episode_rewards, episode_lengths, training_metrics, evaluation_results). Finally, it logs that the trainer has been initialized.",
+    "source_id": "src/a2c/trainer"
+  },
+  {
+    "entity_name": "trainer::A2CTrainer::_collect_batch",
+    "entity_type": "functions",
+    "description": "Collects a batch of environment interaction starting from the provided initial_obs. The method repeatedly queries self.agent.get_action(obs) to obtain an action and the estimated state value, appends the current observation (obs.copy()), action and value, steps the environment (self.env.step(action)) and records the reward and done flag until it has gathered self.batch_size transitions or an episode terminates. After the loop it obtains next_value by calling the agent on the terminal or last observation (0.0 if the episode ended) and returns a dictionary containing numpy arrays of observations, actions, rewards, values and dones, plus next_value, next_obs, episode_finished, and an iron_count extracted from the last info dict (or 0 if no observations were collected). The collected next_value is intended for advantage/return computation.",
+    "source_id": "src/a2c/trainer"
+  },
+  {
+    "entity_name": "trainer::A2CTrainer::_evaluate_agent",
+    "entity_type": "functions",
+    "description": "Runs a single evaluation episode of the trainer's agent in a fresh CcoreFemmEnv and returns summary statistics. The method constructs an evaluation environment using parameters from self.config (max_steps, env_dim, femm_path) and a render output directory under self.results_dir, sets log_level to WARNING, then resets the env and steps it until done. At each step it queries the agent for an action via self.agent.get_action(obs), accumulates total reward and step count, and optionally calls env.render() if logging.render_evaluation is enabled. After the episode it closes the environment and returns a dictionary with 'reward' (total reward), 'length' (step count), and environment-provided 'net_force' and 'iron_count' (with defaults 0.0 and 0 respectively).",
+    "source_id": "src/a2c/trainer"
+  },
+  {
+    "entity_name": "trainer::A2CTrainer::_compile_results",
+    "entity_type": "functions",
+    "description": "Gathers and returns a summary dictionary of training run results. Given training_time (float), episodes (int) and updates (int), it packages those values together with the trainer instance’s stored histories and configuration (self.episode_rewards, self.episode_lengths, self.training_metrics, self.evaluation_results, self.config) and adds a final_performance sub-dictionary containing: mean_reward_last_10 (mean of the last 10 episode rewards, or mean of all rewards if fewer than 10), mean_length_last_10 (analogous for episode lengths), best_reward (max reward or 0.0 if no rewards), and final_evaluation (the last evaluation result or an empty dict). The function returns this aggregated Dict[str, Any]. Note: computing means on empty reward/length lists will yield numpy’s NaN.",
+    "source_id": "src/a2c/trainer"
+  },
+  {
+    "entity_name": "trainer::A2CTrainer::_make_serializable",
+    "entity_type": "functions",
+    "description": "Recursively converts common non-JSON-serializable objects (numpy arrays and numpy scalar types) into JSON-compatible Python primitives. If obj is a numpy.ndarray it returns obj.tolist(); if a numpy.integer or numpy.floating it casts to int or float respectively; if a dict or list it recursively processes each value/item. All other objects are returned unchanged. Intended to prepare nested structures for JSON serialization.",
+    "source_id": "src/a2c/trainer"
+  },
+  {
+    "entity_name": "trainer::A2CTrainer::close",
+    "entity_type": "functions",
+    "description": "Method of A2CTrainer that cleans up resources by closing the trainer's environment (calls self.env.close()) and writes an informational log entry \"Trainer closed\". It takes no parameters and returns nothing.",
+    "source_id": "src/a2c/trainer"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv",
+    "entity_type": "classs",
+    "description": "CcoreFemmEnv is a reinforcement-learning environment that models topology optimization of a C‑core electromagnetic actuator using the FEMM finite‑element engine. The environment represents the problem as a 2D discrete grid of material IDs (air, iron, copper, boundary, pointer) and exposes standard gym‑style methods: reset() to initialize the grid and FEMM geometry, step(action) to move a design pointer and place iron material (worm‑style 3x3 placement), and render()/save_frame() to persist visualizations. Actions move the pointer (with collision checks against boundaries and coils); invalid moves incur a penalty. Rewards are computed by launching FEMM, updating block materials according to the grid, running a magnetostatic analysis, reading B‑field samples in the armature and a net force integral, and returning an average armature B magnitude (scaled) as the reward. The class maintains histories of states, actions, rewards, forces and B‑field distributions, supports a random horizontal flip augmentation for observations, and enforces termination by max steps or exceeding a maximum iron count. Utility methods handle geometry creation (coils, armature, boundaries), updating FEMM materials for changed cells, calculating B‑field distributions for observations, and cleaning up the FEMM process. Properties action_space and observation_space return configured action and observation sizes.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::unknown",
+    "entity_type": "classs",
+    "description": "CcoreFemmEnv is a Gym-style environment class that wraps and manages the FEMM (Finite Element Method Magnetics) core simulation for use in reinforcement learning experiments. It encapsulates control of the FEMM solver and simulation state, exposes action and observation spaces, implements the RL lifecycle (running episodes, taking actions, computing observations and rewards, detecting terminal conditions and resetting), and handles configuration, resource startup/shutdown and integration with the underlying FEMM backend. In short, it provides a reusable environment interface that lets an RL agent interact with FEMM simulations as episodic tasks.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::_execute_action",
+    "entity_type": "functions",
+    "description": "Executes a single discrete movement action for the environment agent and returns the resulting state array plus an integer issue code. The method:\n- Copies the given numpy state array.\n- Looks up the action displacement (dx, dy) from ACTIONS[action] and computes a candidate new position from the environment attributes posR and posC.\n- Validates the candidate position: if it goes outside env_dim it returns the unchanged state and code 3 (out of bounds); if the target cell contains MATERIAL_IDS['boundary'] or MATERIAL_IDS['copper'] it returns the unchanged state and code 2 (collision).\n- On success, updates the internal position (posR, posC), paints a 3×3 block centered on the new position with MATERIAL_IDS['iron'] (clipped at edges), sets the center cell to MATERIAL_IDS['pointer'], and returns the modified state with code 0 (success).\n\nThe function therefore enforces boundary and obstacle collisions, implements worm-like (3×3) placement of material, and encodes outcomes via integer issue codes.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::close",
+    "entity_type": "functions",
+    "description": "Attempts to clean up the FEMM environment by calling femm.closefemm(); any exceptions raised during that call are silently ignored. After the attempt it logs an informational message \"Environment closed\". The method takes no parameters and returns None.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::_calculate_reward",
+    "entity_type": "functions",
+    "description": "Opens a FEMM session and computes a scalar reward from the magnetic field in the actuator armature. Concretely, it: opens FEMM and the 'actuator2.fem' document; updates FEMM material properties using the provided state via self._update_femm_materials(state); runs mi_analyse and loads the solution; samples the magnetic flux density (B) at six armature sample points (coordinates (0.2, 27.5 + arm)) with femm.mo_getb, sums the magnitudes and converts that sum into an average B-field reward scaled by 1000 (reward = (b_sum / 6) * 1000); selects group 5 and computes a net force using femm.mo_blockintegral(19) multiplied by -10, stores it in self.net_force and appends it to self.force_history; calls self._calculate_bfield_distribution() to record the B-field distribution; and closes FEMM. If any error occurs it logs the error and returns a PENALTY value. The method has side effects on self.net_force, self.force_history and any data produced by the helper methods.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::_create_boundaries",
+    "entity_type": "functions",
+    "description": "Uses the FEMM (femm) API to create the problem domain and attach boundary conditions. Specifically, it draws an outer rectangular domain (from x=0..100, y=-100..100), places a block label at (50,0) and sets that block to the material 'Air'. It then defines a boundary property named 'neumann', selects the outer rectangle (via a slightly expanded selection box) and applies the 'neumann' segment property to those segments. Finally it selects three individual segments (via points at (95,-95), (55,95) and (55,-95)), adds a boundary property named 'dirichlet', and applies the 'dirichlet' segment property to the selected segments.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::_update_femm_materials",
+    "entity_type": "functions",
+    "description": "Method on CcoreFemmEnv that updates the FEMM model block materials to reflect the current discrete state array. It computes which grid cells changed by comparing the provided state array to the previous state in self.state_history (or, if no history exists, all cells equal to MATERIAL_IDS['iron']). For each changed cell whose value is the iron material id it selects a label at coordinates (i+0.4, j+0.4), deletes existing labels there, adds a block label, and sets the block material properties to 'Cold rolled low carbon strip steel' (using femm.mi_selectlabel, mi_deleteselectedlabels, mi_addblocklabel, and mi_setblockprop). The function returns None and has the side effect of modifying the open FEMM document; it ignores changes that are not the iron material id and depends on the external MATERIAL_IDS mapping and femm API.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::_save_frame",
+    "entity_type": "functions",
+    "description": "Instance method that saves the most recent environment state as a PNG image. If state_history is empty it returns immediately. Otherwise it extracts a fixed subarray from the latest state using self.geometry['buffer'] and column slice 5:26, normalizes the image by its maximum value, and converts it to unsigned integer format. It creates (if needed) a directory named Eps_{self.frame_idx} under self.render_path, builds a filename containing the frame index, provided step number, description string, and the last recorded reward, and writes the PNG file using imageio. The method returns None.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::__init__",
+    "entity_type": "functions",
+    "description": "Constructor for the C-core FEMM environment object. It configures environment dimensions and limits (max_steps, env_dim, start_position), resolves and prepares FEMM and rendering paths (femm_path, render_path) and ensures the render directory exists, and sets up logging. It initializes episode and step tracking (frame_idx, step_count, done), empty histories for state, action, reward, force and magnetic-field traces, and current_state. It sets the design pointer position (posR, posC) and movement step size (worm_step_size). Physics-related state variables are initialized: net_force, a 15-element bfield_state vector, and 2D arrays bfield_xy and mu_state sized from env_dim and GEOMETRY['buffer']. It also sets data-augmentation controls (flip, flip_actions), copies geometry parameters (geometry), and prepares a placeholder for the FEMM document (femm_doc). Finally it logs that the environment was initialized. Default values are taken from module-level constants (e.g. MAX_STEPS, ENV_DIM, FEMM_PATH, MODEL_PATH, GEOMETRY, ACTION_FLIP) when arguments are not provided.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::reset",
+    "entity_type": "functions",
+    "description": "Resets the environment to the initial episode state and returns the initial observation (numpy array). Specifically, it increments frame_idx, zeroes step_count and done flag, clears state/action/reward/force/bfield histories, sets the agent positions (posR, posC) to start positions and worm_step_size to 3, and resets physics-related variables: net_force to 0.0, bfield_state to a zero vector of length 15, and bfield_xy and mu_state to zero arrays sized from env_dim minus geometry['buffer']. It also picks a random flip bit for data augmentation, rebuilds the geometry (_create_geometry), creates the initial_state (_create_initial_state), stores a copy of that state and a default action index 4 in histories, computes and records the initial reward (_calculate_reward), saves the first frame (_save_frame(0, \"reset\")), logs the reset, and returns the observation produced by _get_observation(initial_state).",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::_create_initial_state",
+    "entity_type": "functions",
+    "description": "Creates and returns the environment initial-state grid as a NumPy array (shape self.env_dim) encoding material IDs. The routine: (1) fills the whole grid with the boundary material ID, (2) carves out the design window region (using geometry['buffer'], 'window_length' and 'window_width') and sets that region to the air material ID, (3) places the primary copper coil using geometry['coil_start'], 'coil_width' and 'coil_length', (4) computes a mirrored coil start (coil2_start = 8 + 8 - (coil_start + coil_width)) and places the second copper coil there, and (5) places the armature region using geometry['arm_start'], 'arm_width' and 'arm_length' setting it to the iron material ID. The function returns the populated state array.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::_calculate_bfield_distribution",
+    "entity_type": "functions",
+    "description": "Queries the FEMM model to compute magnetic flux density magnitudes and stores a few derived arrays on the environment object. Specifically:\n- Fills self.bfield_state (length 15) with the magnitude sqrt(Bx^2+By^2) at 15 armature sample points located at x = row+0.5, y = 26.5 (row = 0..14) using femm.mo_getb.\n- Fills self.bfield_xy (a 2D grid whose shape is already defined on the object) with the magnitude sqrt(Bx^2+By^2) sampled at grid cell centers (x = r+0.5, y = c+0.5 for each r,c) via femm.mo_getb.\n- Computes self.bfield_dist as the sum of squared magnitudes across each row of self.bfield_xy (i.e., row-wise sum of squared B magnitudes) and rounds the result to two decimal places.\n\nSide effects: updates the attributes self.bfield_state, self.bfield_xy and self.bfield_dist and depends on the external FEMM API (femm.mo_getb).",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::render",
+    "entity_type": "functions",
+    "description": "Render the current environment state by saving a frame snapshot. If there is no recorded state (state_history is empty) it does nothing. Otherwise it calls the internal _save_frame method with the current step_count and the tag \"render\". The optional mode parameter is accepted but not used, and the method returns None.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::observation_space",
+    "entity_type": "functions",
+    "description": "Method CcoreFemmEnv.observation_space(): a simple accessor that returns the environment observation space shape. It takes no parameters and returns the constant STATE_SIZE (a tuple of integers) representing the shape/dimensions of the observation space. No side effects.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::step",
+    "entity_type": "functions",
+    "description": "Performs one simulation step in the environment for a discrete action (expected 0–7). If the environment is already finished it raises a RuntimeError. Otherwise it: increments step_count, retrieves the current state, calls _execute_action(current_state, action) to obtain a new_state and an issue code, computes a reward (calls _calculate_reward(new_state) when issue==0 or applies a PENALTY for invalid actions), appends the reward to reward_history, determines termination by calling _check_termination(new_state) and sets self.done, stores the new state and action in state_history and action_history, obtains the observation via _get_observation(new_state), builds an info dict (including step, issue, iron_count, net_force and reward), logs a debug message, and returns (observation: np.ndarray, reward: float, done: bool, info: Dict).",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::_create_coils",
+    "entity_type": "functions",
+    "description": "Creates two rectangular copper coil blocks in the FEMM model using geometry parameters from self.geometry. For each coil the method first selects a slightly inset rectangle and deletes any existing labels/nodes/segments in that area, then draws a rectangle for the coil, adds a block label at the coil center, and assigns block properties with material 'Copper' and an icoil circuit current. The left coil is placed using self.geometry['coil_start'], ['coil_length'] and ['coil_width'] and is given current -500; the right coil is placed symmetrically via coil2_start = 16 - (coil_start + coil_width) (mirrored around the center) and is given current +500.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::_check_termination",
+    "entity_type": "functions",
+    "description": "Method that determines whether an episode should terminate given the current environment state. It expects state as a numpy array of material IDs, counts how many cells equal MATERIAL_IDS['iron'], and returns True if that count exceeds MAX_IRON. It also returns True if the environment’s step_count has reached or exceeded self.max_steps. If neither condition is met it returns False.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::_create_geometry",
+    "entity_type": "functions",
+    "description": "Initializes and writes the base FEMM model for the actuator. The method opens a FEMM session and loads actuator.fem from self.femm_path, ensures required materials ('Air', 'Cold rolled low carbon strip steel', 'Copper') and a coil circuit property ('icoil') are present, clears existing labels by selecting points on a 17×35 grid, sets a default 'Air' block property and clears the selection. It then calls helper methods to create coils, the armature, and boundary geometry, zooms to natural view, saves the result as actuator2.fem, and closes FEMM. Any exception is logged and re-raised.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::_create_armature",
+    "entity_type": "functions",
+    "description": "This private method constructs the rectangular magnetic armature in the FEMM model using geometry values from self.geometry. It first selects a slightly inset rectangular area (x from 0.1 to arm_length-0.1, y from arm_start+0.1 to arm_start+arm_width-0.1) and deletes any existing labels, nodes and segments inside it. It then draws a full rectangle spanning x=0 to x=arm_length and y=arm_start to y=arm_start+arm_width, places a block label at the rectangle center (x=arm_length/2, y=(2*arm_start+arm_width)/2), and sets the block properties to use the material 'Cold rolled low carbon strip steel' with a mesh size of 0.5 and group id 5.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::_get_observation",
+    "entity_type": "functions",
+    "description": "Extracts a local design window from the provided state and returns a 2-channel observation for the RL agent. The function takes the rows from geometry['buffer'] to geometry['buffer']+15 and columns 5:27 (a 15×22 patch) from both the input state and the corresponding bfield_dist slice, stacks them as two channels (shape (2,15,22)) and returns that array. If self.flip == 1, it first applies a reflective pad along the row axis to both patches and then crops to produce an augmented (reflected/padded) 2×15×22 observation; otherwise it returns the direct stacked patches without augmentation.",
+    "source_id": "src/femm_environment/environment"
+  },
+  {
+    "entity_name": "environment::CcoreFemmEnv::action_space",
+    "entity_type": "functions",
+    "description": "Method on CcoreFemmEnv that returns the size (dimension) of the action space as an integer. It is a simple getter that returns the constant ACTION_DIM and takes no parameters.",
+    "source_id": "src/femm_environment/environment"
+  }
+]

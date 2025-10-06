@@ -34,12 +34,12 @@ load_dotenv()
 import openai
 
 # Configuration with environment variable fallbacks
-DEFAULT_PROVIDER = os.getenv("DEFAULT_LLM_PROVIDER", "openrouter")
-DEFAULT_MODEL = os.getenv("DEFAULT_LLM_MODEL", "openai/gpt-5")
+# DEFAULT_MODEL = "openai/gpt-5"
+DEFAULT_MODEL = "openai/gpt-5-mini"
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma3:4b")
+OLLAMA_HOST = "http://localhost:11434"
+OLLAMA_MODEL = "gemma3:4b"
 
 # Structured output schemas
 ENTITY_SCHEMA = {
@@ -150,7 +150,10 @@ Provide a clear, concise description of what this entity does."""
             )
             # Parse JSON response
             result = json.loads(response.choices[0].message.content)
-            return result["description"]
+            description = result["description"]
+            # Sanitize for XML compatibility
+            description = description.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            return description
         else:
             # Use regular text response
             response = self.client.chat.completions.create(
@@ -187,7 +190,10 @@ Provide a clear description and a confidence weight (0.0-1.0)."""
             )
             # Parse JSON response
             result = json.loads(response.choices[0].message.content)
-            return result["description"], result["weight"]
+            description = result["description"]
+            # Sanitize for XML compatibility
+            description = description.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            return description, result["weight"]
         else:
             # Use regular text response with parsing
             response = self.client.chat.completions.create(
@@ -245,8 +251,8 @@ def main():
                        help="Output directory for KG files (default: KG_code/KG_Chp2_FieldDistribution)")
     parser.add_argument("--graph-name", default="graph.json",
                        help="Output graph filename (default: graph.json)")
-    parser.add_argument("--provider", choices=["openrouter", "ollama"], default=DEFAULT_PROVIDER,
-                       help=f"LLM provider (default: {DEFAULT_PROVIDER})")
+    parser.add_argument("--provider", choices=["openrouter", "ollama"], default="openrouter",
+                       help=f"LLM provider (default: openrouter)")
     parser.add_argument("--structured-outputs", action="store_true", default=True,
                        help="Use structured outputs for cleaner responses (default: True)")
     parser.add_argument("--include-source-code", action="store_true", default=False,
