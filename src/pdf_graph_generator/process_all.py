@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from lightrag.utils import EmbeddingFunc
 
-from src.pdf_graph_generator.graph_builder import GraphBuilder
+from .graph_builder import GraphBuilder
 
 load_dotenv()
 

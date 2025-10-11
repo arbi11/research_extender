@@ -9,6 +9,56 @@ class GraphBuilder:
         self.parser = os.getenv("PDF_KG_PARSER", "mineru")
         self.enable_math_analysis = os.getenv("PDF_KG_ENABLE_MATH", "true").lower() == "true"
         self.lightrag = None
+        self.llm_func = None
+        self.embedding_func = None
+
+    async def _vision_model_func(self, prompt, system_prompt=None, image_data=None, **kwargs):
+        """Vision model function for processing images with qwen3-vl-30b-a3b-thinking"""
+        if not image_data:
+            # Fallback to regular text processing when no image
+            if self.llm_func:
+                return await self.llm_func(prompt, system_prompt, **kwargs)
+            return "No image data provided"
+
+        # Use OpenRouter API for vision model
+        import httpx
+
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+        model = "qwen/qwen3-vl-30b-a3b-thinking"
+
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+
+        # Construct message with image
+        content = [
+            {"type": "text", "text": prompt},
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{image_data}"
+                }
+            }
+        ]
+        messages.append({"role": "user", "content": content})
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": model,
+                    "messages": messages
+                },
+                timeout=60.0
+            )
+            response.raise_for_status()
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
 
     async def _process_pdf(self, pdf_file: str):
         """Process PDF document using RAGAnything"""
@@ -17,13 +67,16 @@ class GraphBuilder:
         rag_config = RAGAnythingConfig(
             parser=self.parser,
             enable_equation_processing=self.enable_math_analysis,
-            enable_table_processing=True,
-            enable_image_processing=False,
+            enable_table_processing=False,
+            enable_image_processing=True,
         )
 
         rag_anything = RAGAnything(
             lightrag=self.lightrag,
             config=rag_config,
+            llm_model_func=self.llm_func,
+            embedding_func=self.embedding_func,
+            vision_model_func=self._vision_model_func,
         )
 
         # Parse document
@@ -41,6 +94,10 @@ class GraphBuilder:
 
     async def build(self, pdf_file: str, llm_func, embedding_func):
         os.makedirs(self.working_dir, exist_ok=True)
+
+        # Store the function references for RAGAnything
+        self.llm_func = llm_func
+        self.embedding_func = embedding_func
 
         self.lightrag = LightRAG(
             working_dir=self.working_dir,
