@@ -1,3 +1,7 @@
+"""
+python -m src.pdf_graph_generator.main "Khan_Arbaaz_ECE_Thesis.pdf" --output "lightrag_pdf_index"
+"""
+
 import asyncio
 import os
 from pathlib import Path
@@ -5,13 +9,13 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from lightrag.utils import EmbeddingFunc
 
-from .config import Config
 from .graph_builder import GraphBuilder
 
 load_dotenv()
 
-async def generate_knowledge_graph(latex_file: str, working_dir: str = None):
-    config = Config(working_dir=working_dir or "./latex_kg_output")
+async def generate_knowledge_graph(pdf_file: str, working_dir: str = None):
+    # Use provided working_dir or environment variable or default
+    final_working_dir = working_dir or os.getenv("PDF_KG_WORKING_DIR", "./pdf_kg_output")
 
     # Model functions
     api_key = os.getenv("OPENROUTER_API_KEY")
@@ -32,6 +36,12 @@ async def generate_knowledge_graph(latex_file: str, working_dir: str = None):
         )
         return response.choices[0].message.content
 
+    # Embedding configuration from environment
+    ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+    embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text:latest")
+    embedding_dim = int(os.getenv("OLLAMA_EMBEDDING_DIM", "768"))
+    embedding_max_tokens = int(os.getenv("OLLAMA_EMBEDDING_MAX_TOKENS", "8192"))
+
     async def embedding_func(texts):
         # Use Ollama for embeddings
         import httpx
@@ -40,9 +50,9 @@ async def generate_knowledge_graph(latex_file: str, working_dir: str = None):
         for text in texts:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    "http://localhost:11434/api/embeddings",
+                    f"{ollama_host}/api/embeddings",
                     json={
-                        "model": "nomic-embed-text:latest",
+                        "model": embedding_model,
                         "prompt": text
                     }
                 )
@@ -52,14 +62,14 @@ async def generate_knowledge_graph(latex_file: str, working_dir: str = None):
         return embeddings
 
     embedding_wrapper = EmbeddingFunc(
-        embedding_dim=768,
-        max_token_size=8192,
+        embedding_dim=embedding_dim,
+        max_token_size=embedding_max_tokens,
         func=embedding_func
     )
 
     # Build graph
-    builder = GraphBuilder(config)
-    result = await builder.build(latex_file, llm_func, embedding_wrapper)
+    builder = GraphBuilder(final_working_dir)
+    result = await builder.build(pdf_file, llm_func, embedding_wrapper)
 
     return builder, result
 
@@ -67,21 +77,25 @@ async def generate_knowledge_graph(latex_file: str, working_dir: str = None):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="LaTeX Knowledge Graph Generator")
-    parser.add_argument("latex_file", help="Path to LaTeX file")
-    parser.add_argument("--output", "-o", default="./latex_kg_output", help="Output directory")
+    parser = argparse.ArgumentParser(description="PDF Knowledge Graph Generator")
+    parser.add_argument("pdf_filename", help="Name of PDF file in thesis_pdf/ directory")
+    parser.add_argument("--output", "-o", default="lightrag_pdf_index", help="Output directory name in root")
     parser.add_argument("--query", "-q", help="Query the graph after building")
 
     args = parser.parse_args()
 
     async def main():
-        latex_path = Path(args.latex_file)
-        if not latex_path.exists():
-            print(f"Error: LaTeX file not found: {args.latex_file}")
+        # Construct paths relative to project root
+        pdf_file = Path(__file__).parents[2].absolute() / "thesis_pdf" / args.pdf_filename
+        output_dir = Path(__file__).parents[2].absolute() / args.output
+
+        if not pdf_file.exists():
+            print(f"Error: PDF file not found: {pdf_file}")
+            print(f"Please ensure '{args.pdf_filename}' exists in the 'thesis_pdf/' directory")
             return 1
 
-        print(f"Building knowledge graph from {args.latex_file}...")
-        builder, result = await generate_knowledge_graph(str(latex_path), args.output)
+        print(f"Building knowledge graph from {args.pdf_filename}...")
+        builder, result = await generate_knowledge_graph(str(pdf_file), str(output_dir))
 
         print(f"\n✅ Knowledge graph built successfully!")
         print(f"📊 Statistics:")

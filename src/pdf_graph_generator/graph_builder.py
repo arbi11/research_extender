@@ -1,20 +1,49 @@
 import os
 from lightrag import LightRAG
 from lightrag.kg.shared_storage import initialize_pipeline_status
-from .processor import LatexProcessor
-from .config import Config
+from .relationship_extractor import extract_mathematical_relationships
 
 class GraphBuilder:
-    def __init__(self, config: Config):
-        self.config = config
-        self.processor = LatexProcessor(config)
+    def __init__(self, working_dir: str = None):
+        self.working_dir = working_dir or os.getenv("PDF_KG_WORKING_DIR", "./pdf_kg_output")
+        self.parser = os.getenv("PDF_KG_PARSER", "mineru")
+        self.enable_math_analysis = os.getenv("PDF_KG_ENABLE_MATH", "true").lower() == "true"
         self.lightrag = None
 
-    async def build(self, latex_file: str, llm_func, embedding_func):
-        os.makedirs(self.config.working_dir, exist_ok=True)
+    async def _process_pdf(self, pdf_file: str):
+        """Process PDF document using RAGAnything"""
+        from raganything import RAGAnything, RAGAnythingConfig
+
+        rag_config = RAGAnythingConfig(
+            parser=self.parser,
+            enable_equation_processing=self.enable_math_analysis,
+            enable_table_processing=True,
+            enable_image_processing=False,
+        )
+
+        rag_anything = RAGAnything(
+            lightrag=self.lightrag,
+            config=rag_config,
+        )
+
+        # Parse document
+        parsed = await rag_anything.process_document_complete(pdf_file)
+
+        # Extract mathematical relationships
+        relationships = extract_mathematical_relationships(parsed)
+
+        return {
+            'sections': parsed.get('sections', []),
+            'equations': parsed.get('equations', []),
+            'relationships': relationships,
+            'raw_parsed': parsed
+        }
+
+    async def build(self, pdf_file: str, llm_func, embedding_func):
+        os.makedirs(self.working_dir, exist_ok=True)
 
         self.lightrag = LightRAG(
-            working_dir=self.config.working_dir,
+            working_dir=self.working_dir,
             llm_model_func=llm_func,
             embedding_func=embedding_func,
         )
@@ -22,8 +51,8 @@ class GraphBuilder:
         await self.lightrag.initialize_storages()
         await initialize_pipeline_status()
 
-        # Process LaTeX
-        processed = await self.processor.process(latex_file, self.lightrag)
+        # Process PDF document
+        processed = await self._process_pdf(pdf_file)
 
         # Insert into graph
         content_chunks = []
@@ -53,7 +82,7 @@ class GraphBuilder:
             'total_sections': len(processed['sections']),
             'total_equations': len(processed['equations']),
             'total_relationships': len(processed['relationships']),
-            'graph_directory': self.config.working_dir,
+            'graph_directory': self.working_dir,
             'relationship_types': list(set(rel['type'] for rel in processed['relationships']))
         }
 
