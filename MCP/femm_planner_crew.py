@@ -30,11 +30,30 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-def get_llm_client():
-    """Initialize and return the LLM client"""
+def get_llm_client(task_type="lightweight"):
+    """
+    Initialize and return the appropriate LLM client based on task type
+    
+    Args:
+        task_type: "lightweight" or "deep_thinking"
+    """
+    model_configs = {
+        "lightweight": {
+            "model": "z-ai/glm-4.5-air",
+            "description": "Fast, efficient model for quick tasks"
+        },
+        "deep_thinking": {
+            "model": "z-ai/glm-4.6", 
+            "description": "Advanced reasoning for complex analysis"
+        }
+    }
+    
+    config = model_configs.get(task_type, model_configs["lightweight"])
+    
     return LLM(
-        model="ollama/qwen3:8b",
-        base_url="http://localhost:11434"
+        model=config["model"],
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.getenv("OPENROUTER_API_KEY")
     )
 
 class FEMMValidatorTool(BaseTool):
@@ -137,10 +156,7 @@ def create_femm_planning_crew():
     femm_validator = FEMMValidatorTool()
     library_validator = LibraryValidatorTool()
 
-    # Get LLM client
-    llm = get_llm_client()
-
-    # Agent 1: Paper Deep Analyzer
+    # Agent 1: Paper Deep Analyzer - Deep thinking for complex analysis
     paper_analyzer = Agent(
         role="Research Paper Deep Analyst",
         goal="Perform in-depth analysis of selected research paper for FEMM implementation",
@@ -149,11 +165,11 @@ def create_femm_planning_crew():
         and identify specific components that can be implemented in FEMM.""",
         verbose=True,
         allow_delegation=False,
-        llm=llm,
+        llm=get_llm_client("deep_thinking"),  # Deep thinking for paper analysis
         max_iter=3,  # Guardrail: limit iterations
     )
 
-    # Agent 2: FEMM Geometry Planner
+    # Agent 2: FEMM Geometry Planner - Deep thinking for design
     femm_geometry_planner = Agent(
         role="Electromagnetic Design Specialist",
         goal="Design FEMM geometry, materials, and boundary conditions based on research paper",
@@ -163,11 +179,11 @@ def create_femm_planning_crew():
         verbose=True,
         allow_delegation=False,
         tools=[femm_validator],
-        llm=llm,
+        llm=get_llm_client("deep_thinking"),  # Deep thinking for geometry design
         max_iter=4,  # Guardrail: limit iterations
     )
 
-    # Agent 3: ML Architecture Designer
+    # Agent 3: ML Architecture Designer - Lightweight for architecture design
     ml_architect = Agent(
         role="Machine Learning Engineer",
         goal="Design neural network architecture and data pipeline for the research implementation",
@@ -177,11 +193,11 @@ def create_femm_planning_crew():
         verbose=True,
         allow_delegation=False,
         tools=[library_validator],
-        llm=llm,
+        llm=get_llm_client("lightweight"),  # Lightweight for ML architecture
         max_iter=3,  # Guardrail: limit iterations
     )
 
-    # Agent 4: Integration Architect
+    # Agent 4: Integration Architect - Deep thinking for complex planning
     integration_architect = Agent(
         role="Systems Integration Specialist",
         goal="Create comprehensive execution plan connecting FEMM simulation with ML training",
@@ -190,7 +206,7 @@ def create_femm_planning_crew():
         executable workflows that handle the unique challenges of FEMM+ML integration.""",
         verbose=True,
         allow_delegation=False,
-        llm=llm,
+        llm=get_llm_client("deep_thinking"),  # Deep thinking for integration planning
         max_iter=2,  # Guardrail: limit iterations
     )
 

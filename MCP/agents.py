@@ -9,11 +9,30 @@ from crewai.tools import BaseTool
 # Load environment variables (for non-LinkUp settings)
 load_dotenv()
 
-def get_llm_client():
-    """Initialize and return the LLM client"""
+def get_llm_client(task_type="lightweight"):
+    """
+    Initialize and return the appropriate LLM client based on task type
+    
+    Args:
+        task_type: "lightweight" or "deep_thinking"
+    """
+    model_configs = {
+        "lightweight": {
+            "model": "z-ai/glm-4.5-air",
+            "description": "Fast, efficient model for quick tasks"
+        },
+        "deep_thinking": {
+            "model": "z-ai/glm-4.6", 
+            "description": "Advanced reasoning for complex analysis"
+        }
+    }
+    
+    config = model_configs.get(task_type, model_configs["lightweight"])
+    
     return LLM(
-        model="ollama/qwen3:8b",
-        base_url="http://localhost:11434"
+        model=config["model"],
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.getenv("OPENROUTER_API_KEY")
     )
 
 # Define LinkUp Search Tool
@@ -57,9 +76,7 @@ def create_research_crew(query: str):
     # Initialize tools
     linkup_search_tool = LinkUpSearchTool()
 
-    # Get LLM client
-    client = get_llm_client()
-
+    # Define agents with task-specific models
     web_searcher = Agent(
         role="Web Searcher",
         goal="Find the most relevant information on the web, along with source links (urls).",
@@ -67,7 +84,7 @@ def create_research_crew(query: str):
         verbose=True,
         allow_delegation=True,
         tools=[linkup_search_tool],
-        llm=client,
+        llm=get_llm_client("lightweight"),  # Lightweight for search tasks
     )
 
     # Define the research analyst
@@ -77,7 +94,7 @@ def create_research_crew(query: str):
         backstory="An expert at analyzing information, identifying patterns, and extracting key insights. If required, can delagate the task of fact checking/verification to 'Web Searcher' only. Passes the final results to the 'Technical Writer' only.",
         verbose=True,
         allow_delegation=True,
-        llm=client,
+        llm=get_llm_client("deep_thinking"),  # Deep thinking for analysis
     )
 
     # Define the technical writer
@@ -87,7 +104,7 @@ def create_research_crew(query: str):
         backstory="An expert at communicating complex information in an accessible way.",
         verbose=True,
         allow_delegation=False,
-        llm=client,
+        llm=get_llm_client("lightweight"),  # Lightweight for writing tasks
     )
 
     # Define tasks

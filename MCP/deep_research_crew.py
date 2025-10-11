@@ -34,11 +34,30 @@ LIGHT_RAG_LATEX_DIR = "./lightrag_latex_index"
 OLLAMA_HOST = "http://localhost:11434"
 OLLAMA_EMBEDDING_MODEL = "bge-m3:latest"
 
-def get_llm_client():
-    """Initialize and return the LLM client"""
+def get_llm_client(task_type="lightweight"):
+    """
+    Initialize and return the appropriate LLM client based on task type
+    
+    Args:
+        task_type: "lightweight" or "deep_thinking"
+    """
+    model_configs = {
+        "lightweight": {
+            "model": "z-ai/glm-4.5-air",
+            "description": "Fast, efficient model for quick tasks"
+        },
+        "deep_thinking": {
+            "model": "z-ai/glm-4.6", 
+            "description": "Advanced reasoning for complex analysis"
+        }
+    }
+    
+    config = model_configs.get(task_type, model_configs["lightweight"])
+    
     return LLM(
-        model="ollama/qwen3:8b",
-        base_url="http://localhost:11434"
+        model=config["model"],
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.getenv("OPENROUTER_API_KEY")
     )
 
 class KGQueryInput(BaseModel):
@@ -73,7 +92,7 @@ class KGQueryTool(BaseTool):
             # Initialize LightRAG
             async def llm_func(prompt, **kwargs):
                 return await openai_complete_if_cache(
-                    "openai/gpt-4o-mini",
+                    "z-ai/glm-4.6",  # Using Zhipu AI model as requested
                     prompt,
                     api_key=os.getenv("OPENROUTER_API_KEY"),
                     base_url="https://openrouter.ai/api/v1",
@@ -146,10 +165,7 @@ def create_research_discovery_crew():
     kg_query_tool = KGQueryTool()
     linkup_search_tool = LinkUpSearchTool()
 
-    # Get LLM client
-    llm = get_llm_client()
-
-    # Agent 1: KG Concept Extractor
+    # Agent 1: KG Concept Extractor - Deep thinking for concept analysis
     kg_analyst = Agent(
         role="Knowledge Graph Analyst",
         goal="Extract relevant concepts from dual KG system (code + LaTeX) for the user's research query",
@@ -159,11 +175,11 @@ def create_research_discovery_crew():
         verbose=True,
         allow_delegation=False,
         tools=[kg_query_tool],
-        llm=llm,
+        llm=get_llm_client("deep_thinking"),  # Deep thinking for concept extraction
         max_iter=3,  # Guardrail: limit iterations
     )
 
-    # Agent 2: Research Paper Searcher
+    # Agent 2: Research Paper Searcher - Lightweight for search tasks
     research_searcher = Agent(
         role="Academic Research Specialist",
         goal="Find the most relevant academic papers for electromagnetic/FEMM research using deep web search",
@@ -173,11 +189,11 @@ def create_research_discovery_crew():
         verbose=True,
         allow_delegation=False,
         tools=[linkup_search_tool],
-        llm=llm,
+        llm=get_llm_client("lightweight"),  # Lightweight for search tasks
         max_iter=3,  # Guardrail: limit iterations
     )
 
-    # Agent 3: Research Options Ranker
+    # Agent 3: Research Options Ranker - Deep thinking for analysis
     research_ranker = Agent(
         role="Research Strategy Consultant",
         goal="Analyze and rank research options for FEMM implementation feasibility and impact",
@@ -186,7 +202,7 @@ def create_research_discovery_crew():
         constraints and opportunities of finite element electromagnetic simulation.""",
         verbose=True,
         allow_delegation=False,
-        llm=llm,
+        llm=get_llm_client("deep_thinking"),  # Deep thinking for ranking analysis
         max_iter=2,  # Guardrail: limit iterations
     )
 

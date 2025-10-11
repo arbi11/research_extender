@@ -1,0 +1,133 @@
+{
+  "version": "1.0",
+  "title": "Lightweight 2D Magnetostatics FEM (A_z) + DL/PINNs Hybrid",
+  "scope": {
+    "physics": "Magnetostatics, 2D/plane, A_z scalar potential; B = curl A",
+    "domains": ["C-core with air-gap", "Coils represented by impressed J_z or circuit current"],
+    "materials": ["Linear mu", "Nonlinear BH via ν(B) iteration"]
+  },
+  "modules": [
+    {
+      "name": "mesh",
+      "goal": "Minimal triangle mesh generator and IO",
+      "features": [
+        "C-core parametric geometry (outer/inner yoke, limbs, gap)",
+        "Structured block mesher + simple Delaunay for transitions",
+        "Entities: nodes [x,y], elements [n1,n2,n3, regionId], regions (material, coil tag), boundaries (Dirichlet/Neumann)"
+      ],
+      "outputs": ["nodes.npy", "elements.npy", "regions.json", "boundaries.json"]
+    },
+    {
+      "name": "materials",
+      "goal": "Reluctivity models",
+      "features": [
+        "Linear: ν = 1/μ",
+        "Nonlinear: tabulated BH -> μ(B) -> ν(B) with safe interpolation and slope limiting"
+      ]
+    },
+    {
+      "name": "assembly",
+      "goal": "Assemble K(A) and RHS f for A_z",
+      "features": [
+        "Element stiffness Ke = ∫(ν (∇N)(∇N)^T) dΩ with 1-point eval for linear triangles",
+        "Source: J_z via area-weighted load vector",
+        "Dirichlet BCs on outer boundary (A=0 or vector potential offset)",
+        "Neumann BCs (mag insulation) implicit via no-flux on boundary edges"
+      ]
+    },
+    {
+      "name": "nonlinear_solver",
+      "goal": "Handle BH nonlinearity",
+      "features": [
+        "Fixed-point or Newton-Raphson on ν(B): iterate A -> B -> ν(B) -> reassemble",
+        "Damping/line search and convergence on ||ΔA||/||A|| and energy residual",
+        "Optional PCG inner linear solve with Jacobi/ILU preconditioner"
+      ]
+    },
+    {
+      "name": "postprocess",
+      "goal": "Fields and QoIs",
+      "features": [
+        "Per-element B = [ dA/dy, -dA/dx ]",
+        "Compute |B|, energy ∫(1/2) B·H dΩ, flux in legs, inductance via W = 1/2 L I^2",
+        "Forces (optional): Maxwell stress on gap boundary segment"
+      ]
+    },
+    {
+      "name": "api",
+      "goal": "Single-call solve",
+      "features": [
+        "solve_c_core(params) -> {A_field, B_field, qois, mesh}",
+        "Grid sampling helper to map {A,B} to uniform grids for comparison with DL"
+      ]
+    },
+    {
+      "name": "dl_integration",
+      "goal": "Use your DL/PINNs + MC-dropout",
+      "features": [
+        "mc_dropout_predict(problem) -> μ(x), σ(x)",
+        "pinn_residual(problem, μ) -> r(x) for magnetostatics",
+        "QoIs from μ with uncertainty via MC aggregation"
+      ]
+    },
+    {
+      "name": "hybrid_controller",
+      "goal": "Pick DL or FEM at case level (no patching)",
+      "features": [
+        "Compute scalar scores: mean(σ), mean(r), or percentile",
+        "Decision: if score < τ -> return DL μ; else run FEM and return FEM result",
+        "Optional blend: report both with flags for audit"
+      ]
+    },
+    {
+      "name": "validation",
+      "goal": "Unit tests and benchmarks",
+      "features": [
+        "Uniform μ benchmark (no current) -> A ≈ 0",
+        "Linear material: compare against high-res reference (mesh refinement study)",
+        "C-core inductance vs gap length curve sanity check",
+        "Convergence of nonlinear loop across BH curve"
+      ]
+    }
+  ],
+  "config": {
+    "mesh": { "gap_refine": 2.0, "target_h_core": 2.0, "target_h_gap": 0.5 },
+    "solver": { "max_iters": 50, "tol_rel": 1e-6, "pcg_tol": 1e-10, "pcg_max": 2000 },
+    "nonlinear": { "method": "fixed_point", "damping": 0.5, "max_iters": 20, "tol": 1e-4 },
+    "hybrid": { "metric": "mean_sigma_weighted_with_residual", "w_u": 0.6, "w_r": 0.4, "tau": 0.05 },
+    "units": { "length": "mm", "B": "T", "H": "A/m", "A": "Wb/m" }
+  },
+  "milestones": [
+    { "id": "M1", "name": "Mesh + geometry (C-core)", "days": 3 },
+    { "id": "M2", "name": "Linear assembly + solver", "days": 3 },
+    { "id": "M3", "name": "Nonlinear BH iteration", "days": 3 },
+    { "id": "M4", "name": "Postprocess + QoIs", "days": 2 },
+    { "id": "M5", "name": "DL/PINNs UQ hook + residual", "days": 2 },
+    { "id": "M6", "name": "Hybrid controller (case-level)", "days": 1 },
+    { "id": "M7", "name": "Validation suite", "days": 2 }
+  ],
+  "interfaces": {
+    "solve_c_core": {
+      "input": {
+        "dims": ["outer_w", "inner_w", "leg_w", "gap", "height"],
+        "materials": ["core_BH", "air_mu"],
+        "coil": ["turns", "current", "region_ids"],
+        "mesh": ["h_core", "h_gap"]
+      },
+      "output": {
+        "A_node": "N×1",
+        "B_elem": "E×2 (Bx,By)",
+        "qois": { "L": "H", "flux_leg": "Wb", "energy": "J" },
+        "mesh": { "nodes": "N×2", "elements": "E×3" }
+      }
+    },
+    "predict_or_solve": {
+      "input": "same as solve_c_core",
+      "output": {
+        "field": "DL or FEM",
+        "source": "DL | FEM",
+        "uncertainty_metrics": { "mean_sigma": "float", "mean_residual": "float" }
+      }
+    }
+  }
+}
