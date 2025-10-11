@@ -20,7 +20,7 @@ async def generate_knowledge_graph(pdf_file: str, working_dir: str = None):
     # Model functions
     api_key = os.getenv("OPENROUTER_API_KEY")
     base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-    model = os.getenv("LLM_MODEL", "z-ai/glm-4.5-air:free")
+    model = os.getenv("DEFAULT_LLM_MODEL", "google/gemini-2.5-flash-lite")
 
     client = AsyncOpenAI(api_key=api_key, base_url=base_url)
 

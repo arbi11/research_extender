@@ -25,7 +25,7 @@ class GraphBuilder:
 
         api_key = os.getenv("OPENROUTER_API_KEY")
         base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-        model = "qwen/qwen3-vl-30b-a3b-thinking"
+        model = os.getenv("VISION_MODEL", "google/gemini-2.5-flash-lite")
 
         messages = []
         if system_prompt:
