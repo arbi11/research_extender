@@ -79,17 +79,23 @@ class GraphBuilder:
             vision_model_func=self._vision_model_func,
         )
 
-        # Parse document
-        parsed = await rag_anything.process_document_complete(pdf_file)
+        # Parse document first to get content structure
+        content_list, doc_id = await rag_anything.parse_document(pdf_file)
 
-        # Extract mathematical relationships
-        relationships = extract_mathematical_relationships(parsed)
+        # Extract mathematical relationships from parsed content
+        relationships = extract_mathematical_relationships({
+            'equations': [item for item in content_list if item.get('type') == 'equation'],
+            'sections': [item for item in content_list if item.get('type') == 'text']
+        })
+
+        # Process the complete document (this inserts into LightRAG but returns None)
+        await rag_anything.process_document_complete(pdf_file)
 
         return {
-            'sections': parsed.get('sections', []),
-            'equations': parsed.get('equations', []),
+            'sections': [item for item in content_list if item.get('type') == 'text'],
+            'equations': [item for item in content_list if item.get('type') == 'equation'],
             'relationships': relationships,
-            'raw_parsed': parsed
+            'raw_parsed': content_list
         }
 
     async def build(self, pdf_file: str, llm_func, embedding_func):
