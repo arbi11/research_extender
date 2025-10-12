@@ -67,7 +67,7 @@ class GraphBuilder:
         rag_config = RAGAnythingConfig(
             parser=self.parser,
             enable_equation_processing=self.enable_math_analysis,
-            enable_table_processing=False,
+            enable_table_processing=True,
             enable_image_processing=True,
         )
 
@@ -103,6 +103,7 @@ class GraphBuilder:
             working_dir=self.working_dir,
             llm_model_func=llm_func,
             embedding_func=embedding_func,
+            default_embedding_timeout=int(os.getenv("EMBEDDING_TIMEOUT", "120")),
         )
 
         await self.lightrag.initialize_storages()
