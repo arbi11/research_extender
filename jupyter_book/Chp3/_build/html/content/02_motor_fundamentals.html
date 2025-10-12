@@ -1,0 +1,1370 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Section 2: Electric Motor Fundamentals &#8212; Chapter 3: RNN-based Performance Map Prediction</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/02_motor_fundamentals';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="(3) Data Generation and Processing" href="03_data_generation.html" />
+    <link rel="prev" title="Chapter 3: RNN-based Performance Map Prediction" href="01_introduction.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="01_introduction.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 3: RNN-based Performance Map Prediction</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Section 2: Electric Motor Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_data_generation.html">(3) Data Generation and Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_rnn_fundamentals.html">(4) RNN Architecture Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_attention_mechanisms.html">(5) Attention Mechanisms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_model_implementation.html">(6) Model Implementation</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/02_motor_fundamentals.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Section 2: Electric Motor Fundamentals</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-objectives">Learning Objectives</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#motor-types-and-geometries">Motor Types and Geometries</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interior-permanent-magnet-ipm-motor">1. Interior Permanent Magnet (IPM) Motor</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fractional-slot-concentrated-winding-fscw-pm-motor">2. Fractional-Slot Concentrated Winding (FSCW) PM Motor</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-characteristics">Performance Characteristics</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#control-strategies">Control Strategies</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#maximum-torque-per-ampere-mtpa">1. Maximum Torque Per Ampere (MTPA)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flux-weakening">2. Flux Weakening</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#maximum-torque-per-volt-mtpv">3. Maximum Torque Per Volt (MTPV)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-maps">Performance Maps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#types-of-performance-maps">Types of Performance Maps</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#efficiency-map-n-t">1. Efficiency Map (η(N, T))</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#power-factor-map-pf-n-t">2. Power Factor Map (pf(N, T))</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#loss-maps">3. Loss Maps</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#thermal-maps">4. Thermal Maps</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-parameter-sensitivity">Design Parameter Sensitivity</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-design-parameters">Key Design Parameters</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ipm-motor-parameters-x1-x12">IPM Motor Parameters (X₁-X₁₂)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#fscw-motor-parameters-x1-x10">FSCW Motor Parameters (X₁-X₁₀)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sensitivity-analysis">Sensitivity Analysis</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#section-summary">Section Summary</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-takeaways-from-motor-fundamentals">🎯 Key Takeaways from Motor Fundamentals</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#practical-applications">🔧 Practical Applications</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="section-2-electric-motor-fundamentals">
+<h1>Section 2: Electric Motor Fundamentals<a class="headerlink" href="#section-2-electric-motor-fundamentals" title="Link to this heading">#</a></h1>
+<section id="learning-objectives">
+<h2>Learning Objectives<a class="headerlink" href="#learning-objectives" title="Link to this heading">#</a></h2>
+<p>After completing this section, you will understand:</p>
+<ul class="simple">
+<li><p><strong>Motor Types</strong>: Differences between IPM and FSCW permanent magnet motors</p></li>
+<li><p><strong>Control Strategies</strong>: MTPA, flux weakening, and MTPV control methods</p></li>
+<li><p><strong>Performance Characteristics</strong>: Efficiency maps, power factor maps, and operating envelopes</p></li>
+<li><p><strong>Design Parameters</strong>: Geometric variables and their impact on motor performance</p></li>
+<li><p><strong>Operating Regions</strong>: Understanding speed-torque characteristics and limitations</p></li>
+</ul>
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>This section provides the foundational knowledge of electric motors that forms the basis for performance map prediction. We focus on two main types of synchronous permanent magnet motors commonly used in electric vehicle applications.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Motor fundamentals visualization</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">patches</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rectangle</span><span class="p">,</span> <span class="n">Circle</span><span class="p">,</span> <span class="n">Polygon</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">griddata</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;⚡ Electric Motor Fundamentals&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;📚 Understanding motor types, control strategies, and performance characteristics&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="motor-types-and-geometries">
+<h2>Motor Types and Geometries<a class="headerlink" href="#motor-types-and-geometries" title="Link to this heading">#</a></h2>
+<p>This work focuses on two main types of synchronous permanent magnet motors:</p>
+<section id="interior-permanent-magnet-ipm-motor">
+<h3>1. Interior Permanent Magnet (IPM) Motor<a class="headerlink" href="#interior-permanent-magnet-ipm-motor" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Configuration</strong>: 24 slots, 4 poles</p></li>
+<li><p><strong>Application</strong>: High-performance EV applications</p></li>
+<li><p><strong>Features</strong>: High torque density, good flux-weakening capability</p></li>
+<li><p><strong>Design parameters</strong>: 12 geometric variables (X₁-X₁₂)</p></li>
+</ul>
+</section>
+<section id="fractional-slot-concentrated-winding-fscw-pm-motor">
+<h3>2. Fractional-Slot Concentrated Winding (FSCW) PM Motor<a class="headerlink" href="#fractional-slot-concentrated-winding-fscw-pm-motor" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Configuration</strong>: 12 slots, 10 poles</p></li>
+<li><p><strong>Application</strong>: Compact EV applications</p></li>
+<li><p><strong>Features</strong>: High efficiency, low cogging torque</p></li>
+<li><p><strong>Design parameters</strong>: 10 geometric variables (X₁-X₁₀)</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Motor geometry and characteristics visualization</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">visualize_motor_types</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize IPM and FSCW motor geometries and characteristics&quot;&quot;&quot;</span>
+    
+    <span class="c1"># Create motor geometry visualizations</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+    
+    <span class="c1"># IPM Motor Geometry</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># Simplified IPM motor cross-section</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    
+    <span class="c1"># Stator outline</span>
+    <span class="n">stator_outer</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">stator_inner</span> <span class="o">=</span> <span class="mi">60</span>
+    <span class="n">rotor_outer</span> <span class="o">=</span> <span class="mi">55</span>
+    
+    <span class="c1"># Draw stator</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">stator_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">stator_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="s1">&#39;k-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">stator_inner</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">stator_inner</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="s1">&#39;k-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    
+    <span class="c1"># Draw rotor</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">rotor_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">rotor_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> 
+                    <span class="n">color</span><span class="o">=</span><span class="s1">&#39;lightgray&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    
+    <span class="c1"># Draw simplified magnets (V-shaped)</span>
+    <span class="n">magnet_angles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">135</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
+    <span class="k">for</span> <span class="n">angle</span> <span class="ow">in</span> <span class="n">magnet_angles</span><span class="p">:</span>
+        <span class="c1"># V-shaped magnet representation</span>
+        <span class="n">mag_x1</span> <span class="o">=</span> <span class="p">[</span><span class="mi">35</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="mf">0.2</span><span class="p">),</span> <span class="mi">25</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span> <span class="mi">35</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">)]</span>
+        <span class="n">mag_y1</span> <span class="o">=</span> <span class="p">[</span><span class="mi">35</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="mf">0.2</span><span class="p">),</span> <span class="mi">25</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span> <span class="mi">35</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">)]</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">mag_x1</span><span class="p">,</span> <span class="n">mag_y1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+        
+        <span class="n">mag_x2</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">35</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="mf">0.2</span><span class="p">),</span> <span class="o">-</span><span class="mi">25</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span> <span class="o">-</span><span class="mi">35</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">)]</span>
+        <span class="n">mag_y2</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">35</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="mf">0.2</span><span class="p">),</span> <span class="o">-</span><span class="mi">25</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span> <span class="o">-</span><span class="mi">35</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">)]</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">mag_x2</span><span class="p">,</span> <span class="n">mag_y2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    
+    <span class="c1"># Draw slots</span>
+    <span class="n">n_slots</span> <span class="o">=</span> <span class="mi">24</span>
+    <span class="n">slot_angles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">n_slots</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">angle</span> <span class="ow">in</span> <span class="n">slot_angles</span><span class="p">:</span>
+        <span class="n">slot_x</span> <span class="o">=</span> <span class="p">[</span><span class="n">stator_inner</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span> <span class="n">stator_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">)]</span>
+        <span class="n">slot_y</span> <span class="o">=</span> <span class="p">[</span><span class="n">stator_inner</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span> <span class="n">stator_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">)]</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">slot_x</span><span class="p">,</span> <span class="n">slot_y</span><span class="p">,</span> <span class="s1">&#39;k-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;IPM Motor</span><span class="se">\n</span><span class="s1">(24 slots, 4 poles)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;x (mm)&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;y (mm)&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    
+    <span class="c1"># FSCW Motor Geometry</span>
+    <span class="n">ax2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    
+    <span class="c1"># Simplified FSCW motor cross-section</span>
+    <span class="n">stator_outer</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">stator_inner</span> <span class="o">=</span> <span class="mi">60</span>
+    <span class="n">rotor_outer</span> <span class="o">=</span> <span class="mi">55</span>
+    
+    <span class="c1"># Draw stator</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">stator_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">stator_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="s1">&#39;k-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">stator_inner</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">stator_inner</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="s1">&#39;k-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    
+    <span class="c1"># Draw rotor</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">rotor_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">rotor_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> 
+                    <span class="n">color</span><span class="o">=</span><span class="s1">&#39;lightgray&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    
+    <span class="c1"># Draw surface magnets</span>
+    <span class="n">n_poles</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">pole_angles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">n_poles</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">angle</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pole_angles</span><span class="p">):</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span> <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;blue&#39;</span>
+        <span class="n">pole_x1</span> <span class="o">=</span> <span class="n">rotor_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">n_poles</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">pole_y1</span> <span class="o">=</span> <span class="n">rotor_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">n_poles</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">pole_x2</span> <span class="o">=</span> <span class="n">rotor_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">n_poles</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">pole_y2</span> <span class="o">=</span> <span class="n">rotor_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">n_poles</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        
+        <span class="n">inner_x</span> <span class="o">=</span> <span class="mi">45</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
+        <span class="n">inner_y</span> <span class="o">=</span> <span class="mi">45</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
+        
+        <span class="n">ax2</span><span class="o">.</span><span class="n">fill</span><span class="p">([</span><span class="n">pole_x1</span><span class="p">,</span> <span class="n">pole_x2</span><span class="p">,</span> <span class="n">inner_x</span><span class="p">],</span> <span class="p">[</span><span class="n">pole_y1</span><span class="p">,</span> <span class="n">pole_y2</span><span class="p">,</span> <span class="n">inner_y</span><span class="p">],</span> 
+                <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    
+    <span class="c1"># Draw concentrated slots</span>
+    <span class="n">n_slots</span> <span class="o">=</span> <span class="mi">12</span>
+    <span class="n">slot_angles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">n_slots</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">angle</span> <span class="ow">in</span> <span class="n">slot_angles</span><span class="p">:</span>
+        <span class="c1"># Wider slot opening for concentrated winding</span>
+        <span class="n">slot_width</span> <span class="o">=</span> <span class="mf">0.15</span>  <span class="c1"># radians</span>
+        <span class="n">slot_x1</span> <span class="o">=</span> <span class="p">[</span><span class="n">stator_inner</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="n">slot_width</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> 
+                  <span class="n">stator_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="n">slot_width</span><span class="o">/</span><span class="mi">2</span><span class="p">)]</span>
+        <span class="n">slot_y1</span> <span class="o">=</span> <span class="p">[</span><span class="n">stator_inner</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="n">slot_width</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> 
+                  <span class="n">stator_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="n">slot_width</span><span class="o">/</span><span class="mi">2</span><span class="p">)]</span>
+        <span class="n">slot_x2</span> <span class="o">=</span> <span class="p">[</span><span class="n">stator_inner</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="n">slot_width</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> 
+                  <span class="n">stator_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="n">slot_width</span><span class="o">/</span><span class="mi">2</span><span class="p">)]</span>
+        <span class="n">slot_y2</span> <span class="o">=</span> <span class="p">[</span><span class="n">stator_inner</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="n">slot_width</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> 
+                  <span class="n">stator_outer</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="n">slot_width</span><span class="o">/</span><span class="mi">2</span><span class="p">)]</span>
+        
+        <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">slot_x1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">slot_x2</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="p">[</span><span class="n">slot_y1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">slot_y2</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="s1">&#39;k-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">slot_x1</span><span class="p">,</span> <span class="n">slot_y1</span><span class="p">,</span> <span class="s1">&#39;k-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">slot_x2</span><span class="p">,</span> <span class="n">slot_y2</span><span class="p">,</span> <span class="s1">&#39;k-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;FSCW PM Motor</span><span class="se">\n</span><span class="s1">(12 slots, 10 poles)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;x (mm)&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;y (mm)&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    
+    <span class="c1"># Design Parameter Comparison</span>
+    <span class="n">ax3</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    
+    <span class="c1"># Create parameter comparison table as text</span>
+    <span class="n">parameter_data</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[</span><span class="s1">&#39;Parameter&#39;</span><span class="p">,</span> <span class="s1">&#39;IPM Motor&#39;</span><span class="p">,</span> <span class="s1">&#39;FSCW Motor&#39;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s1">&#39;Slots&#39;</span><span class="p">,</span> <span class="s1">&#39;24&#39;</span><span class="p">,</span> <span class="s1">&#39;12&#39;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s1">&#39;Poles&#39;</span><span class="p">,</span> <span class="s1">&#39;4&#39;</span><span class="p">,</span> <span class="s1">&#39;10&#39;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s1">&#39;Rated Current&#39;</span><span class="p">,</span> <span class="s1">&#39;33.33 A&#39;</span><span class="p">,</span> <span class="s1">&#39;300 A&#39;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s1">&#39;DC Voltage&#39;</span><span class="p">,</span> <span class="s1">&#39;400 V&#39;</span><span class="p">,</span> <span class="s1">&#39;450 V&#39;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s1">&#39;Design Vars&#39;</span><span class="p">,</span> <span class="s1">&#39;12 (X₁-X₁₂)&#39;</span><span class="p">,</span> <span class="s1">&#39;10 (X₁-X₁₀)&#39;</span><span class="p">]</span>
+    <span class="p">]</span>
+    
+    <span class="n">table_data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">parameter_data</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">table_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+    
+    <span class="n">table</span> <span class="o">=</span> <span class="n">ax3</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="n">cellText</span><span class="o">=</span><span class="n">table_data</span><span class="p">,</span>
+                    <span class="n">colLabels</span><span class="o">=</span><span class="n">parameter_data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="n">cellLoc</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span>
+                    <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span>
+                    <span class="n">colWidths</span><span class="o">=</span><span class="p">[</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">])</span>
+    
+    <span class="n">table</span><span class="o">.</span><span class="n">auto_set_font_size</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">table</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">table</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    
+    <span class="c1"># Style the table</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">parameter_data</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">parameter_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+            <span class="n">cell</span> <span class="o">=</span> <span class="n">table</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Header row</span>
+                <span class="n">cell</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s1">&#39;#4CAF50&#39;</span><span class="p">)</span>
+                <span class="n">cell</span><span class="o">.</span><span class="n">set_text_props</span><span class="p">(</span><span class="n">weight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cell</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s1">&#39;#f0f0f0&#39;</span> <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;white&#39;</span><span class="p">)</span>
+    
+    <span class="n">ax3</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Motor Specifications&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Performance Characteristics Comparison</span>
+    <span class="n">ax4</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+    
+    <span class="n">performance_metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Torque</span><span class="se">\n</span><span class="s1">Density&#39;</span><span class="p">,</span> <span class="s1">&#39;Efficiency&#39;</span><span class="p">,</span> <span class="s1">&#39;Power</span><span class="se">\n</span><span class="s1">Factor&#39;</span><span class="p">,</span> <span class="s1">&#39;Cogging</span><span class="se">\n</span><span class="s1">Torque&#39;</span><span class="p">,</span> <span class="s1">&#39;Speed</span><span class="se">\n</span><span class="s1">Range&#39;</span><span class="p">]</span>
+    <span class="n">ipm_scores</span> <span class="o">=</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">9</span><span class="p">]</span>
+    <span class="n">fscw_scores</span> <span class="o">=</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
+    
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">performance_metrics</span><span class="p">))</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="mf">0.35</span>
+    
+    <span class="n">bars1</span> <span class="o">=</span> <span class="n">ax4</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">ipm_scores</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;IPM&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;#3498DB&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    <span class="n">bars2</span> <span class="o">=</span> <span class="n">ax4</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">fscw_scores</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;FSCW&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;#E74C3C&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Performance Metrics&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Score (1-10)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Performance Comparison&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">performance_metrics</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+    
+    <span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Electric Motor Types and Characteristics&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    
+    <span class="c1"># Print key insights</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;⚡ Electric Motor Characteristics:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔧 IPM Motor: </span><span class="si">{</span><span class="n">parameter_data</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> slots, </span><span class="si">{</span><span class="n">parameter_data</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> poles, </span><span class="si">{</span><span class="n">parameter_data</span><span class="p">[</span><span class="mi">5</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> design variables&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔧 FSCW Motor: </span><span class="si">{</span><span class="n">parameter_data</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> slots, </span><span class="si">{</span><span class="n">parameter_data</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> poles, </span><span class="si">{</span><span class="n">parameter_data</span><span class="p">[</span><span class="mi">5</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> design variables&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;📊 IPM Peak Torque Density Score: </span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">ipm_scores</span><span class="p">)</span><span class="si">}</span><span class="s2">/10&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;📊 FSCW Peak Efficiency Score: </span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">fscw_scores</span><span class="p">)</span><span class="si">}</span><span class="s2">/10&quot;</span><span class="p">)</span>
+
+<span class="n">visualize_motor_types</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="performance-characteristics">
+<h2>Performance Characteristics<a class="headerlink" href="#performance-characteristics" title="Link to this heading">#</a></h2>
+<section id="control-strategies">
+<h3>Control Strategies<a class="headerlink" href="#control-strategies" title="Link to this heading">#</a></h3>
+<p>Electric motors in EV applications require sophisticated control strategies to optimize performance across different operating conditions:</p>
+<section id="maximum-torque-per-ampere-mtpa">
+<h4>1. Maximum Torque Per Ampere (MTPA)<a class="headerlink" href="#maximum-torque-per-ampere-mtpa" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>Objective</strong>: Maximize torque production per unit current</p></li>
+<li><p><strong>Region</strong>: Below base speed</p></li>
+<li><p><strong>Benefits</strong>: Optimal efficiency in low-speed region</p></li>
+<li><p><strong>Method</strong>: Optimize d-q current angle for maximum torque</p></li>
+</ul>
+</section>
+<section id="flux-weakening">
+<h4>2. Flux Weakening<a class="headerlink" href="#flux-weakening" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>Objective</strong>: Extend speed range beyond base speed</p></li>
+<li><p><strong>Region</strong>: Above base speed</p></li>
+<li><p><strong>Benefits</strong>: Higher maximum speeds</p></li>
+<li><p><strong>Method</strong>: Adjust d-axis current to reduce back-EMF</p></li>
+</ul>
+</section>
+<section id="maximum-torque-per-volt-mtpv">
+<h4>3. Maximum Torque Per Volt (MTPV)<a class="headerlink" href="#maximum-torque-per-volt-mtpv" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>Objective</strong>: Maximize torque under voltage constraints</p></li>
+<li><p><strong>Region</strong>: High-speed operation</p></li>
+<li><p><strong>Benefits</strong>: Optimal performance at voltage limits</p></li>
+<li><p><strong>Method</strong>: Balance current and voltage constraints</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Control strategy regions visualization</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">visualize_control_strategies</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize control strategy regions and operating envelopes&quot;&quot;&quot;</span>
+    
+    <span class="c1"># Create operating regions visualization</span>
+    <span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">6000</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">torque</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">250</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">speed</span><span class="p">,</span> <span class="n">torque</span><span class="p">)</span>
+    
+    <span class="c1"># Define operating regions</span>
+    <span class="n">base_speed</span> <span class="o">=</span> <span class="mi">3000</span>  <span class="c1"># RPM</span>
+    
+    <span class="c1"># MTPA region (below base speed)</span>
+    <span class="n">mtpa_region</span> <span class="o">=</span> <span class="n">SPEED</span> <span class="o">&lt;=</span> <span class="n">base_speed</span>
+    
+    <span class="c1"># Flux weakening region (above base speed)</span>
+    <span class="n">fw_region</span> <span class="o">=</span> <span class="n">SPEED</span> <span class="o">&gt;</span> <span class="n">base_speed</span>
+    
+    <span class="c1"># Create operating region map</span>
+    <span class="n">region_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">SPEED</span><span class="p">)</span>
+    <span class="n">region_map</span><span class="p">[</span><span class="n">mtpa_region</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># MTPA</span>
+    <span class="n">region_map</span><span class="p">[</span><span class="n">fw_region</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>    <span class="c1"># Flux weakening</span>
+    
+    <span class="c1"># Add torque limit envelope</span>
+    <span class="n">torque_limit</span> <span class="o">=</span> <span class="mi">200</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">SPEED</span> <span class="o">/</span> <span class="mi">8000</span><span class="p">)</span>  <span class="c1"># Exponential torque drop</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">torque</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">speed</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">TORQUE</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">torque_limit</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+                <span class="n">region_map</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Outside operating envelope</span>
+    
+    <span class="c1"># Create visualization</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Motor Control Strategies and Operating Regions&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 1: Control strategy regions</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">im1</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span><span class="p">,</span> <span class="n">region_map</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> 
+                     <span class="n">colors</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;lightgray&#39;</span><span class="p">,</span> <span class="s1">&#39;lightblue&#39;</span><span class="p">,</span> <span class="s1">&#39;lightcoral&#39;</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Speed (RPM)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Torque (Nm)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Control Strategy Regions&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Add region labels</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">1500</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="s1">&#39;MTPA Region&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> 
+            <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s2">&quot;round,pad=0.3&quot;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;lightblue&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">))</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">4500</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;Flux Weakening</span><span class="se">\n</span><span class="s1">Region&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> 
+            <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s2">&quot;round,pad=0.3&quot;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;lightcoral&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">))</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">3000</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Base Speed</span><span class="se">\n</span><span class="si">{</span><span class="n">base_speed</span><span class="si">}</span><span class="s1"> RPM&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> 
+            <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s2">&quot;round,pad=0.3&quot;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;yellow&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">))</span>
+    
+    <span class="c1"># Draw torque limit line</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">speed</span><span class="p">,</span> <span class="n">torque_limit</span><span class="p">,</span> <span class="s1">&#39;k-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Torque Limit&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">base_speed</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Base Speed&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 2: Current trajectories</span>
+    <span class="n">ax2</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    
+    <span class="c1"># Simulate current trajectories for different control strategies</span>
+    <span class="n">speeds_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">5500</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+    
+    <span class="c1"># MTPA trajectory (constant current angle)</span>
+    <span class="n">mtpa_current</span> <span class="o">=</span> <span class="mi">150</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">speeds_test</span><span class="p">)</span>
+    <span class="n">mtpa_angle</span> <span class="o">=</span> <span class="mi">45</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">speeds_test</span><span class="p">)</span>  <span class="c1"># degrees</span>
+    
+    <span class="c1"># Flux weakening trajectory</span>
+    <span class="n">fw_current</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">speeds_test</span> <span class="o">&lt;=</span> <span class="n">base_speed</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">150</span> <span class="o">*</span> <span class="p">(</span><span class="n">base_speed</span> <span class="o">/</span> <span class="n">speeds_test</span><span class="p">))</span>
+    <span class="n">fw_angle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">speeds_test</span> <span class="o">&lt;=</span> <span class="n">base_speed</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>  <span class="c1"># degrees</span>
+    
+    <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">speeds_test</span><span class="p">,</span> <span class="n">mtpa_current</span><span class="p">,</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;MTPA Current&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">speeds_test</span><span class="p">,</span> <span class="n">fw_current</span><span class="p">,</span> <span class="s1">&#39;r-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Flux Weakening Current&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Speed (RPM)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Current Magnitude (A)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Current Magnitude Trajectories&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">base_speed</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 3: Current angle evolution</span>
+    <span class="n">ax3</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    
+    <span class="n">ax3</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">speeds_test</span><span class="p">,</span> <span class="n">mtpa_angle</span><span class="p">,</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;MTPA Angle&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">speeds_test</span><span class="p">,</span> <span class="n">fw_angle</span><span class="p">,</span> <span class="s1">&#39;r-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Flux Weakening Angle&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Speed (RPM)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Current Angle (degrees)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Current Angle Trajectories&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">base_speed</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 4: Performance map overlay</span>
+    <span class="n">ax4</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    
+    <span class="c1"># Create sample efficiency map</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">efficiency_map_model</span><span class="p">(</span><span class="n">speed</span><span class="p">,</span> <span class="n">torque</span><span class="p">):</span>
+        <span class="n">base_eff</span> <span class="o">=</span> <span class="mf">0.85</span> <span class="o">+</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">speed</span> <span class="o">-</span> <span class="mi">3000</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="mi">1500</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">torque_factor</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">0.3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">torque</span> <span class="o">-</span> <span class="mi">150</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="mi">80</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">efficiency</span> <span class="o">=</span> <span class="n">base_eff</span> <span class="o">*</span> <span class="n">torque_factor</span>
+        <span class="n">efficiency</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">efficiency</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">efficiency</span>
+    
+    <span class="n">efficiency_map</span> <span class="o">=</span> <span class="n">efficiency_map_model</span><span class="p">(</span><span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span><span class="p">)</span>
+    
+    <span class="n">im4</span> <span class="o">=</span> <span class="n">ax4</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span><span class="p">,</span> <span class="n">efficiency_map</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    
+    <span class="c1"># Overlay control regions</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span><span class="p">,</span> <span class="n">region_map</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">],</span> 
+               <span class="n">colors</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">],</span> <span class="n">linewidths</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    
+    <span class="c1"># Add efficiency contours</span>
+    <span class="n">efficiency_contours</span> <span class="o">=</span> <span class="n">ax4</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span><span class="p">,</span> <span class="n">efficiency_map</span><span class="p">,</span> 
+                                     <span class="n">levels</span><span class="o">=</span><span class="p">[</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">],</span> <span class="n">colors</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">linewidths</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">clabel</span><span class="p">(</span><span class="n">efficiency_contours</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%.2f</span><span class="s1">&#39;</span><span class="p">)</span>
+    
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Speed (RPM)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Torque (Nm)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Efficiency Map with Control Regions&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Add colorbar</span>
+    <span class="n">cbar</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im4</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Efficiency&#39;</span><span class="p">)</span>
+    
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    
+    <span class="c1"># Print control strategy insights</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;⚙️ Control Strategy Insights:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🎯 Base Speed: </span><span class="si">{</span><span class="n">base_speed</span><span class="si">}</span><span class="s2"> RPM (transition between MTPA and flux weakening)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;📈 MTPA Region: 0-</span><span class="si">{</span><span class="n">base_speed</span><span class="si">}</span><span class="s2"> RPM (optimal torque per ampere)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🚀 Flux Weakening: </span><span class="si">{</span><span class="n">base_speed</span><span class="si">}</span><span class="s2">-6000 RPM (extended speed range)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚡ Current Management: Dynamic adjustment based on operating conditions&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔋 High Efficiency Region: Concentrated around 3000 RPM, 150 Nm&quot;</span><span class="p">)</span>
+
+<span class="n">visualize_control_strategies</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="performance-maps">
+<h2>Performance Maps<a class="headerlink" href="#performance-maps" title="Link to this heading">#</a></h2>
+<section id="types-of-performance-maps">
+<h3>Types of Performance Maps<a class="headerlink" href="#types-of-performance-maps" title="Link to this heading">#</a></h3>
+<section id="efficiency-map-n-t">
+<h4>1. Efficiency Map (η(N, T))<a class="headerlink" href="#efficiency-map-n-t" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>Definition</strong>: Ratio of mechanical output power to electrical input power</p></li>
+<li><p><strong>Range</strong>: Typically 0.6 - 0.95 (60% - 95%)</p></li>
+<li><p><strong>Importance</strong>: Direct impact on vehicle range and energy consumption</p></li>
+<li><p><strong>Units</strong>: Dimensionless (percentage)</p></li>
+</ul>
+</section>
+<section id="power-factor-map-pf-n-t">
+<h4>2. Power Factor Map (pf(N, T))<a class="headerlink" href="#power-factor-map-pf-n-t" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>Definition</strong>: Ratio of real power to apparent power</p></li>
+<li><p><strong>Range</strong>: Typically 0.5 - 1.0</p></li>
+<li><p><strong>Importance</strong>: Affects inverter sizing and grid compatibility</p></li>
+<li><p><strong>Units</strong>: Dimensionless (0 to 1)</p></li>
+</ul>
+</section>
+<section id="loss-maps">
+<h4>3. Loss Maps<a class="headerlink" href="#loss-maps" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>Copper Losses</strong>: I²R losses in windings</p></li>
+<li><p><strong>Iron Losses</strong>: Hysteresis and eddy current losses in core</p></li>
+<li><p><strong>Stray Losses</strong>: Additional losses not accounted for in main categories</p></li>
+</ul>
+</section>
+<section id="thermal-maps">
+<h4>4. Thermal Maps<a class="headerlink" href="#thermal-maps" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>Temperature Distribution</strong>: Heat generation and dissipation</p></li>
+<li><p><strong>Hot Spots</strong>: Areas of concentrated losses</p></li>
+<li><p><strong>Cooling Requirements</strong>: Thermal management design input</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Performance maps visualization</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">visualize_performance_maps</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create comprehensive performance map visualizations&quot;&quot;&quot;</span>
+    
+    <span class="c1"># Create sample performance maps</span>
+    <span class="n">speed_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">6000</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>  <span class="c1"># RPM</span>
+    <span class="n">torque_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">250</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>   <span class="c1"># Nm</span>
+    <span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">speed_points</span><span class="p">,</span> <span class="n">torque_points</span><span class="p">)</span>
+    
+    <span class="c1"># Generate realistic performance maps</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_efficiency_map</span><span class="p">(</span><span class="n">speed</span><span class="p">,</span> <span class="n">torque</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate realistic efficiency map&quot;&quot;&quot;</span>
+        <span class="n">base_eff</span> <span class="o">=</span> <span class="mf">0.85</span> <span class="o">+</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">speed</span> <span class="o">-</span> <span class="mi">3000</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="mi">1500</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">torque_factor</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">0.3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">torque</span> <span class="o">-</span> <span class="mi">150</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="mi">80</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">efficiency</span> <span class="o">=</span> <span class="n">base_eff</span> <span class="o">*</span> <span class="n">torque_factor</span>
+        
+        <span class="c1"># Add realistic noise and variation</span>
+        <span class="n">efficiency</span> <span class="o">+=</span> <span class="mf">0.02</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="o">*</span><span class="n">efficiency</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">efficiency</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">efficiency</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">efficiency</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_power_factor_map</span><span class="p">(</span><span class="n">efficiency_map</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate power factor map correlated with efficiency&quot;&quot;&quot;</span>
+        <span class="n">power_factor</span> <span class="o">=</span> <span class="mf">0.7</span> <span class="o">+</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="n">efficiency_map</span> <span class="o">+</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="o">*</span><span class="n">efficiency_map</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">power_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">power_factor</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">power_factor</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_loss_maps</span><span class="p">(</span><span class="n">efficiency_map</span><span class="p">,</span> <span class="n">power_factor_map</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate copper and iron loss maps&quot;&quot;&quot;</span>
+        <span class="c1"># Simplified loss model based on operating conditions</span>
+        <span class="n">normalized_speed</span> <span class="o">=</span> <span class="n">SPEED</span> <span class="o">/</span> <span class="mi">6000</span>
+        <span class="n">normalized_torque</span> <span class="o">=</span> <span class="n">TORQUE</span> <span class="o">/</span> <span class="mi">250</span>
+        
+        <span class="c1"># Copper losses (proportional to current squared)</span>
+        <span class="n">copper_loss_base</span> <span class="o">=</span> <span class="mi">500</span>  <span class="c1"># Watts</span>
+        <span class="n">copper_loss</span> <span class="o">=</span> <span class="n">copper_loss_base</span> <span class="o">*</span> <span class="p">(</span><span class="n">normalized_torque</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">normalized_speed</span><span class="p">)</span>
+        
+        <span class="c1"># Iron losses (proportional to speed and flux)</span>
+        <span class="n">iron_loss_base</span> <span class="o">=</span> <span class="mi">300</span>  <span class="c1"># Watts</span>
+        <span class="n">iron_loss</span> <span class="o">=</span> <span class="n">iron_loss_base</span> <span class="o">*</span> <span class="p">(</span><span class="n">normalized_speed</span><span class="o">**</span><span class="mf">1.5</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mf">0.3</span> <span class="o">*</span> <span class="n">normalized_torque</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">copper_loss</span><span class="p">,</span> <span class="n">iron_loss</span>
+    
+    <span class="c1"># Generate performance maps</span>
+    <span class="n">efficiency_map</span> <span class="o">=</span> <span class="n">generate_efficiency_map</span><span class="p">(</span><span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span><span class="p">)</span>
+    <span class="n">power_factor_map</span> <span class="o">=</span> <span class="n">generate_power_factor_map</span><span class="p">(</span><span class="n">efficiency_map</span><span class="p">)</span>
+    <span class="n">copper_loss_map</span><span class="p">,</span> <span class="n">iron_loss_map</span> <span class="o">=</span> <span class="n">generate_loss_maps</span><span class="p">(</span><span class="n">efficiency_map</span><span class="p">,</span> <span class="n">power_factor_map</span><span class="p">)</span>
+    <span class="n">total_loss_map</span> <span class="o">=</span> <span class="n">copper_loss_map</span> <span class="o">+</span> <span class="n">iron_loss_map</span>
+    
+    <span class="c1"># Create comprehensive visualization</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Electric Motor Performance Maps&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 1: Efficiency Map</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">im1</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span><span class="p">,</span> <span class="n">efficiency_map</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Speed (RPM)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Torque (Nm)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Efficiency Map&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Efficiency&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Add high-efficiency contour</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span><span class="p">,</span> <span class="n">efficiency_map</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="p">[</span><span class="mf">0.85</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">],</span> <span class="n">colors</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">linewidths</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">clabel</span><span class="p">(</span><span class="n">ax1</span><span class="o">.</span><span class="n">collections</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">inline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%.2f</span><span class="s1">&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 2: Power Factor Map</span>
+    <span class="n">ax2</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">im2</span> <span class="o">=</span> <span class="n">ax2</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span><span class="p">,</span> <span class="n">power_factor_map</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;plasma&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Speed (RPM)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Torque (Nm)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Power Factor Map&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Power Factor&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 3: Combined Performance Index</span>
+    <span class="n">ax3</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">performance_index</span> <span class="o">=</span> <span class="n">efficiency_map</span> <span class="o">*</span> <span class="n">power_factor_map</span>  <span class="c1"># Combined metric</span>
+    <span class="n">im3</span> <span class="o">=</span> <span class="n">ax3</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span><span class="p">,</span> <span class="n">performance_index</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;copper&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Speed (RPM)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Torque (Nm)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Performance Index (η × pf)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im3</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Performance Index&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 4: Copper Loss Map</span>
+    <span class="n">ax4</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">im4</span> <span class="o">=</span> <span class="n">ax4</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span><span class="p">,</span> <span class="n">copper_loss_map</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Speed (RPM)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Torque (Nm)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Copper Loss Map (W)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im4</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Loss (W)&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 5: Iron Loss Map</span>
+    <span class="n">ax5</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">im5</span> <span class="o">=</span> <span class="n">ax5</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span><span class="p">,</span> <span class="n">iron_loss_map</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Blues&#39;</span><span class="p">)</span>
+    <span class="n">ax5</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Speed (RPM)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax5</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Torque (Nm)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax5</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Iron Loss Map (W)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im5</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Loss (W)&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 6: Total Loss Map</span>
+    <span class="n">ax6</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">im6</span> <span class="o">=</span> <span class="n">ax6</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">SPEED</span><span class="p">,</span> <span class="n">TORQUE</span><span class="p">,</span> <span class="n">total_loss_map</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;hot&#39;</span><span class="p">)</span>
+    <span class="n">ax6</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Speed (RPM)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax6</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Torque (Nm)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax6</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Total Loss Map (W)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im6</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Total Loss (W)&#39;</span><span class="p">)</span>
+    
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    
+    <span class="c1"># Calculate and print performance metrics</span>
+    <span class="n">high_eff_threshold</span> <span class="o">=</span> <span class="mf">0.85</span>
+    <span class="n">high_pf_threshold</span> <span class="o">=</span> <span class="mf">0.85</span>
+    
+    <span class="n">high_eff_area</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">efficiency_map</span> <span class="o">&gt;</span> <span class="n">high_eff_threshold</span><span class="p">)</span> <span class="o">/</span> <span class="n">efficiency_map</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="mi">100</span>
+    <span class="n">high_pf_area</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">power_factor_map</span> <span class="o">&gt;</span> <span class="n">high_pf_threshold</span><span class="p">)</span> <span class="o">/</span> <span class="n">power_factor_map</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="mi">100</span>
+    
+    <span class="n">peak_efficiency</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">efficiency_map</span><span class="p">)</span>
+    <span class="n">peak_power_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">power_factor_map</span><span class="p">)</span>
+    <span class="n">peak_eff_loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">efficiency_map</span><span class="p">),</span> <span class="n">efficiency_map</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">peak_pf_loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">power_factor_map</span><span class="p">),</span> <span class="n">power_factor_map</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;📊 Performance Map Analysis:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚡ Peak Efficiency: </span><span class="si">{</span><span class="n">peak_efficiency</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> at </span><span class="si">{</span><span class="n">SPEED</span><span class="p">[</span><span class="n">peak_eff_loc</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="n">peak_eff_loc</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> RPM, </span><span class="si">{</span><span class="n">TORQUE</span><span class="p">[</span><span class="n">peak_eff_loc</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="n">peak_eff_loc</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> Nm&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔋 Peak Power Factor: </span><span class="si">{</span><span class="n">peak_power_factor</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> at </span><span class="si">{</span><span class="n">SPEED</span><span class="p">[</span><span class="n">peak_pf_loc</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="n">peak_pf_loc</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> RPM, </span><span class="si">{</span><span class="n">TORQUE</span><span class="p">[</span><span class="n">peak_pf_loc</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="n">peak_pf_loc</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> Nm&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🎯 High-Efficiency Area (&gt;85%): </span><span class="si">{</span><span class="n">high_eff_area</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">% of operating region&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚡ High-Power Factor Area (&gt;85%): </span><span class="si">{</span><span class="n">high_pf_area</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">% of operating region&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔥 Peak Total Loss: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">total_loss_map</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> W&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;💡 Optimal Operating Region: ~2500-3500 RPM, 120-180 Nm&quot;</span><span class="p">)</span>
+
+<span class="n">visualize_performance_maps</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="design-parameter-sensitivity">
+<h2>Design Parameter Sensitivity<a class="headerlink" href="#design-parameter-sensitivity" title="Link to this heading">#</a></h2>
+<section id="key-design-parameters">
+<h3>Key Design Parameters<a class="headerlink" href="#key-design-parameters" title="Link to this heading">#</a></h3>
+<section id="ipm-motor-parameters-x1-x12">
+<h4>IPM Motor Parameters (X₁-X₁₂)<a class="headerlink" href="#ipm-motor-parameters-x1-x12" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>X₁-X₄</strong>: Magnet dimensions and positioning</p></li>
+<li><p><strong>X₅-X₈</strong>: Rotor geometry parameters</p></li>
+<li><p><strong>X₉-X₁₁</strong>: Stator winding configuration</p></li>
+<li><p><strong>X₁₂</strong>: Air gap dimension</p></li>
+</ul>
+</section>
+<section id="fscw-motor-parameters-x1-x10">
+<h4>FSCW Motor Parameters (X₁-X₁₀)<a class="headerlink" href="#fscw-motor-parameters-x1-x10" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>X₁-X₄</strong>: Stator slot dimensions</p></li>
+<li><p><strong>X₅</strong>: Air gap dimension</p></li>
+<li><p><strong>X₆-X₉</strong>: Rotor geometry parameters</p></li>
+<li><p><strong>X₁₀</strong>: Magnet thickness</p></li>
+</ul>
+</section>
+</section>
+<section id="sensitivity-analysis">
+<h3>Sensitivity Analysis<a class="headerlink" href="#sensitivity-analysis" title="Link to this heading">#</a></h3>
+<p>Understanding how each parameter affects performance is crucial for:</p>
+<ul class="simple">
+<li><p><strong>Design Optimization</strong>: Focusing on high-impact parameters</p></li>
+<li><p><strong>Manufacturing Tolerances</strong>: Setting realistic tolerance requirements</p></li>
+<li><p><strong>Cost-Benefit Analysis</strong>: Balancing performance improvements against cost</p></li>
+<li><p><strong>Design Space Exploration</strong>: Efficient sampling of parameter combinations</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Design parameter sensitivity analysis</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">analyze_parameter_sensitivity</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyze sensitivity of motor design parameters&quot;&quot;&quot;</span>
+    
+    <span class="c1"># Define parameter ranges for sensitivity analysis</span>
+    <span class="n">ipm_params</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;Magnet Width&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">25</span><span class="p">),</span> <span class="s1">&#39;sensitivity&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">},</span>
+        <span class="s1">&#39;Air Gap&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">),</span> <span class="s1">&#39;sensitivity&#39;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">},</span>
+        <span class="s1">&#39;Slot Depth&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">40</span><span class="p">),</span> <span class="s1">&#39;sensitivity&#39;</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">},</span>
+        <span class="s1">&#39;Core Length&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">120</span><span class="p">),</span> <span class="s1">&#39;sensitivity&#39;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">},</span>
+        <span class="s1">&#39;Magnet Height&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span> <span class="s1">&#39;sensitivity&#39;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">}</span>
+    <span class="p">}</span>
+    
+    <span class="n">fscw_params</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;Slot Width&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">18</span><span class="p">),</span> <span class="s1">&#39;sensitivity&#39;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">},</span>
+        <span class="s1">&#39;Air Gap&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">),</span> <span class="s1">&#39;sensitivity&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">},</span>
+        <span class="s1">&#39;Slot Depth&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">35</span><span class="p">),</span> <span class="s1">&#39;sensitivity&#39;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">},</span>
+        <span class="s1">&#39;Core Length&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">90</span><span class="p">,</span> <span class="mi">130</span><span class="p">),</span> <span class="s1">&#39;sensitivity&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">},</span>
+        <span class="s1">&#39;Magnet Thickness&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="s1">&#39;sensitivity&#39;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">}</span>
+    <span class="p">}</span>
+    
+    <span class="c1"># Create visualization</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Motor Design Parameter Sensitivity Analysis&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 1: IPM parameter sensitivity</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    
+    <span class="n">params_ipm</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ipm_params</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">sensitivity_ipm</span> <span class="o">=</span> <span class="p">[</span><span class="n">ipm_params</span><span class="p">[</span><span class="n">param</span><span class="p">][</span><span class="s1">&#39;sensitivity&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params_ipm</span><span class="p">]</span>
+    
+    <span class="n">bars1</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="n">params_ipm</span><span class="p">,</span> <span class="n">sensitivity_ipm</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;#3498DB&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Sensitivity Score&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;IPM Motor Parameter Sensitivity&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Add value labels</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">bar</span><span class="p">,</span> <span class="n">sensitivity</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">bars1</span><span class="p">,</span> <span class="n">sensitivity_ipm</span><span class="p">)):</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">bar</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_y</span><span class="p">()</span> <span class="o">+</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_height</span><span class="p">()</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> 
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">sensitivity</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 2: FSCW parameter sensitivity</span>
+    <span class="n">ax2</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    
+    <span class="n">params_fscw</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">fscw_params</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">sensitivity_fscw</span> <span class="o">=</span> <span class="p">[</span><span class="n">fscw_params</span><span class="p">[</span><span class="n">param</span><span class="p">][</span><span class="s1">&#39;sensitivity&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params_fscw</span><span class="p">]</span>
+    
+    <span class="n">bars2</span> <span class="o">=</span> <span class="n">ax2</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="n">params_fscw</span><span class="p">,</span> <span class="n">sensitivity_fscw</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;#E74C3C&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Sensitivity Score&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;FSCW Motor Parameter Sensitivity&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Add value labels</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">bar</span><span class="p">,</span> <span class="n">sensitivity</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">bars2</span><span class="p">,</span> <span class="n">sensitivity_fscw</span><span class="p">)):</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">bar</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_y</span><span class="p">()</span> <span class="o">+</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_height</span><span class="p">()</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> 
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">sensitivity</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 3: Parameter impact comparison</span>
+    <span class="n">ax3</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    
+    <span class="n">all_params</span> <span class="o">=</span> <span class="n">params_ipm</span> <span class="o">+</span> <span class="n">params_fscw</span>
+    <span class="n">all_sensitivity</span> <span class="o">=</span> <span class="n">sensitivity_ipm</span> <span class="o">+</span> <span class="n">sensitivity_fscw</span>
+    <span class="n">motor_types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;IPM&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">params_ipm</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;FSCW&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">params_fscw</span><span class="p">)</span>
+    
+    <span class="n">x_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_params</span><span class="p">))</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="mf">0.35</span>
+    
+    <span class="n">bars_ipm</span> <span class="o">=</span> <span class="n">ax3</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">params_ipm</span><span class="p">)]</span> <span class="o">-</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">sensitivity_ipm</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> 
+                        <span class="n">label</span><span class="o">=</span><span class="s1">&#39;IPM&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;#3498DB&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    <span class="n">bars_fscw</span> <span class="o">=</span> <span class="n">ax3</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">params_ipm</span><span class="p">):]</span> <span class="o">+</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">sensitivity_fscw</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> 
+                         <span class="n">label</span><span class="o">=</span><span class="s1">&#39;FSCW&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;#E74C3C&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Design Parameters&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Sensitivity Score&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Parameter Impact Comparison&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">x_pos</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">all_params</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Plot 4: Design optimization insights</span>
+    <span class="n">ax4</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    
+    <span class="c1"># Create scatter plot showing parameter ranges vs sensitivity</span>
+    <span class="n">param_ranges_ipm</span> <span class="o">=</span> <span class="p">[</span><span class="n">ipm_params</span><span class="p">[</span><span class="n">param</span><span class="p">][</span><span class="s1">&#39;range&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ipm_params</span><span class="p">[</span><span class="n">param</span><span class="p">][</span><span class="s1">&#39;range&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> 
+                       <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params_ipm</span><span class="p">]</span>
+    <span class="n">param_ranges_fscw</span> <span class="o">=</span> <span class="p">[</span><span class="n">fscw_params</span><span class="p">[</span><span class="n">param</span><span class="p">][</span><span class="s1">&#39;range&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">fscw_params</span><span class="p">[</span><span class="n">param</span><span class="p">][</span><span class="s1">&#39;range&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> 
+                         <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params_fscw</span><span class="p">]</span>
+    
+    <span class="n">ax4</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">param_ranges_ipm</span><span class="p">,</span> <span class="n">sensitivity_ipm</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> 
+               <span class="n">color</span><span class="o">=</span><span class="s1">&#39;#3498DB&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;IPM&#39;</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">param_ranges_fscw</span><span class="p">,</span> <span class="n">sensitivity_fscw</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> 
+               <span class="n">color</span><span class="o">=</span><span class="s1">&#39;#E74C3C&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;FSCW&#39;</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Add annotations for high-impact parameters</span>
+    <span class="n">high_impact_threshold</span> <span class="o">=</span> <span class="mf">0.7</span>
+    
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">sensitivity</span><span class="p">,</span> <span class="n">range_val</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">params_ipm</span><span class="p">,</span> <span class="n">sensitivity_ipm</span><span class="p">,</span> <span class="n">param_ranges_ipm</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">sensitivity</span> <span class="o">&gt;</span> <span class="n">high_impact_threshold</span><span class="p">:</span>
+            <span class="n">ax4</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="se">\n</span><span class="s1">(</span><span class="si">{</span><span class="n">sensitivity</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">,</span> 
+                        <span class="p">(</span><span class="n">range_val</span><span class="p">,</span> <span class="n">sensitivity</span><span class="p">),</span> 
+                        <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">textcoords</span><span class="o">=</span><span class="s1">&#39;offset points&#39;</span><span class="p">,</span>
+                        <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span>
+                        <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s2">&quot;round,pad=0.3&quot;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;yellow&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">))</span>
+    
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">sensitivity</span><span class="p">,</span> <span class="n">range_val</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">params_fscw</span><span class="p">,</span> <span class="n">sensitivity_fscw</span><span class="p">,</span> <span class="n">param_ranges_fscw</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">sensitivity</span> <span class="o">&gt;</span> <span class="n">high_impact_threshold</span><span class="p">:</span>
+            <span class="n">ax4</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="se">\n</span><span class="s1">(</span><span class="si">{</span><span class="n">sensitivity</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">,</span> 
+                        <span class="p">(</span><span class="n">range_val</span><span class="p">,</span> <span class="n">sensitivity</span><span class="p">),</span> 
+                        <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">textcoords</span><span class="o">=</span><span class="s1">&#39;offset points&#39;</span><span class="p">,</span>
+                        <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span>
+                        <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s2">&quot;round,pad=0.3&quot;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;yellow&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">))</span>
+    
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Parameter Range (mm)&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Sensitivity Score&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Design Range vs Impact Analysis&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    
+    <span class="c1"># Print sensitivity analysis summary</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;🔍 Design Parameter Sensitivity Analysis:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">📊 IPM Motor - High Impact Parameters:&quot;</span><span class="p">)</span>
+    <span class="n">high_impact_ipm</span> <span class="o">=</span> <span class="p">[(</span><span class="n">param</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">ipm_params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;sensitivity&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.7</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">high_impact_ipm</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;sensitivity&#39;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   🔹 </span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">: Sensitivity = </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sensitivity&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, Range = </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> mm&quot;</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">📊 FSCW Motor - High Impact Parameters:&quot;</span><span class="p">)</span>
+    <span class="n">high_impact_fscw</span> <span class="o">=</span> <span class="p">[(</span><span class="n">param</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">fscw_params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;sensitivity&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.7</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">high_impact_fscw</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;sensitivity&#39;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   🔹 </span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">: Sensitivity = </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sensitivity&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, Range = </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> mm&quot;</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">💡 Design Optimization Insights:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   🎯 Focus on high-sensitivity parameters for maximum performance improvement&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   ⚖️ Air gap is critical for both motor types (sensitivity &gt; 0.6)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   📏 Parameter ranges vary significantly between motor types&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   🔧 Magnet dimensions have different optimization priorities&quot;</span><span class="p">)</span>
+
+<span class="n">analyze_parameter_sensitivity</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="section-summary">
+<h2>Section Summary<a class="headerlink" href="#section-summary" title="Link to this heading">#</a></h2>
+<section id="key-takeaways-from-motor-fundamentals">
+<h3>🎯 Key Takeaways from Motor Fundamentals<a class="headerlink" href="#key-takeaways-from-motor-fundamentals" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p><strong>Motor Type Selection</strong>:</p>
+<ul class="simple">
+<li><p><strong>IPM Motors</strong>: Better for high-torque, high-speed applications</p></li>
+<li><p><strong>FSCW Motors</strong>: Better for efficiency, low-cogging applications</p></li>
+<li><p><strong>Trade-offs</strong>: Consider application requirements when selecting motor type</p></li>
+</ul>
+</li>
+<li><p><strong>Control Strategy Understanding</strong>:</p>
+<ul class="simple">
+<li><p><strong>MTPA</strong>: Optimal below base speed for maximum efficiency</p></li>
+<li><p><strong>Flux Weakening</strong>: Extends speed range above base speed</p></li>
+<li><p><strong>Dynamic Control</strong>: Adjust parameters based on operating conditions</p></li>
+</ul>
+</li>
+<li><p><strong>Performance Map Characteristics</strong>:</p>
+<ul class="simple">
+<li><p><strong>Efficiency Maps</strong>: Critical for range prediction and energy consumption</p></li>
+<li><p><strong>Power Factor Maps</strong>: Important for inverter sizing and compatibility</p></li>
+<li><p><strong>Loss Maps</strong>: Essential for thermal management design</p></li>
+<li><p><strong>Operating Envelopes</strong>: Define feasible operating regions</p></li>
+</ul>
+</li>
+<li><p><strong>Design Parameter Impact</strong>:</p>
+<ul class="simple">
+<li><p><strong>High-Impact Parameters</strong>: Air gap, magnet dimensions, core length</p></li>
+<li><p><strong>Sensitivity Analysis</strong>: Focus optimization efforts on high-impact parameters</p></li>
+<li><p><strong>Manufacturing Tolerances</strong>: Balance performance improvements against cost</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="practical-applications">
+<h3>🔧 Practical Applications<a class="headerlink" href="#practical-applications" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Vehicle Design</strong>: Select appropriate motor type for specific vehicle requirements</p></li>
+<li><p><strong>Control System Development</strong>: Implement MTPA and flux weakening algorithms</p></li>
+<li><p><strong>Performance Prediction</strong>: Use maps to estimate vehicle range and efficiency</p></li>
+<li><p><strong>Thermal Management</strong>: Design cooling systems based on loss map analysis</p></li>
+<li><p><strong>Design Optimization</strong>: Focus on high-sensitivity parameters for maximum improvement</p></li>
+</ul>
+<p>This foundation provides the necessary context for understanding how deep learning models can predict these complex performance characteristics from motor geometry and operating conditions.</p>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="01_introduction.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Chapter 3: RNN-based Performance Map Prediction</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="03_data_generation.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">(3) Data Generation and Processing</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-objectives">Learning Objectives</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#motor-types-and-geometries">Motor Types and Geometries</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interior-permanent-magnet-ipm-motor">1. Interior Permanent Magnet (IPM) Motor</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fractional-slot-concentrated-winding-fscw-pm-motor">2. Fractional-Slot Concentrated Winding (FSCW) PM Motor</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-characteristics">Performance Characteristics</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#control-strategies">Control Strategies</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#maximum-torque-per-ampere-mtpa">1. Maximum Torque Per Ampere (MTPA)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flux-weakening">2. Flux Weakening</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#maximum-torque-per-volt-mtpv">3. Maximum Torque Per Volt (MTPV)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-maps">Performance Maps</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#types-of-performance-maps">Types of Performance Maps</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#efficiency-map-n-t">1. Efficiency Map (η(N, T))</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#power-factor-map-pf-n-t">2. Power Factor Map (pf(N, T))</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#loss-maps">3. Loss Maps</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#thermal-maps">4. Thermal Maps</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-parameter-sensitivity">Design Parameter Sensitivity</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-design-parameters">Key Design Parameters</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ipm-motor-parameters-x1-x12">IPM Motor Parameters (X₁-X₁₂)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#fscw-motor-parameters-x1-x10">FSCW Motor Parameters (X₁-X₁₀)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sensitivity-analysis">Sensitivity Analysis</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#section-summary">Section Summary</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-takeaways-from-motor-fundamentals">🎯 Key Takeaways from Motor Fundamentals</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#practical-applications">🔧 Practical Applications</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

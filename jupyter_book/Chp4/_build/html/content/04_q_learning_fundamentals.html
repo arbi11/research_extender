@@ -1,0 +1,1197 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>4. Q-Learning Fundamentals for Topology Optimization &#8212; Chapter 4: MDP Topology Optimization for Electrical Machines</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/04_q_learning_fundamentals';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="5. Synchronous Reluctance Motor Environment" href="05_synrm_environment.html" />
+    <link rel="prev" title="3. Markov Decision Processes for Topology Optimization" href="03_markov_decision_processes.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="00_preface.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 4: MDP Topology Optimization for Electrical Machines</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_literature_survey.html">2. Literature Survey</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_markov_decision_processes.html">3. Markov Decision Processes</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">4. Q-Learning Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_synrm_environment.html">5. SynRM Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_genetic_algorithms.html">6. Genetic Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_mdp_implementation.html">7. MDP Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_comparison_methodology.html">8. Comparison Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_results_analysis.html">9. Results Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_advanced_applications.html">10. Advanced Applications</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/04_q_learning_fundamentals.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>4. Q-Learning Fundamentals for Topology Optimization</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction-to-q-learning">4.1 Introduction to Q-Learning</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#historical-development">4.1.1 Historical Development</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-q-learning-for-topology-optimization">4.1.2 Why Q-Learning for Topology Optimization?</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#q-learning-algorithm-fundamentals">4.2 Q-Learning Algorithm Fundamentals</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-update-rule">4.2.1 Core Update Rule</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#temporal-difference-learning">4.2.2 Temporal Difference Learning</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#algorithm-pseudocode">4.2.3 Algorithm Pseudocode</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-components-and-hyperparameters">4.3 Key Components and Hyperparameters</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-rate">4.3.1 Learning Rate (α)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#discount-factor">4.3.2 Discount Factor (γ)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration-strategy-greedy">4.3.3 Exploration Strategy (ε-greedy)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#q-learning-for-topology-optimization">4.4 Q-Learning for Topology Optimization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-and-action-space-design">4.4.1 State and Action Space Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reward-function-for-topology-design">4.4.2 Reward Function for Topology Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#q-table-structure">4.4.3 Q-Table Structure</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#practical-implementation">4.5 Practical Implementation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#q-table-initialization">4.5.1 Q-Table Initialization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-encoding-and-decoding">4.5.2 State Encoding and Decoding</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#action-selection-and-execution">4.5.3 Action Selection and Execution</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#q-value-update">4.5.4 Q-Value Update</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-process">4.6 Training Process</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#episode-structure">4.6.1 Episode Structure</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#training-loop">4.6.2 Training Loop</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-and-performance">4.7 Convergence and Performance</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-criteria">4.7.1 Convergence Criteria</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-metrics">4.7.2 Performance Metrics</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#common-issues-and-solutions">4.7.3 Common Issues and Solutions</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-q-learning-variants">4.8 Advanced Q-Learning Variants</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deep-q-networks-dqn">4.8.1 Deep Q-Networks (DQN)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#double-q-learning">4.8.2 Double Q-Learning</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-step-q-learning">4.8.3 Multi-step Q-Learning</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">4.9 Summary</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-advantages">4.9.1 Key Advantages</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#practical-considerations">4.9.2 Practical Considerations</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="q-learning-fundamentals-for-topology-optimization">
+<h1>4. Q-Learning Fundamentals for Topology Optimization<a class="headerlink" href="#q-learning-fundamentals-for-topology-optimization" title="Link to this heading">#</a></h1>
+<section id="introduction-to-q-learning">
+<h2>4.1 Introduction to Q-Learning<a class="headerlink" href="#introduction-to-q-learning" title="Link to this heading">#</a></h2>
+<p>Q-Learning is a model-free reinforcement learning algorithm that learns the optimal action-value function <span class="math notranslate nohighlight">\(Q^*(s,a)\)</span> through direct interaction with the environment. Unlike dynamic programming methods, Q-Learning does not require knowledge of the transition model <span class="math notranslate nohighlight">\(P(s'|s,a)\)</span>, making it particularly suitable for topology optimization where the effects of design modifications are complex and difficult to model analytically.</p>
+<section id="historical-development">
+<h3>4.1.1 Historical Development<a class="headerlink" href="#historical-development" title="Link to this heading">#</a></h3>
+<p>Q-Learning was introduced by Chris Watkins in his 1989 PhD thesis and has since become one of the most widely used reinforcement learning algorithms:</p>
+<ul class="simple">
+<li><p><strong>1989</strong>: Initial formulation by Chris Watkins</p></li>
+<li><p><strong>1992</strong>: Convergence proof by Watkins and Dayan</p></li>
+<li><p><strong>2000s</strong>: Extension to function approximation</p></li>
+<li><p><strong>2015</strong>: Deep Q-Networks (DQN) breakthrough</p></li>
+<li><p><strong>2020s</strong>: Application to engineering design problems</p></li>
+</ul>
+</section>
+<section id="why-q-learning-for-topology-optimization">
+<h3>4.1.2 Why Q-Learning for Topology Optimization?<a class="headerlink" href="#why-q-learning-for-topology-optimization" title="Link to this heading">#</a></h3>
+<p>Q-Learning is particularly well-suited for topology optimization because:</p>
+<ul class="simple">
+<li><p><strong>Model-free</strong>: No need to predict how design modifications affect performance</p></li>
+<li><p><strong>Off-policy</strong>: Can learn optimal designs while exploring suboptimal strategies</p></li>
+<li><p><strong>Convergence guarantees</strong>: Theoretical convergence to optimal Q-values</p></li>
+<li><p><strong>Sample efficiency</strong>: Reuses experience through replay and learning</p></li>
+</ul>
+</section>
+</section>
+<section id="q-learning-algorithm-fundamentals">
+<h2>4.2 Q-Learning Algorithm Fundamentals<a class="headerlink" href="#q-learning-algorithm-fundamentals" title="Link to this heading">#</a></h2>
+<section id="core-update-rule">
+<h3>4.2.1 Core Update Rule<a class="headerlink" href="#core-update-rule" title="Link to this heading">#</a></h3>
+<p>The Q-Learning update rule is the heart of the algorithm:</p>
+<div class="math notranslate nohighlight">
+\[Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ r_t + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t) \right]\]</div>
+<p>Where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(Q(s_t, a_t)\)</span>: Current estimate of action value</p></li>
+<li><p><span class="math notranslate nohighlight">\(\alpha\)</span>: Learning rate (<span class="math notranslate nohighlight">\(0 &lt; \alpha \leq 1\)</span>)</p></li>
+<li><p><span class="math notranslate nohighlight">\(r_t\)</span>: Reward received at time step <span class="math notranslate nohighlight">\(t\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\gamma\)</span>: Discount factor (<span class="math notranslate nohighlight">\(0 \leq \gamma \leq 1\)</span>)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\max_{a'} Q(s_{t+1}, a')\)</span>: Maximum Q-value for next state</p></li>
+</ul>
+</section>
+<section id="temporal-difference-learning">
+<h3>4.2.2 Temporal Difference Learning<a class="headerlink" href="#temporal-difference-learning" title="Link to this heading">#</a></h3>
+<p>Q-Learning is a temporal difference (TD) learning method that updates estimates based on the difference between predicted and actual outcomes:</p>
+<div class="math notranslate nohighlight">
+\[\delta_t = r_t + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t)\]</div>
+<p>The TD error <span class="math notranslate nohighlight">\(\delta_t\)</span> represents the surprise or prediction error:</p>
+<ul class="simple">
+<li><p><strong>Positive TD error</strong>: Outcome better than expected</p></li>
+<li><p><strong>Negative TD error</strong>: Outcome worse than expected</p></li>
+<li><p><strong>Zero TD error</strong>: Perfect prediction</p></li>
+</ul>
+</section>
+<section id="algorithm-pseudocode">
+<h3>4.2.3 Algorithm Pseudocode<a class="headerlink" href="#algorithm-pseudocode" title="Link to this heading">#</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Initialize Q(s,a) arbitrarily for all s ∈ S, a ∈ A
+Initialize learning rate α, discount factor γ, exploration rate ε
+
+for episode = 1 to N_episodes:
+    Initialize state s_0
+    
+    for t = 0 to T_max:
+        # Action selection (ε-greedy)
+        if random() &lt; ε:
+            a_t = random_action()  # Exploration
+        else:
+            a_t = argmax_a Q(s_t, a)  # Exploitation
+        
+        # Execute action and observe result
+        s_{t+1}, r_t = environment.step(a_t)
+        
+        # Q-value update
+        Q(s_t, a_t) = Q(s_t, a_t) + α[r_t + γ max_a&#39; Q(s_{t+1}, a&#39;) - Q(s_t, a_t)]
+        
+        s_t = s_{t+1}
+        
+        if s_t is terminal:
+            break
+</pre></div>
+</div>
+</section>
+</section>
+<section id="key-components-and-hyperparameters">
+<h2>4.3 Key Components and Hyperparameters<a class="headerlink" href="#key-components-and-hyperparameters" title="Link to this heading">#</a></h2>
+<section id="learning-rate">
+<h3>4.3.1 Learning Rate (α)<a class="headerlink" href="#learning-rate" title="Link to this heading">#</a></h3>
+<p>The learning rate controls how much new information overrides old information:</p>
+<ul class="simple">
+<li><p><strong>High α (0.7-1.0)</strong>: Fast learning, but potentially unstable</p></li>
+<li><p><strong>Low α (0.1-0.3)</strong>: Stable learning, but slow convergence</p></li>
+<li><p><strong>Adaptive α</strong>: Variable learning rate that decreases over time</p></li>
+</ul>
+<p><strong>Recommended for topology optimization</strong>: <span class="math notranslate nohighlight">\(\alpha = 0.8\)</span> (based on empirical testing)</p>
+</section>
+<section id="discount-factor">
+<h3>4.3.2 Discount Factor (γ)<a class="headerlink" href="#discount-factor" title="Link to this heading">#</a></h3>
+<p>The discount factor determines the importance of future rewards:</p>
+<ul class="simple">
+<li><p><strong>γ ≈ 0</strong>: Myopic agent, only considers immediate rewards</p></li>
+<li><p><strong>γ ≈ 1</strong>: Far-sighted agent, values future rewards highly</p></li>
+</ul>
+<p>For topology optimization:</p>
+<ul class="simple">
+<li><p><strong>γ = 0.95</strong>: Balances immediate and long-term design improvements</p></li>
+<li><p>Enables consideration of design sequences that build toward optimal topologies</p></li>
+</ul>
+</section>
+<section id="exploration-strategy-greedy">
+<h3>4.3.3 Exploration Strategy (ε-greedy)<a class="headerlink" href="#exploration-strategy-greedy" title="Link to this heading">#</a></h3>
+<p>Exploration is crucial for discovering novel topologies:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\pi(a|s) = \begin{cases} 1 - \varepsilon + \frac{\varepsilon}{|A|} &amp; \text{if } a = \arg\max_{a'} Q(s,a') \\ \frac{\varepsilon}{|A|} &amp; \text{otherwise} \end{cases}\end{split}\]</div>
+<p><strong>Exploration decay</strong>:
+$<span class="math notranslate nohighlight">\(\varepsilon_t = \max(\varepsilon_{\text{min}}, \varepsilon_{\text{max}} \cdot e^{-\lambda t})\)</span>$</p>
+<p>Parameters for topology optimization:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\varepsilon_{\text{max}} = 1.0\)</span>: Start with full exploration</p></li>
+<li><p><span class="math notranslate nohighlight">\(\varepsilon_{\text{min}} = 0.1\)</span>: Maintain minimum exploration</p></li>
+<li><p><span class="math notranslate nohighlight">\(\lambda = 0.05\)</span>: Moderate decay rate</p></li>
+</ul>
+</section>
+</section>
+<section id="q-learning-for-topology-optimization">
+<h2>4.4 Q-Learning for Topology Optimization<a class="headerlink" href="#q-learning-for-topology-optimization" title="Link to this heading">#</a></h2>
+<section id="state-and-action-space-design">
+<h3>4.4.1 State and Action Space Design<a class="headerlink" href="#state-and-action-space-design" title="Link to this heading">#</a></h3>
+<p>For topology optimization, we need to carefully design the state and action spaces:</p>
+<p><strong>State Representation</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Flatten 2D topology to 1D state vector</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">topology</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>  <span class="c1"># Shape: (n*n,) for n×n grid</span>
+<span class="c1"># Each element is 0 (void) or 1 (material)</span>
+</pre></div>
+</div>
+<p><strong>Action Space</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Actions: Toggle material at grid position (i,j)</span>
+<span class="n">actions</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
+<span class="c1"># Total actions: n² for n×n grid</span>
+</pre></div>
+</div>
+</section>
+<section id="reward-function-for-topology-design">
+<h3>4.4.2 Reward Function for Topology Design<a class="headerlink" href="#reward-function-for-topology-design" title="Link to this heading">#</a></h3>
+<p>The reward function guides the optimization toward desirable topologies:</p>
+<div class="math notranslate nohighlight">
+\[r(s_t, a_t, s_{t+1}) = w_1 \cdot \Delta \text{Performance} + w_2 \cdot \text{ConstraintPenalty} + w_3 \cdot \text{DesignBonus}\]</div>
+<p>For SynRM design specifically:
+$<span class="math notranslate nohighlight">\(r = w_T \cdot \Delta T + w_\eta \cdot \Delta \eta - w_{\text{ripple}} \cdot T_{\text{ripple}} - w_{\text{mass}} \cdot \Delta M\)</span>$</p>
+<p>Where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\Delta T\)</span>: Change in average torque</p></li>
+<li><p><span class="math notranslate nohighlight">\(\Delta \eta\)</span>: Change in efficiency</p></li>
+<li><p><span class="math notranslate nohighlight">\(T_{\text{ripple}}\)</span>: Torque ripple (penalty term)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\Delta M\)</span>: Change in mass (penalty if excessive)</p></li>
+</ul>
+</section>
+<section id="q-table-structure">
+<h3>4.4.3 Q-Table Structure<a class="headerlink" href="#q-table-structure" title="Link to this heading">#</a></h3>
+<p>For discrete topology optimization, we maintain a Q-table:</p>
+<p><strong>Q-Table Dimensions</strong>: <span class="math notranslate nohighlight">\(|S| \times |A|\)</span></p>
+<ul class="simple">
+<li><p><strong><span class="math notranslate nohighlight">\(|S| = 2^{n^2}\)</span></strong>: All possible topologies for <span class="math notranslate nohighlight">\(n \times n\)</span> grid</p></li>
+<li><p><strong><span class="math notranslate nohighlight">\(|A| = n^2\)</span></strong>: Possible actions (toggle each cell)</p></li>
+</ul>
+<p><strong>Memory Considerations</strong>:</p>
+<ul class="simple">
+<li><p>For <span class="math notranslate nohighlight">\(6 \times 6\)</span> grid: <span class="math notranslate nohighlight">\(2^{36} \times 36\)</span> entries (infeasible)
+“””Q-learning update function”””</p></li>
+<li><p><strong>Alternative</strong>: Hierarchical state representation</p></li>
+</ul>
+</section>
+</section>
+<section id="practical-implementation">
+<h2>4.5 Practical Implementation<a class="headerlink" href="#practical-implementation" title="Link to this heading">#</a></h2>
+<section id="q-table-initialization">
+<h3>4.5.1 Q-Table Initialization<a class="headerlink" href="#q-table-initialization" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">QLearningTopologyOptimizer</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grid_size</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">0.95</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">=</span> <span class="n">grid_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_states</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="p">(</span><span class="n">grid_size</span> <span class="o">*</span> <span class="n">grid_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_actions</span> <span class="o">=</span> <span class="n">grid_size</span> <span class="o">*</span> <span class="n">grid_size</span>
+        
+        <span class="c1"># Initialize Q-table</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_actions</span><span class="p">))</span>
+        
+        <span class="c1"># Hyperparameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">learning_rate</span>  <span class="c1"># Learning rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">gamma</span>          <span class="c1"># Discount factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1.0</span>          <span class="c1"># Exploration rate</span>
+</pre></div>
+</div>
+</section>
+<section id="state-encoding-and-decoding">
+<h3>4.5.2 State Encoding and Decoding<a class="headerlink" href="#state-encoding-and-decoding" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">encode_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topology</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert 2D topology to state index&quot;&quot;&quot;</span>
+    <span class="n">flattened</span> <span class="o">=</span> <span class="n">topology</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">state_index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">bit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">flattened</span><span class="p">):</span>
+        <span class="n">state_index</span> <span class="o">+=</span> <span class="n">bit</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">state_index</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">decode_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_index</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert state index back to 2D topology&quot;&quot;&quot;</span>
+    <span class="n">flattened</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">flattened</span><span class="p">)):</span>
+        <span class="n">flattened</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">state_index</span> <span class="o">&gt;&gt;</span> <span class="n">i</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">flattened</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="action-selection-and-execution">
+<h3>4.5.3 Action Selection and Execution<a class="headerlink" href="#action-selection-and-execution" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">select_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_index</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;ε-greedy action selection&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">training</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span><span class="p">:</span>
+        <span class="c1"># Exploration: random action</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_actions</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Exploitation: best known action</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">[</span><span class="n">state_index</span><span class="p">])</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">execute_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topology</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute action and return new topology&quot;&quot;&quot;</span>
+    <span class="n">new_topology</span> <span class="o">=</span> <span class="n">topology</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">action</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">,</span> <span class="n">action</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span>
+    <span class="n">new_topology</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">new_topology</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>  <span class="c1"># Toggle cell</span>
+    <span class="k">return</span> <span class="n">new_topology</span>
+</pre></div>
+</div>
+</section>
+<section id="q-value-update">
+<h3>4.5.4 Q-Value Update<a class="headerlink" href="#q-value-update" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">update_q_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_index</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state_index</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Update Q-value using TD learning&quot;&quot;&quot;</span>
+    <span class="n">current_q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">[</span><span class="n">state_index</span><span class="p">,</span> <span class="n">action</span><span class="p">]</span>
+    <span class="n">max_next_q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">[</span><span class="n">next_state_index</span><span class="p">])</span>
+    
+    <span class="c1"># TD update rule</span>
+    <span class="n">new_q</span> <span class="o">=</span> <span class="n">current_q</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">reward</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="n">max_next_q</span> <span class="o">-</span> <span class="n">current_q</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">[</span><span class="n">state_index</span><span class="p">,</span> <span class="n">action</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_q</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="training-process">
+<h2>4.6 Training Process<a class="headerlink" href="#training-process" title="Link to this heading">#</a></h2>
+<section id="episode-structure">
+<h3>4.6.1 Episode Structure<a class="headerlink" href="#episode-structure" title="Link to this heading">#</a></h3>
+<p>Each episode represents a complete design process:</p>
+<ol class="arabic simple">
+<li><p><strong>Initialization</strong>: Start from a baseline topology</p></li>
+<li><p><strong>Iteration</strong>: Make sequential design modifications</p></li>
+<li><p><strong>Termination</strong>: Stop when convergence or max steps reached</p></li>
+<li><p><strong>Evaluation</strong>: Record final design performance</p></li>
+</ol>
+</section>
+<section id="training-loop">
+<h3>4.6.2 Training Loop<a class="headerlink" href="#training-loop" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_episodes</span><span class="p">,</span> <span class="n">max_steps_per_episode</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Main training loop&quot;&quot;&quot;</span>
+    <span class="n">rewards_history</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">best_designs</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">for</span> <span class="n">episode</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_episodes</span><span class="p">):</span>
+        <span class="c1"># Initialize episode</span>
+        <span class="n">topology</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_topology</span><span class="p">()</span>
+        <span class="n">episode_reward</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_steps_per_episode</span><span class="p">):</span>
+            <span class="c1"># Convert topology to state index</span>
+            <span class="n">state_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode_state</span><span class="p">(</span><span class="n">topology</span><span class="p">)</span>
+            
+            <span class="c1"># Select and execute action</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_action</span><span class="p">(</span><span class="n">state_index</span><span class="p">)</span>
+            <span class="n">new_topology</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_action</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+            
+            <span class="c1"># Calculate reward</span>
+            <span class="n">reward</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_reward</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">new_topology</span><span class="p">)</span>
+            <span class="n">episode_reward</span> <span class="o">+=</span> <span class="n">reward</span>
+            
+            <span class="c1"># Update Q-value</span>
+            <span class="n">next_state_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode_state</span><span class="p">(</span><span class="n">new_topology</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_q_value</span><span class="p">(</span><span class="n">state_index</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state_index</span><span class="p">)</span>
+            
+            <span class="n">topology</span> <span class="o">=</span> <span class="n">new_topology</span>
+            
+        <span class="c1"># Decay exploration rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epsilon_min</span><span class="p">,</span> 
+                          <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon_decay</span><span class="p">)</span>
+        
+        <span class="c1"># Record results</span>
+        <span class="n">rewards_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">episode_reward</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">episode</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">best_designs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">topology</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+    
+    <span class="k">return</span> <span class="n">rewards_history</span><span class="p">,</span> <span class="n">best_designs</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="convergence-and-performance">
+<h2>4.7 Convergence and Performance<a class="headerlink" href="#convergence-and-performance" title="Link to this heading">#</a></h2>
+<section id="convergence-criteria">
+<h3>4.7.1 Convergence Criteria<a class="headerlink" href="#convergence-criteria" title="Link to this heading">#</a></h3>
+<p>Q-Learning converges under specific conditions:</p>
+<p><strong>Robbins-Monro Conditions</strong>:
+$<span class="math notranslate nohighlight">\(\sum_{t=0}^{\infty} \alpha_t = \infty\)</span><span class="math notranslate nohighlight">\(
+\)</span><span class="math notranslate nohighlight">\(\sum_{t=0}^{\infty} \alpha_t^2 &lt; \infty\)</span>$</p>
+<p><strong>Practical Implementation</strong>:</p>
+<ul class="simple">
+<li><p><strong>Learning rate decay</strong>: <span class="math notranslate nohighlight">\(\alpha_t = \alpha_0 / (1 + \beta t)\)</span></p></li>
+<li><p><strong>Exploration decay</strong>: Gradually reduce <span class="math notranslate nohighlight">\(\varepsilon\)</span></p></li>
+<li><p><strong>Visit frequency</strong>: All state-action pairs visited infinitely often</p></li>
+</ul>
+</section>
+<section id="performance-metrics">
+<h3>4.7.2 Performance Metrics<a class="headerlink" href="#performance-metrics" title="Link to this heading">#</a></h3>
+<p><strong>Learning Metrics</strong>:</p>
+<ul class="simple">
+<li><p><strong>Episode rewards</strong>: Track learning progress</p></li>
+<li><p><strong>Q-value convergence</strong>: Stability of learned values</p></li>
+<li><p><strong>Action consistency</strong>: Convergence to stable policy</p></li>
+</ul>
+<p><strong>Design Metrics</strong>:</p>
+<ul class="simple">
+<li><p><strong>Final performance</strong>: Torque, efficiency, etc.</p></li>
+<li><p><strong>Convergence speed</strong>: Episodes to reach good designs</p></li>
+<li><p><strong>Design diversity</strong>: Variety of discovered topologies</p></li>
+</ul>
+</section>
+<section id="common-issues-and-solutions">
+<h3>4.7.3 Common Issues and Solutions<a class="headerlink" href="#common-issues-and-solutions" title="Link to this heading">#</a></h3>
+<p><strong>Slow Convergence</strong>:</p>
+<ul class="simple">
+<li><p><strong>Problem</strong>: Large state space leads to slow learning</p></li>
+<li><p><strong>Solution</strong>: Function approximation, curriculum learning</p></li>
+</ul>
+<p><strong>Local Optima</strong>:</p>
+<ul class="simple">
+<li><p><strong>Problem</strong>: Agent gets stuck in suboptimal designs</p></li>
+<li><p><strong>Solution</strong>: Higher exploration rate, reward shaping</p></li>
+</ul>
+<p><strong>Sparse Rewards</strong>:</p>
+<ul class="simple">
+<li><p><strong>Problem</strong>: Long delay between actions and meaningful feedback</p></li>
+<li><p><strong>Solution</strong>: Intermediate rewards, reward shaping</p></li>
+</ul>
+</section>
+</section>
+<section id="advanced-q-learning-variants">
+<h2>4.8 Advanced Q-Learning Variants<a class="headerlink" href="#advanced-q-learning-variants" title="Link to this heading">#</a></h2>
+<section id="deep-q-networks-dqn">
+<h3>4.8.1 Deep Q-Networks (DQN)<a class="headerlink" href="#deep-q-networks-dqn" title="Link to this heading">#</a></h3>
+<p>For large-scale topology optimization:</p>
+<div class="math notranslate nohighlight">
+\[Q(s,a; \theta) \approx Q^*(s,a)\]</div>
+<p>Where <span class="math notranslate nohighlight">\(\theta\)</span> are neural network parameters.</p>
+<p><strong>Key Innovations</strong>:</p>
+<ul class="simple">
+<li><p><strong>Experience replay</strong>: Store and reuse transitions</p></li>
+<li><p><strong>Target networks</strong>: Stable learning targets</p></li>
+<li><p><strong>CNN architectures</strong>: Spatial feature extraction</p></li>
+</ul>
+</section>
+<section id="double-q-learning">
+<h3>4.8.2 Double Q-Learning<a class="headerlink" href="#double-q-learning" title="Link to this heading">#</a></h3>
+<p>Addresses overestimation bias:</p>
+<div class="math notranslate nohighlight">
+\[Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma Q'(s', \arg\max_a Q(s',a)) - Q(s,a)]\]</div>
+<p>Where <span class="math notranslate nohighlight">\(Q'\)</span> is the target network.</p>
+</section>
+<section id="multi-step-q-learning">
+<h3>4.8.3 Multi-step Q-Learning<a class="headerlink" href="#multi-step-q-learning" title="Link to this heading">#</a></h3>
+<p>Uses n-step returns for faster learning:</p>
+<div class="math notranslate nohighlight">
+\[G_t^{(n)} = \sum_{k=0}^{n-1} \gamma^k r_{t+k} + \gamma^n \max_a Q(s_{t+n}, a)\]</div>
+</section>
+</section>
+<section id="summary">
+<h2>4.9 Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<p>Q-Learning provides a powerful framework for topology optimization:</p>
+<section id="key-advantages">
+<h3>4.9.1 Key Advantages<a class="headerlink" href="#key-advantages" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Model-free</strong>: No need for analytical design models</p></li>
+<li><p><strong>Off-policy</strong>: Can learn optimal designs while exploring</p></li>
+<li><p><strong>Theoretical guarantees</strong>: Convergence to optimal solution</p></li>
+<li><p><strong>Adaptive</strong>: Learns from experience and improves over time</p></li>
+</ul>
+</section>
+<section id="practical-considerations">
+<h3>4.9.2 Practical Considerations<a class="headerlink" href="#practical-considerations" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>State space size</strong>: Exponential growth requires approximation</p></li>
+<li><p><strong>Reward design</strong>: Critical for guiding optimization</p></li>
+<li><p><strong>Exploration balance</strong>: Essential for discovering novel designs</p></li>
+<li><p><strong>Computational cost</strong>: Many iterations required for convergence</p></li>
+</ul>
+<p>Q-Learning represents a fundamental shift from traditional optimization methods, enabling automated discovery of innovative electrical machine topologies through sequential learning and exploration.</p>
+<hr class="docutils" />
+<p><strong>Next Section</strong>: <a class="reference internal" href="05_synrm_environment.html"><span class="std std-doc">SynRM Environment</span></a> - Application domain specifics and electromagnetic design fundamentals.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Q-Learning demonstration for topology optimization</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.animation</span><span class="w"> </span><span class="kn">import</span> <span class="n">FuncAnimation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">display</span><span class="p">,</span> <span class="n">Markdown</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SimpleQLearningTO</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simplified Q-Learning for Topology Optimization&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grid_size</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">=</span> <span class="n">grid_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_cells</span> <span class="o">=</span> <span class="n">grid_size</span> <span class="o">*</span> <span class="n">grid_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_actions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_cells</span>  <span class="c1"># Toggle each cell</span>
+        
+        <span class="c1"># Hyperparameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">learning_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">gamma</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">epsilon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon_decay</span> <span class="o">=</span> <span class="mf">0.995</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon_min</span> <span class="o">=</span> <span class="mf">0.1</span>
+        
+        <span class="c1"># Initialize Q-table (simplified: use smaller state representation)</span>
+        <span class="c1"># For demonstration, we&#39;ll use a compressed state representation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_actions</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>  <span class="c1"># 16 compressed states</span>
+        
+        <span class="c1"># Training history</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reward_history</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">topology_history</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">compress_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topology</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compress topology to smaller state space for demo&quot;&quot;&quot;</span>
+        <span class="c1"># Simple compression: count material in each quadrant</span>
+        <span class="n">half</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">state_vector</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">,</span> <span class="n">half</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">,</span> <span class="n">half</span><span class="p">):</span>
+                <span class="n">quadrant</span> <span class="o">=</span> <span class="n">topology</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">half</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span><span class="n">j</span><span class="o">+</span><span class="n">half</span><span class="p">]</span>
+                <span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">quadrant</span><span class="p">)</span>
+                <span class="n">state_vector</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>  <span class="c1"># Cap at 3 for 4 states per quadrant</span>
+        
+        <span class="c1"># Convert to single state index</span>
+        <span class="n">state_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">state_vector</span><span class="p">):</span>
+            <span class="n">state_index</span> <span class="o">+=</span> <span class="n">val</span> <span class="o">*</span> <span class="p">(</span><span class="mi">4</span><span class="o">**</span><span class="n">i</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">state_index</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">select_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_index</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;ε-greedy action selection&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">training</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_actions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">[</span><span class="n">state_index</span><span class="p">])</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topology</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute action (toggle cell)&quot;&quot;&quot;</span>
+        <span class="n">new_topology</span> <span class="o">=</span> <span class="n">topology</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">action</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">,</span> <span class="n">action</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span>
+        <span class="n">new_topology</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">new_topology</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">new_topology</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_reward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_topology</span><span class="p">,</span> <span class="n">new_topology</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate reward based on design improvement&quot;&quot;&quot;</span>
+        <span class="c1"># Reward function for demonstration</span>
+        
+        <span class="c1"># Connectivity reward</span>
+        <span class="n">old_connectivity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_connectivity</span><span class="p">(</span><span class="n">old_topology</span><span class="p">)</span>
+        <span class="n">new_connectivity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_connectivity</span><span class="p">(</span><span class="n">new_topology</span><span class="p">)</span>
+        <span class="n">connectivity_reward</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_connectivity</span> <span class="o">-</span> <span class="n">old_connectivity</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span>
+        
+        <span class="c1"># Material usage penalty</span>
+        <span class="n">material_ratio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">new_topology</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_cells</span>
+        <span class="n">material_penalty</span> <span class="o">=</span> <span class="o">-</span><span class="nb">abs</span><span class="p">(</span><span class="n">material_ratio</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="mi">5</span>
+        
+        <span class="c1"># Symmetry bonus</span>
+        <span class="n">symmetry_bonus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_symmetry</span><span class="p">(</span><span class="n">new_topology</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>
+        
+        <span class="k">return</span> <span class="n">connectivity_reward</span> <span class="o">+</span> <span class="n">material_penalty</span> <span class="o">+</span> <span class="n">symmetry_bonus</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_connectivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topology</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simple connectivity measure&quot;&quot;&quot;</span>
+        <span class="n">connectivity</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">topology</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">di</span><span class="p">,</span> <span class="n">dj</span> <span class="ow">in</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">)]:</span>
+                        <span class="n">ni</span><span class="p">,</span> <span class="n">nj</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="n">di</span><span class="p">,</span> <span class="n">j</span> <span class="o">+</span> <span class="n">dj</span>
+                        <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">ni</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">nj</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">topology</span><span class="p">[</span><span class="n">ni</span><span class="p">,</span> <span class="n">nj</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                                <span class="n">connectivity</span> <span class="o">+=</span> <span class="mf">0.5</span>
+        <span class="k">return</span> <span class="n">connectivity</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_symmetry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topology</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure symmetry (0 to 1)&quot;&quot;&quot;</span>
+        <span class="n">h_sym</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">topology</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">fliplr</span><span class="p">(</span><span class="n">topology</span><span class="p">)))</span>
+        <span class="n">v_sym</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">topology</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">topology</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">h_sym</span> <span class="o">+</span> <span class="n">v_sym</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_q_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_index</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state_index</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Q-learning update rule&quot;&quot;&quot;</span>
+        <span class="n">current_q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">[</span><span class="n">state_index</span><span class="p">,</span> <span class="n">action</span><span class="p">]</span>
+        <span class="n">max_next_q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">[</span><span class="n">next_state_index</span><span class="p">])</span>
+        
+        <span class="c1"># TD update</span>
+        <span class="n">new_q</span> <span class="o">=</span> <span class="n">current_q</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">reward</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="n">max_next_q</span> <span class="o">-</span> <span class="n">current_q</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">[</span><span class="n">state_index</span><span class="p">,</span> <span class="n">action</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_q</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_episode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Train for one episode&quot;&quot;&quot;</span>
+        <span class="c1"># Initialize with some random topology</span>
+        <span class="n">topology</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">),</span> <span class="n">p</span><span class="o">=</span><span class="p">[</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">])</span>
+        <span class="n">episode_reward</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">episode_topologies</span> <span class="o">=</span> <span class="p">[</span><span class="n">topology</span><span class="o">.</span><span class="n">copy</span><span class="p">()]</span>
+        
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_steps</span><span class="p">):</span>
+            <span class="n">state_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compress_state</span><span class="p">(</span><span class="n">topology</span><span class="p">)</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_action</span><span class="p">(</span><span class="n">state_index</span><span class="p">)</span>
+            <span class="n">new_topology</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_action</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+            
+            <span class="n">reward</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_reward</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">new_topology</span><span class="p">)</span>
+            <span class="n">episode_reward</span> <span class="o">+=</span> <span class="n">reward</span>
+            
+            <span class="n">next_state_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compress_state</span><span class="p">(</span><span class="n">new_topology</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_q_value</span><span class="p">(</span><span class="n">state_index</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state_index</span><span class="p">)</span>
+            
+            <span class="n">topology</span> <span class="o">=</span> <span class="n">new_topology</span>
+            <span class="n">episode_topologies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">topology</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+        
+        <span class="c1"># Decay epsilon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epsilon_min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon_decay</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">episode_reward</span><span class="p">,</span> <span class="n">episode_topologies</span>
+
+<span class="c1"># Demonstrate Q-Learning</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">SimpleQLearningTO</span><span class="p">(</span><span class="n">grid_size</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+<span class="c1"># Train for multiple episodes</span>
+<span class="n">n_episodes</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">training_rewards</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">best_episodes</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Training Q-Learning Agent for Topology Optimization...&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">episode</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_episodes</span><span class="p">):</span>
+    <span class="n">reward</span><span class="p">,</span> <span class="n">topologies</span> <span class="o">=</span> <span class="n">agent</span><span class="o">.</span><span class="n">train_episode</span><span class="p">(</span><span class="n">max_steps</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+    <span class="n">training_rewards</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+    
+    <span class="c1"># Store best episodes for visualization</span>
+    <span class="k">if</span> <span class="n">episode</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">best_episodes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">episode</span><span class="p">,</span> <span class="n">topologies</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">reward</span><span class="p">))</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="n">episode</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Episode </span><span class="si">{</span><span class="n">episode</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: Reward = </span><span class="si">{</span><span class="n">reward</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, Epsilon = </span><span class="si">{</span><span class="n">agent</span><span class="o">.</span><span class="n">epsilon</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Visualize training progress</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># Plot 1: Reward progression</span>
+<span class="n">ax1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">training_rewards</span><span class="p">,</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">training_rewards</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">training_rewards</span><span class="p">),</span> <span class="s1">&#39;r-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Episode&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Episode Reward&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Q-Learning Training Progress&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;Episode Reward&#39;</span><span class="p">,</span> <span class="s1">&#39;Best So Far&#39;</span><span class="p">])</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># Plot 2: Epsilon decay</span>
+<span class="n">ax2</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">epsilons</span> <span class="o">=</span> <span class="p">[</span><span class="n">agent</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">*</span> <span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">epsilon_decay</span> <span class="o">**</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_episodes</span><span class="p">)]</span>
+<span class="n">epsilons</span> <span class="o">=</span> <span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">epsilon_min</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span> <span class="k">for</span> <span class="n">eps</span> <span class="ow">in</span> <span class="n">epsilons</span><span class="p">]</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">epsilons</span><span class="p">,</span> <span class="s1">&#39;g-&#39;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Episode&#39;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Exploration Rate (ε)&#39;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Exploration-Exploitation Balance&#39;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># Plot 3: Final topology</span>
+<span class="n">ax3</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">final_topology</span> <span class="o">=</span> <span class="n">best_episodes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">im</span> <span class="o">=</span> <span class="n">ax3</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">final_topology</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;binary&#39;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Final Design</span><span class="se">\n</span><span class="s1">Reward: </span><span class="si">{</span><span class="n">best_episodes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;X Position&#39;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Y Position&#39;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># Plot 4: Q-value heatmap (sample)</span>
+<span class="n">ax4</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">sample_q</span> <span class="o">=</span> <span class="n">agent</span><span class="o">.</span><span class="n">q_table</span><span class="p">[:</span><span class="nb">min</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">q_table</span><span class="p">)),</span> <span class="p">:</span><span class="nb">min</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="n">agent</span><span class="o">.</span><span class="n">n_actions</span><span class="p">)]</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">sample_q</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax4</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">cbar_kws</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;label&#39;</span><span class="p">:</span> <span class="s1">&#39;Q-value&#39;</span><span class="p">})</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Q-Table Sample (State × Action)&#39;</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Action&#39;</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;State&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Q-Learning for Topology Optimization&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">MMarkdown</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">**Figure: Q-Learning Demonstration Results**</span>
+
+<span class="s2">This demonstration shows Q-Learning applied to topology optimization:</span>
+
+<span class="s2">1. **Training Progress**: The agent learns to improve design quality over episodes, with the red line showing the best reward achieved so far.</span>
+
+<span class="s2">2. **Exploration Decay**: The exploration rate ε starts high (exploring many designs) and gradually decreases (exploiting known good designs).</span>
+
+<span class="s2">3. **Final Design**: The learned topology shows balanced material distribution with good connectivity and symmetry.</span>
+
+<span class="s2">4. **Q-Table**: The heatmap shows learned Q-values for different state-action pairs, with brighter colors indicating higher expected rewards.</span>
+
+<span class="s2">**Key Insights from Q-Learning:**</span>
+<span class="s2">- The agent learns which design modifications lead to better performance</span>
+<span class="s2">- Exploration is crucial for discovering novel topologies</span>
+<span class="s2">- The balance between exploration and exploitation changes over time</span>
+<span class="s2">- Q-values encode the long-term value of design decisions</span>
+
+<span class="s2">This simplified demonstration captures the essence of how Q-Learning can be applied to real topology optimization problems in electrical machine design.</span>
+<span class="s2">&quot;&quot;&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="03_markov_decision_processes.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">3. Markov Decision Processes for Topology Optimization</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="05_synrm_environment.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">5. Synchronous Reluctance Motor Environment</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction-to-q-learning">4.1 Introduction to Q-Learning</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#historical-development">4.1.1 Historical Development</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-q-learning-for-topology-optimization">4.1.2 Why Q-Learning for Topology Optimization?</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#q-learning-algorithm-fundamentals">4.2 Q-Learning Algorithm Fundamentals</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-update-rule">4.2.1 Core Update Rule</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#temporal-difference-learning">4.2.2 Temporal Difference Learning</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#algorithm-pseudocode">4.2.3 Algorithm Pseudocode</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-components-and-hyperparameters">4.3 Key Components and Hyperparameters</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-rate">4.3.1 Learning Rate (α)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#discount-factor">4.3.2 Discount Factor (γ)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration-strategy-greedy">4.3.3 Exploration Strategy (ε-greedy)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#q-learning-for-topology-optimization">4.4 Q-Learning for Topology Optimization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-and-action-space-design">4.4.1 State and Action Space Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reward-function-for-topology-design">4.4.2 Reward Function for Topology Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#q-table-structure">4.4.3 Q-Table Structure</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#practical-implementation">4.5 Practical Implementation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#q-table-initialization">4.5.1 Q-Table Initialization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-encoding-and-decoding">4.5.2 State Encoding and Decoding</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#action-selection-and-execution">4.5.3 Action Selection and Execution</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#q-value-update">4.5.4 Q-Value Update</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-process">4.6 Training Process</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#episode-structure">4.6.1 Episode Structure</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#training-loop">4.6.2 Training Loop</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-and-performance">4.7 Convergence and Performance</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-criteria">4.7.1 Convergence Criteria</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-metrics">4.7.2 Performance Metrics</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#common-issues-and-solutions">4.7.3 Common Issues and Solutions</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-q-learning-variants">4.8 Advanced Q-Learning Variants</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deep-q-networks-dqn">4.8.1 Deep Q-Networks (DQN)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#double-q-learning">4.8.2 Double Q-Learning</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-step-q-learning">4.8.3 Multi-step Q-Learning</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">4.9 Summary</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-advantages">4.9.1 Key Advantages</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#practical-considerations">4.9.2 Practical Considerations</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

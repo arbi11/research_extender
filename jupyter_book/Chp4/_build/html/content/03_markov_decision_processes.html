@@ -1,0 +1,1012 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>3. Markov Decision Processes for Topology Optimization &#8212; Chapter 4: MDP Topology Optimization for Electrical Machines</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/03_markov_decision_processes';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="4. Q-Learning Fundamentals for Topology Optimization" href="04_q_learning_fundamentals.html" />
+    <link rel="prev" title="Literature Survey: Topology Optimization and RL Applications" href="02_literature_survey.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="00_preface.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 4: MDP Topology Optimization for Electrical Machines</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_literature_survey.html">2. Literature Survey</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">3. Markov Decision Processes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_q_learning_fundamentals.html">4. Q-Learning Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_synrm_environment.html">5. SynRM Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_genetic_algorithms.html">6. Genetic Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_mdp_implementation.html">7. MDP Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_comparison_methodology.html">8. Comparison Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_results_analysis.html">9. Results Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_advanced_applications.html">10. Advanced Applications</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/03_markov_decision_processes.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>3. Markov Decision Processes for Topology Optimization</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction-to-mdp-framework">3.1 Introduction to MDP Framework</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-mdps-for-topology-optimization">3.1.1 Why MDPs for Topology Optimization?</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-components-of-mdp">3.1.2 Key Components of MDP</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mathematical-formulation">3.2 Mathematical Formulation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#formal-mdp-definition">3.2.1 Formal MDP Definition</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#markov-property">3.2.2 Markov Property</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mdp-components-in-topology-optimization">3.3 MDP Components in Topology Optimization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-representation">3.3.1 State Representation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#action-space-design">3.3.2 Action Space Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#transition-dynamics">3.3.3 Transition Dynamics</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reward-function-design">3.3.4 Reward Function Design</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#value-functions">3.4 Value Functions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-value-function">3.4.1 State Value Function</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#action-value-function-q-function">3.4.2 Action Value Function (Q-function)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimal-value-functions">3.4.3 Optimal Value Functions</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bellman-equations">3.5 Bellman Equations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bellman-expectation-equation">3.5.1 Bellman Expectation Equation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bellman-optimality-equation">3.5.2 Bellman Optimality Equation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#intuitive-interpretation">3.5.3 Intuitive Interpretation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#policies">3.6 Policies</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stochastic-policy">3.6.1 Stochastic Policy</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deterministic-policy">3.6.2 Deterministic Policy</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimal-policy">3.6.3 Optimal Policy</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mdp-solution-methods">3.7 MDP Solution Methods</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dynamic-programming">3.7.1 Dynamic Programming</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#model-free-methods">3.7.2 Model-Free Methods</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#function-approximation">3.7.3 Function Approximation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mdps-for-synrm-design">3.8 MDPs for SynRM Design</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#synrm-specific-state-design">3.8.1 SynRM-specific State Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#action-space-for-synrm">3.8.2 Action Space for SynRM</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#synrm-reward-function">3.8.3 SynRM Reward Function</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#practical-considerations">3.9 Practical Considerations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-space-complexity">3.9.1 State Space Complexity</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reward-shaping">3.9.2 Reward Shaping</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration-exploitation-trade-off">3.9.3 Exploration-Exploitation Trade-off</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">3.10 Summary</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="markov-decision-processes-for-topology-optimization">
+<h1>3. Markov Decision Processes for Topology Optimization<a class="headerlink" href="#markov-decision-processes-for-topology-optimization" title="Link to this heading">#</a></h1>
+<section id="introduction-to-mdp-framework">
+<h2>3.1 Introduction to MDP Framework<a class="headerlink" href="#introduction-to-mdp-framework" title="Link to this heading">#</a></h2>
+<p>Markov Decision Processes (MDPs) provide a mathematical framework for modeling sequential decision-making under uncertainty. In the context of topology optimization, MDPs enable us to frame the design process as a series of intelligent modifications that progressively improve the electromagnetic performance of electrical machines.</p>
+<section id="why-mdps-for-topology-optimization">
+<h3>3.1.1 Why MDPs for Topology Optimization?<a class="headerlink" href="#why-mdps-for-topology-optimization" title="Link to this heading">#</a></h3>
+<p>Traditional topology optimization approaches treat design as a single-step optimization problem. The MDP formulation offers several advantages:</p>
+<ul class="simple">
+<li><p><strong>Sequential Design Process</strong>: Mimics human engineering intuition of iterative improvement</p></li>
+<li><p><strong>Learning from Experience</strong>: Algorithms improve through repeated design attempts</p></li>
+<li><p><strong>Partial Credit Assignment</strong>: Intermediate design steps can be rewarded</p></li>
+<li><p><strong>Adaptive Strategy</strong>: Design approach can evolve based on current state</p></li>
+</ul>
+</section>
+<section id="key-components-of-mdp">
+<h3>3.1.2 Key Components of MDP<a class="headerlink" href="#key-components-of-mdp" title="Link to this heading">#</a></h3>
+<p>An MDP is defined by five key components:</p>
+<ol class="arabic simple">
+<li><p><strong>States (S)</strong>: Current topology configuration</p></li>
+<li><p><strong>Actions (A)</strong>: Design modifications or decisions</p></li>
+<li><p><strong>Transition Model (P)</strong>: Probability of moving between states</p></li>
+<li><p><strong>Reward Function (R)</strong>: Performance feedback signal</p></li>
+<li><p><strong>Policy (π)</strong>: Strategy for selecting actions</p></li>
+</ol>
+</section>
+</section>
+<section id="mathematical-formulation">
+<h2>3.2 Mathematical Formulation<a class="headerlink" href="#mathematical-formulation" title="Link to this heading">#</a></h2>
+<section id="formal-mdp-definition">
+<h3>3.2.1 Formal MDP Definition<a class="headerlink" href="#formal-mdp-definition" title="Link to this heading">#</a></h3>
+<p>A Markov Decision Process is a tuple <span class="math notranslate nohighlight">\((S, A, P, R, \gamma)\)</span> where:</p>
+<ul class="simple">
+<li><p><strong><span class="math notranslate nohighlight">\(S\)</span></strong>: Set of possible states (topology configurations)</p></li>
+<li><p><strong><span class="math notranslate nohighlight">\(A\)</span></strong>: Set of possible actions (design modifications)</p></li>
+<li><p><strong><span class="math notranslate nohighlight">\(P(s'|s,a)\)</span></strong>: Transition probability from state <span class="math notranslate nohighlight">\(s\)</span> to <span class="math notranslate nohighlight">\(s'\)</span> given action <span class="math notranslate nohighlight">\(a\)</span></p></li>
+<li><p><strong><span class="math notranslate nohighlight">\(R(s,a,s')\)</span></strong>: Reward received when transitioning from <span class="math notranslate nohighlight">\(s\)</span> to <span class="math notranslate nohighlight">\(s'\)</span> via action <span class="math notranslate nohighlight">\(a\)</span></p></li>
+<li><p><strong><span class="math notranslate nohighlight">\(\gamma \in [0,1]\)</span></strong>: Discount factor for future rewards</p></li>
+</ul>
+</section>
+<section id="markov-property">
+<h3>3.2.2 Markov Property<a class="headerlink" href="#markov-property" title="Link to this heading">#</a></h3>
+<p>The <strong>Markov property</strong> states that the future is independent of the past given the present:</p>
+<div class="math notranslate nohighlight">
+\[P(s_{t+1}|s_t, a_t, s_{t-1}, a_{t-1}, \ldots, s_0, a_0) = P(s_{t+1}|s_t, a_t)\]</div>
+<p>This property is crucial as it enables tractable computation and learning algorithms.</p>
+</section>
+</section>
+<section id="mdp-components-in-topology-optimization">
+<h2>3.3 MDP Components in Topology Optimization<a class="headerlink" href="#mdp-components-in-topology-optimization" title="Link to this heading">#</a></h2>
+<section id="state-representation">
+<h3>3.3.1 State Representation<a class="headerlink" href="#state-representation" title="Link to this heading">#</a></h3>
+<p>In topology optimization, states represent the current material distribution:</p>
+<p><strong>Grid-based Representation</strong>:
+$<span class="math notranslate nohighlight">\(s = \begin{bmatrix} \rho_{0,0} &amp; \rho_{0,1} &amp; \cdots &amp; \rho_{0,n-1} \\ \rho_{1,0} &amp; \rho_{1,1} &amp; \cdots &amp; \rho_{1,n-1} \\ \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\ \rho_{m-1,0} &amp; \rho_{m-1,1} &amp; \cdots &amp; \rho_{m-1,n-1} \end{bmatrix}\)</span>$</p>
+<p>Where <span class="math notranslate nohighlight">\(\rho_{i,j} \in \{0,1\}\)</span> represents material presence (1) or absence (0) at grid position <span class="math notranslate nohighlight">\((i,j)\)</span>.</p>
+<p><strong>State Vectorization</strong>:
+For machine learning applications, the 2D grid is flattened to a 1D vector:
+$<span class="math notranslate nohighlight">\(\mathbf{s} = [\rho_0, \rho_1, \ldots, \rho_{N-1}]^T\)</span><span class="math notranslate nohighlight">\(
+where \)</span>N = m \times n$ is the total number of design variables.</p>
+</section>
+<section id="action-space-design">
+<h3>3.3.2 Action Space Design<a class="headerlink" href="#action-space-design" title="Link to this heading">#</a></h3>
+<p>Actions represent design modifications that transition between states:</p>
+<p><strong>Single-cell Actions</strong>:</p>
+<ul class="simple">
+<li><p><strong>Add Material</strong>: Change <span class="math notranslate nohighlight">\(\rho_{i,j} = 0\)</span> to <span class="math notranslate nohighlight">\(\rho_{i,j} = 1\)</span></p></li>
+<li><p><strong>Remove Material</strong>: Change <span class="math notranslate nohighlight">\(\rho_{i,j} = 1\)</span> to <span class="math notranslate nohighlight">\(\rho_{i,j} = 0\)</span></p></li>
+<li><p><strong>Toggle</strong>: Flip the state of a single cell</p></li>
+</ul>
+<p><strong>Multi-cell Actions</strong>:</p>
+<ul class="simple">
+<li><p><strong>Add Line</strong>: Add material along a line segment</p></li>
+<li><p><strong>Remove Region</strong>: Clear material in a rectangular region</p></li>
+<li><p><strong>Pattern Operations</strong>: Apply predefined patterns</p></li>
+</ul>
+<p><strong>Action Encoding</strong>:
+Each action <span class="math notranslate nohighlight">\(a \in A\)</span> can be parameterized as:
+$<span class="math notranslate nohighlight">\(a = (\text{type}, i, j, \text{parameters})\)</span>$</p>
+</section>
+<section id="transition-dynamics">
+<h3>3.3.3 Transition Dynamics<a class="headerlink" href="#transition-dynamics" title="Link to this heading">#</a></h3>
+<p>In topology optimization, transitions are typically <strong>deterministic</strong>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}P(s'|s,a) = \begin{cases} 1 &amp; \text{if } s' = f(s,a) \\ 0 &amp; \text{otherwise} \end{cases}\end{split}\]</div>
+<p>Where <span class="math notranslate nohighlight">\(f(s,a)\)</span> is the deterministic function that applies action <span class="math notranslate nohighlight">\(a\)</span> to state <span class="math notranslate nohighlight">\(s\)</span>.</p>
+<p>However, transitions can be <strong>stochastic</strong> to model:</p>
+<ul class="simple">
+<li><p>Manufacturing uncertainties</p></li>
+<li><p>Material property variations</p></li>
+<li><p>Numerical noise in simulations</p></li>
+</ul>
+</section>
+<section id="reward-function-design">
+<h3>3.3.4 Reward Function Design<a class="headerlink" href="#reward-function-design" title="Link to this heading">#</a></h3>
+<p>The reward function guides the optimization process by providing feedback on design quality:</p>
+<p><strong>Performance-based Rewards</strong>:
+$<span class="math notranslate nohighlight">\(r(s,a,s') = \alpha_1 \cdot \text{Torque}(s') - \alpha_2 \cdot \text{Losses}(s') - \alpha_3 \cdot \text{Mass}(s')\)</span>$</p>
+<p><strong>Improvement Rewards</strong>:
+$<span class="math notranslate nohighlight">\(r(s,a,s') = \text{Performance}(s') - \text{Performance}(s)\)</span>$</p>
+<p><strong>Shaping Rewards</strong>:</p>
+<ul class="simple">
+<li><p><strong>Intermediate Rewards</strong>: Reward partial progress toward goals</p></li>
+<li><p><strong>Penalty Terms</strong>: Penalize constraint violations</p></li>
+<li><p><strong>Bonus Rewards</strong>: Extra rewards for significant improvements</p></li>
+</ul>
+</section>
+</section>
+<section id="value-functions">
+<h2>3.4 Value Functions<a class="headerlink" href="#value-functions" title="Link to this heading">#</a></h2>
+<p>Value functions quantify the long-term desirability of states or state-action pairs.</p>
+<section id="state-value-function">
+<h3>3.4.1 State Value Function<a class="headerlink" href="#state-value-function" title="Link to this heading">#</a></h3>
+<p>The <strong>state value function</strong> <span class="math notranslate nohighlight">\(V^\pi(s)\)</span> represents the expected cumulative reward when starting from state <span class="math notranslate nohighlight">\(s\)</span> and following policy <span class="math notranslate nohighlight">\(\pi\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[V^\pi(s) = \mathbb{E}\left[\sum_{t=0}^{\infty} \gamma^t r_t \mid s_0 = s, \pi\right]\]</div>
+</section>
+<section id="action-value-function-q-function">
+<h3>3.4.2 Action Value Function (Q-function)<a class="headerlink" href="#action-value-function-q-function" title="Link to this heading">#</a></h3>
+<p>The <strong>action value function</strong> <span class="math notranslate nohighlight">\(Q^\pi(s,a)\)</span> represents the expected cumulative reward when starting from state <span class="math notranslate nohighlight">\(s\)</span>, taking action <span class="math notranslate nohighlight">\(a\)</span>, and then following policy <span class="math notranslate nohighlight">\(\pi\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[Q^\pi(s,a) = \mathbb{E}\left[\sum_{t=0}^{\infty} \gamma^t r_t \mid s_0 = s, a_0 = a, \pi\right]\]</div>
+</section>
+<section id="optimal-value-functions">
+<h3>3.4.3 Optimal Value Functions<a class="headerlink" href="#optimal-value-functions" title="Link to this heading">#</a></h3>
+<p>The <strong>optimal state value function</strong> and <strong>optimal action value function</strong> are:</p>
+<div class="math notranslate nohighlight">
+\[V^*(s) = \max_\pi V^\pi(s) = \max_a Q^*(s,a)\]</div>
+<div class="math notranslate nohighlight">
+\[Q^*(s,a) = \max_\pi Q^\pi(s,a)\]</div>
+</section>
+</section>
+<section id="bellman-equations">
+<h2>3.5 Bellman Equations<a class="headerlink" href="#bellman-equations" title="Link to this heading">#</a></h2>
+<p>Bellman equations provide recursive relationships that define optimal value functions.</p>
+<section id="bellman-expectation-equation">
+<h3>3.5.1 Bellman Expectation Equation<a class="headerlink" href="#bellman-expectation-equation" title="Link to this heading">#</a></h3>
+<p>For state values:
+$<span class="math notranslate nohighlight">\(V^\pi(s) = \sum_a \pi(a|s) \sum_{s'} P(s'|s,a) [R(s,a,s') + \gamma V^\pi(s')]\)</span>$</p>
+<p>For action values:
+$<span class="math notranslate nohighlight">\(Q^\pi(s,a) = \sum_{s'} P(s'|s,a) [R(s,a,s') + \gamma \sum_{a'} \pi(a'|s') Q^\pi(s',a')]\)</span>$</p>
+</section>
+<section id="bellman-optimality-equation">
+<h3>3.5.2 Bellman Optimality Equation<a class="headerlink" href="#bellman-optimality-equation" title="Link to this heading">#</a></h3>
+<p>For optimal state values:
+$<span class="math notranslate nohighlight">\(V^*(s) = \max_a \sum_{s'} P(s'|s,a) [R(s,a,s') + \gamma V^*(s')]\)</span>$</p>
+<p>For optimal action values:
+$<span class="math notranslate nohighlight">\(Q^*(s,a) = \sum_{s'} P(s'|s,a) [R(s,a,s') + \gamma \max_{a'} Q^*(s',a')]\)</span>$</p>
+</section>
+<section id="intuitive-interpretation">
+<h3>3.5.3 Intuitive Interpretation<a class="headerlink" href="#intuitive-interpretation" title="Link to this heading">#</a></h3>
+<p>The Bellman equations express that:</p>
+<ul class="simple">
+<li><p><strong>Immediate Reward</strong>: The reward received for the current action</p></li>
+<li><p><strong>Future Value</strong>: The discounted value of future states</p></li>
+<li><p><strong>Optimality</strong>: Choose actions that maximize the sum of immediate and future rewards</p></li>
+</ul>
+</section>
+</section>
+<section id="policies">
+<h2>3.6 Policies<a class="headerlink" href="#policies" title="Link to this heading">#</a></h2>
+<p>A policy defines the agent’s behavior by specifying action selection in each state.</p>
+<section id="stochastic-policy">
+<h3>3.6.1 Stochastic Policy<a class="headerlink" href="#stochastic-policy" title="Link to this heading">#</a></h3>
+<p>A stochastic policy <span class="math notranslate nohighlight">\(\pi: S \times A \rightarrow [0,1]\)</span> gives the probability of taking action <span class="math notranslate nohighlight">\(a\)</span> in state <span class="math notranslate nohighlight">\(s\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\pi(a|s) = P(a_t = a | s_t = s)\]</div>
+<p>Constraints: <span class="math notranslate nohighlight">\(\sum_a \pi(a|s) = 1\)</span> for all <span class="math notranslate nohighlight">\(s \in S\)</span></p>
+</section>
+<section id="deterministic-policy">
+<h3>3.6.2 Deterministic Policy<a class="headerlink" href="#deterministic-policy" title="Link to this heading">#</a></h3>
+<p>A deterministic policy <span class="math notranslate nohighlight">\(\pi: S \rightarrow A\)</span> directly maps states to actions:</p>
+<div class="math notranslate nohighlight">
+\[a = \pi(s)\]</div>
+</section>
+<section id="optimal-policy">
+<h3>3.6.3 Optimal Policy<a class="headerlink" href="#optimal-policy" title="Link to this heading">#</a></h3>
+<p>The optimal policy <span class="math notranslate nohighlight">\(\pi^*\)</span> maximizes the expected cumulative reward:</p>
+<div class="math notranslate nohighlight">
+\[\pi^* = \arg\max_\pi V^\pi(s) \quad \forall s \in S\]</div>
+</section>
+</section>
+<section id="mdp-solution-methods">
+<h2>3.7 MDP Solution Methods<a class="headerlink" href="#mdp-solution-methods" title="Link to this heading">#</a></h2>
+<p>Several approaches exist for solving MDPs, each with different trade-offs.</p>
+<section id="dynamic-programming">
+<h3>3.7.1 Dynamic Programming<a class="headerlink" href="#dynamic-programming" title="Link to this heading">#</a></h3>
+<p><strong>Value Iteration</strong>:
+$<span class="math notranslate nohighlight">\(V_{k+1}(s) = \max_a \sum_{s'} P(s'|s,a) [R(s,a,s') + \gamma V_k(s')]\)</span>$</p>
+<p><strong>Policy Iteration</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Policy Evaluation</strong>: Compute <span class="math notranslate nohighlight">\(V^\pi\)</span> for current policy</p></li>
+<li><p><strong>Policy Improvement</strong>: Update <span class="math notranslate nohighlight">\(\pi\)</span> to be greedy w.r.t. <span class="math notranslate nohighlight">\(V^\pi\)</span></p></li>
+<li><p>Repeat until convergence</p></li>
+</ol>
+</section>
+<section id="model-free-methods">
+<h3>3.7.2 Model-Free Methods<a class="headerlink" href="#model-free-methods" title="Link to this heading">#</a></h3>
+<p>When the transition model is unknown:</p>
+<ul class="simple">
+<li><p><strong>Monte Carlo Methods</strong>: Learn from complete episodes</p></li>
+<li><p><strong>Temporal Difference Learning</strong>: Learn from incomplete episodes</p></li>
+<li><p><strong>Q-Learning</strong>: Directly learn optimal action values</p></li>
+</ul>
+</section>
+<section id="function-approximation">
+<h3>3.7.3 Function Approximation<a class="headerlink" href="#function-approximation" title="Link to this heading">#</a></h3>
+<p>For large state spaces, approximate value functions:</p>
+<ul class="simple">
+<li><p><strong>Linear Function Approximation</strong>: <span class="math notranslate nohighlight">\(V(s) \approx \mathbf{w}^T \mathbf{\phi}(s)\)</span></p></li>
+<li><p><strong>Neural Networks</strong>: Deep RL methods</p></li>
+<li><p><strong>Policy Gradient Methods</strong>: Direct policy optimization</p></li>
+</ul>
+</section>
+</section>
+<section id="mdps-for-synrm-design">
+<h2>3.8 MDPs for SynRM Design<a class="headerlink" href="#mdps-for-synrm-design" title="Link to this heading">#</a></h2>
+<section id="synrm-specific-state-design">
+<h3>3.8.1 SynRM-specific State Design<a class="headerlink" href="#synrm-specific-state-design" title="Link to this heading">#</a></h3>
+<p>For Synchronous Reluctance Motor design, states include:</p>
+<ul class="simple">
+<li><p><strong>Flux Barrier Configuration</strong>: Rotor topology</p></li>
+<li><p><strong>Material Distribution</strong>: Iron vs air regions</p></li>
+<li><p><strong>Geometric Constraints</strong>: Manufacturing limitations</p></li>
+<li><p><strong>Performance Metrics</strong>: Current torque and efficiency</p></li>
+</ul>
+</section>
+<section id="action-space-for-synrm">
+<h3>3.8.2 Action Space for SynRM<a class="headerlink" href="#action-space-for-synrm" title="Link to this heading">#</a></h3>
+<p>Specialized actions for motor design:</p>
+<ul class="simple">
+<li><p><strong>Add Flux Barrier</strong>: Create new flux barrier</p></li>
+<li><p><strong>Modify Barrier Shape</strong>: Change barrier geometry</p></li>
+<li><p><strong>Adjust Barrier Width</strong>: Vary barrier thickness</p></li>
+<li><p><strong>Relocate Barrier</strong>: Move barrier position</p></li>
+</ul>
+</section>
+<section id="synrm-reward-function">
+<h3>3.8.3 SynRM Reward Function<a class="headerlink" href="#synrm-reward-function" title="Link to this heading">#</a></h3>
+<p>Motor-specific reward design:</p>
+<div class="math notranslate nohighlight">
+\[r = w_1 \cdot \frac{T}{T_{\text{max}}} + w_2 \cdot \frac{\eta}{\eta_{\text{max}}} - w_3 \cdot \frac{T_{\text{ripple}}}{T_{\text{ripple,max}}}\]</div>
+<p>Where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(T\)</span>: Average torque</p></li>
+<li><p><span class="math notranslate nohighlight">\(\eta\)</span>: Efficiency</p></li>
+<li><p><span class="math notranslate nohighlight">\(T_{\text{ripple}}\)</span>: Torque ripple</p></li>
+<li><p><span class="math notranslate nohighlight">\(w_1, w_2, w_3\)</span>: Weighting factors</p></li>
+</ul>
+</section>
+</section>
+<section id="practical-considerations">
+<h2>3.9 Practical Considerations<a class="headerlink" href="#practical-considerations" title="Link to this heading">#</a></h2>
+<section id="state-space-complexity">
+<h3>3.9.1 State Space Complexity<a class="headerlink" href="#state-space-complexity" title="Link to this heading">#</a></h3>
+<p>For an <span class="math notranslate nohighlight">\(n \times n\)</span> grid:</p>
+<ul class="simple">
+<li><p><strong>State Space Size</strong>: <span class="math notranslate nohighlight">\(2^{n^2}\)</span> possible topologies</p></li>
+<li><p><strong>Curse of Dimensionality</strong>: Exponential growth with grid size</p></li>
+<li><p><strong>Solution</strong>: Use function approximation and hierarchical methods</p></li>
+</ul>
+</section>
+<section id="reward-shaping">
+<h3>3.9.2 Reward Shaping<a class="headerlink" href="#reward-shaping" title="Link to this heading">#</a></h3>
+<p>Challenges in reward design:</p>
+<ul class="simple">
+<li><p><strong>Sparse Rewards</strong>: Long delay between actions and meaningful feedback</p></li>
+<li><p><strong>Local Optima</strong>: Policies may get stuck in suboptimal designs</p></li>
+<li><p><strong>Multi-objective Balance</strong>: Competing design objectives</p></li>
+</ul>
+</section>
+<section id="exploration-exploitation-trade-off">
+<h3>3.9.3 Exploration-Exploitation Trade-off<a class="headerlink" href="#exploration-exploitation-trade-off" title="Link to this heading">#</a></h3>
+<p>Balancing discovery of new designs with refinement of known good designs:</p>
+<ul class="simple">
+<li><p><strong>Exploration</strong>: Try novel design modifications</p></li>
+<li><p><strong>Exploitation</strong>: Refine promising design directions</p></li>
+<li><p><strong>Strategies</strong>: ε-greedy, Boltzmann exploration, Upper Confidence Bounds</p></li>
+</ul>
+</section>
+</section>
+<section id="summary">
+<h2>3.10 Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<p>Markov Decision Processes provide a powerful framework for topology optimization by:</p>
+<ol class="arabic simple">
+<li><p><strong>Sequential Decision Making</strong>: Frame design as an iterative process</p></li>
+<li><p><strong>Learning from Experience</strong>: Improve design strategies over time</p></li>
+<li><p><strong>Mathematical Rigor</strong>: Provide formal optimality guarantees</p></li>
+<li><p><strong>Flexibility</strong>: Adapt to different design problems and constraints</p></li>
+</ol>
+<p>The MDP formulation enables the application of reinforcement learning algorithms to topology optimization, opening new possibilities for automated electrical machine design.</p>
+<hr class="docutils" />
+<p><strong>Next Section</strong>: <a class="reference internal" href="04_q_learning_fundamentals.html"><span class="std std-doc">Q-Learning Fundamentals</span></a> - Implementation of RL algorithms for topology optimization.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Interactive MDP visualization for topology optimization</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rectangle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">display</span><span class="p">,</span> <span class="n">Markdown</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mpatches</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TopologyMDP</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simplified MDP for topology optimization demonstration&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grid_size</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">=</span> <span class="n">grid_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_states</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="p">(</span><span class="n">grid_size</span> <span class="o">*</span> <span class="n">grid_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize topology with some material&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">))</span>
+        <span class="c1"># Add some initial material</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute action and return reward&quot;&quot;&quot;</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">action</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">,</span> <span class="n">action</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span>
+        
+        <span class="c1"># Toggle material at position (i,j)</span>
+        <span class="n">old_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+        
+        <span class="c1"># Calculate reward based on design quality</span>
+        <span class="n">reward</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_reward</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">reward</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">),</span> <span class="s2">&quot;old_value&quot;</span><span class="p">:</span> <span class="n">old_value</span><span class="p">}</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_reward</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simple reward function based on design metrics&quot;&quot;&quot;</span>
+        <span class="c1"># Reward for having connected material</span>
+        <span class="n">connectivity_reward</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_connectivity</span><span class="p">()</span> <span class="o">*</span> <span class="mi">10</span>
+        
+        <span class="c1"># Penalty for too much or too little material</span>
+        <span class="n">material_ratio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">)</span>
+        <span class="n">material_penalty</span> <span class="o">=</span> <span class="o">-</span><span class="nb">abs</span><span class="p">(</span><span class="n">material_ratio</span> <span class="o">-</span> <span class="mf">0.4</span><span class="p">)</span> <span class="o">*</span> <span class="mi">20</span>
+        
+        <span class="c1"># Bonus for symmetric designs</span>
+        <span class="n">symmetry_bonus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_symmetry</span><span class="p">()</span> <span class="o">*</span> <span class="mi">5</span>
+        
+        <span class="k">return</span> <span class="n">connectivity_reward</span> <span class="o">+</span> <span class="n">material_penalty</span> <span class="o">+</span> <span class="n">symmetry_bonus</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_connectivity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure how connected the material regions are&quot;&quot;&quot;</span>
+        <span class="c1"># Simple connectivity measure (count adjacent material cells)</span>
+        <span class="n">connectivity</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="c1"># Check neighbors</span>
+                    <span class="k">for</span> <span class="n">di</span><span class="p">,</span> <span class="n">dj</span> <span class="ow">in</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">)]:</span>
+                        <span class="n">ni</span><span class="p">,</span> <span class="n">nj</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="n">di</span><span class="p">,</span> <span class="n">j</span> <span class="o">+</span> <span class="n">dj</span>
+                        <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">ni</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">nj</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="n">ni</span><span class="p">,</span> <span class="n">nj</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                                <span class="n">connectivity</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">connectivity</span> <span class="o">/</span> <span class="mi">8</span>  <span class="c1"># Normalize</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_symmetry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure symmetry of the design&quot;&quot;&quot;</span>
+        <span class="c1"># Horizontal symmetry</span>
+        <span class="n">h_sym</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">fliplr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)))</span>
+        <span class="c1"># Vertical symmetry  </span>
+        <span class="n">v_sym</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)))</span>
+        <span class="c1"># Return symmetry score (lower difference = higher symmetry)</span>
+        <span class="k">return</span> <span class="mi">2</span> <span class="o">-</span> <span class="p">(</span><span class="n">h_sym</span> <span class="o">+</span> <span class="n">v_sym</span><span class="p">)</span>
+
+<span class="c1"># Demonstrate MDP dynamics</span>
+<span class="n">mdp</span> <span class="o">=</span> <span class="n">TopologyMDP</span><span class="p">(</span><span class="n">grid_size</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">mdp</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+<span class="c1"># Simulate sequence of actions</span>
+<span class="n">actions_sequence</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">18</span><span class="p">]</span>
+<span class="n">rewards</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">action</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">actions_sequence</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mdp</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+        <span class="n">rewards</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+    
+    <span class="c1"># Visualize current state</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;binary&#39;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Step </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s1">: State</span><span class="se">\n</span><span class="s1">Action: </span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s1"> → </span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;action&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;N/A&quot;</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;X Position&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Y Position&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    
+    <span class="c1"># Add reward text</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">reward_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Reward: </span><span class="si">{</span><span class="n">reward</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">if</span> <span class="n">reward</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">reward_text</span> <span class="o">+=</span> <span class="s1">&#39; ✓&#39;</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;green&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reward_text</span> <span class="o">+=</span> <span class="s1">&#39; ✗&#39;</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="n">reward_text</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span> 
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">verticalalignment</span><span class="o">=</span><span class="s1">&#39;top&#39;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s1">&#39;round&#39;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;MDP Dynamics in Topology Optimization&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Show cumulative reward</span>
+<span class="n">cumulative_rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">rewards</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rewards</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">rewards</span><span class="p">,</span> <span class="s1">&#39;bo-&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Immediate Reward&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rewards</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">cumulative_rewards</span><span class="p">,</span> <span class="s1">&#39;r^-&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Cumulative Reward&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Step&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Reward&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Reward Evolution in Topology Optimization MDP&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">MMarkdown</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">**Figure: MDP Demonstration for Topology Optimization**</span>
+
+<span class="s2">This visualization shows how an MDP framework works for topology optimization:</span>
+
+<span class="s2">1. **State Representation**: Each grid shows the current material distribution (black = material, white = void)</span>
+<span class="s2">2. **Actions**: Each step toggles material at a specific location</span>
+<span class="s2">3. **Rewards**: The reward function evaluates design quality based on:</span>
+<span class="s2">   - Connectivity of material regions</span>
+<span class="s2">   - Appropriate material ratio (40% target)</span>
+<span class="s2">   - Symmetry of the design</span>
+
+<span class="s2">4. **Learning**: The agent learns which actions lead to better designs through reward feedback</span>
+
+<span class="s2">Key insights from this MDP formulation:</span>
+<span class="s2">- Each action has immediate and long-term consequences</span>
+<span class="s2">- The reward function guides the optimization process</span>
+<span class="s2">- Sequential decision-making enables progressive design improvement</span>
+<span class="s2">&quot;&quot;&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="02_literature_survey.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Literature Survey: Topology Optimization and RL Applications</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="04_q_learning_fundamentals.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">4. Q-Learning Fundamentals for Topology Optimization</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction-to-mdp-framework">3.1 Introduction to MDP Framework</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-mdps-for-topology-optimization">3.1.1 Why MDPs for Topology Optimization?</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-components-of-mdp">3.1.2 Key Components of MDP</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mathematical-formulation">3.2 Mathematical Formulation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#formal-mdp-definition">3.2.1 Formal MDP Definition</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#markov-property">3.2.2 Markov Property</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mdp-components-in-topology-optimization">3.3 MDP Components in Topology Optimization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-representation">3.3.1 State Representation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#action-space-design">3.3.2 Action Space Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#transition-dynamics">3.3.3 Transition Dynamics</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reward-function-design">3.3.4 Reward Function Design</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#value-functions">3.4 Value Functions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-value-function">3.4.1 State Value Function</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#action-value-function-q-function">3.4.2 Action Value Function (Q-function)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimal-value-functions">3.4.3 Optimal Value Functions</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bellman-equations">3.5 Bellman Equations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bellman-expectation-equation">3.5.1 Bellman Expectation Equation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bellman-optimality-equation">3.5.2 Bellman Optimality Equation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#intuitive-interpretation">3.5.3 Intuitive Interpretation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#policies">3.6 Policies</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stochastic-policy">3.6.1 Stochastic Policy</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deterministic-policy">3.6.2 Deterministic Policy</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimal-policy">3.6.3 Optimal Policy</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mdp-solution-methods">3.7 MDP Solution Methods</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dynamic-programming">3.7.1 Dynamic Programming</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#model-free-methods">3.7.2 Model-Free Methods</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#function-approximation">3.7.3 Function Approximation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mdps-for-synrm-design">3.8 MDPs for SynRM Design</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#synrm-specific-state-design">3.8.1 SynRM-specific State Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#action-space-for-synrm">3.8.2 Action Space for SynRM</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#synrm-reward-function">3.8.3 SynRM Reward Function</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#practical-considerations">3.9 Practical Considerations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-space-complexity">3.9.1 State Space Complexity</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reward-shaping">3.9.2 Reward Shaping</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration-exploitation-trade-off">3.9.3 Exploration-Exploitation Trade-off</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">3.10 Summary</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

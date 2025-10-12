@@ -1,0 +1,1318 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>5. Synchronous Reluctance Motor Environment &#8212; Chapter 4: MDP Topology Optimization for Electrical Machines</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/05_synrm_environment';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="6. Genetic Algorithms" href="06_genetic_algorithms.html" />
+    <link rel="prev" title="4. Q-Learning Fundamentals for Topology Optimization" href="04_q_learning_fundamentals.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="00_preface.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 4: MDP Topology Optimization for Electrical Machines</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_literature_survey.html">2. Literature Survey</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_markov_decision_processes.html">3. Markov Decision Processes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_q_learning_fundamentals.html">4. Q-Learning Fundamentals</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">5. SynRM Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_genetic_algorithms.html">6. Genetic Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_mdp_implementation.html">7. MDP Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_comparison_methodology.html">8. Comparison Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_results_analysis.html">9. Results Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_advanced_applications.html">10. Advanced Applications</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/05_synrm_environment.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>5. Synchronous Reluctance Motor Environment</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction-to-synrm-design">5.1 Introduction to SynRM Design</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#working-principle">5.1.1 Working Principle</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#advantages-over-conventional-motors">5.1.2 Advantages over Conventional Motors</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#industrial-applications">5.1.3 Industrial Applications</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rotor-design-fundamentals">5.2 Rotor Design Fundamentals</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flux-barrier-concept">5.2.1 Flux Barrier Concept</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rotor-types">5.2.2 Rotor Types</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#design-parameters">5.2.3 Design Parameters</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#synrm-for-topology-optimization">5.3 SynRM for Topology Optimization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimization-objectives">5.3.1 Optimization Objectives</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#design-space-discretization">5.3.2 Design Space Discretization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#material-representation">5.3.3 Material Representation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#synrm-environment-for-reinforcement-learning">5.4 SynRM Environment for Reinforcement Learning</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-space-design">5.4.1 State Space Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#action-space-design">5.4.2 Action Space Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reward-function-design">5.4.3 Reward Function Design</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#physical-simulation-integration">5.5 Physical Simulation Integration</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#electromagnetic-analysis">5.5.1 Electromagnetic Analysis</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-metrics">5.5.2 Performance Metrics</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-workflow">5.5.3 Simulation Workflow</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-constraints-and-validation">5.6 Design Constraints and Validation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#manufacturing-constraints">5.6.1 Manufacturing Constraints</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#electromagnetic-constraints">5.6.2 Electromagnetic Constraints</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#validation-criteria">5.6.3 Validation Criteria</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#baseline-design-and-benchmark">5.7 Baseline Design and Benchmark</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reference-design">5.7.1 Reference Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimization-targets">5.7.2 Optimization Targets</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-framework">5.8 Implementation Framework</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#environment-class-structure">5.8.1 Environment Class Structure</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#integration-with-rl-algorithms">5.8.2 Integration with RL Algorithms</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">5.9 Summary</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-contributions">5.9.1 Key Contributions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#design-insights">5.9.2 Design Insights</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="synchronous-reluctance-motor-environment">
+<h1>5. Synchronous Reluctance Motor Environment<a class="headerlink" href="#synchronous-reluctance-motor-environment" title="Link to this heading">#</a></h1>
+<section id="introduction-to-synrm-design">
+<h2>5.1 Introduction to SynRM Design<a class="headerlink" href="#introduction-to-synrm-design" title="Link to this heading">#</a></h2>
+<p>Synchronous Reluctance Motors (SynRMs) represent a compelling class of electrical machines that have gained significant industrial attention due to their simple structure, low cost, and high efficiency. Unlike permanent magnet motors, SynRMs generate torque solely through reluctance variation, making them attractive for applications where cost and reliability are paramount.</p>
+<section id="working-principle">
+<h3>5.1.1 Working Principle<a class="headerlink" href="#working-principle" title="Link to this heading">#</a></h3>
+<p>SynRMs operate on the fundamental principle of <strong>reluctance torque</strong>: the rotor tends to align itself in a position of minimum magnetic reluctance with respect to the stator’s rotating magnetic field. This phenomenon can be expressed mathematically as:</p>
+<div class="math notranslate nohighlight">
+\[T = \frac{3}{2} \cdot \frac{P}{2} \cdot \left(\frac{V_s}{\omega_s}\right)^2 \cdot \left(\frac{1}{L_q} - \frac{1}{L_d}\right) \cdot \sin(2\delta)\]</div>
+<p>Where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(T\)</span>: Electromagnetic torque</p></li>
+<li><p><span class="math notranslate nohighlight">\(P\)</span>: Number of poles</p></li>
+<li><p><span class="math notranslate nohighlight">\(V_s\)</span>: Stator voltage</p></li>
+<li><p><span class="math notranslate nohighlight">\(\omega_s\)</span>: Synchronous angular velocity</p></li>
+<li><p><span class="math notranslate nohighlight">\(L_d, L_q\)</span>: Direct and quadrature axis inductances</p></li>
+<li><p><span class="math notranslate nohighlight">\(\delta\)</span>: Torque angle</p></li>
+</ul>
+</section>
+<section id="advantages-over-conventional-motors">
+<h3>5.1.2 Advantages over Conventional Motors<a class="headerlink" href="#advantages-over-conventional-motors" title="Link to this heading">#</a></h3>
+<p>SynRMs offer several compelling advantages:</p>
+<p><strong>Efficiency Benefits</strong>:</p>
+<ul class="simple">
+<li><p><strong>No rotor losses</strong>: Absence of rotor windings eliminates copper losses</p></li>
+<li><p><strong>High efficiency</strong>: Recent designs achieve up to 99.05% efficiency</p></li>
+<li><p><strong>Lower operating temperature</strong>: Reduced thermal stress on components</p></li>
+</ul>
+<p><strong>Manufacturing Advantages</strong>:</p>
+<ul class="simple">
+<li><p><strong>Simple construction</strong>: No permanent magnets, brushes, or slip rings</p></li>
+<li><p><strong>Low cost</strong>: Elimination of expensive rare-earth materials</p></li>
+<li><p><strong>Robust design</strong>: Suitable for harsh industrial environments</p></li>
+</ul>
+<p><strong>Performance Characteristics</strong>:</p>
+<ul class="simple">
+<li><p><strong>High power density</strong>: 2-4 times higher than induction motors</p></li>
+<li><p><strong>Compact footprint</strong>: 1-2 times smaller frame size</p></li>
+<li><p><strong>Maintenance-free</strong>: Long operational life with minimal servicing</p></li>
+</ul>
+</section>
+<section id="industrial-applications">
+<h3>5.1.3 Industrial Applications<a class="headerlink" href="#industrial-applications" title="Link to this heading">#</a></h3>
+<p>SynRMs find applications in diverse industrial sectors:</p>
+<ul class="simple">
+<li><p><strong>Appliances</strong>: Washing machines, HVAC systems</p></li>
+<li><p><strong>Automotive</strong>: Electric vehicle auxiliary systems</p></li>
+<li><p><strong>Industrial</strong>: Pumps, fans, compressors</p></li>
+<li><p><strong>Precision devices</strong>: Analog meters, hard disk drives</p></li>
+</ul>
+</section>
+</section>
+<section id="rotor-design-fundamentals">
+<h2>5.2 Rotor Design Fundamentals<a class="headerlink" href="#rotor-design-fundamentals" title="Link to this heading">#</a></h2>
+<section id="flux-barrier-concept">
+<h3>5.2.1 Flux Barrier Concept<a class="headerlink" href="#flux-barrier-concept" title="Link to this heading">#</a></h3>
+<p>The key to SynRM performance lies in the strategic placement of <strong>flux barriers</strong> in the rotor structure. These barriers guide magnetic flux along preferred paths, creating the necessary reluctance variation for torque generation.</p>
+<p><strong>Flux Barrier Functions</strong>:</p>
+<ul class="simple">
+<li><p><strong>Direct flux guidance</strong>: Channel flux through high-permeability iron paths</p></li>
+<li><p><strong>Quadrature flux blocking</strong>: Prevent flux leakage between poles</p></li>
+<li><p><strong>Saliency creation</strong>: Maximize <span class="math notranslate nohighlight">\(L_d/L_q\)</span> ratio for torque production</p></li>
+<li><p><strong>Structural integrity</strong>: Maintain mechanical strength at high speeds</p></li>
+</ul>
+</section>
+<section id="rotor-types">
+<h3>5.2.2 Rotor Types<a class="headerlink" href="#rotor-types" title="Link to this heading">#</a></h3>
+<p>Three main SynRM rotor configurations exist:</p>
+<p><strong>1. Simple Salient Pole Rotor</strong>:</p>
+<ul class="simple">
+<li><p><strong>Design</strong>: Projecting poles with air gaps between</p></li>
+<li><p><strong>Advantages</strong>: Simple manufacturing, robust construction</p></li>
+<li><p><strong>Limitations</strong>: Lower saliency ratio, higher torque ripple</p></li>
+</ul>
+<p><strong>2. Transverse Laminated Rotor</strong>:</p>
+<ul class="simple">
+<li><p><strong>Design</strong>: Stacked steel sheets with flux barriers</p></li>
+<li><p><strong>Advantages</strong>: Better flux control, reduced eddy currents</p></li>
+<li><p><strong>Limitations</strong>: Complex manufacturing, alignment requirements</p></li>
+</ul>
+<p><strong>3. Axially Laminated Rotor</strong>:</p>
+<ul class="simple">
+<li><p><strong>Design</strong>: Axial flux barriers with layered construction</p></li>
+<li><p><strong>Advantages</strong>: High saliency, excellent performance</p></li>
+<li><p><strong>Limitations</strong>: Very complex manufacturing, high cost</p></li>
+</ul>
+</section>
+<section id="design-parameters">
+<h3>5.2.3 Design Parameters<a class="headerlink" href="#design-parameters" title="Link to this heading">#</a></h3>
+<p>Key geometric parameters affecting SynRM performance:</p>
+<p><strong>Barrier Geometry</strong>:</p>
+<ul class="simple">
+<li><p><strong>Number of barriers</strong>: Typically 2-4 barriers per pole</p></li>
+<li><p><strong>Barrier width</strong>: Trade-off between flux blocking and structural integrity</p></li>
+<li><p><strong>Barrier shape</strong>: Linear, curved, or complex geometries</p></li>
+<li><p><strong>Barrier position</strong>: Radial location and angular extent</p></li>
+</ul>
+<p><strong>Rotor Dimensions</strong>:</p>
+<ul class="simple">
+<li><p><strong>Outer diameter</strong>: Determines torque capacity</p></li>
+<li><p><strong>Inner diameter</strong>: Affects mechanical robustness</p></li>
+<li><p><strong>Stack length</strong>: Influences power rating</p></li>
+<li><p><strong>Air gap</strong>: Critical for performance and manufacturability</p></li>
+</ul>
+</section>
+</section>
+<section id="synrm-for-topology-optimization">
+<h2>5.3 SynRM for Topology Optimization<a class="headerlink" href="#synrm-for-topology-optimization" title="Link to this heading">#</a></h2>
+<section id="optimization-objectives">
+<h3>5.3.1 Optimization Objectives<a class="headerlink" href="#optimization-objectives" title="Link to this heading">#</a></h3>
+<p>The primary objective in SynRM topology optimization is <strong>torque maximization</strong>:</p>
+<div class="math notranslate nohighlight">
+\[\max_{\mathbf{p}} T_{\text{avg}}(\mathbf{p})\]</div>
+<p>Subject to constraints:
+$<span class="math notranslate nohighlight">\(K_1 \leq \sum_{j=1}^{n} (p_j = 0) \leq K_2\)</span>$</p>
+<p>Where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\mathbf{p}\)</span>: Material distribution vector (<span class="math notranslate nohighlight">\(p_j = 1\)</span> for iron, <span class="math notranslate nohighlight">\(p_j = 0\)</span> for air)</p></li>
+<li><p><span class="math notranslate nohighlight">\(T_{\text{avg}}\)</span>: Average electromagnetic torque</p></li>
+<li><p><span class="math notranslate nohighlight">\(K_1, K_2\)</span>: Minimum and maximum air (flux barrier) constraints</p></li>
+</ul>
+</section>
+<section id="design-space-discretization">
+<h3>5.3.2 Design Space Discretization<a class="headerlink" href="#design-space-discretization" title="Link to this heading">#</a></h3>
+<p>For topology optimization, the rotor design space is discretized into a grid:</p>
+<p><strong>Grid Resolution Considerations</strong>:</p>
+<ul class="simple">
+<li><p><strong>Coarse grids (5×5)</strong>: Fast computation, limited design freedom</p></li>
+<li><p><strong>Medium grids (10×10)</strong>: Balanced approach, reasonable detail</p></li>
+<li><p><strong>Fine grids (20×20+)</strong>: High detail, computationally expensive</p></li>
+</ul>
+<p><strong>Symmetry Exploitation</strong>:
+For a 4-pole, 3-phase design, only <strong>one-quarter</strong> of the rotor needs to be optimized:
+$<span class="math notranslate nohighlight">\(\text{Full rotor} = 4 \times \text{Quarter design}\)</span>$</p>
+<p>This reduces computational complexity by a factor of 4 while maintaining design completeness.</p>
+</section>
+<section id="material-representation">
+<h3>5.3.3 Material Representation<a class="headerlink" href="#material-representation" title="Link to this heading">#</a></h3>
+<p><strong>Binary Material Model</strong>:
+$<span class="math notranslate nohighlight">\(\rho_{i,j} = \begin{cases} 1 &amp; \text{M-19 steel (magnetic material)} \\ 0 &amp; \text{Air (flux barrier)} \end{cases}\)</span>$</p>
+<p><strong>Properties</strong>:</p>
+<ul class="simple">
+<li><p><strong>M-19 Steel</strong>: <span class="math notranslate nohighlight">\(\mu_r \approx 2000\)</span>, high saturation flux density</p></li>
+<li><p><strong>Air</strong>: <span class="math notranslate nohighlight">\(\mu_r = 1\)</span>, non-magnetic barrier</p></li>
+</ul>
+</section>
+</section>
+<section id="synrm-environment-for-reinforcement-learning">
+<h2>5.4 SynRM Environment for Reinforcement Learning<a class="headerlink" href="#synrm-environment-for-reinforcement-learning" title="Link to this heading">#</a></h2>
+<section id="state-space-design">
+<h3>5.4.1 State Space Design<a class="headerlink" href="#state-space-design" title="Link to this heading">#</a></h3>
+<p>The state represents the current rotor topology:</p>
+<p><strong>Topological State</strong>:
+$<span class="math notranslate nohighlight">\(s_t = \begin{bmatrix} \rho_{0,0} &amp; \rho_{0,1} &amp; \cdots &amp; \rho_{0,n-1} \\ \rho_{1,0} &amp; \rho_{1,1} &amp; \cdots &amp; \rho_{1,n-1} \\ \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\ \rho_{n-1,0} &amp; \rho_{n-1,1} &amp; \cdots &amp; \rho_{n-1,n-1} \end{bmatrix}\)</span>$</p>
+<p><strong>Performance State</strong> (augmented):</p>
+<ul class="simple">
+<li><p><strong>Current torque</strong>: <span class="math notranslate nohighlight">\(T_{\text{current}}\)</span></p></li>
+<li><p><strong>Torque improvement</strong>: <span class="math notranslate nohighlight">\(\Delta T = T_{\text{current}} - T_{\text{baseline}}\)</span></p></li>
+<li><p><strong>Material usage</strong>: <span class="math notranslate nohighlight">\(M_\text{ratio} = \frac{\sum \rho_{i,j}}{n^2}\)</span></p></li>
+</ul>
+</section>
+<section id="action-space-design">
+<h3>5.4.2 Action Space Design<a class="headerlink" href="#action-space-design" title="Link to this heading">#</a></h3>
+<p>Actions represent design modifications to the rotor topology:</p>
+<p><strong>Primary Actions</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Add Flux Barrier</strong>: <span class="math notranslate nohighlight">\(a_{\text{add}}(i,j)\)</span>: Change <span class="math notranslate nohighlight">\(\rho_{i,j}\)</span> from 1 to 0</p></li>
+<li><p><strong>Remove Flux Barrier</strong>: <span class="math notranslate nohighlight">\(a_{\text{remove}}(i,j)\)</span>: Change <span class="math notranslate nohighlight">\(\rho_{i,j}\)</span> from 0 to 1</p></li>
+<li><p><strong>Toggle Cell</strong>: <span class="math notranslate nohighlight">\(a_{\text{toggle}}(i,j)\)</span>: Flip material state at position <span class="math notranslate nohighlight">\((i,j)\)</span></p></li>
+</ol>
+<p><strong>Secondary Actions</strong> (advanced):</p>
+<ul class="simple">
+<li><p><strong>Add Barrier Line</strong>: Create linear flux barrier</p></li>
+<li><p><strong>Add Barrier Curve</strong>: Create curved flux barrier</p></li>
+<li><p><strong>Modify Barrier Width</strong>: Change existing barrier dimensions</p></li>
+</ul>
+</section>
+<section id="reward-function-design">
+<h3>5.4.3 Reward Function Design<a class="headerlink" href="#reward-function-design" title="Link to this heading">#</a></h3>
+<p>The reward function guides the optimization toward high-performance designs:</p>
+<p><strong>Primary Reward Component</strong>:
+$<span class="math notranslate nohighlight">\(r_{\text{torque}} = w_T \cdot \frac{T_{\text{new}} - T_{\text{old}}}{T_{\text{baseline}}}\)</span>$</p>
+<p><strong>Constraint Penalty Components</strong>:</p>
+<ul class="simple">
+<li><p><strong>Material Usage Penalty</strong>: <span class="math notranslate nohighlight">\(r_{\text{material}} = -w_m \cdot |M_\text{ratio} - M_\text{target}|\)</span></p></li>
+<li><p><strong>Connectivity Penalty</strong>: <span class="math notranslate nohighlight">\(r_{\text{connect}} = -w_c \cdot C_\text{violations}\)</span></p></li>
+<li><p><strong>Manufacturing Penalty</strong>: <span class="math notranslate nohighlight">\(r_{\text{manufacturing}} = -w_{\text{manu}} \cdot M_\text{violations}\)</span></p></li>
+</ul>
+<p><strong>Total Reward</strong>:
+$<span class="math notranslate nohighlight">\(r = r_{\text{torque}} + r_{\text{material}} + r_{\text{connect}} + r_{\text{manufacturing}}\)</span>$</p>
+</section>
+</section>
+<section id="physical-simulation-integration">
+<h2>5.5 Physical Simulation Integration<a class="headerlink" href="#physical-simulation-integration" title="Link to this heading">#</a></h2>
+<section id="electromagnetic-analysis">
+<h3>5.5.1 Electromagnetic Analysis<a class="headerlink" href="#electromagnetic-analysis" title="Link to this heading">#</a></h3>
+<p>Accurate torque calculation requires electromagnetic field analysis:</p>
+<p><strong>Finite Element Method (FEM)</strong>:</p>
+<ul class="simple">
+<li><p><strong>Governing equation</strong>: <span class="math notranslate nohighlight">\(\nabla \times (\frac{1}{\mu} \nabla \times \mathbf{A}) = \mathbf{J}\)</span></p></li>
+<li><p><strong>Boundary conditions</strong>: Appropriate stator and rotor conditions</p></li>
+<li><p><strong>Mesh refinement</strong>: Fine mesh in air gap and flux barriers</p></li>
+</ul>
+<p><strong>Magnetic Circuit Analysis</strong> (simplified):</p>
+<ul class="simple">
+<li><p><strong>Reluctance network</strong>: Analogous to electric circuits</p></li>
+<li><p><strong>Flux paths</strong>: Main and leakage flux paths</p></li>
+<li><p><strong>Inductance calculation</strong>: <span class="math notranslate nohighlight">\(L_d, L_q\)</span> from circuit analysis</p></li>
+</ul>
+</section>
+<section id="performance-metrics">
+<h3>5.5.2 Performance Metrics<a class="headerlink" href="#performance-metrics" title="Link to this heading">#</a></h3>
+<p><strong>Primary Performance Indicators</strong>:</p>
+<ul class="simple">
+<li><p><strong>Average Torque</strong>: <span class="math notranslate nohighlight">\(T_{\text{avg}} = \frac{1}{T} \int_0^T T(t) dt\)</span></p></li>
+<li><p><strong>Torque Ripple</strong>: <span class="math notranslate nohighlight">\(T_{\text{ripple}} = \frac{T_{\text{max}} - T_{\text{min}}}{T_{\text{avg}}}\)</span></p></li>
+<li><p><strong>Efficiency</strong>: <span class="math notranslate nohighlight">\(\eta = \frac{P_{\text{mechanical}}}{P_{\text{electrical}}}\)</span></p></li>
+<li><p><strong>Power Factor</strong>: <span class="math notranslate nohighlight">\(\cos \phi = \frac{P_{\text{real}}}{P_{\text{apparent}}}\)</span></p></li>
+</ul>
+<p><strong>Secondary Metrics</strong>:</p>
+<ul class="simple">
+<li><p><strong>Saliency Ratio</strong>: <span class="math notranslate nohighlight">\(\xi = \frac{L_d}{L_q}\)</span></p></li>
+<li><p><strong>Core Losses</strong>: <span class="math notranslate nohighlight">\(P_{\text{core}} = f(B, f, \text{material})\)</span></p></li>
+<li><p><strong>Mechanical Stress</strong>: Structural integrity validation</p></li>
+</ul>
+</section>
+<section id="simulation-workflow">
+<h3>5.5.3 Simulation Workflow<a class="headerlink" href="#simulation-workflow" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">evaluate_synrm_design</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate SynRM rotor design&quot;&quot;&quot;</span>
+    <span class="c1"># 1. Geometry generation</span>
+    <span class="n">rotor_geometry</span> <span class="o">=</span> <span class="n">generate_rotor_geometry</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+    
+    <span class="c1"># 2. Mesh generation</span>
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">generate_fem_mesh</span><span class="p">(</span><span class="n">rotor_geometry</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+    
+    <span class="c1"># 3. Electromagnetic simulation</span>
+    <span class="n">field_solution</span> <span class="o">=</span> <span class="n">solve</span> <span class="n">electromagnetic_field</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+    
+    <span class="c1"># 4. Post-processing</span>
+    <span class="n">torque</span> <span class="o">=</span> <span class="n">calculate_torque</span><span class="p">(</span><span class="n">field_solution</span><span class="p">)</span>
+    <span class="n">efficiency</span> <span class="o">=</span> <span class="n">calculate_efficiency</span><span class="p">(</span><span class="n">field_solution</span><span class="p">,</span> <span class="n">losses</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;torque&#39;</span><span class="p">:</span> <span class="n">torque</span><span class="p">,</span>
+        <span class="s1">&#39;efficiency&#39;</span><span class="p">:</span> <span class="n">efficiency</span><span class="p">,</span>
+        <span class="s1">&#39;field_distribution&#39;</span><span class="p">:</span> <span class="n">field_solution</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="design-constraints-and-validation">
+<h2>5.6 Design Constraints and Validation<a class="headerlink" href="#design-constraints-and-validation" title="Link to this heading">#</a></h2>
+<section id="manufacturing-constraints">
+<h3>5.6.1 Manufacturing Constraints<a class="headerlink" href="#manufacturing-constraints" title="Link to this heading">#</a></h3>
+<p><strong>Minimum Feature Size</strong>:</p>
+<ul class="simple">
+<li><p><strong>Minimum barrier width</strong>: <span class="math notranslate nohighlight">\(w_{\text{min}} \geq 1\)</span> mm (manufacturing limit)</p></li>
+<li><p><strong>Minimum iron bridge</strong>: <span class="math notranslate nohighlight">\(b_{\text{min}} \geq 0.5\)</span> mm (structural requirement)</p></li>
+<li><p><strong>Corner radius</strong>: <span class="math notranslate nohighlight">\(r_{\text{min}} \geq 0.5\)</span> mm (stress concentration)</p></li>
+</ul>
+<p><strong>Connectivity Requirements</strong>:</p>
+<ul class="simple">
+<li><p><strong>Iron connectivity</strong>: All iron regions must be connected to rotor core</p></li>
+<li><p><strong>Flux barrier continuity</strong>: Barriers should not create isolated islands</p></li>
+<li><p><strong>Symmetry maintenance</strong>: 4-fold symmetry must be preserved</p></li>
+</ul>
+</section>
+<section id="electromagnetic-constraints">
+<h3>5.6.2 Electromagnetic Constraints<a class="headerlink" href="#electromagnetic-constraints" title="Link to this heading">#</a></h3>
+<p><strong>Flux Density Limits</strong>:</p>
+<ul class="simple">
+<li><p><strong>Iron saturation</strong>: <span class="math notranslate nohighlight">\(B_{\text{max}} \leq 1.8\)</span> T for M-19 steel</p></li>
+<li><p><strong>Air gap flux</strong>: <span class="math notranslate nohighlight">\(B_{\text{airgap}} \leq 1.2\)</span> T (practical limit)</p></li>
+</ul>
+<p><strong>Thermal Constraints</strong>:</p>
+<ul class="simple">
+<li><p><strong>Temperature rise</strong>: <span class="math notranslate nohighlight">\(\Delta T \leq 80\)</span>°C (insulation limit)</p></li>
+<li><p><strong>Hot spot prevention</strong>: Uniform flux distribution</p></li>
+</ul>
+</section>
+<section id="validation-criteria">
+<h3>5.6.3 Validation Criteria<a class="headerlink" href="#validation-criteria" title="Link to this heading">#</a></h3>
+<p><strong>Performance Validation</strong>:</p>
+<ul class="simple">
+<li><p><strong>Torque requirement</strong>: <span class="math notranslate nohighlight">\(T_{\text{design}} \geq T_{\text{specification}}\)</span></p></li>
+<li><p><strong>Efficiency target</strong>: <span class="math notranslate nohighlight">\(\eta \geq \eta_{\text{target}}\)</span></p></li>
+<li><p><strong>Torque ripple limit</strong>: <span class="math notranslate nohighlight">\(T_{\text{ripple}} \leq 10\%\)</span> (for smooth operation)</p></li>
+</ul>
+<p><strong>Manufacturing Validation</strong>:</p>
+<ul class="simple">
+<li><p><strong>Structural analysis</strong>: Stress analysis at rated speed</p></li>
+<li><p><strong>Vibration analysis</strong>: Critical speed evaluation</p></li>
+<li><p><strong>Assembly verification</strong>: Manufacturing feasibility check</p></li>
+</ul>
+</section>
+</section>
+<section id="baseline-design-and-benchmark">
+<h2>5.7 Baseline Design and Benchmark<a class="headerlink" href="#baseline-design-and-benchmark" title="Link to this heading">#</a></h2>
+<section id="reference-design">
+<h3>5.7.1 Reference Design<a class="headerlink" href="#reference-design" title="Link to this heading">#</a></h3>
+<p>A conventional single-barrier SynRM serves as the baseline:</p>
+<p><strong>Baseline Parameters</strong>:</p>
+<ul class="simple">
+<li><p><strong>Rotor outer diameter</strong>: 100 mm</p></li>
+<li><p><strong>Rotor inner diameter</strong>: 50 mm</p></li>
+<li><p><strong>Air gap</strong>: 0.5 mm</p></li>
+<li><p><strong>Stack length</strong>: 100 mm</p></li>
+<li><p><strong>Number of poles</strong>: 4</p></li>
+<li><p><strong>Number of phases</strong>: 3</p></li>
+</ul>
+<p><strong>Baseline Performance</strong>:</p>
+<ul class="simple">
+<li><p><strong>Average torque</strong>: 2.5 Nm</p></li>
+<li><p><strong>Efficiency</strong>: ~92%</p></li>
+<li><p><strong>Power factor</strong>: ~0.7</p></li>
+</ul>
+</section>
+<section id="optimization-targets">
+<h3>5.7.2 Optimization Targets<a class="headerlink" href="#optimization-targets" title="Link to this heading">#</a></h3>
+<p><strong>Performance Improvement Goals</strong>:</p>
+<ul class="simple">
+<li><p><strong>Torque increase</strong>: Target ≥ 30% improvement</p></li>
+<li><p><strong>Efficiency improvement</strong>: Target ≥ 5% improvement</p></li>
+<li><p><strong>Torque ripple reduction</strong>: Target ≤ 50% reduction</p></li>
+</ul>
+<p><strong>Design Optimization Goals</strong>:</p>
+<ul class="simple">
+<li><p><strong>Novel topologies</strong>: Discover unconventional flux barrier shapes</p></li>
+<li><p><strong>Material efficiency</strong>: Optimize material usage</p></li>
+<li><p><strong>Manufacturability</strong>: Ensure production feasibility</p></li>
+</ul>
+</section>
+</section>
+<section id="implementation-framework">
+<h2>5.8 Implementation Framework<a class="headerlink" href="#implementation-framework" title="Link to this heading">#</a></h2>
+<section id="environment-class-structure">
+<h3>5.8.1 Environment Class Structure<a class="headerlink" href="#environment-class-structure" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SynRMOptimizationEnvironment</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SynRM topology optimization environment for RL&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grid_size</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">=</span> <span class="n">grid_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset_environment</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset environment to initial state&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">topology</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_performance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_design</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute action and return observation&quot;&quot;&quot;</span>
+        <span class="n">old_topology</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">old_performance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_performance</span>
+        
+        <span class="c1"># Apply action</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">topology</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_action</span><span class="p">(</span><span class="n">old_topology</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+        
+        <span class="c1"># Evaluate new design</span>
+        <span class="n">new_performance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_design</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="p">)</span>
+        
+        <span class="c1"># Calculate reward</span>
+        <span class="n">reward</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_reward</span><span class="p">(</span><span class="n">old_performance</span><span class="p">,</span> <span class="n">new_performance</span><span class="p">)</span>
+        
+        <span class="c1"># Check termination</span>
+        <span class="n">done</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_termination</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;topology&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+            <span class="s1">&#39;performance&#39;</span><span class="p">:</span> <span class="n">new_performance</span>
+        <span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="integration-with-rl-algorithms">
+<h3>5.8.2 Integration with RL Algorithms<a class="headerlink" href="#integration-with-rl-algorithms" title="Link to this heading">#</a></h3>
+<p>The SynRM environment seamlessly integrates with standard RL algorithms:</p>
+<ul class="simple">
+<li><p><strong>Q-Learning</strong>: Discrete action space, model-free learning</p></li>
+<li><p><strong>Deep Q-Networks</strong>: Large state spaces, function approximation</p></li>
+<li><p><strong>Policy Gradient</strong>: Continuous action variants</p></li>
+<li><p><strong>Actor-Critic</strong>: Value-based and policy-based methods</p></li>
+</ul>
+</section>
+</section>
+<section id="summary">
+<h2>5.9 Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<p>The SynRM environment provides a comprehensive framework for topology optimization:</p>
+<section id="key-contributions">
+<h3>5.9.1 Key Contributions<a class="headerlink" href="#key-contributions" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Realistic application</strong>: Industry-relevant electrical machine design</p></li>
+<li><p><strong>Performance-driven optimization</strong>: Clear objective functions and metrics</p></li>
+<li><p><strong>Physics-informed rewards</strong>: Electromagnetic principles guide learning</p></li>
+<li><p><strong>Manufacturing awareness</strong>: Practical constraints embedded in environment</p></li>
+</ul>
+</section>
+<section id="design-insights">
+<h3>5.9.2 Design Insights<a class="headerlink" href="#design-insights" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Flux barrier optimization</strong>: Critical for SynRM performance enhancement</p></li>
+<li><p><strong>Topology exploration</strong>: RL can discover unconventional designs</p></li>
+<li><p><strong>Multi-objective balance</strong>: Torque, efficiency, and manufacturability</p></li>
+<li><p><strong>Symmetry exploitation</strong>: Reduces complexity while maintaining effectiveness</p></li>
+</ul>
+<p>The SynRM environment serves as an ideal testbed for demonstrating the effectiveness of reinforcement learning in complex engineering design problems, bridging the gap between theoretical algorithms and practical industrial applications.</p>
+<hr class="docutils" />
+<p><strong>Next Section</strong>: <a class="reference internal" href="06_genetic_algorithms.html"><span class="std std-doc">Genetic Algorithms</span></a> - Traditional optimization baseline for comparison with RL approaches.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># SynRM environment visualization and demonstration</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circle</span><span class="p">,</span> <span class="n">Wedge</span><span class="p">,</span> <span class="n">Rectangle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">display</span><span class="p">,</span> <span class="n">Markdown</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mpatches</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SynRMEnvironment</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simplified SynRM environment for demonstration&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grid_size</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">rotor_outer_dia</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">rotor_inner_dia</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">=</span> <span class="n">grid_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rotor_outer_dia</span> <span class="o">=</span> <span class="n">rotor_outer_dia</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rotor_inner_dia</span> <span class="o">=</span> <span class="n">rotor_inner_dia</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize with solid rotor (all iron)&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">topology</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">performance_history</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get current state representation&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;topology&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+            <span class="s1">&#39;performance&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_performance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="p">)</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute action: toggle material at grid position&quot;&quot;&quot;</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">action</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">,</span> <span class="n">action</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span>
+        
+        <span class="c1"># Toggle material at position</span>
+        <span class="n">old_topology</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+        
+        <span class="c1"># Calculate performance change</span>
+        <span class="n">old_performance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_performance</span><span class="p">(</span><span class="n">old_topology</span><span class="p">)</span>
+        <span class="n">new_performance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_performance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="p">)</span>
+        
+        <span class="c1"># Calculate reward</span>
+        <span class="n">reward</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_reward</span><span class="p">(</span><span class="n">old_performance</span><span class="p">,</span> <span class="n">new_performance</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">performance_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_performance</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">])</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span> <span class="n">reward</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">),</span>
+            <span class="s1">&#39;torque_change&#39;</span><span class="p">:</span> <span class="n">new_performance</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">old_performance</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">]</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_performance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topology</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simplified performance evaluation&quot;&quot;&quot;</span>
+        <span class="c1"># Simplified torque calculation based on flux barrier patterns</span>
+        <span class="n">torque</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_torque</span><span class="p">(</span><span class="n">topology</span><span class="p">)</span>
+        <span class="n">efficiency</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_efficiency</span><span class="p">(</span><span class="n">topology</span><span class="p">)</span>
+        <span class="n">torque_ripple</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_torque_ripple</span><span class="p">(</span><span class="n">topology</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;torque&#39;</span><span class="p">:</span> <span class="n">torque</span><span class="p">,</span>
+            <span class="s1">&#39;efficiency&#39;</span><span class="p">:</span> <span class="n">efficiency</span><span class="p">,</span>
+            <span class="s1">&#39;torque_ripple&#39;</span><span class="p">:</span> <span class="n">torque_ripple</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_torque</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topology</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simplified torque calculation&quot;&quot;&quot;</span>
+        <span class="c1"># Base torque for solid rotor</span>
+        <span class="n">base_torque</span> <span class="o">=</span> <span class="mf">2.0</span>
+        
+        <span class="c1"># Analyze flux barrier patterns</span>
+        <span class="c1"># Check for radial flux barriers (good for torque)</span>
+        <span class="n">radial_bonuses</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">):</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="n">topology</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span>
+            <span class="c1"># Look for vertical barriers (radial direction)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_radial_barrier</span><span class="p">(</span><span class="n">column</span><span class="p">):</span>
+                <span class="n">radial_bonuses</span> <span class="o">+=</span> <span class="mf">0.5</span>
+        
+        <span class="c1"># Check for proper iron bridges (structural integrity)</span>
+        <span class="n">bridge_bonus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">count_iron_bridges</span><span class="p">(</span><span class="n">topology</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.2</span>
+        
+        <span class="c1"># Penalty for too much air (weak rotor)</span>
+        <span class="n">air_ratio</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">topology</span><span class="p">)</span>
+        <span class="n">air_penalty</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">air_ratio</span> <span class="o">&gt;</span> <span class="mf">0.6</span> <span class="k">else</span> <span class="mi">0</span>
+        
+        <span class="k">return</span> <span class="n">base_torque</span> <span class="o">+</span> <span class="n">radial_bonuses</span> <span class="o">+</span> <span class="n">bridge_bonus</span> <span class="o">+</span> <span class="n">air_penalty</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_radial_barrier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if column represents a radial flux barrier&quot;&quot;&quot;</span>
+        <span class="c1"># Look for pattern: iron-air-iron (good flux barrier)</span>
+        <span class="n">transitions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">column</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">transitions</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">column</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span>  <span class="c1"># At least 2 iron pieces</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">count_iron_bridges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topology</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Count iron bridges for structural integrity&quot;&quot;&quot;</span>
+        <span class="n">bridges</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># Check outer ring</span>
+        <span class="n">bridges</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">topology</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">topology</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">bridges</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">topology</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">topology</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">bridges</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_efficiency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topology</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simplified efficiency calculation&quot;&quot;&quot;</span>
+        <span class="c1"># Efficiency based on flux path optimization</span>
+        <span class="n">base_efficiency</span> <span class="o">=</span> <span class="mf">0.92</span>
+        <span class="n">air_ratio</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">topology</span><span class="p">)</span>
+        
+        <span class="c1"># Optimal air ratio for efficiency</span>
+        <span class="n">optimal_air_ratio</span> <span class="o">=</span> <span class="mf">0.3</span>
+        <span class="n">efficiency_loss</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">air_ratio</span> <span class="o">-</span> <span class="n">optimal_air_ratio</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
+        
+        <span class="k">return</span> <span class="n">base_efficiency</span> <span class="o">-</span> <span class="n">efficiency_loss</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_torque_ripple</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topology</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simplified torque ripple calculation&quot;&quot;&quot;</span>
+        <span class="c1"># Ripple based on flux distribution uniformity</span>
+        <span class="n">uniformity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">topology</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">uniformity</span> <span class="o">*</span> <span class="mf">0.2</span>  <span class="c1"># Simplified relationship</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_reward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_perf</span><span class="p">,</span> <span class="n">new_perf</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate reward based on performance improvement&quot;&quot;&quot;</span>
+        <span class="n">torque_improvement</span> <span class="o">=</span> <span class="n">new_perf</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">old_perf</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">]</span>
+        <span class="n">efficiency_improvement</span> <span class="o">=</span> <span class="n">new_perf</span><span class="p">[</span><span class="s1">&#39;efficiency&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">old_perf</span><span class="p">[</span><span class="s1">&#39;efficiency&#39;</span><span class="p">]</span>
+        <span class="n">ripple_change</span> <span class="o">=</span> <span class="n">old_perf</span><span class="p">[</span><span class="s1">&#39;torque_ripple&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">new_perf</span><span class="p">[</span><span class="s1">&#39;torque_ripple&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># Weighted reward</span>
+        <span class="n">reward</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mf">2.0</span> <span class="o">*</span> <span class="n">torque_improvement</span> <span class="o">+</span>
+            <span class="mf">5.0</span> <span class="o">*</span> <span class="n">efficiency_improvement</span> <span class="o">+</span>
+            <span class="mf">1.0</span> <span class="o">*</span> <span class="n">ripple_change</span>
+        <span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">reward</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">visualize_rotor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">topology</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Rotor Topology&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Visualize rotor topology&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">topology</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">topology</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">topology</span>
+        
+        <span class="c1"># Draw rotor outline</span>
+        <span class="n">outer_circle</span> <span class="o">=</span> <span class="n">Circle</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotor_outer_dia</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">inner_circle</span> <span class="o">=</span> <span class="n">Circle</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotor_inner_dia</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">outer_circle</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">inner_circle</span><span class="p">)</span>
+        
+        <span class="c1"># Draw topology grid</span>
+        <span class="n">grid_extent</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rotor_outer_dia</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotor_inner_dia</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">cell_size</span> <span class="o">=</span> <span class="n">grid_extent</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">):</span>
+                <span class="c1"># Calculate cell position</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotor_inner_dia</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">cell_size</span>
+                <span class="n">theta</span> <span class="o">=</span> <span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span>  <span class="c1"># Quarter circle</span>
+                
+                <span class="n">x</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+                
+                <span class="c1"># Draw cell</span>
+                <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;gray&#39;</span> <span class="k">if</span> <span class="n">topology</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;white&#39;</span>
+                <span class="n">rect</span> <span class="o">=</span> <span class="n">Rectangle</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">cell_size</span><span class="o">/</span><span class="mi">3</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="n">cell_size</span><span class="o">/</span><span class="mi">3</span><span class="p">),</span> 
+                              <span class="n">cell_size</span><span class="o">/</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">cell_size</span><span class="o">/</span><span class="mf">1.5</span><span class="p">,</span> 
+                              <span class="n">facecolor</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span>
+        
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">rotor_outer_dia</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">10</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotor_outer_dia</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">rotor_outer_dia</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">10</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotor_outer_dia</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># Demonstrate SynRM environment</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">SynRMEnvironment</span><span class="p">(</span><span class="n">grid_size</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="c1"># Create figure with multiple visualizations</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+
+<span class="c1"># 1. Initial rotor design</span>
+<span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;polar&#39;</span><span class="p">)</span>
+<span class="n">env</span><span class="o">.</span><span class="n">visualize_rotor_polar</span><span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Initial Solid Rotor&quot;</span><span class="p">)</span>
+
+<span class="c1"># 2. Simulated optimization episode</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="n">topology_steps</span> <span class="o">=</span> <span class="p">[</span><span class="n">state</span><span class="p">[</span><span class="s1">&#39;topology&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()]</span>
+<span class="n">performance_steps</span> <span class="o">=</span> <span class="p">[</span><span class="n">state</span><span class="p">[</span><span class="s1">&#39;performance&#39;</span><span class="p">]]</span>
+<span class="n">rewards</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="c1"># Run optimization episode</span>
+<span class="n">actions</span> <span class="o">=</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">11</span><span class="p">]</span>  <span class="c1"># Predefined actions for demonstration</span>
+
+<span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">action</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">actions</span><span class="p">):</span>
+    <span class="n">state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+    <span class="n">topology_steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s1">&#39;topology&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+    <span class="n">performance_steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s1">&#39;performance&#39;</span><span class="p">])</span>
+    <span class="n">rewards</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+
+<span class="c1"># 3. Final optimized design</span>
+<span class="n">ax2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;polar&#39;</span><span class="p">)</span>
+<span class="n">env</span><span class="o">.</span><span class="n">visualize_rotor_polar</span><span class="p">(</span><span class="n">ax2</span><span class="p">,</span> <span class="n">topology</span><span class="o">=</span><span class="n">topology_steps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Optimized Rotor Design&quot;</span><span class="p">)</span>
+
+<span class="c1"># 4. Performance progression</span>
+<span class="n">ax3</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">torques</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">performance_steps</span><span class="p">]</span>
+<span class="n">efficiencies</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;efficiency&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">performance_steps</span><span class="p">]</span>
+<span class="n">ax3_twin</span> <span class="o">=</span> <span class="n">ax3</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
+
+<span class="n">ax3</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">torques</span><span class="p">)),</span> <span class="n">torques</span><span class="p">,</span> <span class="s1">&#39;b-o&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Torque (Nm)&#39;</span><span class="p">)</span>
+<span class="n">ax3_twin</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">efficiencies</span><span class="p">)),</span> <span class="n">efficiencies</span><span class="p">,</span> <span class="s1">&#39;r-s&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Efficiency&#39;</span><span class="p">)</span>
+
+<span class="n">ax3</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Optimization Step&#39;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Torque (Nm)&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+<span class="n">ax3_twin</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Efficiency&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">labelcolor</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+<span class="n">ax3_twin</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">labelcolor</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Performance Evolution&#39;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># 5. Reward progression</span>
+<span class="n">ax4</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="n">cumulative_rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">rewards</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rewards</span><span class="p">)),</span> <span class="n">rewards</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Immediate Reward&#39;</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cumulative_rewards</span><span class="p">)),</span> <span class="n">cumulative_rewards</span><span class="p">,</span> <span class="s1">&#39;r-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Cumulative Reward&#39;</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Action&#39;</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Reward&#39;</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Reward Progression&#39;</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># 6. Topology evolution</span>
+<span class="n">ax5</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">final_topology</span> <span class="o">=</span> <span class="n">topology_steps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">im</span> <span class="o">=</span> <span class="n">ax5</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">final_topology</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;binary&#39;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+<span class="n">ax5</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Final Topology (Grid View)&#39;</span><span class="p">)</span>
+<span class="n">ax5</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Angular Position&#39;</span><span class="p">)</span>
+<span class="n">ax5</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Radial Position&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Material (1=Iron, 0=Air)&#39;</span><span class="p">)</span>
+
+<span class="c1"># 7. Performance comparison</span>
+<span class="n">ax6</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="n">initial_perf</span> <span class="o">=</span> <span class="n">performance_steps</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">final_perf</span> <span class="o">=</span> <span class="n">performance_steps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Torque (Nm)&#39;</span><span class="p">,</span> <span class="s1">&#39;Efficiency&#39;</span><span class="p">,</span> <span class="s1">&#39;Torque Ripple&#39;</span><span class="p">]</span>
+<span class="n">initial_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">initial_perf</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">],</span> <span class="n">initial_perf</span><span class="p">[</span><span class="s1">&#39;efficiency&#39;</span><span class="p">],</span> <span class="n">initial_perf</span><span class="p">[</span><span class="s1">&#39;torque_ripple&#39;</span><span class="p">]]</span>
+<span class="n">final_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">final_perf</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">],</span> <span class="n">final_perf</span><span class="p">[</span><span class="s1">&#39;efficiency&#39;</span><span class="p">],</span> <span class="n">final_perf</span><span class="p">[</span><span class="s1">&#39;torque_ripple&#39;</span><span class="p">]]</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">metrics</span><span class="p">))</span>
+<span class="n">width</span> <span class="o">=</span> <span class="mf">0.35</span>
+
+<span class="n">ax6</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">initial_values</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Initial&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">ax6</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">final_values</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Optimized&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="n">ax6</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Performance Metrics&#39;</span><span class="p">)</span>
+<span class="n">ax6</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Value&#39;</span><span class="p">)</span>
+<span class="n">ax6</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Performance Comparison&#39;</span><span class="p">)</span>
+<span class="n">ax6</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">ax6</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span>
+<span class="n">ax6</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax6</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;SynRM Topology Optimization Environment&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Print summary</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">SynRM Optimization Summary:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initial Performance: Torque = </span><span class="si">{</span><span class="n">initial_perf</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> Nm, Efficiency = </span><span class="si">{</span><span class="n">initial_perf</span><span class="p">[</span><span class="s1">&#39;efficiency&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final Performance: Torque = </span><span class="si">{</span><span class="n">final_perf</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> Nm, Efficiency = </span><span class="si">{</span><span class="n">final_perf</span><span class="p">[</span><span class="s1">&#39;efficiency&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Torque Improvement: </span><span class="si">{</span><span class="p">(</span><span class="n">final_perf</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">initial_perf</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> Nm (</span><span class="si">{</span><span class="mi">100</span><span class="o">*</span><span class="p">(</span><span class="n">final_perf</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">initial_perf</span><span class="p">[</span><span class="s1">&#39;torque&#39;</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total Reward: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">rewards</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">MMarkdown</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">**Figure: SynRM Topology Optimization Environment**</span>
+
+<span class="s2">This demonstration showcases the SynRM environment for reinforcement learning:</span>
+
+<span class="s2">1. **Initial Solid Rotor**: Starting point with all-iron rotor (no flux barriers)</span>
+<span class="s2">2. **Optimized Rotor Design**: Final topology with strategic flux barrier placement</span>
+<span class="s2">3. **Performance Evolution**: Progressive improvement in torque and efficiency</span>
+<span class="s2">4. **Reward Progression**: Agent receives positive feedback for performance improvements</span>
+<span class="s2">5. **Final Topology**: Grid view showing material distribution (black = air barriers, white = iron)</span>
+<span class="s2">6. **Performance Comparison**: Quantitative improvement in key metrics</span>
+
+<span class="s2">**Key Design Insights:**</span>
+<span class="s2">- **Radial flux barriers** (vertical patterns) improve torque production</span>
+<span class="s2">- **Iron bridges** maintain structural integrity</span>
+<span class="s2">- **Optimal air ratio** balances flux guidance and rotor strength</span>
+<span class="s2">- **Progressive improvement** through sequential design modifications</span>
+
+<span class="s2">This simplified environment captures the essential physics of SynRM design while remaining computationally tractable for reinforcement learning demonstrations.</span>
+<span class="s2">&quot;&quot;&quot;</span><span class="p">))</span>
+
+<span class="c1"># Add the missing polar visualization method</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">visualize_rotor_polar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">topology</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Rotor Topology&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize rotor topology in polar coordinates&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">topology</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">topology</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">topology</span>
+    
+    <span class="c1"># Draw rotor boundaries</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">outer_r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotor_outer_dia</span><span class="o">/</span><span class="mi">2</span>
+    <span class="n">inner_r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotor_inner_dia</span><span class="o">/</span><span class="mi">2</span>
+    
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="p">[</span><span class="n">outer_r</span><span class="p">]</span><span class="o">*</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;k-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="p">[</span><span class="n">inner_r</span><span class="p">]</span><span class="o">*</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;k-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    
+    <span class="c1"># Draw topology (show 4 quadrants)</span>
+    <span class="n">grid_extent</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rotor_outer_dia</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotor_inner_dia</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">cell_size_r</span> <span class="o">=</span> <span class="n">grid_extent</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span>
+    <span class="n">cell_size_theta</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span>  <span class="c1"># Quarter circle per quadrant</span>
+    
+    <span class="k">for</span> <span class="n">quadrant</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+        <span class="n">theta_offset</span> <span class="o">=</span> <span class="n">quadrant</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">topology</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># Iron</span>
+                    <span class="n">r_center</span> <span class="o">=</span> <span class="n">inner_r</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">cell_size_r</span>
+                    <span class="n">theta_center</span> <span class="o">=</span> <span class="n">theta_offset</span> <span class="o">+</span> <span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">cell_size_theta</span>
+                    
+                    <span class="c1"># Draw cell as a small arc segment</span>
+                    <span class="n">r_inner</span> <span class="o">=</span> <span class="n">r_center</span> <span class="o">-</span> <span class="n">cell_size_r</span><span class="o">/</span><span class="mi">2</span>
+                    <span class="n">r_outer</span> <span class="o">=</span> <span class="n">r_center</span> <span class="o">+</span> <span class="n">cell_size_r</span><span class="o">/</span><span class="mi">2</span>
+                    <span class="n">theta_start</span> <span class="o">=</span> <span class="n">theta_center</span> <span class="o">-</span> <span class="n">cell_size_theta</span><span class="o">/</span><span class="mi">2</span>
+                    <span class="n">theta_end</span> <span class="o">=</span> <span class="n">theta_center</span> <span class="o">+</span> <span class="n">cell_size_theta</span><span class="o">/</span><span class="mi">2</span>
+                    
+                    <span class="n">theta_arc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">theta_start</span><span class="p">,</span> <span class="n">theta_end</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">r_inner</span><span class="p">,</span> <span class="n">r_outer</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+                        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">theta_arc</span><span class="p">,</span> <span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">*</span><span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">outer_r</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># Add method to class</span>
+<span class="n">SynRMEnvironment</span><span class="o">.</span><span class="n">visualize_rotor_polar</span> <span class="o">=</span> <span class="n">visualize_rotor_polar</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="04_q_learning_fundamentals.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">4. Q-Learning Fundamentals for Topology Optimization</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="06_genetic_algorithms.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">6. Genetic Algorithms</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction-to-synrm-design">5.1 Introduction to SynRM Design</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#working-principle">5.1.1 Working Principle</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#advantages-over-conventional-motors">5.1.2 Advantages over Conventional Motors</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#industrial-applications">5.1.3 Industrial Applications</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rotor-design-fundamentals">5.2 Rotor Design Fundamentals</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flux-barrier-concept">5.2.1 Flux Barrier Concept</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rotor-types">5.2.2 Rotor Types</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#design-parameters">5.2.3 Design Parameters</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#synrm-for-topology-optimization">5.3 SynRM for Topology Optimization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimization-objectives">5.3.1 Optimization Objectives</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#design-space-discretization">5.3.2 Design Space Discretization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#material-representation">5.3.3 Material Representation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#synrm-environment-for-reinforcement-learning">5.4 SynRM Environment for Reinforcement Learning</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-space-design">5.4.1 State Space Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#action-space-design">5.4.2 Action Space Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reward-function-design">5.4.3 Reward Function Design</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#physical-simulation-integration">5.5 Physical Simulation Integration</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#electromagnetic-analysis">5.5.1 Electromagnetic Analysis</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-metrics">5.5.2 Performance Metrics</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-workflow">5.5.3 Simulation Workflow</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-constraints-and-validation">5.6 Design Constraints and Validation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#manufacturing-constraints">5.6.1 Manufacturing Constraints</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#electromagnetic-constraints">5.6.2 Electromagnetic Constraints</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#validation-criteria">5.6.3 Validation Criteria</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#baseline-design-and-benchmark">5.7 Baseline Design and Benchmark</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reference-design">5.7.1 Reference Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimization-targets">5.7.2 Optimization Targets</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-framework">5.8 Implementation Framework</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#environment-class-structure">5.8.1 Environment Class Structure</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#integration-with-rl-algorithms">5.8.2 Integration with RL Algorithms</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">5.9 Summary</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-contributions">5.9.1 Key Contributions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#design-insights">5.9.2 Design Insights</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

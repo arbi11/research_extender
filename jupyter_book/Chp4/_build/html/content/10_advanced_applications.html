@@ -1,0 +1,1757 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>10. Advanced Applications and Future Directions &#8212; Chapter 4: MDP Topology Optimization for Electrical Machines</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/10_advanced_applications';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="9. Results Analysis" href="09_results_analysis.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="00_preface.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 4: MDP Topology Optimization for Electrical Machines</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_literature_survey.html">2. Literature Survey</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_markov_decision_processes.html">3. Markov Decision Processes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_q_learning_fundamentals.html">4. Q-Learning Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_synrm_environment.html">5. SynRM Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_genetic_algorithms.html">6. Genetic Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_mdp_implementation.html">7. MDP Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_comparison_methodology.html">8. Comparison Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_results_analysis.html">9. Results Analysis</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">10. Advanced Applications</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/10_advanced_applications.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>10. Advanced Applications and Future Directions</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction-to-advanced-applications">10.1 Introduction to Advanced Applications</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#technological-convergence">10.1.1 Technological Convergence</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#industrial-evolution">10.1.2 Industrial Evolution</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-objective-optimization-extensions">10.2 Multi-Objective Optimization Extensions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-pareto-front-exploration">10.2.1 Advanced Pareto Front Exploration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#constraint-handling-and-robustness">10.2.2 Constraint Handling and Robustness</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deep-reinforcement-learning-for-large-scale-problems">10.3 Deep Reinforcement Learning for Large-Scale Problems</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#function-approximation-for-high-dimensional-spaces">10.3.1 Function Approximation for High-Dimensional Spaces</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#actor-critic-methods">10.3.2 Actor-Critic Methods</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#transfer-learning-and-domain-adaptation">10.3.3 Transfer Learning and Domain Adaptation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#real-time-optimization-and-digital-twins">10.4 Real-Time Optimization and Digital Twins</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#digital-twin-integration">10.4.1 Digital Twin Integration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adaptive-control-systems">10.4.2 Adaptive Control Systems</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-physics-integration">10.5 Multi-Physics Integration</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#thermal-electromagnetic-coupling">10.5.1 Thermal-Electromagnetic Coupling</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoustic-and-vibration-optimization">10.5.2 Acoustic and Vibration Optimization</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#manufacturing-integration">10.6 Manufacturing Integration</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#additive-manufacturing-optimization">10.6.1 Additive Manufacturing Optimization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quality-control-and-process-optimization">10.6.2 Quality Control and Process Optimization</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#industry-4-0-and-smart-manufacturing">10.7 Industry 4.0 and Smart Manufacturing</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#smart-factory-integration">10.7.1 Smart Factory Integration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#supply-chain-integration">10.7.2 Supply Chain Integration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#human-ai-collaboration">10.8 Human-AI Collaboration</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#explainable-ai-for-design">10.8.1 Explainable AI for Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#knowledge-transfer-and-education">10.8.2 Knowledge Transfer and Education</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#future-research-directions">10.9 Future Research Directions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#emerging-technologies">10.9.1 Emerging Technologies</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-application-domains">10.9.2 Advanced Application Domains</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#societal-impact-considerations">10.9.3 Societal Impact Considerations</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-and-outlook">10.10 Summary and Outlook</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-advancements-presented">10.10.1 Key Advancements Presented</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#future-outlook">10.10.2 Future Outlook</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#concluding-remarks">10.10.3 Concluding Remarks</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="advanced-applications-and-future-directions">
+<h1>10. Advanced Applications and Future Directions<a class="headerlink" href="#advanced-applications-and-future-directions" title="Link to this heading">#</a></h1>
+<section id="introduction-to-advanced-applications">
+<h2>10.1 Introduction to Advanced Applications<a class="headerlink" href="#introduction-to-advanced-applications" title="Link to this heading">#</a></h2>
+<p>The successful implementation of MDP-based topology optimization for electrical machines opens numerous avenues for advanced applications and future research. This chapter explores emerging directions, technological enhancements, and industrial applications that build upon the foundation established in previous chapters. The convergence of reinforcement learning, computational intelligence, and electrical engineering presents unprecedented opportunities for innovation in automated design.</p>
+<section id="technological-convergence">
+<h3>10.1.1 Technological Convergence<a class="headerlink" href="#technological-convergence" title="Link to this heading">#</a></h3>
+<p>Several technological trends are converging to create new possibilities for advanced topology optimization:</p>
+<p><strong>Artificial Intelligence Advancements</strong>:</p>
+<ul class="simple">
+<li><p><strong>Deep Reinforcement Learning</strong>: Complex policy representations for large-scale problems</p></li>
+<li><p><strong>Transfer Learning</strong>: Knowledge transfer across different motor types and applications</p></li>
+<li><p><strong>Meta-Learning</strong>: Learning to optimize across multiple design scenarios</p></li>
+<li><p><strong>Explainable AI</strong>: Interpretable optimization decisions and design insights</p></li>
+</ul>
+<p><strong>Computational Infrastructure</strong>:</p>
+<ul class="simple">
+<li><p><strong>High-Performance Computing</strong>: Parallel processing for large-scale optimization</p></li>
+<li><p><strong>Cloud Computing</strong>: Distributed optimization across multiple platforms</p></li>
+<li><p><strong>Edge Computing</strong>: Real-time optimization on embedded systems</p></li>
+<li><p><strong>Quantum Computing</strong>: Potential for exponential speedup in optimization</p></li>
+</ul>
+<p><strong>Digital Twin Technology</strong>:</p>
+<ul class="simple">
+<li><p><strong>Real-time Simulation</strong>: Integration with live motor monitoring systems</p></li>
+<li><p><strong>Predictive Maintenance</strong>: Optimization based on operational data</p></li>
+<li><p><strong>Performance Adaptation</strong>: Dynamic design adjustments during operation</p></li>
+<li><p><strong>Lifecycle Optimization</strong>: End-to-end design optimization from cradle to grave</p></li>
+</ul>
+</section>
+<section id="industrial-evolution">
+<h3>10.1.2 Industrial Evolution<a class="headerlink" href="#industrial-evolution" title="Link to this heading">#</a></h3>
+<p>The industrial landscape is evolving in ways that make advanced optimization increasingly valuable:</p>
+<p><strong>Manufacturing Revolution</strong>:</p>
+<ul class="simple">
+<li><p><strong>Additive Manufacturing</strong>: Complex geometries that were previously impossible</p></li>
+<li><p><strong>Smart Factories</strong>: Automated production with integrated quality control</p></li>
+<li><p><strong>Mass Customization</strong>: Tailored designs for specific applications</p></li>
+<li><p><strong>Rapid Prototyping</strong>: Fast iteration and design validation cycles</p></li>
+</ul>
+<p><strong>Energy Transition</strong>:</p>
+<ul class="simple">
+<li><p><strong>Electric Vehicle Proliferation</strong>: Demand for high-efficiency motors</p></li>
+<li><p><strong>Renewable Energy Integration</strong>: Specialized motor requirements for wind/solar</p></li>
+<li><p><strong>Energy Efficiency Standards</strong>: Regulatory pressure for optimal designs</p></li>
+<li><p><strong>Sustainable Manufacturing</strong>: Material and energy optimization</p></li>
+</ul>
+</section>
+</section>
+<section id="multi-objective-optimization-extensions">
+<h2>10.2 Multi-Objective Optimization Extensions<a class="headerlink" href="#multi-objective-optimization-extensions" title="Link to this heading">#</a></h2>
+<section id="advanced-pareto-front-exploration">
+<h3>10.2.1 Advanced Pareto Front Exploration<a class="headerlink" href="#advanced-pareto-front-exploration" title="Link to this heading">#</a></h3>
+<p>While basic multi-objective optimization was introduced earlier, advanced applications require more sophisticated approaches:</p>
+<p><strong>Pareto Front Navigation</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">AdvancedParetoOptimizer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Advanced Pareto front exploration with decision maker preferences&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objectives</span><span class="p">,</span> <span class="n">preferences</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">objectives</span> <span class="o">=</span> <span class="n">objectives</span>  <span class="c1"># [&#39;torque&#39;, &#39;efficiency&#39;, &#39;ripple&#39;, &#39;cost&#39;]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">preferences</span> <span class="o">=</span> <span class="n">preferences</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pareto_front</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">explore_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_solutions</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Systematically explore Pareto front&quot;&quot;&quot;</span>
+        <span class="c1"># Use reference point method for directed search</span>
+        <span class="n">reference_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_reference_points</span><span class="p">()</span>
+        
+        <span class="k">for</span> <span class="n">ref_point</span> <span class="ow">in</span> <span class="n">reference_points</span><span class="p">:</span>
+            <span class="n">solution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimize_to_reference</span><span class="p">(</span><span class="n">ref_point</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_pareto_optimal</span><span class="p">(</span><span class="n">solution</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pareto_front</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pareto_front</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">interactive_preference_learning</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Learn decision maker preferences through interaction&quot;&quot;&quot;</span>
+        <span class="c1"># Present sample solutions and gather preferences</span>
+        <span class="c1"># Update preference model iteratively</span>
+        <span class="c1"># Focus search on preferred regions</span>
+        <span class="k">pass</span>
+</pre></div>
+</div>
+<p><strong>Dynamic Objective Weighting</strong>:</p>
+<ul class="simple">
+<li><p><strong>Adaptive weights</strong>: Adjust importance based on design progress</p></li>
+<li><p><strong>Contextual weighting</strong>: Different weights for different operating conditions</p></li>
+<li><p><strong>Stakeholder preferences</strong>: Incorporate multiple decision maker perspectives</p></li>
+<li><p><strong>Time-varying objectives</strong>: Optimize for different life cycle stages</p></li>
+</ul>
+</section>
+<section id="constraint-handling-and-robustness">
+<h3>10.2.2 Constraint Handling and Robustness<a class="headerlink" href="#constraint-handling-and-robustness" title="Link to this heading">#</a></h3>
+<p>Advanced constraint handling goes beyond simple penalty functions:</p>
+<p><strong>Constraint Prioritization</strong>:</p>
+<ul class="simple">
+<li><p><strong>Hard constraints</strong>: Manufacturing limitations, physical laws</p></li>
+<li><p><strong>Soft constraints</strong>: Performance targets, cost considerations</p></li>
+<li><p><strong>Priority levels</strong>: Hierarchical constraint satisfaction</p></li>
+<li><p><strong>Conflict resolution</strong>: Automated handling of competing constraints</p></li>
+</ul>
+<p><strong>Robust Optimization</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">RobustTopologyOptimizer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Robust optimization considering uncertainties&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uncertainty_model</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uncertainty_model</span> <span class="o">=</span> <span class="n">uncertainty_model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">robustness_metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;worst_case&#39;</span><span class="p">,</span> <span class="s1">&#39;expected_value&#39;</span><span class="p">,</span> <span class="s1">&#39;variance&#39;</span><span class="p">]</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">robust_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">design</span><span class="p">,</span> <span class="n">scenarios</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate robust objective considering multiple scenarios&quot;&quot;&quot;</span>
+        <span class="n">performances</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">scenario</span> <span class="ow">in</span> <span class="n">scenarios</span><span class="p">:</span>
+            <span class="c1"># Apply uncertainties to design parameters</span>
+            <span class="n">perturbed_design</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_uncertainties</span><span class="p">(</span><span class="n">design</span><span class="p">,</span> <span class="n">scenario</span><span class="p">)</span>
+            <span class="n">performance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_design</span><span class="p">(</span><span class="n">perturbed_design</span><span class="p">)</span>
+            <span class="n">performances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">performance</span><span class="p">)</span>
+        
+        <span class="c1"># Calculate robustness metrics</span>
+        <span class="n">worst_case</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">performances</span><span class="p">)</span>
+        <span class="n">expected_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">performances</span><span class="p">)</span>
+        <span class="n">variance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">performances</span><span class="p">)</span>
+        
+        <span class="c1"># Combine metrics with preferences</span>
+        <span class="n">robust_score</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">worst_case</span> <span class="o">+</span> 
+                       <span class="mf">0.3</span> <span class="o">*</span> <span class="n">expected_value</span> <span class="o">-</span> 
+                       <span class="mf">0.2</span> <span class="o">*</span> <span class="n">variance</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">robust_score</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="deep-reinforcement-learning-for-large-scale-problems">
+<h2>10.3 Deep Reinforcement Learning for Large-Scale Problems<a class="headerlink" href="#deep-reinforcement-learning-for-large-scale-problems" title="Link to this heading">#</a></h2>
+<section id="function-approximation-for-high-dimensional-spaces">
+<h3>10.3.1 Function Approximation for High-Dimensional Spaces<a class="headerlink" href="#function-approximation-for-high-dimensional-spaces" title="Link to this heading">#</a></h3>
+<p>Tabular Q-Learning becomes infeasible for large design spaces. Deep RL approaches address this limitation:</p>
+<p><strong>Deep Q-Networks (DQN)</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TopologyDQN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deep Q-Network for topology optimization&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grid_size</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="o">=</span><span class="mi">512</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">=</span> <span class="n">grid_size</span>
+        
+        <span class="c1"># Convolutional layers for spatial feature extraction</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv_layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Fully connected layers for Q-value prediction</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">128</span> <span class="o">*</span> <span class="n">grid_size</span> <span class="o">*</span> <span class="n">grid_size</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.2</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">hidden_dim</span> <span class="o">//</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">grid_size</span> <span class="o">*</span> <span class="n">grid_size</span><span class="p">)</span>  <span class="c1"># Q-values for each action</span>
+        <span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="c1"># x shape: (batch_size, 1, grid_size, grid_size)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv_layers</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Flatten</span>
+        <span class="n">q_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_layers</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">q_values</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DeepQLearningOptimizer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deep Q-Learning for large-scale topology optimization&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grid_size</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">=</span> <span class="n">grid_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Neural network and optimizer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_network</span> <span class="o">=</span> <span class="n">TopologyDQN</span><span class="p">(</span><span class="n">grid_size</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_network</span> <span class="o">=</span> <span class="n">TopologyDQN</span><span class="p">(</span><span class="n">grid_size</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_network</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">)</span>
+        
+        <span class="c1"># Experience replay</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">replay_buffer</span> <span class="o">=</span> <span class="n">ReplayBuffer</span><span class="p">(</span><span class="n">capacity</span><span class="o">=</span><span class="mi">100000</span><span class="p">)</span>
+        
+        <span class="c1"># Training parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon_decay</span> <span class="o">=</span> <span class="mf">0.995</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon_min</span> <span class="o">=</span> <span class="mf">0.01</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_update_freq</span> <span class="o">=</span> <span class="mi">1000</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Single training step with experience replay&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">replay_buffer</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">batch_size</span><span class="p">:</span>
+            <span class="k">return</span>
+        
+        <span class="c1"># Sample batch from replay buffer</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">replay_buffer</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+        <span class="n">states</span><span class="p">,</span> <span class="n">actions</span><span class="p">,</span> <span class="n">rewards</span><span class="p">,</span> <span class="n">next_states</span><span class="p">,</span> <span class="n">dones</span> <span class="o">=</span> <span class="n">batch</span>
+        
+        <span class="c1"># Convert to tensors</span>
+        <span class="n">states</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">states</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">actions</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">rewards</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">rewards</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">next_states</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">next_states</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">dones</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">BoolTensor</span><span class="p">(</span><span class="n">dones</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        
+        <span class="c1"># Current Q-values</span>
+        <span class="n">current_q_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_network</span><span class="p">(</span><span class="n">states</span><span class="p">)</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">actions</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        
+        <span class="c1"># Next Q-values from target network</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">next_q_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_network</span><span class="p">(</span><span class="n">next_states</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">target_q_values</span> <span class="o">=</span> <span class="n">rewards</span> <span class="o">+</span> <span class="p">(</span><span class="mf">0.99</span> <span class="o">*</span> <span class="n">next_q_values</span> <span class="o">*</span> <span class="o">~</span><span class="n">dones</span><span class="p">)</span>
+        
+        <span class="c1"># Compute loss</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()(</span><span class="n">current_q_values</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">target_q_values</span><span class="p">)</span>
+        
+        <span class="c1"># Optimize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="actor-critic-methods">
+<h3>10.3.2 Actor-Critic Methods<a class="headerlink" href="#actor-critic-methods" title="Link to this heading">#</a></h3>
+<p>Actor-Critic methods combine value-based and policy-based approaches:</p>
+<p><strong>Advantage Actor-Critic (A2C)</strong>:</p>
+<ul class="simple">
+<li><p><strong>Actor</strong>: Policy network for action selection</p></li>
+<li><p><strong>Critic</strong>: Value network for state evaluation</p></li>
+<li><p><strong>Advantage</strong>: Difference between actual and expected returns</p></li>
+</ul>
+<p><strong>Proximal Policy Optimization (PPO)</strong>:</p>
+<ul class="simple">
+<li><p><strong>Clipped objective</strong>: Prevents large policy updates</p></li>
+<li><p><strong>Stable training</strong>: More reliable than policy gradient methods</p></li>
+<li><p><strong>Sample efficiency</strong>: Better use of collected experience</p></li>
+</ul>
+</section>
+<section id="transfer-learning-and-domain-adaptation">
+<h3>10.3.3 Transfer Learning and Domain Adaptation<a class="headerlink" href="#transfer-learning-and-domain-adaptation" title="Link to this heading">#</a></h3>
+<p><strong>Cross-Model Transfer</strong>:</p>
+<ul class="simple">
+<li><p><strong>Pre-trained networks</strong>: Use knowledge from similar motor types</p></li>
+<li><p><strong>Fine-tuning</strong>: Adapt to specific motor requirements</p></li>
+<li><p><strong>Domain adaptation</strong>: Handle different operating conditions</p></li>
+<li><p><strong>Multi-task learning</strong>: Simultaneous optimization of multiple motor types</p></li>
+</ul>
+<p><strong>Meta-Learning Framework</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MetaLearningOptimizer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Meta-learning for rapid adaptation to new motor designs&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_model</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_model</span> <span class="o">=</span> <span class="n">base_model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">base_model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">meta_train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_distribution</span><span class="p">,</span> <span class="n">n_tasks</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Train on distribution of motor design tasks&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">episode</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_tasks</span><span class="p">):</span>
+            <span class="c1"># Sample task from distribution</span>
+            <span class="n">task</span> <span class="o">=</span> <span class="n">task_distribution</span><span class="o">.</span><span class="n">sample_task</span><span class="p">()</span>
+            
+            <span class="c1"># Adapt to task</span>
+            <span class="n">adapted_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adapt_to_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            
+            <span class="c1"># Compute meta-loss</span>
+            <span class="n">meta_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_meta_loss</span><span class="p">(</span><span class="n">adapted_model</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
+            
+            <span class="c1"># Update meta-parameters</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">meta_optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">meta_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">meta_optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">rapid_adaptation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_task</span><span class="p">,</span> <span class="n">n_steps</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rapidly adapt to new motor design with few examples&quot;&quot;&quot;</span>
+        <span class="c1"># Use meta-trained model for quick adaptation</span>
+        <span class="n">adapted_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_model</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_steps</span><span class="p">):</span>
+            <span class="c1"># Fast adaptation steps</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_adaptation_loss</span><span class="p">(</span><span class="n">adapted_model</span><span class="p">,</span> <span class="n">new_task</span><span class="p">)</span>
+            <span class="c1"># ... adaptation logic ...</span>
+        
+        <span class="k">return</span> <span class="n">adapted_model</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="real-time-optimization-and-digital-twins">
+<h2>10.4 Real-Time Optimization and Digital Twins<a class="headerlink" href="#real-time-optimization-and-digital-twins" title="Link to this heading">#</a></h2>
+<section id="digital-twin-integration">
+<h3>10.4.1 Digital Twin Integration<a class="headerlink" href="#digital-twin-integration" title="Link to this heading">#</a></h3>
+<p>Digital twins create virtual replicas of physical motors for real-time optimization:</p>
+<p><strong>Digital Twin Architecture</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MotorDigitalTwin</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Digital twin for real-time motor optimization&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">motor_id</span><span class="p">,</span> <span class="n">optimization_model</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">motor_id</span> <span class="o">=</span> <span class="n">motor_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimization_model</span> <span class="o">=</span> <span class="n">optimization_model</span>
+        
+        <span class="c1"># Real-time data streams</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sensor_data</span> <span class="o">=</span> <span class="n">SensorDataManager</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">performance_monitor</span> <span class="o">=</span> <span class="n">PerformanceMonitor</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">condition_monitor</span> <span class="o">=</span> <span class="n">ConditionMonitor</span><span class="p">()</span>
+        
+        <span class="c1"># Optimization state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_design</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimization_history</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adaptation_schedule</span> <span class="o">=</span> <span class="n">AdaptationSchedule</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">real_time_optimization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Continuous optimization based on real-time data&quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="c1"># Collect current operating data</span>
+            <span class="n">operating_conditions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_operating_conditions</span><span class="p">()</span>
+            <span class="n">performance_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_performance_metrics</span><span class="p">()</span>
+            
+            <span class="c1"># Identify optimization opportunities</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">should_optimize</span><span class="p">(</span><span class="n">operating_conditions</span><span class="p">,</span> <span class="n">performance_metrics</span><span class="p">):</span>
+                <span class="c1"># Run optimization for current conditions</span>
+                <span class="n">optimized_design</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimize_for_conditions</span><span class="p">(</span><span class="n">operating_conditions</span><span class="p">)</span>
+                
+                <span class="c1"># Validate and implement improvements</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_improvement</span><span class="p">(</span><span class="n">optimized_design</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">implement_design_change</span><span class="p">(</span><span class="n">optimized_design</span><span class="p">)</span>
+            
+            <span class="c1"># Update digital twin state</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_twin_state</span><span class="p">()</span>
+            
+            <span class="c1"># Wait for next optimization cycle</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimization_interval</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict_maintenance_needs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict maintenance requirements based on optimization data&quot;&quot;&quot;</span>
+        <span class="c1"># Use optimization history to predict performance degradation</span>
+        <span class="c1"># Schedule maintenance before performance drops</span>
+        <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+<section id="adaptive-control-systems">
+<h3>10.4.2 Adaptive Control Systems<a class="headerlink" href="#adaptive-control-systems" title="Link to this heading">#</a></h3>
+<p><strong>Self-Optimizing Motors</strong>:</p>
+<ul class="simple">
+<li><p><strong>Parameter adaptation</strong>: Real-time adjustment of motor parameters</p></li>
+<li><p><strong>Control optimization</strong>: Optimize control strategies based on current design</p></li>
+<li><p><strong>Load adaptation</strong>: Adjust design for changing load conditions</p></li>
+<li><p><strong>Environmental adaptation</strong>: Compensate for temperature, humidity changes</p></li>
+</ul>
+<p><strong>Predictive Optimization</strong>:</p>
+<ul class="simple">
+<li><p><strong>Load forecasting</strong>: Predict future load patterns</p></li>
+<li><p><strong>Preemptive optimization</strong>: Optimize before conditions change</p></li>
+<li><p><strong>Energy management</strong>: Optimize for energy efficiency patterns</p></li>
+<li><p><strong>Lifetime optimization</strong>: Extend motor life through adaptive operation</p></li>
+</ul>
+</section>
+</section>
+<section id="multi-physics-integration">
+<h2>10.5 Multi-Physics Integration<a class="headerlink" href="#multi-physics-integration" title="Link to this heading">#</a></h2>
+<section id="thermal-electromagnetic-coupling">
+<h3>10.5.1 Thermal-Electromagnetic Coupling<a class="headerlink" href="#thermal-electromagnetic-coupling" title="Link to this heading">#</a></h3>
+<p>Advanced optimization must consider multiple physical phenomena:</p>
+<p><strong>Coupled Physics Simulation</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MultiPhysicsOptimizer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multi-physics optimization for electrical machines&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">physics_models</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">physics_models</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;electromagnetic&#39;</span><span class="p">:</span> <span class="n">physics_models</span><span class="p">[</span><span class="s1">&#39;em&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;thermal&#39;</span><span class="p">:</span> <span class="n">physics_models</span><span class="p">[</span><span class="s1">&#39;thermal&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;structural&#39;</span><span class="p">:</span> <span class="n">physics_models</span><span class="p">[</span><span class="s1">&#39;structural&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;acoustic&#39;</span><span class="p">:</span> <span class="n">physics_models</span><span class="p">[</span><span class="s1">&#39;acoustic&#39;</span><span class="p">]</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># Coupling parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coupling_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_coupling_matrix</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">convergence_criteria</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;physics&#39;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span>
+            <span class="s1">&#39;optimization&#39;</span><span class="p">:</span> <span class="mf">1e-4</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">coupled_simulation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">design</span><span class="p">,</span> <span class="n">operating_point</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run coupled multi-physics simulation&quot;&quot;&quot;</span>
+        <span class="c1"># Initialize physics fields</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_fields</span><span class="p">(</span><span class="n">design</span><span class="p">)</span>
+        
+        <span class="c1"># Iterative coupling</span>
+        <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_coupling_iterations</span><span class="p">):</span>
+            <span class="c1"># Electromagnetic analysis</span>
+            <span class="n">em_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">physics_models</span><span class="p">[</span><span class="s1">&#39;electromagnetic&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="n">fields</span><span class="p">,</span> <span class="n">operating_point</span>
+            <span class="p">)</span>
+            
+            <span class="c1"># Update heat sources from EM losses</span>
+            <span class="n">fields</span><span class="p">[</span><span class="s1">&#39;heat_sources&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">em_results</span><span class="p">[</span><span class="s1">&#39;losses&#39;</span><span class="p">]</span>
+            
+            <span class="c1"># Thermal analysis</span>
+            <span class="n">thermal_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">physics_models</span><span class="p">[</span><span class="s1">&#39;thermal&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="n">fields</span><span class="p">,</span> <span class="n">operating_point</span>
+            <span class="p">)</span>
+            
+            <span class="c1"># Update material properties based on temperature</span>
+            <span class="n">fields</span><span class="p">[</span><span class="s1">&#39;material_properties&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_temperature_dependent_properties</span><span class="p">(</span>
+                <span class="n">thermal_results</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span>
+            <span class="p">)</span>
+            
+            <span class="c1"># Structural analysis (electromagnetic forces)</span>
+            <span class="n">fields</span><span class="p">[</span><span class="s1">&#39;forces&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">em_results</span><span class="p">[</span><span class="s1">&#39;electromagnetic_forces&#39;</span><span class="p">]</span>
+            <span class="n">structural_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">physics_models</span><span class="p">[</span><span class="s1">&#39;structural&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="n">fields</span><span class="p">,</span> <span class="n">operating_point</span>
+            <span class="p">)</span>
+            
+            <span class="c1"># Check convergence</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_coupling_convergence</span><span class="p">(</span><span class="n">fields</span><span class="p">):</span>
+                <span class="k">break</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">combine_results</span><span class="p">(</span><span class="n">em_results</span><span class="p">,</span> <span class="n">thermal_results</span><span class="p">,</span> <span class="n">structural_results</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="acoustic-and-vibration-optimization">
+<h3>10.5.2 Acoustic and Vibration Optimization<a class="headerlink" href="#acoustic-and-vibration-optimization" title="Link to this heading">#</a></h3>
+<p><strong>Noise Reduction Optimization</strong>:</p>
+<ul class="simple">
+<li><p><strong>Acoustic modeling</strong>: Sound generation and propagation</p></li>
+<li><p><strong>Vibration analysis</strong>: Mechanical vibration characteristics</p></li>
+<li><p><strong>Noise source identification</strong>: Pinpoint dominant noise sources</p></li>
+<li><p><strong>Design optimization</strong>: Reduce noise while maintaining performance</p></li>
+</ul>
+<p><strong>Multi-Objective Balance</strong>:</p>
+<ul class="simple">
+<li><p><strong>Performance vs. noise</strong>: Trade-off between torque and acoustic performance</p></li>
+<li><p><strong>Cost vs. comfort</strong>: Balance manufacturing cost with noise reduction</p></li>
+<li><p><strong>Efficiency vs. vibration</strong>: Optimize for both energy efficiency and smooth operation</p></li>
+</ul>
+</section>
+</section>
+<section id="manufacturing-integration">
+<h2>10.6 Manufacturing Integration<a class="headerlink" href="#manufacturing-integration" title="Link to this heading">#</a></h2>
+<section id="additive-manufacturing-optimization">
+<h3>10.6.1 Additive Manufacturing Optimization<a class="headerlink" href="#additive-manufacturing-optimization" title="Link to this heading">#</a></h3>
+<p>Additive manufacturing enables complex geometries that were previously impossible:</p>
+<p><strong>Design for Additive Manufacturing (DfAM)</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">AdditiveManufacturingOptimizer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optimization specifically for additive manufacturing constraints&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manufacturing_params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">printer_capabilities</span> <span class="o">=</span> <span class="n">manufacturing_params</span><span class="p">[</span><span class="s1">&#39;printer&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">material_properties</span> <span class="o">=</span> <span class="n">manufacturing_params</span><span class="p">[</span><span class="s1">&#39;material&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">process_parameters</span> <span class="o">=</span> <span class="n">manufacturing_params</span><span class="p">[</span><span class="s1">&#39;process&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># Manufacturing constraints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_feature_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">printer_capabilities</span><span class="p">[</span><span class="s1">&#39;min_feature&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_overhang_angle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">printer_capabilities</span><span class="p">[</span><span class="s1">&#39;max_overhang&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">support_constraints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">printer_capabilities</span><span class="p">[</span><span class="s1">&#39;supports&#39;</span><span class="p">]</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">manufacturability_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">design</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate design manufacturability&quot;&quot;&quot;</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;feature_size&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_feature_size</span><span class="p">(</span><span class="n">design</span><span class="p">),</span>
+            <span class="s1">&#39;overhang&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_overhangs</span><span class="p">(</span><span class="n">design</span><span class="p">),</span>
+            <span class="s1">&#39;support&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_support_requirements</span><span class="p">(</span><span class="n">design</span><span class="p">),</span>
+            <span class="s1">&#39;orientation&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_build_orientation</span><span class="p">(</span><span class="n">design</span><span class="p">),</span>
+            <span class="s1">&#39;material&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_material_compatibility</span><span class="p">(</span><span class="n">design</span><span class="p">)</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># Calculate overall manufacturability score</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">]</span>
+        <span class="n">overall_score</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">s</span> <span class="k">for</span> <span class="n">w</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">scores</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;overall_score&#39;</span><span class="p">:</span> <span class="n">overall_score</span><span class="p">,</span>
+            <span class="s1">&#39;detailed_scores&#39;</span><span class="p">:</span> <span class="n">scores</span><span class="p">,</span>
+            <span class="s1">&#39;recommendations&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_manufacturing_recommendations</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">optimize_for_manufacturing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">design</span><span class="p">,</span> <span class="n">objectives</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Optimize design considering manufacturing constraints&quot;&quot;&quot;</span>
+        <span class="c1"># Multi-objective optimization</span>
+        <span class="c1"># Objectives: performance, manufacturability, cost, time</span>
+        
+        <span class="c1"># Use constrained optimization</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">min_feature_size_constraint</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">overhang_constraint</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">support_constraint</span>
+        <span class="p">]</span>
+        
+        <span class="c1"># Run optimization</span>
+        <span class="n">optimized_design</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constrained_optimization</span><span class="p">(</span>
+            <span class="n">design</span><span class="p">,</span> <span class="n">objectives</span><span class="p">,</span> <span class="n">constraints</span>
+        <span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">optimized_design</span>
+</pre></div>
+</div>
+</section>
+<section id="quality-control-and-process-optimization">
+<h3>10.6.2 Quality Control and Process Optimization<a class="headerlink" href="#quality-control-and-process-optimization" title="Link to this heading">#</a></h3>
+<p><strong>In-Process Quality Control</strong>:</p>
+<ul class="simple">
+<li><p><strong>Real-time monitoring</strong>: Sensor integration during manufacturing</p></li>
+<li><p><strong>Defect detection</strong>: Automatic identification of manufacturing defects</p></li>
+<li><p><strong>Process adjustment</strong>: Dynamic parameter adjustment during printing</p></li>
+<li><p><strong>Quality prediction</strong>: Predict final quality from intermediate states</p></li>
+</ul>
+<p><strong>Post-Processing Optimization</strong>:</p>
+<ul class="simple">
+<li><p><strong>Heat treatment optimization</strong>: Optimize thermal processing parameters</p></li>
+<li><p><strong>Surface finishing</strong>: Minimize post-processing requirements</p></li>
+<li><p><strong>Inspection planning</strong>: Optimize quality control procedures</p></li>
+<li><p><strong>Certification</strong>: Automated compliance verification</p></li>
+</ul>
+</section>
+</section>
+<section id="industry-4-0-and-smart-manufacturing">
+<h2>10.7 Industry 4.0 and Smart Manufacturing<a class="headerlink" href="#industry-4-0-and-smart-manufacturing" title="Link to this heading">#</a></h2>
+<section id="smart-factory-integration">
+<h3>10.7.1 Smart Factory Integration<a class="headerlink" href="#smart-factory-integration" title="Link to this heading">#</a></h3>
+<p><strong>Connected Manufacturing Systems</strong>:</p>
+<ul class="simple">
+<li><p><strong>IoT sensors</strong>: Real-time monitoring of manufacturing processes</p></li>
+<li><p><strong>Cloud computing</strong>: Distributed optimization across facilities</p></li>
+<li><p><strong>Digital threads</strong>: End-to-end data integration from design to production</p></li>
+<li><p><strong>Artificial intelligence</strong>: Intelligent decision support systems</p></li>
+</ul>
+<p><strong>Automated Quality Management</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SmartManufacturingSystem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Smart manufacturing system for motor production&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">factory_config</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">factory_id</span> <span class="o">=</span> <span class="n">factory_config</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">production_lines</span> <span class="o">=</span> <span class="n">factory_config</span><span class="p">[</span><span class="s1">&#39;lines&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quality_systems</span> <span class="o">=</span> <span class="n">factory_config</span><span class="p">[</span><span class="s1">&#39;quality&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># AI systems</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">design_optimizer</span> <span class="o">=</span> <span class="n">TopologyOptimizer</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">process_optimizer</span> <span class="o">=</span> <span class="n">ProcessOptimizer</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quality_predictor</span> <span class="o">=</span> <span class="n">QualityPredictor</span><span class="p">()</span>
+        
+        <span class="c1"># Data integration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_lake</span> <span class="o">=</span> <span class="n">DataLake</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analytics_platform</span> <span class="o">=</span> <span class="n">AnalyticsPlatform</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">intelligent_production_planning</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">customer_requirements</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;AI-driven production planning&quot;&quot;&quot;</span>
+        <span class="c1"># Analyze requirements</span>
+        <span class="n">requirements_analysis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_requirements</span><span class="p">(</span><span class="n">customer_requirements</span><span class="p">)</span>
+        
+        <span class="c1"># Optimize design for requirements</span>
+        <span class="n">optimal_design</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">design_optimizer</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">requirements_analysis</span><span class="p">)</span>
+        
+        <span class="c1"># Plan manufacturing process</span>
+        <span class="n">manufacturing_plan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_optimizer</span><span class="o">.</span><span class="n">plan_production</span><span class="p">(</span>
+            <span class="n">optimal_design</span><span class="p">,</span> <span class="n">requirements_analysis</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Predict quality outcomes</span>
+        <span class="n">quality_prediction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quality_predictor</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+            <span class="n">optimal_design</span><span class="p">,</span> <span class="n">manufacturing_plan</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Optimize for quality and cost</span>
+        <span class="n">final_plan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimize_plan</span><span class="p">(</span>
+            <span class="n">manufacturing_plan</span><span class="p">,</span> <span class="n">quality_prediction</span>
+        <span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">final_plan</span>
+</pre></div>
+</div>
+</section>
+<section id="supply-chain-integration">
+<h3>10.7.2 Supply Chain Integration<a class="headerlink" href="#supply-chain-integration" title="Link to this heading">#</a></h3>
+<p><strong>Intelligent Supply Chain</strong>:</p>
+<ul class="simple">
+<li><p><strong>Material optimization</strong>: Select optimal materials based on availability and cost</p></li>
+<li><p><strong>Supplier selection</strong>: AI-driven supplier evaluation and selection</p></li>
+<li><p><strong>Inventory management</strong>: Predictive inventory optimization</p></li>
+<li><p><strong>Logistics optimization</strong>: Route and scheduling optimization</p></li>
+</ul>
+<p><strong>Circular Economy Integration</strong>:</p>
+<ul class="simple">
+<li><p><strong>Recyclability analysis</strong>: Optimize designs for end-of-life recycling</p></li>
+<li><p><strong>Material recovery</strong>: Maximize material recovery from used motors</p></li>
+<li><p>**Remanufacturing: Optimize for motor refurbishment and reuse</p></li>
+<li><p><strong>Life cycle assessment</strong>: Environmental impact optimization</p></li>
+</ul>
+</section>
+</section>
+<section id="human-ai-collaboration">
+<h2>10.8 Human-AI Collaboration<a class="headerlink" href="#human-ai-collaboration" title="Link to this heading">#</a></h2>
+<section id="explainable-ai-for-design">
+<h3>10.8.1 Explainable AI for Design<a class="headerlink" href="#explainable-ai-for-design" title="Link to this heading">#</a></h3>
+<p><strong>Interpretable Optimization</strong>:</p>
+<ul class="simple">
+<li><p><strong>Design rationale</strong>: Explain why specific design choices were made</p></li>
+<li><p><strong>Trade-off explanation</strong>: Clarify multi-objective optimization decisions</p></li>
+<li><p><strong>Constraint handling</strong>: Show how constraints influenced the design</p></li>
+<li><p><strong>Sensitivity analysis</strong>: Explain design sensitivity to parameters</p></li>
+</ul>
+<p><strong>Interactive Design Systems</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">InteractiveDesignSystem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interactive design system with human-AI collaboration&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ai_optimizer</span><span class="p">,</span> <span class="n">interface_config</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ai_optimizer</span> <span class="o">=</span> <span class="n">ai_optimizer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">DesignInterface</span><span class="p">(</span><span class="n">interface_config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explanation_system</span> <span class="o">=</span> <span class="n">ExplanationGenerator</span><span class="p">()</span>
+        
+        <span class="c1"># Human preference learning</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">preference_model</span> <span class="o">=</span> <span class="n">PreferenceModel</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interaction_history</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">collaborative_design_session</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_requirements</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Interactive design session with human designer&quot;&quot;&quot;</span>
+        <span class="c1"># Initialize with AI suggestions</span>
+        <span class="n">ai_suggestions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ai_optimizer</span><span class="o">.</span><span class="n">generate_suggestions</span><span class="p">(</span><span class="n">initial_requirements</span><span class="p">)</span>
+        
+        <span class="n">current_design</span> <span class="o">=</span> <span class="n">ai_suggestions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">design_complete</span><span class="p">(</span><span class="n">current_design</span><span class="p">):</span>
+            <span class="c1"># Present design with explanations</span>
+            <span class="n">explanation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">explanation_system</span><span class="o">.</span><span class="n">explain_design</span><span class="p">(</span><span class="n">current_design</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">display_design</span><span class="p">(</span><span class="n">current_design</span><span class="p">,</span> <span class="n">explanation</span><span class="p">)</span>
+            
+            <span class="c1"># Get human feedback</span>
+            <span class="n">human_feedback</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">get_feedback</span><span class="p">()</span>
+            
+            <span class="c1"># Learn from human preferences</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">preference_model</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">human_feedback</span><span class="p">)</span>
+            
+            <span class="c1"># Generate new suggestions based on feedback</span>
+            <span class="n">refined_suggestions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ai_optimizer</span><span class="o">.</span><span class="n">refine_suggestions</span><span class="p">(</span>
+                <span class="n">current_design</span><span class="p">,</span> <span class="n">human_feedback</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">preference_model</span>
+            <span class="p">)</span>
+            
+            <span class="c1"># Human selects next design iteration</span>
+            <span class="n">current_design</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">select_design</span><span class="p">(</span><span class="n">refined_suggestions</span><span class="p">)</span>
+            
+            <span class="c1"># Record interaction</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">interaction_history</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;design&#39;</span><span class="p">:</span> <span class="n">current_design</span><span class="p">,</span>
+                <span class="s1">&#39;feedback&#39;</span><span class="p">:</span> <span class="n">human_feedback</span><span class="p">,</span>
+                <span class="s1">&#39;explanation&#39;</span><span class="p">:</span> <span class="n">explanation</span>
+            <span class="p">})</span>
+        
+        <span class="k">return</span> <span class="n">current_design</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">interaction_history</span>
+</pre></div>
+</div>
+</section>
+<section id="knowledge-transfer-and-education">
+<h3>10.8.2 Knowledge Transfer and Education<a class="headerlink" href="#knowledge-transfer-and-education" title="Link to this heading">#</a></h3>
+<p><strong>AI-Assisted Learning</strong>:</p>
+<ul class="simple">
+<li><p><strong>Design education</strong>: AI tutors for teaching motor design principles</p></li>
+<li><p><strong>Knowledge extraction</strong>: Extract design knowledge from optimization results</p></li>
+<li><p><strong>Best practice discovery</strong>: Identify and document optimal design strategies</p></li>
+<li><p><strong>Expert system development</strong>: Capture expert knowledge in AI systems</p></li>
+</ul>
+<p><strong>Design Knowledge Management</strong>:</p>
+<ul class="simple">
+<li><p><strong>Design repositories</strong>: Organized storage of optimized designs</p></li>
+<li><p><strong>Pattern recognition</strong>: Identify successful design patterns</p></li>
+<li><p><strong>Failure analysis</strong>: Learn from design failures and improvements</p></li>
+<li><p><strong>Innovation tracking</strong>: Monitor emerging design trends and innovations</p></li>
+</ul>
+</section>
+</section>
+<section id="future-research-directions">
+<h2>10.9 Future Research Directions<a class="headerlink" href="#future-research-directions" title="Link to this heading">#</a></h2>
+<section id="emerging-technologies">
+<h3>10.9.1 Emerging Technologies<a class="headerlink" href="#emerging-technologies" title="Link to this heading">#</a></h3>
+<p><strong>Quantum Computing Applications</strong>:</p>
+<ul class="simple">
+<li><p><strong>Quantum annealing</strong>: Solve complex optimization problems</p></li>
+<li><p><strong>Quantum machine learning</strong>: Enhanced pattern recognition</p></li>
+<li><p><strong>Quantum simulation</strong>: More accurate physics modeling</p></li>
+<li><p><strong>Hybrid quantum-classical</strong>: Combine quantum and classical approaches</p></li>
+</ul>
+<p><strong>Neuromorphic Computing</strong>:</p>
+<ul class="simple">
+<li><p><strong>Spiking neural networks</strong>: Brain-inspired optimization algorithms</p></li>
+<li><p><strong>Event-driven processing</strong>: Efficient real-time optimization</p></li>
+<li><p><strong>Neuromorphic hardware</strong>: Specialized hardware for optimization</p></li>
+<li><p><strong>Adaptive architectures</strong>: Self-optimizing computing systems</p></li>
+</ul>
+</section>
+<section id="advanced-application-domains">
+<h3>10.9.2 Advanced Application Domains<a class="headerlink" href="#advanced-application-domains" title="Link to this heading">#</a></h3>
+<p><strong>Medical Devices</strong>:</p>
+<ul class="simple">
+<li><p><strong>Implantable motors</strong>: Optimized for medical applications</p></li>
+<li><p><strong>Surgical robots</strong>: High-precision motor design</p></li>
+<li><p><strong>Rehabilitation devices</strong>: Customized motor solutions</p></li>
+<li><p><strong>Diagnostic equipment</strong>: Specialized electromagnetic devices</p></li>
+</ul>
+<p><strong>Aerospace Applications</strong>:</p>
+<ul class="simple">
+<li><p><strong>Aircraft actuators</strong>: Weight-critical motor optimization</p></li>
+<li><p><strong>Satellite mechanisms</strong>: Space-qualified motor designs</p></li>
+<li><p><strong>Electric propulsion</strong>: Advanced motor systems for aircraft</p></li>
+<li><p><strong>Radar systems</strong>: Specialized electromagnetic devices</p></li>
+</ul>
+<p><strong>Renewable Energy Systems</strong>:</p>
+<ul class="simple">
+<li><p><strong>Wind turbine generators</strong>: Large-scale motor optimization</p></li>
+<li><p><strong>Tidal power systems</strong>: Marine environment optimization</p></li>
+<li><p><strong>Wave energy converters</strong>: Complex multi-physics optimization</p></li>
+<li><p><strong>Energy storage systems</strong>: Motor-based energy storage</p></li>
+</ul>
+</section>
+<section id="societal-impact-considerations">
+<h3>10.9.3 Societal Impact Considerations<a class="headerlink" href="#societal-impact-considerations" title="Link to this heading">#</a></h3>
+<p><strong>Sustainability and Environment</strong>:</p>
+<ul class="simple">
+<li><p><strong>Energy efficiency optimization</strong>: Reduce energy consumption</p></li>
+<li><p><strong>Material efficiency</strong>: Minimize material usage and waste</p></li>
+<li><p><strong>Life cycle optimization</strong>: Environmental impact minimization</p></li>
+<li><p><strong>Circular economy</strong>: Design for recycling and reuse</p></li>
+</ul>
+<p><strong>Ethical AI Considerations</strong>:</p>
+<ul class="simple">
+<li><p><strong>Bias mitigation</strong>: Ensure fair and unbiased optimization</p></li>
+<li><p><strong>Transparency</strong>: Make optimization decisions understandable</p></li>
+<li><p><strong>Accountability</strong>: Clear responsibility for design decisions</p></li>
+<li><p><strong>Human oversight</strong>: Maintain human control over critical decisions</p></li>
+</ul>
+</section>
+</section>
+<section id="summary-and-outlook">
+<h2>10.10 Summary and Outlook<a class="headerlink" href="#summary-and-outlook" title="Link to this heading">#</a></h2>
+<section id="key-advancements-presented">
+<h3>10.10.1 Key Advancements Presented<a class="headerlink" href="#key-advancements-presented" title="Link to this heading">#</a></h3>
+<p><strong>Technical Innovations</strong>:</p>
+<ul class="simple">
+<li><p><strong>MDP framework</strong>: Successful application of reinforcement learning to topology optimization</p></li>
+<li><p><strong>Multi-objective optimization</strong>: Sophisticated balancing of competing objectives</p></li>
+<li><p><strong>Deep RL integration</strong>: Scalable approaches for large-scale problems</p></li>
+<li><p><strong>Real-time optimization</strong>: Digital twin integration for continuous improvement</p></li>
+</ul>
+<p><strong>Methodological Contributions</strong>:</p>
+<ul class="simple">
+<li><p><strong>Rigorous comparison</strong>: Systematic evaluation of optimization methods</p></li>
+<li><p><strong>Statistical validation</strong>: Comprehensive statistical analysis framework</p></li>
+<li><p><strong>Industrial integration</strong>: Practical implementation considerations</p></li>
+<li><p><strong>Human-AI collaboration</strong>: Interactive design systems</p></li>
+</ul>
+<p><strong>Engineering Impact</strong>:</p>
+<ul class="simple">
+<li><p><strong>Performance improvements</strong>: 30-40% improvement over conventional designs</p></li>
+<li><p><strong>Design automation</strong>: Reduction in design time and expertise requirements</p></li>
+<li><p><strong>Innovation enablement</strong>: Discovery of unconventional optimal designs</p></li>
+<li><p><strong>Manufacturing integration</strong>: Seamless connection to production systems</p></li>
+</ul>
+</section>
+<section id="future-outlook">
+<h3>10.10.2 Future Outlook<a class="headerlink" href="#future-outlook" title="Link to this heading">#</a></h3>
+<p><strong>Short-term Horizons (1-3 years)</strong>:</p>
+<ul class="simple">
+<li><p><strong>Industrial deployment</strong>: Widespread adoption in motor manufacturing</p></li>
+<li><p><strong>Multi-physics integration</strong>: Thermal, structural, acoustic optimization</p></li>
+<li><p><strong>Cloud-based optimization</strong>: Distributed optimization platforms</p></li>
+<li><p><strong>Standardization</strong>: Industry standards for AI-optimized motor design</p></li>
+</ul>
+<p><strong>Medium-term Horizons (3-7 years)</strong>:</p>
+<ul class="simple">
+<li><p><strong>Fully autonomous design</strong>: End-to-end automated motor design systems</p></li>
+<li><p><strong>Quantum advantage</strong>: Quantum computing for complex optimization</p></li>
+<li><p><strong>Self-optimizing products</strong>: Motors that optimize themselves during operation</p></li>
+<li><p><strong>Personalized manufacturing</strong>: Custom motor designs for specific applications</p></li>
+</ul>
+<p><strong>Long-term Vision (7+ years)</strong>:</p>
+<ul class="simple">
+<li><p><strong>Creative AI systems</strong>: AI that can invent entirely new motor concepts</p></li>
+<li><p><strong>Bio-inspired designs</strong>: Motors based on biological principles</p></li>
+<li><p><strong>Space manufacturing</strong>: Off-world motor manufacturing and optimization</p></li>
+<li><p><strong>Conscious design systems</strong>: AI systems with design awareness and understanding</p></li>
+</ul>
+</section>
+<section id="concluding-remarks">
+<h3>10.10.3 Concluding Remarks<a class="headerlink" href="#concluding-remarks" title="Link to this heading">#</a></h3>
+<p>The integration of reinforcement learning with electrical machine topology optimization represents a significant advancement in automated design systems. The MDP framework provides a robust foundation for systematic design exploration, while the comparative analysis with traditional evolutionary methods offers valuable insights into algorithm selection and application.</p>
+<p>The methods presented in this chapter demonstrate that:</p>
+<ol class="arabic simple">
+<li><p><strong>Reinforcement learning is viable</strong>: Q-Learning can effectively navigate complex design spaces</p></li>
+<li><p><strong>Performance improvements are significant</strong>: Substantial gains over conventional approaches</p></li>
+<li><p><strong>Practical implementation is feasible</strong>: The framework can be deployed in industrial settings</p></li>
+<li><p><strong>Future potential is enormous</strong>: Advanced applications promise revolutionary capabilities</p></li>
+</ol>
+<p>As the field continues to evolve, the convergence of artificial intelligence, computational physics, and advanced manufacturing will enable unprecedented levels of design automation and innovation. The framework established in this work provides a solid foundation for future research and development in automated electrical machine design.</p>
+<p>The journey from traditional parametric optimization to intelligent, learning-based design systems represents not just a technological advancement, but a paradigm shift in how we approach engineering design. As these technologies mature, we can expect to see increasingly sophisticated systems that not only optimize existing concepts but discover entirely new design principles and possibilities.</p>
+<hr class="docutils" />
+<p><strong>Chapter 4 Complete</strong>: This concludes the comprehensive study of MDP-based topology optimization for electrical machines, providing both theoretical foundations and practical implementations for the next generation of automated design systems.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Advanced Applications Demonstration</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circle</span><span class="p">,</span> <span class="n">FancyBboxPatch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mpatches</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">display</span><span class="p">,</span> <span class="n">Markdown</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AdvancedApplicationsDemo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Demonstration of advanced applications and future directions&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">technology_readiness</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;Deep RL&#39;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span>
+            <span class="s1">&#39;Transfer Learning&#39;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span>
+            <span class="s1">&#39;Digital Twins&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span>
+            <span class="s1">&#39;Multi-Physics&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="s1">&#39;Additive Manufacturing&#39;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span>
+            <span class="s1">&#39;Quantum Computing&#39;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span>
+            <span class="s1">&#39;Neuromorphic&#39;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span>
+            <span class="s1">&#39;Human-AI Collaboration&#39;</span><span class="p">:</span> <span class="mf">0.6</span>
+        <span class="p">}</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">application_domains</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;Automotive&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;impact&#39;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span> <span class="s1">&#39;readiness&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">},</span>
+            <span class="s1">&#39;Aerospace&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;impact&#39;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span> <span class="s1">&#39;readiness&#39;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">},</span>
+            <span class="s1">&#39;Medical&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;impact&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span> <span class="s1">&#39;readiness&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">},</span>
+            <span class="s1">&#39;Renewable Energy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;impact&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span> <span class="s1">&#39;readiness&#39;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">},</span>
+            <span class="s1">&#39;Industrial&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;impact&#39;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span> <span class="s1">&#39;readiness&#39;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">},</span>
+            <span class="s1">&#39;Robotics&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;impact&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span> <span class="s1">&#39;readiness&#39;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">}</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_roadmap_visualization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create technology roadmap visualization&quot;&quot;&quot;</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="p">((</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">),</span> <span class="p">(</span><span class="n">ax3</span><span class="p">,</span> <span class="n">ax4</span><span class="p">))</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+        
+        <span class="c1"># 1. Technology Readiness Assessment</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Technology Readiness Assessment&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+        
+        <span class="n">technologies</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">technology_readiness</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">readiness</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">technology_readiness</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        
+        <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;red&#39;</span> <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="mf">0.4</span> <span class="k">else</span> <span class="s1">&#39;orange&#39;</span> <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="mf">0.7</span> <span class="k">else</span> <span class="s1">&#39;green&#39;</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">readiness</span><span class="p">]</span>
+        <span class="n">bars</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="n">technologies</span><span class="p">,</span> <span class="n">readiness</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+        
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Readiness Level&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        
+        <span class="c1"># Add readiness labels</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">bar</span><span class="p">,</span> <span class="n">tech</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">bars</span><span class="p">,</span> <span class="n">technologies</span><span class="p">)):</span>
+            <span class="n">width</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Emerging&#39;</span> <span class="k">if</span> <span class="n">width</span> <span class="o">&lt;</span> <span class="mf">0.4</span> <span class="k">else</span> <span class="s1">&#39;Developing&#39;</span> <span class="k">if</span> <span class="n">width</span> <span class="o">&lt;</span> <span class="mf">0.7</span> <span class="k">else</span> <span class="s1">&#39;Mature&#39;</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">width</span> <span class="o">+</span> <span class="mf">0.02</span><span class="p">,</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_y</span><span class="p">()</span> <span class="o">+</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_height</span><span class="p">()</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span>
+                    <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+        
+        <span class="c1"># 2. Application Domain Impact</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Application Domain Impact &amp; Readiness&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+        
+        <span class="n">domains</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">application_domains</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">impacts</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">application_domains</span><span class="p">[</span><span class="n">d</span><span class="p">][</span><span class="s1">&#39;impact&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">domains</span><span class="p">]</span>
+        <span class="n">readinesses</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">application_domains</span><span class="p">[</span><span class="n">d</span><span class="p">][</span><span class="s1">&#39;readiness&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">domains</span><span class="p">]</span>
+        
+        <span class="n">scatter</span> <span class="o">=</span> <span class="n">ax2</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">readinesses</span><span class="p">,</span> <span class="n">impacts</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">domains</span><span class="p">)),</span> 
+                           <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        
+        <span class="c1"># Add labels</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">domain</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">domains</span><span class="p">):</span>
+            <span class="n">ax2</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="p">(</span><span class="n">readinesses</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">impacts</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> 
+                        <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">textcoords</span><span class="o">=</span><span class="s1">&#39;offset points&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+        
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Readiness&#39;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Impact&#39;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mf">0.4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">0.6</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        
+        <span class="c1"># 3. Future Timeline</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Future Development Timeline&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+        
+        <span class="n">timeline_events</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="s1">&#39;Industrial Deployment&#39;</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">),</span>
+            <span class="p">(</span><span class="mi">2026</span><span class="p">,</span> <span class="s1">&#39;Cloud-Based Optimization&#39;</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">),</span>
+            <span class="p">(</span><span class="mi">2028</span><span class="p">,</span> <span class="s1">&#39;Fully Autonomous Design&#39;</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">),</span>
+            <span class="p">(</span><span class="mi">2030</span><span class="p">,</span> <span class="s1">&#39;Quantum Advantage&#39;</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+            <span class="p">(</span><span class="mi">2032</span><span class="p">,</span> <span class="s1">&#39;Self-Optimizing Products&#39;</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">)</span>
+        <span class="p">]</span>
+        
+        <span class="n">years</span> <span class="o">=</span> <span class="p">[</span><span class="n">event</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">timeline_events</span><span class="p">]</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">event</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">timeline_events</span><span class="p">]</span>
+        <span class="n">probabilities</span> <span class="o">=</span> <span class="p">[</span><span class="n">event</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">timeline_events</span><span class="p">]</span>
+        
+        <span class="n">colors</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">RdYlGn</span><span class="p">(</span><span class="n">probabilities</span><span class="p">)</span>
+        <span class="n">bars</span> <span class="o">=</span> <span class="n">ax3</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">years</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">years</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+        
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Achievement Probability&#39;</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Year&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Add event labels</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">years</span><span class="p">,</span> <span class="n">events</span><span class="p">)):</span>
+            <span class="n">ax3</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="mf">1.05</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;bottom&#39;</span><span class="p">,</span> 
+                    <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        
+        <span class="n">ax3</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        
+        <span class="c1"># 4. Research Focus Areas</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Research Focus Areas&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+        
+        <span class="n">research_areas</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;Algorithm Development&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span>
+            <span class="s1">&#39;Multi-Physics&#39;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span>
+            <span class="s1">&#39;Manufacturing Integration&#39;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span>
+            <span class="s1">&#39;Human-AI Collaboration&#39;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span>
+            <span class="s1">&#39;Sustainability&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span>
+            <span class="s1">&#39;Security &amp; Safety&#39;</span><span class="p">:</span> <span class="mf">0.7</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># Create bubble chart</span>
+        <span class="n">areas</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">research_areas</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">importance</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">research_areas</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">complexity</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">]</span>
+        
+        <span class="n">bubble_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="n">imp</span> <span class="o">*</span> <span class="n">comp</span> <span class="o">*</span> <span class="mi">1000</span> <span class="k">for</span> <span class="n">imp</span><span class="p">,</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">importance</span><span class="p">,</span> <span class="n">complexity</span><span class="p">)]</span>
+        
+        <span class="n">scatter</span> <span class="o">=</span> <span class="n">ax4</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">areas</span><span class="p">)),</span> <span class="n">importance</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">bubble_sizes</span><span class="p">,</span> 
+                           <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">complexity</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;plasma&#39;</span><span class="p">,</span> 
+                           <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        
+        <span class="n">ax4</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">areas</span><span class="p">)))</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">areas</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Importance&#39;</span><span class="p">)</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        
+        <span class="c1"># Add colorbar for complexity</span>
+        <span class="n">cbar</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">scatter</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax4</span><span class="p">)</span>
+        <span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;Complexity&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">270</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+        
+        <span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Advanced Applications: Technology Roadmap and Future Directions&#39;</span><span class="p">,</span>
+                    <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.98</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">demonstrate_future_concepts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Demonstrate future concept visualizations&quot;&quot;&quot;</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="p">((</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">),</span> <span class="p">(</span><span class="n">ax3</span><span class="p">,</span> <span class="n">ax4</span><span class="p">))</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+        
+        <span class="c1"># 1. Self-Optimizing Motor Concept</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Self-Optimizing Motor Concept&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Create motor visualization with optimization indicators</span>
+        <span class="n">motor_circle</span> <span class="o">=</span> <span class="n">Circle</span><span class="p">((</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="mf">0.3</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">motor_circle</span><span class="p">)</span>
+        
+        <span class="c1"># Add optimization zones</span>
+        <span class="n">optimization_zones</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">Circle</span><span class="p">((</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="mf">0.25</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;lightblue&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
+            <span class="n">Circle</span><span class="p">((</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;lightgreen&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
+            <span class="n">Circle</span><span class="p">((</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="mf">0.15</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;yellow&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="p">]</span>
+        
+        <span class="k">for</span> <span class="n">zone</span> <span class="ow">in</span> <span class="n">optimization_zones</span><span class="p">:</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">zone</span><span class="p">)</span>
+        
+        <span class="c1"># Add optimization arrows</span>
+        <span class="n">arrows</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> 
+                 <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">)]</span>
+        
+        <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">arrows</span><span class="p">:</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="n">end</span><span class="p">,</span> <span class="n">xytext</span><span class="o">=</span><span class="n">start</span><span class="p">,</span>
+                        <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s1">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># 2. Digital Twin Integration</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Digital Twin Integration&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Physical motor</span>
+        <span class="n">physical_motor</span> <span class="o">=</span> <span class="n">FancyBboxPatch</span><span class="p">((</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">),</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span>
+                                         <span class="n">boxstyle</span><span class="o">=</span><span class="s2">&quot;round,pad=0.02&quot;</span><span class="p">,</span>
+                                         <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;lightblue&#39;</span><span class="p">,</span>
+                                         <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span>
+                                         <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">physical_motor</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">,</span> <span class="s1">&#39;Physical</span><span class="se">\n</span><span class="s1">Motor&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Digital twin</span>
+        <span class="n">digital_twin</span> <span class="o">=</span> <span class="n">FancyBboxPatch</span><span class="p">((</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">),</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span>
+                                       <span class="n">boxstyle</span><span class="o">=</span><span class="s2">&quot;round,pad=0.02&quot;</span><span class="p">,</span>
+                                       <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;lightgreen&#39;</span><span class="p">,</span>
+                                       <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span>
+                                       <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">digital_twin</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">,</span> <span class="s1">&#39;Digital</span><span class="se">\n</span><span class="s1">Twin&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Data flow</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">),</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">),</span>
+                    <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s1">&#39;&lt;-&gt;&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">,</span> <span class="s1">&#39;Data</span><span class="se">\n</span><span class="s1">Flow&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+        
+        <span class="c1"># Optimization system</span>
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="n">FancyBboxPatch</span><span class="p">((</span><span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span>
+                                     <span class="n">boxstyle</span><span class="o">=</span><span class="s2">&quot;round,pad=0.02&quot;</span><span class="p">,</span>
+                                     <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;yellow&#39;</span><span class="p">,</span>
+                                     <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span>
+                                     <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="s1">&#39;Optimization</span><span class="se">\n</span><span class="s1">System&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Connections</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">),</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">),</span>
+                    <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s1">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">),</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">),</span>
+                    <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s1">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># 3. Human-AI Collaboration</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Human-AI Design Collaboration&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Human designer</span>
+        <span class="n">human_circle</span> <span class="o">=</span> <span class="n">Circle</span><span class="p">((</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">),</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;lightblue&#39;</span><span class="p">,</span> 
+                           <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">human_circle</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">,</span> <span class="s1">&#39;Human</span><span class="se">\n</span><span class="s1">Designer&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        
+        <span class="c1"># AI system</span>
+        <span class="n">ai_circle</span> <span class="o">=</span> <span class="n">Circle</span><span class="p">((</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">),</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;lightgreen&#39;</span><span class="p">,</span>
+                        <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">ai_circle</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">,</span> <span class="s1">&#39;AI</span><span class="se">\n</span><span class="s1">System&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        
+        <span class="c1"># Collaboration space</span>
+        <span class="n">collaboration</span> <span class="o">=</span> <span class="n">FancyBboxPatch</span><span class="p">((</span><span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">),</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span>
+                                       <span class="n">boxstyle</span><span class="o">=</span><span class="s2">&quot;round,pad=0.02&quot;</span><span class="p">,</span>
+                                       <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;lightyellow&#39;</span><span class="p">,</span>
+                                       <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span>
+                                       <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">collaboration</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.45</span><span class="p">,</span> <span class="s1">&#39;Design</span><span class="se">\n</span><span class="s1">Space&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Interactions</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">),</span>
+                    <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s1">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mf">0.65</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">),</span>
+                    <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s1">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        
+        <span class="n">ax3</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.65</span><span class="p">),</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">),</span>
+                    <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s1">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.65</span><span class="p">),</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mf">0.65</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">),</span>
+                    <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s1">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># 4. Future Technology Stack</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Future Technology Stack&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Create technology stack layers</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s1">&#39;Quantum Computing&#39;</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s1">&#39;Neuromorphic Hardware&#39;</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="s1">&#39;orange&#39;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s1">&#39;Edge AI&#39;</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="s1">&#39;yellow&#39;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s1">&#39;Deep RL&#39;</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s1">&#39;Digital Twins&#39;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;blue&#39;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s1">&#39;Cloud Computing&#39;</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="s1">&#39;purple&#39;</span><span class="p">)</span>
+        <span class="p">]</span>
+        
+        <span class="n">y_positions</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="mf">0.12</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">))]</span>
+        
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">tech</span><span class="p">,</span> <span class="n">importance</span><span class="p">,</span> <span class="n">color</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">layers</span><span class="p">):</span>
+            <span class="n">rect</span> <span class="o">=</span> <span class="n">FancyBboxPatch</span><span class="p">((</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">y_positions</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">,</span>
+                                     <span class="n">boxstyle</span><span class="o">=</span><span class="s2">&quot;round,pad=0.01&quot;</span><span class="p">,</span>
+                                     <span class="n">facecolor</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+                                     <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+                                     <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span>
+                                     <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">ax4</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span>
+            <span class="n">ax4</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y_positions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.04</span><span class="p">,</span> <span class="n">tech</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span>
+                    <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+        
+        <span class="n">ax4</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax4</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+        
+        <span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Future Concepts: Advanced Applications Vision&#39;</span><span class="p">,</span>
+                    <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.98</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_future_predictions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate and display future predictions&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">80</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;🔮 FUTURE PREDICTIONS FOR ELECTRICAL MACHINE DESIGN&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">80</span><span class="p">)</span>
+        
+        <span class="n">predictions</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;2025&#39;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s1">&#39;Widespread industrial deployment of RL-based design&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;Integration with cloud-based optimization platforms&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;Standardization of AI-optimized design workflows&#39;</span>
+            <span class="p">],</span>
+            <span class="s1">&#39;2028&#39;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s1">&#39;Fully autonomous motor design systems&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;Real-time self-optimizing motor systems&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;Quantum computing for complex optimization problems&#39;</span>
+            <span class="p">],</span>
+            <span class="s1">&#39;2032&#39;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s1">&#39;Creative AI systems discovering new motor concepts&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;Bio-inspired motor designs based on natural principles&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;Neuromorphic computing for ultra-efficient optimization&#39;</span>
+            <span class="p">],</span>
+            <span class="s1">&#39;2035+&#39;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s1">&#39;Conscious design systems with design awareness&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;Space-based motor manufacturing and optimization&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;Merging of biological and mechanical design principles&#39;</span>
+            <span class="p">]</span>
+        <span class="p">}</span>
+        
+        <span class="k">for</span> <span class="n">year</span><span class="p">,</span> <span class="n">preds</span> <span class="ow">in</span> <span class="n">predictions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">📅 </span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">pred</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">💡 KEY INSIGHTS:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   • Convergence of AI and advanced manufacturing&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   • Shift from design optimization to design creation&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   • Increasing autonomy in design systems&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   • Integration of multiple physics domains&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   • Human-AI collaboration as the new norm&quot;</span><span class="p">)</span>
+
+
+<span class="c1"># Run the demonstration</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;🚀 ADVANCED APPLICATIONS AND FUTURE DIRECTIONS&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">80</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exploring the future of AI-driven electrical machine design...&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create demo instance</span>
+<span class="n">demo</span> <span class="o">=</span> <span class="n">AdvancedApplicationsDemo</span><span class="p">()</span>
+
+<span class="c1"># Create visualizations</span>
+<span class="n">demo</span><span class="o">.</span><span class="n">create_roadmap_visualization</span><span class="p">()</span>
+<span class="n">demo</span><span class="o">.</span><span class="n">demonstrate_future_concepts</span><span class="p">()</span>
+<span class="n">demo</span><span class="o">.</span><span class="n">generate_future_predictions</span><span class="p">()</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">MMarkdown</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">**Figure: Advanced Applications and Future Roadmap**</span>
+
+<span class="s2">This visualization presents a comprehensive view of the future landscape for AI-driven electrical machine design:</span>
+
+<span class="s2">1. **Technology Readiness Assessment**: Current maturity levels of key technologies, from emerging quantum computing to mature additive manufacturing integration.</span>
+
+<span class="s2">2. **Application Domain Impact**: Analysis of different industrial sectors based on their potential impact and readiness for AI-optimized motor design.</span>
+
+<span class="s2">3. **Future Development Timeline**: Predicted timeline for key technological breakthroughs and their achievement probabilities.</span>
+
+<span class="s2">4. **Research Focus Areas**: Priority areas for future research, sized by importance and colored by complexity.</span>
+
+<span class="s2">5. **Self-Optimizing Motor Concept**: Visualization of motors that can continuously optimize their own performance during operation.</span>
+
+<span class="s2">6. **Digital Twin Integration**: Architecture showing the connection between physical motors, their digital twins, and optimization systems.</span>
+
+<span class="s2">7. **Human-AI Collaboration**: Interactive design process where human designers and AI systems work together.</span>
+
+<span class="s2">8. **Future Technology Stack**: Layered view of the technologies that will power future design systems.</span>
+
+<span class="s2">**Key Future Directions:**</span>
+
+<span class="s2">- **Short-term (1-3 years)**: Industrial deployment, cloud optimization, standardization</span>
+<span class="s2">- **Medium-term (3-7 years)**: Autonomous design, quantum advantage, self-optimizing products</span>
+<span class="s2">- **Long-term (7+ years)**: Creative AI, bio-inspired designs, space manufacturing</span>
+
+<span class="s2">**Critical Success Factors:**</span>
+<span class="s2">- Integration with manufacturing systems</span>
+<span class="s2">- Human-AI collaboration frameworks</span>
+<span class="s2">- Multi-physics optimization capabilities</span>
+<span class="s2">- Robustness and reliability guarantees</span>
+<span class="s2">- Ethical AI principles and transparency</span>
+
+<span class="s2">The future of electrical machine design lies in the seamless integration of artificial intelligence, advanced manufacturing, and human expertise, creating systems that can not only optimize existing concepts but discover entirely new design principles and possibilities.</span>
+<span class="s2">&quot;&quot;&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="09_results_analysis.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">9. Results Analysis</p>
+      </div>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction-to-advanced-applications">10.1 Introduction to Advanced Applications</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#technological-convergence">10.1.1 Technological Convergence</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#industrial-evolution">10.1.2 Industrial Evolution</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-objective-optimization-extensions">10.2 Multi-Objective Optimization Extensions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-pareto-front-exploration">10.2.1 Advanced Pareto Front Exploration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#constraint-handling-and-robustness">10.2.2 Constraint Handling and Robustness</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deep-reinforcement-learning-for-large-scale-problems">10.3 Deep Reinforcement Learning for Large-Scale Problems</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#function-approximation-for-high-dimensional-spaces">10.3.1 Function Approximation for High-Dimensional Spaces</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#actor-critic-methods">10.3.2 Actor-Critic Methods</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#transfer-learning-and-domain-adaptation">10.3.3 Transfer Learning and Domain Adaptation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#real-time-optimization-and-digital-twins">10.4 Real-Time Optimization and Digital Twins</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#digital-twin-integration">10.4.1 Digital Twin Integration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adaptive-control-systems">10.4.2 Adaptive Control Systems</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-physics-integration">10.5 Multi-Physics Integration</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#thermal-electromagnetic-coupling">10.5.1 Thermal-Electromagnetic Coupling</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoustic-and-vibration-optimization">10.5.2 Acoustic and Vibration Optimization</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#manufacturing-integration">10.6 Manufacturing Integration</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#additive-manufacturing-optimization">10.6.1 Additive Manufacturing Optimization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quality-control-and-process-optimization">10.6.2 Quality Control and Process Optimization</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#industry-4-0-and-smart-manufacturing">10.7 Industry 4.0 and Smart Manufacturing</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#smart-factory-integration">10.7.1 Smart Factory Integration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#supply-chain-integration">10.7.2 Supply Chain Integration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#human-ai-collaboration">10.8 Human-AI Collaboration</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#explainable-ai-for-design">10.8.1 Explainable AI for Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#knowledge-transfer-and-education">10.8.2 Knowledge Transfer and Education</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#future-research-directions">10.9 Future Research Directions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#emerging-technologies">10.9.1 Emerging Technologies</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-application-domains">10.9.2 Advanced Application Domains</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#societal-impact-considerations">10.9.3 Societal Impact Considerations</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-and-outlook">10.10 Summary and Outlook</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-advancements-presented">10.10.1 Key Advancements Presented</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#future-outlook">10.10.2 Future Outlook</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#concluding-remarks">10.10.3 Concluding Remarks</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
