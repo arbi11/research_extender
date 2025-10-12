@@ -1,0 +1,672 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Modeling Fundamentals &#8212; Chapter 2: Deep Learning for Magnetic Field Prediction</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/01_modeling_fundamentals';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Machine Learning Fundamentals" href="02_ml_basics.html" />
+    <link rel="prev" title="Chapter 2: Deep Learning for Magnetic Field Prediction" href="00_intro.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="00_intro.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 2: Deep Learning for Magnetic Field Prediction</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Modeling Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_ml_basics.html">Machine Learning Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_data_pipeline.html">Data Pipeline for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_neural_networks.html">CNN Architecture for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_uncertainty_quantification.html">Uncertainty Quantification for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_physics_informed_neural_networks.html">Physics-Informed Neural Networks for Electromagnetic Field Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/01_modeling_fundamentals.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Modeling Fundamentals</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-nature-of-models">The Nature of Models</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#desirable-model-features">Desirable Model Features</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#electromagnetic-modeling-challenges">Electromagnetic Modeling Challenges</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#first-principle-models">First Principle Models</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#electromagnetic-modeling-approaches">Electromagnetic Modeling Approaches</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analytical-methods">1. Analytical Methods</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#physics-based-models">2. Physics-based Models</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#magnetic-equivalent-circuits-mec">Magnetic Equivalent Circuits (MEC)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#finite-element-analysis-fea">Finite Element Analysis (FEA)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogate-data-driven-models">3. Surrogate/Data-driven Models</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-between-mec-and-fea">Comparison Between MEC and FEA</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mec-advantages">MEC Advantages</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fea-advantages">FEA Advantages</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-comparison">Performance Comparison</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#need-for-improved-surrogate-models">Need for Improved Surrogate Models</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="modeling-fundamentals">
+<h1>Modeling Fundamentals<a class="headerlink" href="#modeling-fundamentals" title="Link to this heading">#</a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
+<p>Data-driven methodologies are currently revolutionizing how we model, predict, and control complex systems such as climate, finance, traffic, robotics and autonomy. The most pressing scientific and engineering tasks of the present era are not dependent on empirical models or derivations based on first principles. Increasingly, researchers are turning to data-driven approaches for characterizing and modeling a diverse range of complex systems with the goal of sensing, prediction, estimation, and control.</p>
+<p>One such challenge is analyzing the performance of electric machines in a relatively short period of time. An electromagnetic model is needed to perform the design and analysis of an electric machine. This model will be used to evaluate relevant electromagnetic performance characteristics associated with an electric machine such as electromagnetic force, torque, fields, and losses distribution maps. Further, a model capable of providing an accurate and fast performance evaluation is the backbone of an optimization task for achieving objectives such as minimizing the torque ripple, increasing average torque and efficiency. It also plays a central role in designing the motor drive system.</p>
+</section>
+<section id="the-nature-of-models">
+<h2>The Nature of Models<a class="headerlink" href="#the-nature-of-models" title="Link to this heading">#</a></h2>
+<p>The very word ‘model’ implies simplification and idealization. A model is an approximation of reality and hence will not reflect all of reality. In 1976, a renowned British statistician named George Box wrote the famous line:</p>
+<blockquote>
+<div><p>“All models are wrong, some are useful”</p>
+</div></blockquote>
+<p>The intuition behind this sentence is that every model is wrong because it is a simplification of reality. However, simplifications of reality can be quite useful. They can help us explain, predict and understand the universe and all its various components. It means useful insights can be provided from models which are not a perfect representation of the phenomena they model. The practical question is how wrong do they have to be in order to be not useful.</p>
+<section id="desirable-model-features">
+<h3>Desirable Model Features<a class="headerlink" href="#desirable-model-features" title="Link to this heading">#</a></h3>
+<p>As such, the desirable features of a model can be summarized as follows:</p>
+<ol class="arabic simple">
+<li><p><strong>Consistency</strong>: A model should be consistent in its ability to explain past observations and predict future observations.</p></li>
+<li><p><strong>Computational Efficiency</strong>: A model should be computationally cheaper than traditional methods available for analysis.</p></li>
+<li><p><strong>Accuracy</strong>: A model that gives highly accurate results but takes a lot of computational time may not be useful. On the other hand, a model that is not as accurate but can produce estimates very quickly can be beneficial.</p></li>
+</ol>
+</section>
+</section>
+<section id="electromagnetic-modeling-challenges">
+<h2>Electromagnetic Modeling Challenges<a class="headerlink" href="#electromagnetic-modeling-challenges" title="Link to this heading">#</a></h2>
+<section id="first-principle-models">
+<h3>First Principle Models<a class="headerlink" href="#first-principle-models" title="Link to this heading">#</a></h3>
+<p>Maxwell’s equations form the foundation of classical electromagnetism, classical optics, and electric circuits. We can consider models built on solving physics (such as Maxwell’s equations) as the First Principle models. Modeling is the mathematical representation of physical phenomena and simulation is the numerical representation of such models on computing machines. Over the years Computer-Aided Design (CAD) has evolved as the field of “using computers to aid in the creation, modification, analysis, or optimization of a design”.</p>
+<p>Accurate modeling and analysis of an electromagnetic problem is both a challenging and time-consuming process due to several reasons:</p>
+<ol class="arabic simple">
+<li><p><strong>Nonlinear Systems</strong>: The system of differential equations for the electromagnetic analysis of electric devices is nonlinear due to the property of saturation in magnetic materials.</p></li>
+<li><p><strong>Complex Geometry</strong>: The non-linear dependence of inductances on rotor-to-stator angles is reflected in the non-linear relationship between current and fluxes.</p></li>
+<li><p><strong>Computational Complexity</strong>: Since the induced voltage and electromagnetic torque are proportional to the state variables, such as flux, current, and speed, it makes it impossible to find an analytic solution to the machine system of differential equations.</p></li>
+</ol>
+</section>
+</section>
+<section id="electromagnetic-modeling-approaches">
+<h2>Electromagnetic Modeling Approaches<a class="headerlink" href="#electromagnetic-modeling-approaches" title="Link to this heading">#</a></h2>
+<p>Having identified the challenges associated with the field of electromagnetic modeling and simulation, we can broadly divide the field into three categories of algorithms:</p>
+<figure class="align-default" id="fig-modeling-techniques">
+<img alt="Different electromagnetic modeling techniques" src="../_images/EM_model_techniques.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Different electromagnetic modeling techniques.</span><a class="headerlink" href="#fig-modeling-techniques" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<section id="analytical-methods">
+<h3>1. Analytical Methods<a class="headerlink" href="#analytical-methods" title="Link to this heading">#</a></h3>
+<p>Of the three approaches, analytical algorithms are usually the least demanding in terms of computational need and will provide the fastest results. These methods try to find the closed-form expressions for magnetic fields and losses in a motor. However, they face a major challenge in:</p>
+<ul class="simple">
+<li><p><strong>Geometric Complexity</strong>: Approximating complex geometries and incorporating the effect of iron saturation in their analysis</p></li>
+<li><p><strong>Physical Effects</strong>: They are incapable of modeling skin and proximity effects in the winding and the end winding inductance</p></li>
+</ul>
+<p>Despite their limited capabilities, analytic models are popular because of the low computation power required for their highly simplified expressions and ease of parameterization. They are employed when fast prototyping is needed and the design is evaluated only on the basis of global performance quantities such as torque and forces.</p>
+</section>
+<section id="physics-based-models">
+<h3>2. Physics-based Models<a class="headerlink" href="#physics-based-models" title="Link to this heading">#</a></h3>
+<p>The physics-based models, on the other hand, are founded on established and detailed physical principles and lead to more accurate simulations. They model the interaction of electromagnetic fields with physical objects and the environment. Two such methods are:</p>
+<section id="magnetic-equivalent-circuits-mec">
+<h4>Magnetic Equivalent Circuits (MEC)<a class="headerlink" href="#magnetic-equivalent-circuits-mec" title="Link to this heading">#</a></h4>
+<p>MEC modeling is a popular method in modeling electric machines. It’s a special case since it can be considered as an analytical or numerical technique according to how it is applied:</p>
+<ul class="simple">
+<li><p><strong>As Analytical</strong>: When combined with other analytical modeling techniques such as Maxwell’s equations</p></li>
+<li><p><strong>As Numerical</strong>: When the nonlinearity of the magnetic materials is considered, requiring combination with numerical techniques</p></li>
+</ul>
+<p>MECs offer an alternative possibility based on permeance network models comprising reluctance and mmf sources. The MEC can be considered as a reduced order FE which translates a geometrical description of a magnetic device into an electrical circuit description.</p>
+</section>
+<section id="finite-element-analysis-fea">
+<h4>Finite Element Analysis (FEA)<a class="headerlink" href="#finite-element-analysis-fea" title="Link to this heading">#</a></h4>
+<p>The present-day Finite Element (FE) method based software suite allows for the accurate analysis of electric machines in three dimensions with coupled fields. It is the method of choice for today’s machine designers, in comparison to analytical models and MECs.</p>
+<p><strong>FEA Process Steps</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Domain Discretization</strong>: Proper discretization optimizes the number of elements and unknowns for the desired solution accuracy</p></li>
+<li><p><strong>Selection of Interpolation Functions</strong>: Converting a continuous operator problem to a discrete problem</p></li>
+<li><p><strong>Formulation of the System of Equations</strong>: Methods like Ritz and Galerkin</p></li>
+<li><p><strong>Solution of the System of Equations</strong>: Using numerical methods like LU Decomposition, Conjugate Gradient Method</p></li>
+</ol>
+<figure class="align-default" id="fig-fem-process">
+<img alt="Computational Analysis in FEM" src="../_images/Proposal.pdf" />
+<figcaption>
+<p><span class="caption-number">Fig. 2 </span><span class="caption-text">Computational Analysis in FEM</span><a class="headerlink" href="#fig-fem-process" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+</section>
+</section>
+<section id="surrogate-data-driven-models">
+<h3>3. Surrogate/Data-driven Models<a class="headerlink" href="#surrogate-data-driven-models" title="Link to this heading">#</a></h3>
+<p>Another class of models, surrogate or data-driven models, is not necessarily based on first principles. They approximate the relationship between the input parameters and output characteristics and reduce the repetitive bottom-up approach taken by the first principle models. Machine Learning (ML) and curve-fitting-based techniques are some of the approaches in this category of modeling used to predict the performance of electric machines.</p>
+<p><strong>Advantages</strong>:</p>
+<ul class="simple">
+<li><p>Provide a fast prediction of global performance parameters such as average and ripple torque</p></li>
+<li><p>Include experimental or Finite Element (FE) model data to develop the model</p></li>
+</ul>
+<p><strong>Limitations</strong>:</p>
+<ul class="simple">
+<li><p>Based on current literature, these models are not capable of producing information on local effects within the device such as fields, losses, and stresses</p></li>
+<li><p>Knowledge of the flux distribution inside the motor for different operating conditions is essential at the design stage to predict the performance</p></li>
+</ul>
+</section>
+</section>
+<section id="comparison-between-mec-and-fea">
+<h2>Comparison Between MEC and FEA<a class="headerlink" href="#comparison-between-mec-and-fea" title="Link to this heading">#</a></h2>
+<section id="mec-advantages">
+<h3>MEC Advantages<a class="headerlink" href="#mec-advantages" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Reduced Model Complexity</strong>: Compared to FE</p></li>
+<li><p><strong>Ease of Parameterization</strong>: Simple to adjust parameters</p></li>
+<li><p><strong>Fast Computational Time</strong>: Quick analysis</p></li>
+<li><p><strong>3D Extension</strong>: Extension to 3-D does not expand numerical complexity as quickly as FEA</p></li>
+<li><p><strong>Initial Sizing</strong>: Useful for performance analysis and initial device sizing</p></li>
+</ul>
+</section>
+<section id="fea-advantages">
+<h3>FEA Advantages<a class="headerlink" href="#fea-advantages" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Fine Resolution</strong>: Offers finer modeling and simulation resolution</p></li>
+<li><p><strong>Complex Analysis</strong>: Enables study of complex issues such as internal faults or localized magnetic saturation</p></li>
+<li><p><strong>Flexible Design</strong>: More flexible tool to study designs incorporating new shapes</p></li>
+<li><p><strong>Accurate</strong>: Generally more accurate than MEC analysis</p></li>
+<li><p><strong>Deployment Time</strong>: Generally requires less deployment time for simulation</p></li>
+</ul>
+</section>
+<section id="performance-comparison">
+<h3>Performance Comparison<a class="headerlink" href="#performance-comparison" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Reference</p></th>
+<th class="head"><p>Method</p></th>
+<th class="head"><p>Force/Torque Comparison</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Liu et al. (2006)</p></td>
+<td><p>FEA-MEC</p></td>
+<td><p>6% on force between MEC and test, 10% on force between FEA and test</p></td>
+</tr>
+<tr class="row-odd"><td><p>Hur et al. (1997)</p></td>
+<td><p>FEA-MEC</p></td>
+<td><p>8.6% on force between 2D MEC and test, 9% on force between 2D FEA and test, 1% on force between 3D MEC and test</p></td>
+</tr>
+<tr class="row-even"><td><p>Leplat et al. (1996)</p></td>
+<td><p>FEA-MEC</p></td>
+<td><p>16.9% on torque between MEC and test, 11.1% on torque between FEA and test</p></td>
+</tr>
+<tr class="row-odd"><td><p>Kim et al. (2004)</p></td>
+<td><p>FEA-MEC</p></td>
+<td><p>3-5% on force between FEA and test, 5-35% on force between MEC and test</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="need-for-improved-surrogate-models">
+<h2>Need for Improved Surrogate Models<a class="headerlink" href="#need-for-improved-surrogate-models" title="Link to this heading">#</a></h2>
+<p>Having discussed the advantages and limitations of the popular numerical methods associated with the analysis of electric machines, it is clear that a computationally cheap and accurate field solution is necessary for the analysis of electromagnetic devices such as actuators, transformers, and electrical machines.</p>
+<p><strong>Current Challenges</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Optimization Overhead</strong>: Usually, for generating an optimal design, we need to perform a few thousand analyses as part of optimization</p></li>
+<li><p><strong>Computational Expense</strong>: Using FEA methods for modeling and simulation purposes remains a computationally expensive process</p></li>
+<li><p><strong>Search Space Limitation</strong>: Using FEA directly for design steps dramatically reduces the size of search space and is computationally very expensive</p></li>
+</ol>
+<p><strong>Deep Learning Opportunity</strong>:
+Recent rapid developments in the field of machine learning and big data have opened new venues for pattern recognition and curve fitting in complex problems such as computer vision, dense regression, text analysis, and forecasting. The possibility of applying deep networks to magnetic field estimation could accelerate the solution of such problems.</p>
+<p>This chapter will explore the field of Deep Learning (a sub-field of ML) to predict the field distribution for different electromagnetic problems using a bitmap approach.</p>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="00_intro.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Chapter 2: Deep Learning for Magnetic Field Prediction</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="02_ml_basics.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Machine Learning Fundamentals</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-nature-of-models">The Nature of Models</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#desirable-model-features">Desirable Model Features</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#electromagnetic-modeling-challenges">Electromagnetic Modeling Challenges</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#first-principle-models">First Principle Models</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#electromagnetic-modeling-approaches">Electromagnetic Modeling Approaches</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analytical-methods">1. Analytical Methods</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#physics-based-models">2. Physics-based Models</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#magnetic-equivalent-circuits-mec">Magnetic Equivalent Circuits (MEC)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#finite-element-analysis-fea">Finite Element Analysis (FEA)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogate-data-driven-models">3. Surrogate/Data-driven Models</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-between-mec-and-fea">Comparison Between MEC and FEA</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mec-advantages">MEC Advantages</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fea-advantages">FEA Advantages</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-comparison">Performance Comparison</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#need-for-improved-surrogate-models">Need for Improved Surrogate Models</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
