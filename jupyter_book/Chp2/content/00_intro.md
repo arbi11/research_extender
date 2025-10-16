@@ -1,71 +1,79 @@
 # Chapter 2: Deep Learning for Magnetic Field Prediction
 
-Welcome to this interactive exploration of Chapter 2 of the thesis, where we dive deep into the application of Deep Learning for magnetic field prediction in electromagnetic devices.
+## Introduction
 
-## 🎯 Chapter Overview
+Data-driven methodologies are currently revolutionizing how we model, predict, and control complex systems across diverse domains including climate science, finance, traffic management, and robotics. The most pressing scientific and engineering tasks of the present era increasingly rely on data-driven approaches for characterizing and modeling complex systems with goals of sensing, prediction, estimation, and control. With modern mathematical methods, enabled by unprecedented availability of data and computational resources, we are now able to tackle previously unattainable challenges.
 
-This chapter presents a comprehensive study on using Convolutional Neural Networks (CNNs) as surrogate models for predicting magnetic field distributions in electromagnetic devices. We explore both traditional deep learning approaches and physics-informed neural networks to create computationally efficient alternatives to traditional Finite Element Analysis (FEA).
+One such challenge is analyzing the performance of electric machines in a relatively short period of time. An electromagnetic model is needed to perform the design and analysis of an electric machine, which will be used to evaluate relevant electromagnetic performance characteristics such as electromagnetic force, torque, fields, and losses distribution maps. A model capable of providing accurate and fast performance evaluation forms the backbone of optimization tasks for achieving objectives such as minimizing torque ripple, increasing average torque and efficiency, and plays a central role in designing motor drive systems.
 
-## 📚 What You'll Learn
+### The Philosophy of Modeling
 
-1. **Fundamentals of Electromagnetic Modeling**: Understanding the challenges in traditional approaches
-2. **Deep Learning Foundations**: From basic neural networks to advanced CNN architectures
-3. **Data Pipeline Development**: How to generate and process training data from FEA simulations
-4. **Model Implementation**: Complete CNN architecture for magnetic field prediction
-5. **Uncertainty Quantification**: Bayesian approaches using Monte Carlo Dropout
-6. **Physics-Informed Methods**: Extended PINN (XPINN) for incorporating physical laws
+The very word "model" implies simplification and idealization. A model is an approximation of reality and hence will not reflect all of reality. In 1976, renowned British statistician George Box wrote the famous line:
 
-## 🚀 Interactive Features
+> "All models are wrong, some are useful"
 
-This Jupyter Book includes:
+The intuition behind this statement is that every model is wrong because it is a simplification of reality. However, simplifications of reality can be quite useful in helping us explain, predict, and understand natural phenomena. The practical question becomes: how wrong do models have to be in order to not be useful?
 
-- **Executable Code Cells**: Run actual implementations of CNN models and training procedures
-- **Interactive Visualizations**: Explore model architectures and results
-- **Mathematical Derivations**: Step-by-step explanations of key concepts
-- **Real-time Demonstrations**: See models in action with sample data
+The desirable features of a model can be summarized as follows:
 
-## 📖 Chapter Structure
+1. **Consistency**: A model should be consistent in its ability to explain past observations and predict future observations
+2. **Computational Efficiency**: A model should be computationally cheaper than traditional methods available for analysis
+3. **Accuracy Trade-off**: A model that gives highly accurate results but requires excessive computational time may not be useful, whereas a model that is less accurate but produces estimates quickly can be beneficial
 
-The chapter is organized into the following sections:
+### Electromagnetic Modeling Challenges
 
-1. **Modeling Fundamentals**: Introduction to electromagnetic modeling challenges
-2. **Machine Learning Basics**: Foundation concepts and terminology
-3. **Data Pipeline**: Data collection and preprocessing techniques
-4. **Neural Networks**: Basic ANN concepts and architectures
-5. **CNN Architecture**: Detailed model design and implementation
-6. **Training Workflow**: Training procedures and optimization
-7. **Results Analysis**: Performance evaluation and comparison
-8. **Uncertainty Analysis**: Bayesian methods and confidence quantification
-9. **PINN Approach**: Physics-informed neural network implementation
-10. **Conclusion**: Summary and future directions
+Maxwell's equations form the foundation of classical electromagnetism, classical optics, and electric circuits. Models built on solving physics equations (such as Maxwell's equations) can be considered First Principle models. Modeling is the mathematical representation of physical phenomena, and simulation is the numerical representation of such models on computing machines.
 
-## 🎯 Learning Objectives
+Accurate modeling and analysis of electromagnetic problems presents several significant challenges:
 
-After completing this chapter, you will be able to:
+1. **Nonlinear Systems**: The system of differential equations for electromagnetic analysis of electric devices is nonlinear due to saturation properties in magnetic materials
 
-- Understand the limitations of traditional electromagnetic modeling approaches
-- Design and implement CNN architectures for field prediction problems
-- Develop data pipelines from FEA simulations to deep learning models
-- Apply uncertainty quantification techniques to neural network predictions
-- Implement physics-informed neural networks for solving PDEs
-- Evaluate and compare different modeling approaches
+2. **Complex Geometry**: The non-linear dependence of inductances on rotor-to-stator angles is reflected in the non-linear relationship between current and fluxes
 
-## 🔧 Technical Prerequisites
+3. **Analytical Intractability**: Since induced voltage and electromagnetic torque are proportional to state variables (flux, current, and speed), finding an analytic solution to the machine system of differential equations is impossible
 
-This chapter assumes familiarity with:
+If we neglect the effects of saturation and non-linear magnetic materials, a model will be suitable for only a fraction of a device's operating capacity. Finding field solutions on complex geometries such as electric machines adds further complexity to the task.
 
-- Basic electromagnetics and Maxwell's equations
-- Python programming and machine learning concepts
-- Neural network fundamentals
-- Finite Element Analysis basics
+## Chapter Scope and Organization
 
-## 💻 Getting Started
+This chapter explores the application of Deep Learning to predict field distributions for electromagnetic problems. Three modeling approaches are examined:
 
-Click on any section in the table of contents to begin your journey. Each section contains:
+1. **Analytical Methods**: Fast but limited in handling complex geometries and saturation effects
+2. **Physics-Based Numerical Methods**: Including Finite Element Analysis (FEA) and Magnetic Equivalent Circuits (MEC)
+3. **Data-Driven Surrogate Models**: Machine learning approaches for rapid field prediction
 
-- Theoretical background from the original thesis
-- Interactive code demonstrations
-- Visual explanations and diagrams
-- Practical implementation details
+```{figure} ../_static/figures/EM_model_techniques.png
+---
+name: fig-modeling-techniques-intro
+width: 70%
+---
+Different electromagnetic modeling techniques categorized by computational cost and accuracy trade-offs.
+```
 
-Let's dive into the fascinating world of deep learning applied to electromagnetic field prediction!
+Since machine learning models require labeled data for training, identifying a reliable source for generating training data is essential. Analytical models are not capable of capturing sufficient information for electric machine analysis; therefore, this discussion focuses on FEA and MEC as data generation sources.
+
+### Research Contribution
+
+This work investigates the possibility of applying deep convolutional neural networks to magnetic field estimation for low-frequency electromagnetic devices using a bitmap approach. The key contributions include:
+
+- Development of CNN architectures for field distribution prediction in electromagnetic devices (coil, transformer, IPM motor)
+- Integration with finite element analysis for training data generation
+- Uncertainty quantification using Monte Carlo dropout for prediction confidence assessment
+- Demonstration of computational speedup while maintaining acceptable accuracy
+
+The following sections detail the complete pipeline: physics-based modeling fundamentals, machine learning foundations, data collection methodology, CNN architecture design, training procedures, results analysis, and uncertainty quantification.
+
+## Chapter Organization
+
+The content is structured as follows:
+
+1. **Modeling Fundamentals**: Overview of electromagnetic modeling challenges and approaches
+2. **Machine Learning Foundations**: Historical context and deep learning fundamentals
+3. **Data Pipeline**: Training data generation using Latin Hypercube sampling and FEA
+4. **Neural Network Architectures**: From basic feedforward networks to advanced CNNs
+5. **CNN Design and Training**: Detailed architecture, dilated convolutions, and optimization
+6. **Results and Performance**: Quantitative evaluation on three electromagnetic problems
+7. **Uncertainty Quantification**: Bayesian approaches using Monte Carlo dropout
+8. **Conclusion**: Summary of contributions and future research directions
+
+This investigation demonstrates that deep learning can serve as a computationally efficient surrogate for traditional electromagnetic field solvers, with the added benefit of GPU parallelization and uncertainty-aware predictions.
