@@ -1,0 +1,868 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>1. Introduction to Deep Reinforcement Learning &#8212; Chapter 5: Deep Reinforcement Learning for Topology Optimization</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/01_introduction';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Literature Survey: Machine Learning in Topology Optimization" href="02_literature_survey.html" />
+    <link rel="prev" title="Chapter 5: Deep Reinforcement Learning for Topology Optimization" href="00_preface.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="00_preface.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 5: Deep Reinforcement Learning for Topology Optimization</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_literature_survey.html">2. Literature Survey</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_function_approximators.html">3. Function Approximators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_deep_q_learning.html">4. Deep Q-Learning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_policy_gradient.html">5. Policy Gradient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_enhanced_mdp.html">6. Enhanced MDP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_a2c_implementation.html">7. A2C Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_experiment_setup.html">8. Experiment Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_results_analysis.html">9. Results Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_conclusions.html">10. Conclusions</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/01_introduction.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>1. Introduction to Deep Reinforcement Learning</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-quest-for-intelligent-machines">1.1 The Quest for Intelligent Machines</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#reinforcement-learning-learning-from-experience">1.2 Reinforcement Learning: Learning from Experience</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#psychological-foundations">1.2.1 Psychological Foundations</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#drl-breakthrough-applications">1.3 DRL Breakthrough Applications</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#atari-games">1.3.1 Atari Games</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alphago-and-alphago-zero">1.3.2 AlphaGo and AlphaGo Zero</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#robotics-and-control">1.3.3 Robotics and Control</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#drug-discovery">1.3.4 Drug Discovery</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#drl-for-topology-optimization">1.4 DRL for Topology Optimization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-topology-optimization-challenge">1.4.1 The Topology Optimization Challenge</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-drl-for-topology-optimization">1.4.2 Why DRL for Topology Optimization?</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#drl-advantages">1.4.3 DRL Advantages</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#chapter-overview">1.5 Chapter Overview</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#chapter-structure">1.5.1 Chapter Structure</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-contributions">1.5.2 Key Contributions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">1.5.3 Prerequisites</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-objectives">1.6 Learning Objectives</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mathematical-prerequisites">1.6.1 Mathematical Prerequisites</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#programming-prerequisites">1.6.2 Programming Prerequisites</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="introduction-to-deep-reinforcement-learning">
+<h1>1. Introduction to Deep Reinforcement Learning<a class="headerlink" href="#introduction-to-deep-reinforcement-learning" title="Link to this heading">#</a></h1>
+<section id="the-quest-for-intelligent-machines">
+<h2>1.1 The Quest for Intelligent Machines<a class="headerlink" href="#the-quest-for-intelligent-machines" title="Link to this heading">#</a></h2>
+<p>Inventors have always dreamed of machines that can think. When programmable computers were first conceived, people wondered whether machines might become intelligent, a hundred years before one was even built. Building intelligent machines involves the capability to learn from examples, experiences, or even from other machines <a class="reference internal" href="#references"><span class="xref myst">[Turing 1950]</span></a>.</p>
+<p>The true challenge for Artificial Intelligence (AI) is solving tasks that provide no supervision and involve its evolution of knowledge from experience. This is significantly different from the supervised learning algorithms discussed in earlier chapters, where the task was well defined in terms of the labeled data, and the feedback provided to the learning algorithm was in the form of a correct response (ground truth/labeled data).</p>
+</section>
+<section id="reinforcement-learning-learning-from-experience">
+<h2>1.2 Reinforcement Learning: Learning from Experience<a class="headerlink" href="#reinforcement-learning-learning-from-experience" title="Link to this heading">#</a></h2>
+<p>In contrast to supervised learning, a far more complicated task is to enable a learning technique to improve over time in an interactive environment through trial and error and using feedback from its actions and experiences. This type of learning, when coupled with neural networks, is the basis of <strong>Deep Reinforcement Learning (DRL)</strong>.</p>
+<section id="psychological-foundations">
+<h3>1.2.1 Psychological Foundations<a class="headerlink" href="#psychological-foundations" title="Link to this heading">#</a></h3>
+<p>To some extent, the psychology principle - ‘Law of Effects’ <a class="reference internal" href="#references"><span class="xref myst">[Thorndike 1913]</span></a>, associated with the behaviour of animals, can be related to the foundation of Reinforcement Learning. The notion states that:</p>
+<blockquote>
+<div><p>“responses to experiences that produce a satisfying situation become more likely to occur again in that situation, and responses that produce a discomforting effect become less likely” <a class="reference internal" href="#references"><span class="xref myst">[Gray 2011]</span></a></p>
+</div></blockquote>
+<p>This principle was advanced by Edward Thorndike, who was the first to introduce the concept of ‘reinforcement’ in the area of the psychological principle of learning <a class="reference internal" href="#references"><span class="xref myst">[Thorndike 1898]</span></a>. The terms ‘satisfying’ and ‘dissatisfying’ were later replaced with the words ‘reinforcing’ and ‘punishing’ respectively <a class="reference internal" href="#references"><span class="xref myst">[Mazur 2015]</span></a>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SimpleGridWorld</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simple grid world for demonstrating RL concepts&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">goal</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obstacles</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)]</span>
+        
+        <span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">obstacles</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="n">obs</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">goal</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset environment and return initial state&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_pos</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_pos</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_pos</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Take action and return (next_state, reward, done, info)&quot;&quot;&quot;</span>
+        <span class="c1"># Actions: 0=up, 1=right, 2=down, 3=left</span>
+        <span class="n">moves</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+        
+        <span class="c1"># Calculate new position</span>
+        <span class="n">new_pos</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">moves</span><span class="p">[</span><span class="n">action</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_pos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">moves</span><span class="p">[</span><span class="n">action</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Check boundaries</span>
+        <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">new_pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="ow">and</span> 
+            <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">new_pos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+            
+            <span class="c1"># Check for obstacles</span>
+            <span class="k">if</span> <span class="n">new_pos</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">obstacles</span><span class="p">:</span>
+                <span class="n">reward</span> <span class="o">=</span> <span class="o">-</span><span class="mf">5.0</span>
+                <span class="n">done</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">elif</span> <span class="n">new_pos</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">goal</span><span class="p">:</span>
+                <span class="n">reward</span> <span class="o">=</span> <span class="mf">10.0</span>
+                <span class="n">done</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">reward</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.1</span>  <span class="c1"># Small negative reward for each step</span>
+                <span class="n">done</span> <span class="o">=</span> <span class="kc">False</span>
+            
+            <span class="c1"># Update position</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_pos</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_pos</span> <span class="o">=</span> <span class="n">new_pos</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_pos</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reward</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>  <span class="c1"># Penalty for hitting boundary</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="kc">False</span>
+        
+        <span class="k">return</span> <span class="n">new_pos</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;grid&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">copy</span><span class="p">()}</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Visualize the grid world&quot;&quot;&quot;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdYlGn&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;Reward&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Simple Grid World (Current: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">current_pos</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Demonstrate the simple RL environment</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">SimpleGridWorld</span><span class="p">()</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initial state: </span><span class="si">{</span><span class="n">state</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Take a few random actions</span>
+<span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>  <span class="c1"># Random action</span>
+    <span class="n">next_state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Step </span><span class="si">{</span><span class="n">step</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: Action=</span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2">, State=</span><span class="si">{</span><span class="n">next_state</span><span class="si">}</span><span class="s2">, Reward=</span><span class="si">{</span><span class="n">reward</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, Done=</span><span class="si">{</span><span class="n">done</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+        <span class="k">break</span>
+
+<span class="n">env</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="drl-breakthrough-applications">
+<h2>1.3 DRL Breakthrough Applications<a class="headerlink" href="#drl-breakthrough-applications" title="Link to this heading">#</a></h2>
+<p>Deep Reinforcement Learning is expected to revolutionize the field of AI and represents a step towards building autonomous systems with a higher-level understanding of the physical world. The field received a lot of attention for several breakthrough developments:</p>
+<section id="atari-games">
+<h3>1.3.1 Atari Games<a class="headerlink" href="#atari-games" title="Link to this heading">#</a></h3>
+<p>The development of an algorithm that can play a range of Atari games was a breakthrough in artificial intelligence <a class="reference internal" href="#references"><span class="xref myst">[Silver et al. 2013]</span></a>. Scientists thought that it would take many more years to make machines win such complex games.</p>
+</section>
+<section id="alphago-and-alphago-zero">
+<h3>1.3.2 AlphaGo and AlphaGo Zero<a class="headerlink" href="#alphago-and-alphago-zero" title="Link to this heading">#</a></h3>
+<p>Deep neural networks are enabling reinforcement learning to scale to previously intractable problems, such as creating a single system that can play multiple video games directly from pixels, named AlphaGo <a class="reference internal" href="#references"><span class="xref myst">[Silver et al. 2016]</span></a> and AlphaGo Zero <a class="reference internal" href="#references"><span class="xref myst">[Silver et al. 2017]</span></a>.</p>
+</section>
+<section id="robotics-and-control">
+<h3>1.3.3 Robotics and Control<a class="headerlink" href="#robotics-and-control" title="Link to this heading">#</a></h3>
+<p>DRL algorithms are also applied to robotics, allowing control policies for robots to be learned directly from sensory inputs in the real world <a class="reference internal" href="#references"><span class="xref myst">[Kober et al. 2013]</span></a>, designing algorithms to automatically learn to allocate and schedule computer resources <a class="reference internal" href="#references"><span class="xref myst">[Mao et al. 2016]</span></a>, and designing traffic light controllers <a class="reference internal" href="#references"><span class="xref myst">[Arel et al. 2010]</span></a>.</p>
+</section>
+<section id="drug-discovery">
+<h3>1.3.4 Drug Discovery<a class="headerlink" href="#drug-discovery" title="Link to this heading">#</a></h3>
+<p>Recently, DRL was tested on predicting the 3D shape that a protein will fold into. The results of the biennial protein-structure prediction challenge called CASP (Critical Assessment of Structure Prediction) is seen as a breakthrough in the application of DRL in the field of drug discovery <a class="reference internal" href="#references"><span class="xref myst">[Senior et al. 2020]</span></a>, which is seen as a field that is not part of the conventional RL domains.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># DRL application timeline</span>
+<span class="n">applications</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="mi">2013</span><span class="p">,</span> <span class="s2">&quot;Atari DQN&quot;</span><span class="p">,</span> <span class="s2">&quot;DeepMind&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">2016</span><span class="p">,</span> <span class="s2">&quot;AlphaGo&quot;</span><span class="p">,</span> <span class="s2">&quot;DeepMind&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">2017</span><span class="p">,</span> <span class="s2">&quot;AlphaGo Zero&quot;</span><span class="p">,</span> <span class="s2">&quot;DeepMind&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">2020</span><span class="p">,</span> <span class="s2">&quot;Protein Folding&quot;</span><span class="p">,</span> <span class="s2">&quot;DeepMind&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">2022</span><span class="p">,</span> <span class="s2">&quot;ChatGPT&quot;</span><span class="p">,</span> <span class="s2">&quot;OpenAI&quot;</span><span class="p">)</span>
+<span class="p">]</span>
+
+<span class="n">years</span> <span class="o">=</span> <span class="p">[</span><span class="n">app</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">applications</span><span class="p">]</span>
+<span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">app</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">applications</span><span class="p">]</span>
+<span class="n">organizations</span> <span class="o">=</span> <span class="p">[</span><span class="n">app</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">applications</span><span class="p">]</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">years</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">years</span><span class="p">)),</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">org</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">applications</span><span class="p">):</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">org</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">,</span> 
+                 <span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> 
+                 <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> 
+                 <span class="n">textcoords</span><span class="o">=</span><span class="s1">&#39;offset points&#39;</span><span class="p">,</span>
+                 <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+                 <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s1">&#39;round,pad=0.5,fc=&#39;</span><span class="n">yellow</span><span class="s1">&#39;,alpha=0.7))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Major DRL Breakthrough Applications&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Year&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Application Index&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="drl-for-topology-optimization">
+<h2>1.4 DRL for Topology Optimization<a class="headerlink" href="#drl-for-topology-optimization" title="Link to this heading">#</a></h2>
+<p>While the present achievements of DRL in the field of robotics and computer games are impressive and required a massive amount of resources to discover, <strong>this chapter extends the work in the field of DRL to Topology Optimization</strong>.</p>
+<section id="the-topology-optimization-challenge">
+<h3>1.4.1 The Topology Optimization Challenge<a class="headerlink" href="#the-topology-optimization-challenge" title="Link to this heading">#</a></h3>
+<p>Topology optimization is the process of finding the optimal distribution of material within a design domain to achieve specific performance criteria. In electrical machine design, this involves:</p>
+<ul class="simple">
+<li><p>Maximizing performance metrics (torque, force, efficiency)</p></li>
+<li><p>Satisfying constraints (volume, manufacturability)</p></li>
+<li><p>Navigating complex design spaces</p></li>
+<li><p>Dealing with multi-objective trade-offs</p></li>
+</ul>
+</section>
+<section id="why-drl-for-topology-optimization">
+<h3>1.4.2 Why DRL for Topology Optimization?<a class="headerlink" href="#why-drl-for-topology-optimization" title="Link to this heading">#</a></h3>
+<p>Traditional approaches to topology optimization have several limitations:</p>
+<ol class="arabic simple">
+<li><p><strong>Supervised Learning Limitations</strong>:</p>
+<ul class="simple">
+<li><p>Require labeled optimal designs as training data</p></li>
+<li><p>Limited generalization to unseen geometries</p></li>
+<li><p>Collection bias in training datasets</p></li>
+<li><p>Poor performance on novel design spaces</p></li>
+</ul>
+</li>
+<li><p><strong>Optimization Algorithm Limitations</strong>:</p>
+<ul class="simple">
+<li><p>Genetic algorithms require many function evaluations</p></li>
+<li><p>Gradient-based methods struggle with discrete design variables</p></li>
+<li><p>Limited adaptability to changing constraints</p></li>
+</ul>
+</li>
+<li><p><strong>Computational Cost</strong>:</p>
+<ul class="simple">
+<li><p>High-fidelity simulations are expensive</p></li>
+<li><p>Optimization requires many iterations</p></li>
+<li><p>Limited exploration of design space</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="drl-advantages">
+<h3>1.4.3 DRL Advantages<a class="headerlink" href="#drl-advantages" title="Link to this heading">#</a></h3>
+<p>Deep Reinforcement Learning addresses these limitations by:</p>
+<ul class="simple">
+<li><p><strong>Sequential Decision Making</strong>: Learns through interaction with the environment</p></li>
+<li><p><strong>Adaptive Learning</strong>: Can adapt to new geometries and constraints</p></li>
+<li><p><strong>Generalization</strong>: Can transfer learning to similar optimization problems</p></li>
+<li><p><strong>Exploration-Exploitation Balance</strong>: Systematically explores design space while exploiting promising regions</p></li>
+<li><p><strong>Online Learning</strong>: Continuously improves with experience</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="c1"># Comparison of optimization approaches for topology optimization</span>
+<span class="n">methods</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;Supervised Learning&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;Data Requirement&#39;</span><span class="p">:</span> <span class="s1">&#39;Large labeled dataset&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Generalization&#39;</span><span class="p">:</span> <span class="s1">&#39;Poor to unseen designs&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Adaptability&#39;</span><span class="p">:</span> <span class="s1">&#39;Requires retraining&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Exploration&#39;</span><span class="p">:</span> <span class="s1">&#39;Limited&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Computational Cost&#39;</span><span class="p">:</span> <span class="s1">&#39;Low (after training)&#39;</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;Genetic Algorithms&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;Data Requirement&#39;</span><span class="p">:</span> <span class="s1">&#39;No training data&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Generalization&#39;</span><span class="p">:</span> <span class="s1">&#39;Problem-specific&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Adaptability&#39;</span><span class="p">:</span> <span class="s1">&#39;Requires re-optimization&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Exploration&#39;</span><span class="p">:</span> <span class="s1">&#39;Built-in through population&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Computational Cost&#39;</span><span class="p">:</span> <span class="s1">&#39;Very high&#39;</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;Deep RL&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;Data Requirement&#39;</span><span class="p">:</span> <span class="s1">&#39;Generated through interaction&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Generalization&#39;</span><span class="p">:</span> <span class="s1">&#39;Good to similar problems&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Adaptability&#39;</span><span class="p">:</span> <span class="s1">&#39;Online learning capability&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Exploration&#39;</span><span class="p">:</span> <span class="s1">&#39;Intrinsic to learning process&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Computational Cost&#39;</span><span class="p">:</span> <span class="s1">&#39;High but improves over time&#39;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1"># Create comparison radar chart</span>
+<span class="n">categories</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">methods</span><span class="p">[</span><span class="s1">&#39;Supervised Learning&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="n">angles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">),</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">angles_closed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">angles</span><span class="p">,</span> <span class="p">[</span><span class="n">angles</span><span class="p">[</span><span class="mi">0</span><span class="p">]]))</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">subplot_kw</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="s1">&#39;polar&#39;</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">method</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">methods</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span><span class="s2">&quot;): </span>
+    <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">methods</span><span class="p">[</span><span class="n">method</span><span class="p">][</span><span class="n">cat</span><span class="p">]</span> <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">]</span>
+    <span class="n">values_closed</span> <span class="o">=</span> <span class="n">values</span> <span class="o">+</span> <span class="p">[</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">angles_closed</span><span class="p">,</span> <span class="n">values_closed</span><span class="p">,</span> <span class="s1">&#39;o-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">angles_closed</span><span class="p">,</span> <span class="n">values_closed</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">angles</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Comparison of Optimization Approaches for Topology Optimization&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper right&#39;</span><span class="p">,</span> <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="chapter-overview">
+<h2>1.5 Chapter Overview<a class="headerlink" href="#chapter-overview" title="Link to this heading">#</a></h2>
+<p>This chapter explores the application of Deep Reinforcement Learning to topology optimization of electrical machines, building upon the MDP framework established in Chapter 4.</p>
+<section id="chapter-structure">
+<h3>1.5.1 Chapter Structure<a class="headerlink" href="#chapter-structure" title="Link to this heading">#</a></h3>
+<p>The chapter is organized as follows:</p>
+<ul class="simple">
+<li><p><strong>Section 1</strong>: Introduction to DRL and motivation for topology optimization</p></li>
+<li><p><strong>Section 2</strong>: Literature survey of ML applications in topology optimization</p></li>
+<li><p><strong>Section 3</strong>: Advanced function approximators for high-dimensional state spaces</p></li>
+<li><p><strong>Section 4</strong>: Deep Q-Learning algorithms and implementation</p></li>
+<li><p><strong>Section 5</strong>: Policy Gradient methods and Actor-Critic algorithms</p></li>
+<li><p><strong>Section 6</strong>: Enhanced MDP environment (SeqTO-v2) with advanced state representations</p></li>
+<li><p><strong>Section 7</strong>: A2C implementation details and training methodology</p></li>
+<li><p><strong>Section 8</strong>: Experimental setup and configuration</p></li>
+<li><p><strong>Section 9</strong>: Results analysis and performance comparison</p></li>
+<li><p><strong>Section 10</strong>: Conclusions and future research directions</p></li>
+</ul>
+</section>
+<section id="key-contributions">
+<h3>1.5.2 Key Contributions<a class="headerlink" href="#key-contributions" title="Link to this heading">#</a></h3>
+<p>This chapter makes the following contributions:</p>
+<ol class="arabic simple">
+<li><p><strong>Theoretical Framework</strong>: Extension of MDP topology optimization to include deep neural networks</p></li>
+<li><p><strong>Algorithm Implementation</strong>: Complete A2C implementation with CNN-based state processing</p></li>
+<li><p><strong>Environment Enhancement</strong>: SeqTO-v2 environment with multi-channel state representations</p></li>
+<li><p><strong>Empirical Validation</strong>: Comprehensive experiments on C-core electromagnetic actuator optimization</p></li>
+<li><p><strong>Comparative Analysis</strong>: Systematic comparison with traditional optimization approaches</p></li>
+</ol>
+</section>
+<section id="prerequisites">
+<h3>1.5.3 Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
+<p>This chapter assumes familiarity with:</p>
+<ul class="simple">
+<li><p>Chapter 4: Markov Decision Processes for topology optimization</p></li>
+<li><p>Basic understanding of neural networks and deep learning</p></li>
+<li><p>Reinforcement learning fundamentals</p></li>
+<li><p>Electromagnetic simulation and FEMM integration</p></li>
+</ul>
+<p>Readers should have completed the exercises and examples from Chapter 4 to fully appreciate the enhancements presented in this chapter.</p>
+</section>
+</section>
+<section id="learning-objectives">
+<h2>1.6 Learning Objectives<a class="headerlink" href="#learning-objectives" title="Link to this heading">#</a></h2>
+<p>After completing this chapter, readers should be able to:</p>
+<ol class="arabic simple">
+<li><p><strong>Understand</strong> the fundamental differences between supervised learning and reinforcement learning</p></li>
+<li><p><strong>Explain</strong> the role of function approximation in scaling RL algorithms to complex problems</p></li>
+<li><p><strong>Implement</strong> Deep Q-Learning with experience replay and target networks</p></li>
+<li><p><strong>Develop</strong> Actor-Critic algorithms with advantage estimation</p></li>
+<li><p><strong>Design</strong> enhanced state representations for topology optimization problems</p></li>
+<li><p><strong>Apply</strong> DRL algorithms to real-world electromagnetic design optimization</p></li>
+<li><p><strong>Analyze</strong> computational efficiency and generalization capabilities</p></li>
+<li><p><strong>Compare</strong> different optimization approaches objectively</p></li>
+</ol>
+<section id="mathematical-prerequisites">
+<h3>1.6.1 Mathematical Prerequisites<a class="headerlink" href="#mathematical-prerequisites" title="Link to this heading">#</a></h3>
+<p>Key mathematical concepts covered:</p>
+<ul class="simple">
+<li><p>Bellman equations and dynamic programming</p></li>
+<li><p>Neural network architectures and training</p></li>
+<li><p>Gradient-based optimization</p></li>
+<li><p>Statistical learning theory</p></li>
+<li><p>Markov decision processes</p></li>
+</ul>
+</section>
+<section id="programming-prerequisites">
+<h3>1.6.2 Programming Prerequisites<a class="headerlink" href="#programming-prerequisites" title="Link to this heading">#</a></h3>
+<p>Key programming skills developed:</p>
+<ul class="simple">
+<li><p>PyTorch/TensorFlow for deep learning</p></li>
+<li><p>FEMM integration for electromagnetic simulation</p></li>
+<li><p>Reinforcement learning environment implementation</p></li>
+<li><p>Performance evaluation and visualization</p></li>
+<li><p>Hyperparameter tuning and experimentation</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="00_preface.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Chapter 5: Deep Reinforcement Learning for Topology Optimization</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="02_literature_survey.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Literature Survey: Machine Learning in Topology Optimization</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-quest-for-intelligent-machines">1.1 The Quest for Intelligent Machines</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#reinforcement-learning-learning-from-experience">1.2 Reinforcement Learning: Learning from Experience</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#psychological-foundations">1.2.1 Psychological Foundations</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#drl-breakthrough-applications">1.3 DRL Breakthrough Applications</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#atari-games">1.3.1 Atari Games</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alphago-and-alphago-zero">1.3.2 AlphaGo and AlphaGo Zero</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#robotics-and-control">1.3.3 Robotics and Control</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#drug-discovery">1.3.4 Drug Discovery</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#drl-for-topology-optimization">1.4 DRL for Topology Optimization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-topology-optimization-challenge">1.4.1 The Topology Optimization Challenge</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-drl-for-topology-optimization">1.4.2 Why DRL for Topology Optimization?</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#drl-advantages">1.4.3 DRL Advantages</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#chapter-overview">1.5 Chapter Overview</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#chapter-structure">1.5.1 Chapter Structure</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-contributions">1.5.2 Key Contributions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">1.5.3 Prerequisites</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-objectives">1.6 Learning Objectives</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mathematical-prerequisites">1.6.1 Mathematical Prerequisites</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#programming-prerequisites">1.6.2 Programming Prerequisites</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

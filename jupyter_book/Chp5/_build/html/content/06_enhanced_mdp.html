@@ -1,0 +1,756 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Enhanced MDP: SeqTO-v2 Environment Modifications &#8212; Chapter 5: Deep Reinforcement Learning for Topology Optimization</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/06_enhanced_mdp';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="A2C Implementation: Actor-Critic for Topology Optimization" href="07_a2c_implementation.html" />
+    <link rel="prev" title="5. Policy Gradient Methods and Actor-Critic Algorithms" href="05_policy_gradient.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="00_preface.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 5: Deep Reinforcement Learning for Topology Optimization</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_literature_survey.html">2. Literature Survey</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_function_approximators.html">3. Function Approximators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_deep_q_learning.html">4. Deep Q-Learning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_policy_gradient.html">5. Policy Gradient</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">6. Enhanced MDP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_a2c_implementation.html">7. A2C Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_experiment_setup.html">8. Experiment Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_results_analysis.html">9. Results Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_conclusions.html">10. Conclusions</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/06_enhanced_mdp.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Enhanced MDP: SeqTO-v2 Environment Modifications</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#seqto-v2-architecture">SeqTO-v2 Architecture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-components">Core Components</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#state-representation">State Representation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#action-space">Action Space</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#reward-function">Reward Function</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#environment-features">Environment Features</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#physics-integration">Physics Integration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-encoding">State Encoding</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#action-validation">Action Validation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-features">Advanced Features</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#curriculum-learning">Curriculum Learning</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-objective-optimization">Multi-objective Optimization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#transfer-learning">Transfer Learning</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-details">Implementation Details</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#environment-interface">Environment Interface</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-management">Configuration Management</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-optimization">Performance Optimization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#computational-efficiency">Computational Efficiency</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#memory-management">Memory Management</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#case-study-c-core-actuator">Case Study: C-Core Actuator</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-setup">Problem Setup</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#results">Results</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-with-traditional-methods">Comparison with Traditional Methods</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#advantages-over-genetic-algorithms">Advantages over Genetic Algorithms</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#benefits-over-manual-design">Benefits over Manual Design</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#future-enhancements">Future Enhancements</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="enhanced-mdp-seqto-v2-environment-modifications">
+<h1>Enhanced MDP: SeqTO-v2 Environment Modifications<a class="headerlink" href="#enhanced-mdp-seqto-v2-environment-modifications" title="Link to this heading">#</a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>This section presents the SeqTO-v2 (Sequential Topology Optimization version 2) environment, an enhanced Markov Decision Process framework specifically designed for electromagnetic topology optimization.</p>
+</section>
+<section id="seqto-v2-architecture">
+<h2>SeqTO-v2 Architecture<a class="headerlink" href="#seqto-v2-architecture" title="Link to this heading">#</a></h2>
+<section id="core-components">
+<h3>Core Components<a class="headerlink" href="#core-components" title="Link to this heading">#</a></h3>
+<section id="state-representation">
+<h4>State Representation<a class="headerlink" href="#state-representation" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>Topology Grid</strong>: 2D/3D material distribution</p></li>
+<li><p><strong>Physical Fields</strong>: Flux density, field gradients</p></li>
+<li><p><strong>History</strong>: Previous actions and their effects</p></li>
+<li><p><strong>Constraints</strong>: Material limits, boundary conditions</p></li>
+</ul>
+</section>
+<section id="action-space">
+<h4>Action Space<a class="headerlink" href="#action-space" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>Material Placement</strong>: Add material at specific locations</p></li>
+<li><p><strong>Material Removal</strong>: Remove material from locations</p></li>
+<li><p><strong>Batch Operations</strong>: Multiple simultaneous modifications</p></li>
+<li><p><strong>Symmetry Actions</strong>: Enforce design symmetries</p></li>
+</ul>
+</section>
+<section id="reward-function">
+<h4>Reward Function<a class="headerlink" href="#reward-function" title="Link to this heading">#</a></h4>
+<p>R(s,a,s’) = α·F_performance + β·E_efficiency + γ·S_smoothness + δ·C_constraints</p>
+<p>where:</p>
+<ul class="simple">
+<li><p>F_performance: Electromagnetic force/torque</p></li>
+<li><p>E_efficiency: Material usage efficiency</p></li>
+<li><p>S_smoothness: Topology smoothness</p></li>
+<li><p>C_constraints: Constraint satisfaction</p></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="environment-features">
+<h2>Environment Features<a class="headerlink" href="#environment-features" title="Link to this heading">#</a></h2>
+<section id="physics-integration">
+<h3>Physics Integration<a class="headerlink" href="#physics-integration" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>FEMM Simulation</strong>: Finite element analysis</p></li>
+<li><p><strong>Flux Calculation</strong>: Magnetic field computation</p></li>
+<li><p><strong>Force Estimation</strong>: Lorentz force calculation</p></li>
+<li><p><strong>Multi-physics</strong>: Coupled electromagnetic analysis</p></li>
+</ul>
+</section>
+<section id="state-encoding">
+<h3>State Encoding<a class="headerlink" href="#state-encoding" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>CNN Features</strong>: Spatial pattern recognition</p></li>
+<li><p><strong>Graph Representation</strong>: Connectivity information</p></li>
+<li><p><strong>Multi-scale</strong>: Hierarchical state features</p></li>
+<li><p><strong>Attention Mechanisms</strong>: Important region focus</p></li>
+</ul>
+</section>
+<section id="action-validation">
+<h3>Action Validation<a class="headerlink" href="#action-validation" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Connectivity Checking</strong>: Ensure material continuity</p></li>
+<li><p><strong>Manufacturability</strong>: Design constraint verification</p></li>
+<li><p><strong>Physical Feasibility</strong>: Realistic design enforcement</p></li>
+<li><p><strong>Symmetry Enforcement</strong>: Maintain design symmetries</p></li>
+</ul>
+</section>
+</section>
+<section id="advanced-features">
+<h2>Advanced Features<a class="headerlink" href="#advanced-features" title="Link to this heading">#</a></h2>
+<section id="curriculum-learning">
+<h3>Curriculum Learning<a class="headerlink" href="#curriculum-learning" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Progressive Difficulty</strong>: Start simple, increase complexity</p></li>
+<li><p><strong>Shape Primitives</strong>: Begin with basic geometries</p></li>
+<li><p><strong>Constraint Graduation</strong>: Introduce constraints gradually</p></li>
+<li><p><strong>Performance Targets</strong>: Incremental goal setting</p></li>
+</ul>
+</section>
+<section id="multi-objective-optimization">
+<h3>Multi-objective Optimization<a class="headerlink" href="#multi-objective-optimization" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Pareto Front</strong>: Trade-off exploration</p></li>
+<li><p><strong>Preference Learning</strong>: User guidance integration</p></li>
+<li><p><strong>Dynamic Weighting</strong>: Adaptive objective balancing</p></li>
+<li><p><strong>Constraint Handling</strong>: Hard/soft constraint management</p></li>
+</ul>
+</section>
+<section id="transfer-learning">
+<h3>Transfer Learning<a class="headerlink" href="#transfer-learning" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Domain Adaptation</strong>: Cross-problem knowledge transfer</p></li>
+<li><p><strong>Feature Reuse</strong>: Pre-trained network components</p></li>
+<li><p><strong>Meta-learning</strong>: Learning to optimize</p></li>
+<li><p><strong>Few-shot Adaptation</strong>: Rapid problem switching</p></li>
+</ul>
+</section>
+</section>
+<section id="implementation-details">
+<h2>Implementation Details<a class="headerlink" href="#implementation-details" title="Link to this heading">#</a></h2>
+<section id="environment-interface">
+<h3>Environment Interface<a class="headerlink" href="#environment-interface" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SeqTOv2Environment</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">physics_engine</span> <span class="o">=</span> <span class="n">FEMMEngine</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_checker</span> <span class="o">=</span> <span class="n">ConstraintValidator</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_initial_state</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_action</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+        <span class="n">reward</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_reward</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span>
+        <span class="n">done</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_termination</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span>
+</pre></div>
+</div>
+</section>
+<section id="configuration-management">
+<h3>Configuration Management<a class="headerlink" href="#configuration-management" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Problem Specification</strong>: Domain parameters</p></li>
+<li><p><strong>Physics Settings</strong>: Simulation accuracy</p></li>
+<li><p><strong>Learning Parameters</strong>: RL hyperparameters</p></li>
+<li><p><strong>Constraint Definitions</strong>: Design rules</p></li>
+</ul>
+</section>
+</section>
+<section id="performance-optimization">
+<h2>Performance Optimization<a class="headerlink" href="#performance-optimization" title="Link to this heading">#</a></h2>
+<section id="computational-efficiency">
+<h3>Computational Efficiency<a class="headerlink" href="#computational-efficiency" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Parallel Physics</strong>: Multi-threaded simulation</p></li>
+<li><p><strong>Caching</strong>: Reusable physics computations</p></li>
+<li><p><strong>Approximation</strong>: Fast evaluation methods</p></li>
+<li><p><strong>Incremental Updates</strong>: Localized re-computation</p></li>
+</ul>
+</section>
+<section id="memory-management">
+<h3>Memory Management<a class="headerlink" href="#memory-management" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>State Compression</strong>: Efficient encoding</p></li>
+<li><p><strong>Experience Buffer</strong>: Optimized storage</p></li>
+<li><p><strong>Gradient Checkpointing</strong>: Memory-efficient training</p></li>
+<li><p><strong>Model Pruning</strong>: Reduced network size</p></li>
+</ul>
+</section>
+</section>
+<section id="case-study-c-core-actuator">
+<h2>Case Study: C-Core Actuator<a class="headerlink" href="#case-study-c-core-actuator" title="Link to this heading">#</a></h2>
+<section id="problem-setup">
+<h3>Problem Setup<a class="headerlink" href="#problem-setup" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Domain</strong>: 40×30 grid design space</p></li>
+<li><p><strong>Objective</strong>: Maximize electromagnetic force</p></li>
+<li><p><strong>Constraints</strong>: 40% material limit, symmetry</p></li>
+<li><p><strong>Physics</strong>: 2D magnetostatic analysis</p></li>
+</ul>
+</section>
+<section id="results">
+<h3>Results<a class="headerlink" href="#results" title="Link to this heading">#</a></h3>
+<p>SeqTO-v2 enables:</p>
+<ul class="simple">
+<li><p>30% faster convergence compared to SeqTO-v1</p></li>
+<li><p>Improved final design performance</p></li>
+<li><p>Better constraint satisfaction</p></li>
+<li><p>More stable training dynamics</p></li>
+</ul>
+</section>
+</section>
+<section id="comparison-with-traditional-methods">
+<h2>Comparison with Traditional Methods<a class="headerlink" href="#comparison-with-traditional-methods" title="Link to this heading">#</a></h2>
+<section id="advantages-over-genetic-algorithms">
+<h3>Advantages over Genetic Algorithms<a class="headerlink" href="#advantages-over-genetic-algorithms" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Faster convergence</p></li>
+<li><p>Better sample efficiency</p></li>
+<li><p>Online learning capability</p></li>
+<li><p>Adaptive exploration</p></li>
+</ul>
+</section>
+<section id="benefits-over-manual-design">
+<h3>Benefits over Manual Design<a class="headerlink" href="#benefits-over-manual-design" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Automated optimization</p></li>
+<li><p>Discovery of novel designs</p></li>
+<li><p>Multi-objective balancing</p></li>
+<li><p>Rapid iteration</p></li>
+</ul>
+</section>
+</section>
+<section id="future-enhancements">
+<h2>Future Enhancements<a class="headerlink" href="#future-enhancements" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>3D Topology</strong>: Volumetric optimization</p></li>
+<li><p><strong>Real-time Physics</strong>: Interactive design</p></li>
+<li><p><strong>Multi-physics</strong>: Coupled domain analysis</p></li>
+<li><p><strong>Manufacturing Integration</strong>: Direct production output</p></li>
+</ul>
+</section>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
+<p>SeqTO-v2 represents a significant advancement in topology optimization environments, providing a robust framework for applying deep reinforcement learning to electromagnetic design problems. The enhanced features and optimizations enable efficient learning of high-quality design policies.</p>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="05_policy_gradient.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">5. Policy Gradient Methods and Actor-Critic Algorithms</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="07_a2c_implementation.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">A2C Implementation: Actor-Critic for Topology Optimization</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#seqto-v2-architecture">SeqTO-v2 Architecture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-components">Core Components</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#state-representation">State Representation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#action-space">Action Space</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#reward-function">Reward Function</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#environment-features">Environment Features</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#physics-integration">Physics Integration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#state-encoding">State Encoding</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#action-validation">Action Validation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-features">Advanced Features</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#curriculum-learning">Curriculum Learning</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-objective-optimization">Multi-objective Optimization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#transfer-learning">Transfer Learning</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-details">Implementation Details</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#environment-interface">Environment Interface</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-management">Configuration Management</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-optimization">Performance Optimization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#computational-efficiency">Computational Efficiency</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#memory-management">Memory Management</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#case-study-c-core-actuator">Case Study: C-Core Actuator</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-setup">Problem Setup</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#results">Results</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-with-traditional-methods">Comparison with Traditional Methods</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#advantages-over-genetic-algorithms">Advantages over Genetic Algorithms</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#benefits-over-manual-design">Benefits over Manual Design</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#future-enhancements">Future Enhancements</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
