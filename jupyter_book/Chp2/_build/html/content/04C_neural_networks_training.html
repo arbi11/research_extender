@@ -1,0 +1,844 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>CNN Training and Optimization &#8212; Chapter 2: Deep Learning for Magnetic Field Prediction</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/04C_neural_networks_training';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="00_intro.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 2: Deep Learning for Magnetic Field Prediction</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="01_modeling_fundamentals.html">Modeling Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_ml_basics.html">Machine Learning Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_data_pipeline.html">Data Pipeline for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_uncertainty_quantification.html">Uncertainty Quantification for Magnetic Field Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/04C_neural_networks_training.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>CNN Training and Optimization</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#working-of-the-deep-learning-model">Working of the Deep Learning Model</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#encoder-feature-extraction">Encoder: Feature Extraction</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#decoder-spatial-reconstruction">Decoder: Spatial Reconstruction</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-selection-and-hyperparameter-tuning">Model Selection and Hyperparameter Tuning</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#search-strategies">Search Strategies</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hyperparameters-explored">Hyperparameters Explored</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#experimental-scale">Experimental Scale</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-finding-impact-of-dilated-filters">Key Finding: Impact of Dilated Filters</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-dilated-filters-matter">Why Dilated Filters Matter</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimal-configuration">Optimal Configuration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparative-analysis-dilated-vs-non-dilated">Comparative Analysis: Dilated vs. Non-Dilated</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-comparison">Performance Comparison</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#observation-diminishing-returns">Observation: Diminishing Returns</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#physical-intuition-why-dilated-filters-work">Physical Intuition: Why Dilated Filters Work</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#electromagnetic-field-theory">Electromagnetic Field Theory</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#network-design-implication">Network Design Implication</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-details">Training Details</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimization">Optimization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-preparation">Data Preparation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-partitioning-methods">Alternative Partitioning Methods</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-analysis">Convergence Analysis</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#training-time">Training Time</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-criteria">Convergence Criteria</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-capacity-considerations">Model Capacity Considerations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#capacity-vs-complexity-trade-off">Capacity vs. Complexity Trade-off</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#achieving-appropriate-capacity">Achieving Appropriate Capacity</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="cnn-training-and-optimization">
+<h1>CNN Training and Optimization<a class="headerlink" href="#cnn-training-and-optimization" title="Link to this heading">#</a></h1>
+<p>This section examines the training process for the magnetic field prediction CNN, with particular focus on the critical discovery that dilated convolutions significantly improve performance without increasing model parameters.</p>
+<section id="working-of-the-deep-learning-model">
+<h2>Working of the Deep Learning Model<a class="headerlink" href="#working-of-the-deep-learning-model" title="Link to this heading">#</a></h2>
+<p>The architecture resembles image segmentation networks but focuses on <strong>dense regression</strong> instead of classification. The network can be conceptually divided into two functional components:</p>
+<section id="encoder-feature-extraction">
+<h3>Encoder: Feature Extraction<a class="headerlink" href="#encoder-feature-extraction" title="Link to this heading">#</a></h3>
+<p>The encoder section tries to extract spatially related features from the input:</p>
+<ol class="arabic simple">
+<li><p><strong>Progressive Downsampling</strong>: Each pooling layer reduces spatial dimensions by 2×</p></li>
+<li><p><strong>Feature Hierarchy</strong>: Early layers detect simple patterns, deeper layers detect complex patterns</p></li>
+<li><p><strong>Bottleneck Creation</strong>: Compresses high-dimensional input into a compact latent representation</p></li>
+</ol>
+<p>The <strong>latent representation</strong> contains the most useful information extracted from the input - the essential features needed to predict the magnetic field distribution.</p>
+</section>
+<section id="decoder-spatial-reconstruction">
+<h3>Decoder: Spatial Reconstruction<a class="headerlink" href="#decoder-spatial-reconstruction" title="Link to this heading">#</a></h3>
+<p>The decoder section uses the latent representation to predict the output:</p>
+<ol class="arabic simple">
+<li><p><strong>Semantic Projection</strong>: Projects discriminative features back onto the original input space</p></li>
+<li><p><strong>Progressive Upsampling</strong>: Each up-sampling layer increases spatial dimensions by 2×</p></li>
+<li><p><strong>Field Prediction</strong>: Final layer outputs the predicted magnetic field distribution</p></li>
+</ol>
+<p>This architecture is similar to U-Net and SegNet used in medical image segmentation, adapted for regression tasks.</p>
+</section>
+</section>
+<section id="model-selection-and-hyperparameter-tuning">
+<h2>Model Selection and Hyperparameter Tuning<a class="headerlink" href="#model-selection-and-hyperparameter-tuning" title="Link to this heading">#</a></h2>
+<p>Model selection is performed by investigating a set of candidate models and choosing the one which gives the best balance between model fit and complexity.</p>
+<section id="search-strategies">
+<h3>Search Strategies<a class="headerlink" href="#search-strategies" title="Link to this heading">#</a></h3>
+<p><strong>Random Search</strong> and <strong>Grid Search</strong> are common approaches for hyperparameter optimization:</p>
+<ul class="simple">
+<li><p><strong>Grid Search</strong>: Exhaustively tries all combinations</p></li>
+<li><p><strong>Random Search</strong>: Samples random combinations (often more efficient)</p></li>
+</ul>
+</section>
+<section id="hyperparameters-explored">
+<h3>Hyperparameters Explored<a class="headerlink" href="#hyperparameters-explored" title="Link to this heading">#</a></h3>
+<p>During model selection, the following hyperparameters were varied:</p>
+<ol class="arabic simple">
+<li><p><strong>Number of Layers</strong>: Network depth</p></li>
+<li><p><strong>Kernel Size</strong>: 3×3, 5×5, 7×7</p></li>
+<li><p><strong>Number of Kernels/Filters (K)</strong>: 32, 64, 128 per layer</p></li>
+<li><p><strong>Dilation</strong>: Dense vs. dilated convolutions</p></li>
+<li><p><strong>Skip Connections</strong>: With or without</p></li>
+<li><p><strong>Dropout Rate</strong>: 0.3, 0.5, 0.7</p></li>
+</ol>
+</section>
+<section id="experimental-scale">
+<h3>Experimental Scale<a class="headerlink" href="#experimental-scale" title="Link to this heading">#</a></h3>
+<p><strong>A total of 35 networks with different configurations</strong> were trained in the process of model selection before converging on the final architecture.</p>
+</section>
+</section>
+<section id="key-finding-impact-of-dilated-filters">
+<h2>Key Finding: Impact of Dilated Filters<a class="headerlink" href="#key-finding-impact-of-dilated-filters" title="Link to this heading">#</a></h2>
+<p>The most significant improvement in network performance was achieved by <strong>adding dilated filters</strong> . This is particularly noteworthy because:</p>
+<section id="why-dilated-filters-matter">
+<h3>Why Dilated Filters Matter<a class="headerlink" href="#why-dilated-filters-matter" title="Link to this heading">#</a></h3>
+<p><strong>Performance improved not due to the addition of neurons, but by changing the behavior of the constituent filters.</strong></p>
+<p>This demonstrates that <strong>architectural innovations</strong> can be more important than simply increasing model size .</p>
+</section>
+<section id="optimal-configuration">
+<h3>Optimal Configuration<a class="headerlink" href="#optimal-configuration" title="Link to this heading">#</a></h3>
+<p>The best performing network configuration includes:</p>
+<ul class="simple">
+<li><p><strong>Kernel Size</strong>: 5×5</p></li>
+<li><p><strong>Number of Filters</strong>: K = 64</p></li>
+<li><p><strong>Skip Connections</strong>: Enabled</p></li>
+<li><p><strong>Dilated Layers</strong>: Alternate dilated layers in the encoder</p></li>
+</ul>
+<figure class="align-default" id="fig-training-curves">
+<a class="reference internal image-reference" href="_static/figures/Training_results3.png"><img alt="_static/figures/Training_results3.png" src="_static/figures/Training_results3.png" style="width: 100%;" />
+</a>
+<figcaption>
+<p><span class="caption-text">Training curves with Normalized Prediction Error (calculated over validation dataset) for three electromagnetic problems: (a) Coil, (b) Transformer, (c) IPM Motor. Networks with dilated convolutions (blue) consistently outperform dense convolutions (red).</span><a class="headerlink" href="#fig-training-curves" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+</section>
+</section>
+<section id="comparative-analysis-dilated-vs-non-dilated">
+<h2>Comparative Analysis: Dilated vs. Non-Dilated<a class="headerlink" href="#comparative-analysis-dilated-vs-non-dilated" title="Link to this heading">#</a></h2>
+<section id="performance-comparison">
+<h3>Performance Comparison<a class="headerlink" href="#performance-comparison" title="Link to this heading">#</a></h3>
+<p>The normalized RMS error in prediction over the validation set shows:</p>
+<p><strong>Improvement with Dilation</strong>: Networks with dilated filters outperform the same architecture with non-dilated (dense) kernels.</p>
+<p><strong>Consistency Across Problems</strong>: The pattern is consistent for all three electromagnetic problems:</p>
+<ol class="arabic simple">
+<li><p>Simple coil in air</p></li>
+<li><p>Transformer with magnetic core</p></li>
+<li><p>IPM motor (most complex)</p></li>
+</ol>
+</section>
+<section id="observation-diminishing-returns">
+<h3>Observation: Diminishing Returns<a class="headerlink" href="#observation-diminishing-returns" title="Link to this heading">#</a></h3>
+<p>For the coil problem (simplest geometry), similar accuracy levels are achieved for networks with K=32 and K=64, suggesting that:</p>
+<ul class="simple">
+<li><p>Simpler problems require less model capacity</p></li>
+<li><p>Excessive parameters lead to diminishing returns</p></li>
+<li><p>Problem complexity should guide architecture selection</p></li>
+</ul>
+</section>
+</section>
+<section id="physical-intuition-why-dilated-filters-work">
+<h2>Physical Intuition: Why Dilated Filters Work<a class="headerlink" href="#physical-intuition-why-dilated-filters-work" title="Link to this heading">#</a></h2>
+<section id="electromagnetic-field-theory">
+<h3>Electromagnetic Field Theory<a class="headerlink" href="#electromagnetic-field-theory" title="Link to this heading">#</a></h3>
+<p>The magnetic field at a point can be affected by regions <strong>far away from it</strong> - specifically, the source of excitation (current-carrying conductors or permanent magnets).</p>
+<p>According to the Biot-Savart law :</p>
+<div class="math notranslate nohighlight">
+\[
+\mathbf{B}(\mathbf{r}) = \frac{\mu_0}{4\pi} \int \frac{I d\mathbf{l} \times \mathbf{\hat{r}}'}{|\mathbf{r}'|^2}
+\]</div>
+<p>The field at position <span class="math notranslate nohighlight">\(\mathbf{r}\)</span> depends on <strong>all</strong> current elements in the system, not just local ones.</p>
+</section>
+<section id="network-design-implication">
+<h3>Network Design Implication<a class="headerlink" href="#network-design-implication" title="Link to this heading">#</a></h3>
+<p>The presence of dilation enables <strong>spatially far relations to be captured</strong> without :</p>
+<ol class="arabic simple">
+<li><p><strong>Increasing kernel size</strong> (which adds more parameters)</p></li>
+<li><p><strong>Adding more layers</strong> (which increases depth and training difficulty)</p></li>
+</ol>
+<p>This is important for maintaining the <strong>locality-context trade-off</strong> of the network:</p>
+<ul class="simple">
+<li><p><strong>Locality</strong>: Capture local patterns (material boundaries, geometry edges)</p></li>
+<li><p><strong>Context</strong>: Understand global relationships (influence of distant sources)</p></li>
+</ul>
+</section>
+</section>
+<section id="training-details">
+<h2>Training Details<a class="headerlink" href="#training-details" title="Link to this heading">#</a></h2>
+<section id="optimization">
+<h3>Optimization<a class="headerlink" href="#optimization" title="Link to this heading">#</a></h3>
+<p>The network is trained using <strong>backpropagation</strong>  with the following configuration:</p>
+<ul class="simple">
+<li><p><strong>Objective</strong>: Minimize RMS error between prediction and FEA field distribution</p></li>
+<li><p><strong>Optimizer</strong>: Adam  (adaptive learning rate)</p></li>
+<li><p><strong>Learning Rate</strong>: Initial rate with decay schedule</p></li>
+<li><p><strong>Batch Size</strong>: 16 samples per batch</p></li>
+<li><p><strong>Regularization</strong>: Dropout  (0.5), Batch Normalization </p></li>
+</ul>
+</section>
+<section id="data-preparation">
+<h3>Data Preparation<a class="headerlink" href="#data-preparation" title="Link to this heading">#</a></h3>
+<p>The geometrical and excitation parameters are populated using <strong>Latin Hypercube Sampling</strong>  to ensure:</p>
+<ul class="simple">
+<li><p>Comprehensive coverage of the design space</p></li>
+<li><p>No clustering of samples</p></li>
+<li><p>Uniform distribution across parameter ranges</p></li>
+</ul>
+<p>The dataset is then partitioned randomly into:</p>
+<ul class="simple">
+<li><p><strong>Training</strong>: 30,000 samples (parameter updates)</p></li>
+<li><p><strong>Validation</strong>: 10,000 samples (hyperparameter tuning, early stopping)</p></li>
+<li><p><strong>Test</strong>: 5,000 samples (final evaluation)</p></li>
+</ul>
+</section>
+<section id="alternative-partitioning-methods">
+<h3>Alternative Partitioning Methods<a class="headerlink" href="#alternative-partitioning-methods" title="Link to this heading">#</a></h3>
+<p>Although other techniques exist for data partitioning:</p>
+<ul class="simple">
+<li><p><strong>Cross-Validation</strong>: K-fold validation for robust evaluation</p></li>
+<li><p><strong>Bootstrap</strong>: Resampling-based validation</p></li>
+</ul>
+<p>The high computational cost associated with these techniques <strong>prohibited their usage</strong> in this case. Random partitioning provides a good balance between robustness and computational efficiency.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Demonstrate training progress visualization</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_training_comparison</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize training curves for dilated vs non-dilated networks&quot;&quot;&quot;</span>
+
+    <span class="n">epochs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">101</span><span class="p">)</span>
+
+    <span class="c1"># Simulated training curves (decreasing validation error)</span>
+    <span class="c1"># Dilated network converges faster and to lower error</span>
+    <span class="n">dense_error</span> <span class="o">=</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">epochs</span><span class="o">/</span><span class="mi">30</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.02</span> <span class="o">+</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">epochs</span><span class="o">/</span><span class="mi">20</span><span class="p">)</span>
+    <span class="n">dilated_error</span> <span class="o">=</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">epochs</span><span class="o">/</span><span class="mi">25</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.01</span> <span class="o">+</span> <span class="mf">0.005</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">epochs</span><span class="o">/</span><span class="mi">20</span><span class="p">)</span>
+
+    <span class="c1"># Ensure decreasing trend</span>
+    <span class="n">dense_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">dense_error</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">dilated_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">dilated_error</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">dense_error</span><span class="p">,</span> <span class="s1">&#39;r-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Dense Convolutions&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">dilated_error</span><span class="p">,</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Dilated Convolutions&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Epoch&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Normalized RMS Error (Validation)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Training Comparison: Dilated vs Dense Convolutions&#39;</span><span class="p">,</span>
+              <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper right&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">dense_error</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">dilated_error</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="o">*</span> <span class="mf">1.1</span><span class="p">])</span>
+
+    <span class="c1"># Add annotation</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Dilated filters achieve</span><span class="se">\n</span><span class="s1">lower final error&#39;</span><span class="p">,</span>
+                <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="n">dilated_error</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">]),</span>
+                <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="n">dilated_error</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.03</span><span class="p">),</span>
+                <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s1">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final Validation Error:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Dense Convolutions: </span><span class="si">{</span><span class="n">dense_error</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Dilated Convolutions: </span><span class="si">{</span><span class="n">dilated_error</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Improvement: </span><span class="si">{</span><span class="p">((</span><span class="n">dense_error</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">dilated_error</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="n">dense_error</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+
+<span class="n">plot_training_comparison</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/7cc9da713109f56a12d94d5ff94a91ef4cfe7bbc4462e55c9c273ef7c3319720.png" src="../_images/7cc9da713109f56a12d94d5ff94a91ef4cfe7bbc4462e55c9c273ef7c3319720.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Final Validation Error:
+  Dense Convolutions: 0.0254
+  Dilated Convolutions: 0.0127
+  Improvement: 49.8%
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="convergence-analysis">
+<h2>Convergence Analysis<a class="headerlink" href="#convergence-analysis" title="Link to this heading">#</a></h2>
+<section id="training-time">
+<h3>Training Time<a class="headerlink" href="#training-time" title="Link to this heading">#</a></h3>
+<p>The network was trained on an <strong>NVIDIA 1080 Ti GPU</strong>:</p>
+<ul class="simple">
+<li><p><strong>Time per Epoch</strong>: ~10 minutes</p></li>
+<li><p><strong>Batch Size</strong>: 16</p></li>
+<li><p><strong>Epochs to Convergence</strong>: 60-100 (depending on network configuration)</p></li>
+<li><p><strong>Total Training Time</strong>: 12-15 hours</p></li>
+</ul>
+</section>
+<section id="convergence-criteria">
+<h3>Convergence Criteria<a class="headerlink" href="#convergence-criteria" title="Link to this heading">#</a></h3>
+<p>Training is stopped when:</p>
+<ol class="arabic simple">
+<li><p>Validation error plateaus (no improvement for multiple epochs)</p></li>
+<li><p>Maximum epoch limit reached</p></li>
+<li><p>Overfitting detected (training error decreases but validation error increases)</p></li>
+</ol>
+<p><strong>Early Stopping</strong> is employed to prevent overfitting:</p>
+<ul class="simple">
+<li><p>Monitor validation error every epoch</p></li>
+<li><p>Stop if no improvement for 10 consecutive epochs</p></li>
+<li><p>Restore weights from best validation performance</p></li>
+</ul>
+</section>
+</section>
+<section id="model-capacity-considerations">
+<h2>Model Capacity Considerations<a class="headerlink" href="#model-capacity-considerations" title="Link to this heading">#</a></h2>
+<p>For the network to train successfully, it must have <strong>sufficient capacity</strong> to capture the complexity of the problem:</p>
+<section id="capacity-vs-complexity-trade-off">
+<h3>Capacity vs. Complexity Trade-off<a class="headerlink" href="#capacity-vs-complexity-trade-off" title="Link to this heading">#</a></h3>
+<p><strong>Underfitting</strong> (insufficient capacity):</p>
+<ul class="simple">
+<li><p>High training error</p></li>
+<li><p>High validation error</p></li>
+<li><p>Model too simple to capture patterns</p></li>
+<li><p>Solution: Increase model capacity</p></li>
+</ul>
+<p><strong>Overfitting</strong> (excessive capacity):</p>
+<ul class="simple">
+<li><p>Low training error</p></li>
+<li><p>High validation error</p></li>
+<li><p>Model memorizes training data</p></li>
+<li><p>Solution: Regularization, more data, or reduce capacity</p></li>
+</ul>
+<p><strong>Good Fit</strong> (appropriate capacity):</p>
+<ul class="simple">
+<li><p>Low training error</p></li>
+<li><p>Low validation error</p></li>
+<li><p>Model generalizes well</p></li>
+</ul>
+</section>
+<section id="achieving-appropriate-capacity">
+<h3>Achieving Appropriate Capacity<a class="headerlink" href="#achieving-appropriate-capacity" title="Link to this heading">#</a></h3>
+<p>The final model achieves good generalization through:</p>
+<ol class="arabic simple">
+<li><p><strong>Architecture Design</strong>: Dilated convolutions for efficiency</p></li>
+<li><p><strong>Regularization</strong>: Dropout (0.5), Batch Normalization</p></li>
+<li><p><strong>Data Quantity</strong>: 30,000 training samples</p></li>
+<li><p><strong>Data Quality</strong>: Latin Hypercube ensures diverse coverage</p></li>
+</ol>
+</section>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<p>This section covered the training and optimization of the CNN for magnetic field prediction:</p>
+<p><strong>Key Insights</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Dilated Convolutions</strong>: Most significant architectural innovation, improving performance without adding parameters</p></li>
+<li><p><strong>Physical Motivation</strong>: Captures long-range electromagnetic interactions</p></li>
+<li><p><strong>Model Selection</strong>: 35 networks tested to find optimal configuration</p></li>
+<li><p><strong>Training Efficiency</strong>: 12-15 hours on NVIDIA 1080 Ti</p></li>
+</ol>
+<p><strong>Optimal Configuration</strong>:</p>
+<ul class="simple">
+<li><p>Kernel size: 5×5</p></li>
+<li><p>Filters: K=64</p></li>
+<li><p>Skip connections: Enabled</p></li>
+<li><p>Dilated layers: Alternating in encoder</p></li>
+</ul>
+<p><strong>Dataset</strong>:</p>
+<ul class="simple">
+<li><p>30,000 training samples</p></li>
+<li><p>10,000 validation samples</p></li>
+<li><p>5,000 test samples</p></li>
+<li><p>Latin Hypercube Sampling for diversity</p></li>
+</ul>
+<p>The next section presents quantitative results and performance analysis across the three electromagnetic problems.</p>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#working-of-the-deep-learning-model">Working of the Deep Learning Model</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#encoder-feature-extraction">Encoder: Feature Extraction</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#decoder-spatial-reconstruction">Decoder: Spatial Reconstruction</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-selection-and-hyperparameter-tuning">Model Selection and Hyperparameter Tuning</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#search-strategies">Search Strategies</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hyperparameters-explored">Hyperparameters Explored</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#experimental-scale">Experimental Scale</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-finding-impact-of-dilated-filters">Key Finding: Impact of Dilated Filters</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-dilated-filters-matter">Why Dilated Filters Matter</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimal-configuration">Optimal Configuration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparative-analysis-dilated-vs-non-dilated">Comparative Analysis: Dilated vs. Non-Dilated</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-comparison">Performance Comparison</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#observation-diminishing-returns">Observation: Diminishing Returns</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#physical-intuition-why-dilated-filters-work">Physical Intuition: Why Dilated Filters Work</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#electromagnetic-field-theory">Electromagnetic Field Theory</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#network-design-implication">Network Design Implication</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-details">Training Details</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimization">Optimization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-preparation">Data Preparation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-partitioning-methods">Alternative Partitioning Methods</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-analysis">Convergence Analysis</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#training-time">Training Time</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-criteria">Convergence Criteria</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-capacity-considerations">Model Capacity Considerations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#capacity-vs-complexity-trade-off">Capacity vs. Complexity Trade-off</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#achieving-appropriate-capacity">Achieving Appropriate Capacity</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

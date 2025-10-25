@@ -32,7 +32,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
     <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -62,7 +62,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'content/03_data_pipeline';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="CNN Architecture for Magnetic Field Prediction" href="04_neural_networks.html" />
+    <link rel="next" title="Uncertainty Quantification for Magnetic Field Prediction" href="05_uncertainty_quantification.html" />
     <link rel="prev" title="Machine Learning Fundamentals" href="02_ml_basics.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -171,9 +171,7 @@
 <li class="toctree-l1"><a class="reference internal" href="01_modeling_fundamentals.html">Modeling Fundamentals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="02_ml_basics.html">Machine Learning Fundamentals</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Data Pipeline for Magnetic Field Prediction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="04_neural_networks.html">CNN Architecture for Magnetic Field Prediction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="05_uncertainty_quantification.html">Uncertainty Quantification for Magnetic Field Prediction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="06_physics_informed_neural_networks.html">Physics-Informed Neural Networks for Electromagnetic Field Prediction</a></li>
 </ul>
 
     </div>
@@ -324,6 +322,12 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-objectives">Learning Objectives</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#electromagnetic-problems-overview">Electromagnetic Problems Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-1-simple-coil-in-air">Problem 1: Simple Coil in Air</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-2-transformer">Problem 2: Transformer</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-3-ipm-motor">Problem 3: IPM Motor</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#challenge-uncertainty-in-out-of-distribution-inputs">Challenge: Uncertainty in Out-of-Distribution Inputs</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#theoretical-foundations-of-experimental-design">Theoretical Foundations of Experimental Design</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#design-of-experiments-theory">1. Design of Experiments Theory</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#information-theoretic-sampling">2. Information-Theoretic Sampling</a></li>
@@ -336,11 +340,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimality-criteria">3. Optimality Criteria</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-achievements">✅ <strong>Key Achievements</strong></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">🎯 <strong>Next Steps</strong></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
 </ul>
             </nav>
         </div>
@@ -369,24 +369,181 @@ document.write(`
 </section>
 <section id="electromagnetic-problems-overview">
 <h2>Electromagnetic Problems Overview<a class="headerlink" href="#electromagnetic-problems-overview" title="Link to this heading">#</a></h2>
-<p>This data pipeline generates training data for three fundamental electromagnetic problems:</p>
+<p>This data pipeline generates training data for three fundamental electromagnetic problems of increasing complexity:</p>
 <ol class="arabic simple">
 <li><p><strong>Simple Coil in Air</strong> - Basic electromagnetic problem with analytical validation</p></li>
-<li><p><strong>Transformer</strong> - Multi-material problem with magnetic core and windings</p></li>
+<li><p><strong>Transformer</strong> - Multi-material problem with magnetic core (M19 silicon steel) and windings</p></li>
 <li><p><strong>IPM Motor</strong> - Complex rotating machine with permanent magnets and non-linear materials</p></li>
 </ol>
-<p>Each geometry will generate <strong>100 samples</strong> using <strong>Latin Hypercube Sampling</strong> to ensure comprehensive coverage of the parameter space, resulting in <strong>300 total training samples</strong>.</p>
+<p>The complete dataset consists of <strong>45,000 samples</strong> generated using <strong>Latin Hypercube Sampling</strong>:</p>
+<ul class="simple">
+<li><p>Training: 30,000 samples</p></li>
+<li><p>Validation: 10,000 samples</p></li>
+<li><p>Test: 5,000 samples</p></li>
+</ul>
+<p>All three problems are parametrized and simulated using FEA software. Material properties including non-linear B-H relations are incorporated from the material library.</p>
+</section>
+<section id="problem-1-simple-coil-in-air">
+<h2>Problem 1: Simple Coil in Air<a class="headerlink" href="#problem-1-simple-coil-in-air" title="Link to this heading">#</a></h2>
+<p>A simple coil made of copper is located inside an airbox with fixed dimensions (height = 160mm, width = 160mm). The parametric design varies:</p>
+<p><strong>Variable Parameters</strong>:</p>
+<ul class="simple">
+<li><p><strong>Coil Radius</strong>: <span class="math notranslate nohighlight">\(3mm \leq R \leq 15mm\)</span></p></li>
+<li><p><strong>Coil Center Position</strong>: <span class="math notranslate nohighlight">\((x_c, y_c)\)</span> adjusted to keep coil inside airbox</p></li>
+<li><p><strong>Coil Current</strong>: <span class="math notranslate nohighlight">\(5A \leq I \leq 15A\)</span></p></li>
+</ul>
+<p><strong>Constraints</strong>:</p>
+<ul class="simple">
+<li><p>Entire coil must remain inside the airbox</p></li>
+<li><p>Radius is determined first, then center position is adjusted accordingly</p></li>
+</ul>
+<figure class="align-default" id="fig-coil-geometry">
+<a class="reference internal image-reference" href="_static/figures/Geo_coil.png"><img alt="_static/figures/Geo_coil.png" src="_static/figures/Geo_coil.png" style="width: 50%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Parametrized geometry for the simple coil problem.</span><a class="headerlink" href="#fig-coil-geometry" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="problem-2-transformer">
+<h2>Problem 2: Transformer<a class="headerlink" href="#problem-2-transformer" title="Link to this heading">#</a></h2>
+<p>A transformer with two coils is considered as the second problem, which is more complex than the coil in terms of geometry, material, and field distribution.</p>
+<p><strong>Materials</strong>:</p>
+<ul class="simple">
+<li><p><strong>Core</strong>: M19 silicon steel (non-linear B-H characteristics)</p></li>
+<li><p><strong>Coils</strong>: Copper windings</p></li>
+</ul>
+<p><strong>Fixed Parameters</strong>:</p>
+<ul class="simple">
+<li><p>Left coil current: 1A with 90 turns</p></li>
+<li><p>Right coil current: 0A (unexcited)</p></li>
+<li><p>Depth: 2.5mm</p></li>
+</ul>
+<p><strong>Variable Parameters</strong>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Minimum (mm)</p></th>
+<th class="head"><p>Maximum (mm)</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(x\)</span></p></td>
+<td><p>10</p></td>
+<td><p>190</p></td>
+<td><p>Core horizontal dimension</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(y\)</span></p></td>
+<td><p>10</p></td>
+<td><p>190</p></td>
+<td><p>Core vertical dimension</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(w\)</span></p></td>
+<td><p>5</p></td>
+<td><p>150</p></td>
+<td><p>Core width</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(y_c\)</span></p></td>
+<td><p>5</p></td>
+<td><p>50</p></td>
+<td><p>Coil height</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure class="align-default" id="fig-transformer-geometry">
+<a class="reference internal image-reference" href="_static/figures/Geo_Tf.png"><img alt="_static/figures/Geo_Tf.png" src="_static/figures/Geo_Tf.png" style="width: 60%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 2 </span><span class="caption-text">Parametrized geometry for the transformer problem with magnetic core.</span><a class="headerlink" href="#fig-transformer-geometry" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="problem-3-ipm-motor">
+<h2>Problem 3: IPM Motor<a class="headerlink" href="#problem-3-ipm-motor" title="Link to this heading">#</a></h2>
+<p>A 4-Pole, 24-slot Interior Permanent Magnet (IPM) motor is analyzed as the most complex problem in this work.</p>
+<p><strong>Materials</strong>:</p>
+<ul class="simple">
+<li><p><strong>Stator/Rotor Core</strong>: M19 silicon steel (non-linear)</p></li>
+<li><p><strong>Windings</strong>: Copper</p></li>
+<li><p><strong>Magnets</strong>: NdFeBr (Neodymium Iron Boron)</p></li>
+</ul>
+<p><strong>Fixed Parameters</strong>:</p>
+<ul class="simple">
+<li><p>Number of poles: 4</p></li>
+<li><p>Number of slots: 24</p></li>
+<li><p>Stator winding turns: 8</p></li>
+<li><p>Excitation current: 25A to 35A (RMS)</p></li>
+<li><p>Model type: Partial (one pole) to reduce computation time</p></li>
+</ul>
+<p><strong>Variable Parameters</strong>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Symbol</p></th>
+<th class="head"><p>Minimum (mm)</p></th>
+<th class="head"><p>Maximum (mm)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stator back iron</p></td>
+<td><p><span class="math notranslate nohighlight">\(x_1\)</span></p></td>
+<td><p>5</p></td>
+<td><p>35</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stator tooth width</p></td>
+<td><p><span class="math notranslate nohighlight">\(x_2\)</span></p></td>
+<td><p>5</p></td>
+<td><p>12</p></td>
+</tr>
+<tr class="row-even"><td><p>Magnet inset depth</p></td>
+<td><p><span class="math notranslate nohighlight">\(x_3\)</span></p></td>
+<td><p>5</p></td>
+<td><p>25</p></td>
+</tr>
+<tr class="row-odd"><td><p>Magnet thickness</p></td>
+<td><p><span class="math notranslate nohighlight">\(x_4\)</span></p></td>
+<td><p>1</p></td>
+<td><p>50</p></td>
+</tr>
+<tr class="row-even"><td><p>Magnet width</p></td>
+<td><p><span class="math notranslate nohighlight">\(x_5\)</span></p></td>
+<td><p>20</p></td>
+<td><p>50</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure class="align-default" id="fig-motor-geometry">
+<a class="reference internal image-reference" href="_static/figures/Geo_motor.png"><img alt="_static/figures/Geo_motor.png" src="_static/figures/Geo_motor.png" style="width: 55%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 3 </span><span class="caption-text">Parametrized geometry for the IPM motor showing the five design variables.</span><a class="headerlink" href="#fig-motor-geometry" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<section id="challenge-uncertainty-in-out-of-distribution-inputs">
+<h3>Challenge: Uncertainty in Out-of-Distribution Inputs<a class="headerlink" href="#challenge-uncertainty-in-out-of-distribution-inputs" title="Link to this heading">#</a></h3>
+<p>A machine learning network trained in supervised manner could predict the solution for any arbitrary input. As such, a DL emulator lacks physics-based judgment about input validity.</p>
+<p><strong>Issue</strong>: The network will attempt predictions even for:</p>
+<ul class="simple">
+<li><p>Invalid geometric configurations</p></li>
+<li><p>Excitations far outside training range</p></li>
+<li><p>Physically impossible designs</p></li>
+</ul>
+<p><strong>Solution</strong>: Uncertainty quantification (addressed in Chapter 5) provides confidence measures, helping identify when predictions should not be trusted.</p>
+</section>
 </section>
 <section id="theoretical-foundations-of-experimental-design">
 <h2>Theoretical Foundations of Experimental Design<a class="headerlink" href="#theoretical-foundations-of-experimental-design" title="Link to this heading">#</a></h2>
 <section id="design-of-experiments-theory">
 <h3>1. Design of Experiments Theory<a class="headerlink" href="#design-of-experiments-theory" title="Link to this heading">#</a></h3>
-<p>The problem of selecting training samples can be formulated as <strong>optimal experimental design</strong>. Given a parameter space <span class="math notranslate nohighlight">\(\mathcal{X} \subset \mathbb{R}^d\)</span> and a set of candidate samples <span class="math notranslate nohighlight">\(\{\mathbf{x}_1, \mathbf{x}_2, \ldots, \mathbf{x}_n\}\)</span>, we want to select a subset that maximizes information gain.</p>
+<p>The problem of selecting training samples can be formulated as <strong>optimal experimental design</strong> . Given a parameter space <span class="math notranslate nohighlight">\(\mathcal{X} \subset \mathbb{R}^d\)</span> and a set of candidate samples <span class="math notranslate nohighlight">\(\{\mathbf{x}_1, \mathbf{x}_2, \ldots, \mathbf{x}_n\}\)</span>, we want to select a subset that maximizes information gain.</p>
 <p><strong>Mathematical Formulation</strong>:</p>
 <p>Find design <span class="math notranslate nohighlight">\(\xi = \{(\mathbf{x}_i, w_i)\}_{i=1}^n\)</span> with weights <span class="math notranslate nohighlight">\(w_i \geq 0\)</span>, <span class="math notranslate nohighlight">\(\sum_{i=1}^n w_i = 1\)</span> that optimizes:</p>
 <div class="math notranslate nohighlight">
 \[\xi^* = \arg\min_{\xi} \Phi(M(\xi))\]</div>
-<p>where <span class="math notranslate nohighlight">\(M(\xi)\)</span> is the <strong>Fisher Information Matrix</strong> and <span class="math notranslate nohighlight">\(\Phi\)</span> is an optimality criterion.</p>
+<p>where <span class="math notranslate nohighlight">\(M(\xi)\)</span> is the <strong>Fisher Information Matrix</strong> and <span class="math notranslate nohighlight">\(\Phi\)</span> is an optimality criterion .</p>
 </section>
 <section id="information-theoretic-sampling">
 <h3>2. Information-Theoretic Sampling<a class="headerlink" href="#information-theoretic-sampling" title="Link to this heading">#</a></h3>
@@ -404,7 +561,7 @@ document.write(`
 <div class="math notranslate nohighlight">
 \[N(d, \epsilon) \propto \epsilon^{-d}\]</div>
 <p>where <span class="math notranslate nohighlight">\(d\)</span> is the dimension and <span class="math notranslate nohighlight">\(\epsilon\)</span> is the desired resolution.</p>
-<p><strong>Latin Hypercube Sampling</strong> addresses this by ensuring <strong>uniform projection</strong> onto each one-dimensional subspace.</p>
+<p><strong>Latin Hypercube Sampling</strong> addresses this by ensuring <strong>uniform projection</strong> onto each one-dimensional subspace .</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install required packages</span>
@@ -432,7 +589,7 @@ document.write(`
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Libraries imported successfully
 NumPy version: 2.3.3
-Matplotlib version: 3.10.7
+Matplotlib version: 3.10.6
 SciPy version: unknown
 </pre></div>
 </div>
@@ -443,28 +600,28 @@ SciPy version: unknown
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Demonstration of sampling theory concepts</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">demonstrate_sampling_theory</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize different sampling strategies and their properties&quot;&quot;&quot;</span>
-    
+
     <span class="c1"># Set random seed for reproducibility</span>
     <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-    
+
     <span class="c1"># Define 2D parameter space</span>
     <span class="n">n_samples</span> <span class="o">=</span> <span class="mi">50</span>
     <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
-    
+
     <span class="c1"># 1. Random sampling</span>
     <span class="n">random_samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-    
+
     <span class="c1"># 2. Grid sampling</span>
     <span class="n">grid_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_samples</span><span class="p">))</span>
     <span class="n">x_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="n">grid_size</span><span class="p">)</span>
     <span class="n">y_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="n">grid_size</span><span class="p">)</span>
     <span class="n">grid_samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">x_grid</span><span class="p">,</span> <span class="n">y_grid</span><span class="p">)))</span>
     <span class="n">grid_samples</span> <span class="o">=</span> <span class="n">grid_samples</span><span class="p">[:</span><span class="n">n_samples</span><span class="p">]</span>  <span class="c1"># Take exactly n_samples</span>
-    
+
     <span class="c1"># 3. Latin Hypercube Sampling</span>
     <span class="n">sampler</span> <span class="o">=</span> <span class="n">qmc</span><span class="o">.</span><span class="n">LatinHypercube</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
     <span class="n">lhd_samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n_samples</span><span class="p">)</span>
-    
+
     <span class="c1"># Calculate coverage metrics</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_coverage_metrics</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate various coverage metrics for sampling&quot;&quot;&quot;</span>
@@ -472,43 +629,43 @@ SciPy version: unknown
         <span class="n">distances</span> <span class="o">=</span> <span class="n">pdist</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
         <span class="n">min_distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span>
         <span class="n">mean_distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span>
-        
+
         <span class="c1"># Space-filling criterion (maximin)</span>
         <span class="n">maxmin_distance</span> <span class="o">=</span> <span class="n">min_distance</span>
-        
+
         <span class="c1"># Uniformity of projections (standard deviation of projections)</span>
         <span class="n">proj_x_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">samples</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">proj_y_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">samples</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
-        
+
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> Metrics:&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Min distance: </span><span class="si">{</span><span class="n">min_distance</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean distance: </span><span class="si">{</span><span class="n">mean_distance</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  X-projection std: </span><span class="si">{</span><span class="n">proj_x_std</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Y-projection std: </span><span class="si">{</span><span class="n">proj_y_std</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">()</span>
-        
+
         <span class="k">return</span> <span class="p">{</span>
             <span class="s1">&#39;min_distance&#39;</span><span class="p">:</span> <span class="n">min_distance</span><span class="p">,</span>
             <span class="s1">&#39;mean_distance&#39;</span><span class="p">:</span> <span class="n">mean_distance</span><span class="p">,</span>
             <span class="s1">&#39;proj_uniformity&#39;</span><span class="p">:</span> <span class="n">proj_x_std</span> <span class="o">+</span> <span class="n">proj_y_std</span>
         <span class="p">}</span>
-    
+
     <span class="c1"># Create visualization</span>
     <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Sampling Theory: Comparison of Sampling Strategies&#39;</span><span class="p">,</span> 
+    <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Sampling Theory: Comparison of Sampling Strategies&#39;</span><span class="p">,</span>
                  <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
-    
+
     <span class="n">sampling_methods</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="n">random_samples</span><span class="p">,</span> <span class="s1">&#39;Random Sampling&#39;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">grid_samples</span><span class="p">,</span> <span class="s1">&#39;Grid Sampling&#39;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">lhd_samples</span><span class="p">,</span> <span class="s1">&#39;Latin Hypercube Sampling&#39;</span><span class="p">)</span>
     <span class="p">]</span>
-    
+
     <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;#FF6B6B&#39;</span><span class="p">,</span> <span class="s1">&#39;#4ECDC4&#39;</span><span class="p">,</span> <span class="s1">&#39;#45B7D1&#39;</span><span class="p">]</span>
-    
+
     <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sampling_methods</span><span class="p">):</span>
         <span class="c1"># Plot sampling pattern</span>
-        <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">samples</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">samples</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> 
+        <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">samples</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">samples</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
                            <span class="n">c</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
         <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -517,21 +674,21 @@ SciPy version: unknown
         <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Parameter 2&#39;</span><span class="p">)</span>
         <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
         <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
-        
+
         <span class="c1"># Plot projections</span>
-        <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">samples</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> 
+        <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">samples</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span>
                         <span class="n">label</span><span class="o">=</span><span class="s1">&#39;X projection&#39;</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">samples</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> 
+        <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">samples</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span>
                         <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Y projection&#39;</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> - Projections&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
         <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Value&#39;</span><span class="p">)</span>
         <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Density&#39;</span><span class="p">)</span>
         <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
         <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
-        
+
         <span class="c1"># Calculate and print metrics</span>
         <span class="n">calculate_coverage_metrics</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-    
+
     <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
@@ -559,7 +716,7 @@ Latin Hypercube Sampling Metrics:
   Y-projection std: 0.45
 </pre></div>
 </div>
-<img alt="../_images/6ce99e5777fc0bafa6f55b6e833e71d978414b0c7bef6d66f848eef87d728670.png" src="../_images/6ce99e5777fc0bafa6f55b6e833e71d978414b0c7bef6d66f848eef87d728670.png" />
+<img alt="../_images/615451a7f201c77987c76f0ca2349c0cb5d65d68032650aa9f006a32e6236bcd.png" src="../_images/615451a7f201c77987c76f0ca2349c0cb5d65d68032650aa9f006a32e6236bcd.png" />
 </div>
 </div>
 </section>
@@ -568,7 +725,7 @@ Latin Hypercube Sampling Metrics:
 <h2>Latin Hypercube Sampling: Theory and Implementation<a class="headerlink" href="#latin-hypercube-sampling-theory-and-implementation" title="Link to this heading">#</a></h2>
 <section id="mathematical-foundation">
 <h3>1. Mathematical Foundation<a class="headerlink" href="#mathematical-foundation" title="Link to this heading">#</a></h3>
-<p><strong>Latin Hypercube Sampling (LHS)</strong> is a stratified sampling method that ensures uniform coverage of each parameter dimension. For <span class="math notranslate nohighlight">\(n\)</span> samples in <span class="math notranslate nohighlight">\(d\)</span> dimensions:</p>
+<p><strong>Latin Hypercube Sampling (LHS)</strong> is a stratified sampling method that ensures uniform coverage of each parameter dimension . For <span class="math notranslate nohighlight">\(n\)</span> samples in <span class="math notranslate nohighlight">\(d\)</span> dimensions:</p>
 <p><strong>Algorithm Steps</strong>:</p>
 <ol class="arabic simple">
 <li><p>Divide each dimension into <span class="math notranslate nohighlight">\(n\)</span> equal intervals: <span class="math notranslate nohighlight">\([0,1/n), [1/n,2/n), \ldots, [(n-1)/n,1]\)</span></p></li>
@@ -578,7 +735,7 @@ Latin Hypercube Sampling Metrics:
 <p><strong>Mathematical Properties</strong>:</p>
 <ul class="simple">
 <li><p><strong>Unbiased</strong>: <span class="math notranslate nohighlight">\(\mathbb{E}[f(\mathbf{X})] = \int_0^1 f(\mathbf{x}) d\mathbf{x}\)</span></p></li>
-<li><p><strong>Lower Variance</strong>: <span class="math notranslate nohighlight">\(\text{Var}[\hat{\mu}_{LHS}] \leq \text{Var}[\hat{\mu}_{MC}]\)</span></p></li>
+<li><p><strong>Lower Variance</strong>: <span class="math notranslate nohighlight">\(\text{Var}[\hat{\mu}_{LHS}] \leq \text{Var}[\hat{\mu}_{MC}]\)</span> </p></li>
 <li><p><strong>Perfect Projection</strong>: Each 1D projection has exactly one sample per interval</p></li>
 </ul>
 </section>
@@ -587,11 +744,11 @@ Latin Hypercube Sampling Metrics:
 <p>The integration error for LHS with smooth functions is:</p>
 <div class="math notranslate nohighlight">
 \[|\mathbb{E}[f(\mathbf{X})] - \hat{\mu}_{LHS}| = O(n^{-1})\]</div>
-<p>compared to Monte Carlo’s <span class="math notranslate nohighlight">\(O(n^{-1/2})\)</span> convergence rate.</p>
+<p>compared to Monte Carlo’s <span class="math notranslate nohighlight">\(O(n^{-1/2})\)</span> convergence rate .</p>
 </section>
 <section id="optimality-criteria">
 <h3>3. Optimality Criteria<a class="headerlink" href="#optimality-criteria" title="Link to this heading">#</a></h3>
-<p><strong>Maximin Design</strong>: Maximize the minimum distance between any two points:</p>
+<p><strong>Maximin Design</strong> : Maximize the minimum distance between any two points:</p>
 <div class="math notranslate nohighlight">
 \[\max_{\mathbf{X}} \min_{i \neq j} d(\mathbf{x}_i, \mathbf{x}_j)\]</div>
 <p><strong>Minimum Correlation</strong>: Minimize correlation between dimensions:</p>
@@ -602,45 +759,45 @@ Latin Hypercube Sampling Metrics:
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Implementation of Latin Hypercube Sampling with optimization</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OptimalLatinHypercube</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Optimized Latin Hypercube Sampling implementation&quot;&quot;&quot;</span>
-    
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">=</span> <span class="n">d</span>  <span class="c1"># dimensions</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span> <span class="o">=</span> <span class="n">n_samples</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span>
         <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-    
+
     <span class="k">def</span><span class="w"> </span><span class="nf">generate_initial</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate initial Latin Hypercube design&quot;&quot;&quot;</span>
         <span class="c1"># Create base Latin Hypercube</span>
         <span class="n">lhd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">))</span>
-        
+
         <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">):</span>
             <span class="c1"># Random permutation for each dimension</span>
             <span class="n">perm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span><span class="p">)</span>
             <span class="c1"># Add random offset within each interval</span>
             <span class="n">lhd</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">perm</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span><span class="p">))</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span>
-        
+
         <span class="k">return</span> <span class="n">lhd</span>
-    
+
     <span class="k">def</span><span class="w"> </span><span class="nf">maximin_optimization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_design</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Optimize design using maximin criterion&quot;&quot;&quot;</span>
         <span class="n">design</span> <span class="o">=</span> <span class="n">initial_design</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">best_design</span> <span class="o">=</span> <span class="n">design</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">best_min_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_min_distance</span><span class="p">(</span><span class="n">design</span><span class="p">)</span>
-        
+
         <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span><span class="p">):</span>
             <span class="c1"># Random elementwise perturbation</span>
             <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">)</span>
-            
+
             <span class="c1"># Try swapping with another point in the same dimension</span>
             <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">i</span><span class="p">:</span>
                 <span class="c1"># Swap positions</span>
                 <span class="n">design</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span> <span class="n">design</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">design</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span> <span class="n">design</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
-                
+
                 <span class="c1"># Calculate new minimum distance</span>
                 <span class="n">new_min_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_min_distance</span><span class="p">(</span><span class="n">design</span><span class="p">)</span>
-                
+
                 <span class="c1"># Accept if better</span>
                 <span class="k">if</span> <span class="n">new_min_dist</span> <span class="o">&gt;</span> <span class="n">best_min_dist</span><span class="p">:</span>
                     <span class="n">best_min_dist</span> <span class="o">=</span> <span class="n">new_min_dist</span>
@@ -648,14 +805,14 @@ Latin Hypercube Sampling Metrics:
                 <span class="k">else</span><span class="p">:</span>
                     <span class="c1"># Revert if not better</span>
                     <span class="n">design</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span> <span class="n">design</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">design</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span> <span class="n">design</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
-        
+
         <span class="k">return</span> <span class="n">best_design</span>
-    
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_min_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">design</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate minimum distance between any two points&quot;&quot;&quot;</span>
         <span class="n">distances</span> <span class="o">=</span> <span class="n">pdist</span><span class="p">(</span><span class="n">design</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span>
-    
+
     <span class="k">def</span><span class="w"> </span><span class="nf">generate_optimal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate optimized Latin Hypercube design&quot;&quot;&quot;</span>
         <span class="n">initial</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_initial</span><span class="p">()</span>
@@ -665,42 +822,42 @@ Latin Hypercube Sampling Metrics:
 <span class="c1"># Demonstrate LHS optimization</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">demonstrate_lhs_optimization</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Show the optimization process for Latin Hypercube Sampling&quot;&quot;&quot;</span>
-    
+
     <span class="n">d</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">20</span>
-    
+
     <span class="c1"># Generate different LHS designs</span>
     <span class="n">generator</span> <span class="o">=</span> <span class="n">OptimalLatinHypercube</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
-    
+
     <span class="c1"># Initial LHS</span>
     <span class="n">initial_design</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate_initial</span><span class="p">()</span>
-    
+
     <span class="c1"># Optimized LHS</span>
     <span class="n">optimized_design</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate_optimal</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
-    
+
     <span class="c1"># Regular LHS from scipy</span>
     <span class="n">sampler</span> <span class="o">=</span> <span class="n">qmc</span><span class="o">.</span><span class="n">LatinHypercube</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
     <span class="n">scipy_lhd</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
-    
+
     <span class="c1"># Calculate metrics</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_metrics</span><span class="p">(</span><span class="n">design</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="n">distances</span> <span class="o">=</span> <span class="n">pdist</span><span class="p">(</span><span class="n">design</span><span class="p">)</span>
         <span class="n">min_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span>
         <span class="n">mean_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span>
-        
+
         <span class="c1"># Calculate correlation between dimensions</span>
         <span class="n">correlation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">design</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">design</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-        
+
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Min distance: </span><span class="si">{</span><span class="n">min_dist</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean distance: </span><span class="si">{</span><span class="n">mean_dist</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Correlation: </span><span class="si">{</span><span class="n">correlation</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">()</span>
-        
+
         <span class="k">return</span> <span class="n">min_dist</span><span class="p">,</span> <span class="n">mean_dist</span><span class="p">,</span> <span class="n">correlation</span>
-    
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;🔧 Latin Hypercube Optimization Results:&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Latin Hypercube Optimization Results:&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
-    
+
     <span class="n">initial_metrics</span> <span class="o">=</span> <span class="n">calculate_metrics</span><span class="p">(</span><span class="n">initial_design</span><span class="p">,</span> <span class="s2">&quot;Initial LHS&quot;</span><span class="p">)</span>
     <span class="n">optimized_metrics</span> <span class="o">=</span> <span class="n">calculate_metrics</span><span class="p">(</span><span class="n">optimized_design</span><span class="p">,</span> <span class="s2">&quot;Optimized LHS (Maximin)&quot;</span><span class="p">)</span>
     <span class="n">scipy_metrics</span> <span class="o">=</span> <span class="n">calculate_metrics</span><span class="p">(</span><span class="n">scipy_lhd</span><span class="p">,</span> <span class="s2">&quot;SciPy LHS&quot;</span><span class="p">)</span>
@@ -710,7 +867,7 @@ Latin Hypercube Sampling Metrics:
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>🔧 Latin Hypercube Optimization Results:
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Latin Hypercube Optimization Results:
 ==================================================
 Initial LHS:
   Min distance: 0.0467
@@ -734,27 +891,36 @@ SciPy LHS:
 </section>
 <section id="summary">
 <h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
-<p>This notebook provides a comprehensive foundation for understanding the data pipeline requirements for magnetic field prediction using deep learning. The key concepts covered include:</p>
-<section id="key-achievements">
-<h3>✅ <strong>Key Achievements</strong><a class="headerlink" href="#key-achievements" title="Link to this heading">#</a></h3>
+<p>This notebook provides comprehensive foundations for the data pipeline used in magnetic field prediction with deep learning. The key concepts covered include:</p>
+<p><strong>Theoretical Foundations</strong>:</p>
 <ol class="arabic simple">
-<li><p><strong>Theoretical Foundation</strong>: Mathematical understanding of optimal experimental design</p></li>
-<li><p><strong>Sampling Theory</strong>: Latin Hypercube Sampling for efficient parameter space exploration</p></li>
-<li><p><strong>Quality Assurance</strong>: Framework for validating generated data</p></li>
-<li><p><strong>Integration Ready</strong>: Structure for incorporating FEMM simulations</p></li>
+<li><p><strong>Optimal Experimental Design</strong>: Mathematical framework for sample selection</p></li>
+<li><p><strong>Latin Hypercube Sampling</strong>: Efficient stratified sampling for high-dimensional spaces</p></li>
+<li><p><strong>Space-Filling Criteria</strong>: Maximizing coverage and minimizing correlation</p></li>
 </ol>
-</section>
-<section id="next-steps">
-<h3>🎯 <strong>Next Steps</strong><a class="headerlink" href="#next-steps" title="Link to this heading">#</a></h3>
-<p>The complete implementation would include:</p>
+<p><strong>Electromagnetic Problems</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Coil (Simple)</strong>: 3 parameters, copper in air</p></li>
+<li><p><strong>Transformer (Medium)</strong>: 4 parameters, M19 core with copper windings</p></li>
+<li><p><strong>IPM Motor (Complex)</strong>: 5 parameters, M19 core with NdFeBr magnets</p></li>
+</ol>
+<p><strong>Dataset Specifications</strong>:</p>
 <ul class="simple">
-<li><p>FEMM integration for real electromagnetic simulations</p></li>
-<li><p>Feature engineering pipeline for neural network inputs</p></li>
-<li><p>Data validation and quality assurance</p></li>
-<li><p>Storage and retrieval mechanisms for training data</p></li>
+<li><p>Total samples: 45,000</p></li>
+<li><p>Training: 30,000 (67%)</p></li>
+<li><p>Validation: 10,000 (22%)</p></li>
+<li><p>Test: 5,000 (11%)</p></li>
+<li><p>Sampling method: Latin Hypercube for uniform parameter space coverage</p></li>
 </ul>
-<p>This theoretical foundation ensures that the generated training data will be optimal for training deep learning models that can accurately predict magnetic fields in electromagnetic devices.</p>
-</section>
+<p><strong>Key Insights</strong>:</p>
+<p>The Latin Hypercube Sampling approach ensures:</p>
+<ul class="simple">
+<li><p>No clustering of samples in parameter space</p></li>
+<li><p>Each dimension is uniformly represented</p></li>
+<li><p>Better convergence than random sampling (<span class="math notranslate nohighlight">\(O(n^{-1})\)</span> vs <span class="math notranslate nohighlight">\(O(n^{-1/2})\)</span>)</p></li>
+<li><p>Efficient exploration of high-dimensional design spaces</p></li>
+</ul>
+<p>This theoretical foundation and practical parameterization enable training of deep learning models that accurately predict magnetic fields across diverse electromagnetic device configurations.</p>
 </section>
 </section>
 
@@ -798,11 +964,11 @@ SciPy LHS:
       </div>
     </a>
     <a class="right-next"
-       href="04_neural_networks.html"
+       href="05_uncertainty_quantification.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">CNN Architecture for Magnetic Field Prediction</p>
+        <p class="prev-next-title">Uncertainty Quantification for Magnetic Field Prediction</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -824,6 +990,12 @@ SciPy LHS:
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-objectives">Learning Objectives</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#electromagnetic-problems-overview">Electromagnetic Problems Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-1-simple-coil-in-air">Problem 1: Simple Coil in Air</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-2-transformer">Problem 2: Transformer</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-3-ipm-motor">Problem 3: IPM Motor</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#challenge-uncertainty-in-out-of-distribution-inputs">Challenge: Uncertainty in Out-of-Distribution Inputs</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#theoretical-foundations-of-experimental-design">Theoretical Foundations of Experimental Design</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#design-of-experiments-theory">1. Design of Experiments Theory</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#information-theoretic-sampling">2. Information-Theoretic Sampling</a></li>
@@ -836,11 +1008,7 @@ SciPy LHS:
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimality-criteria">3. Optimality Criteria</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-achievements">✅ <strong>Key Achievements</strong></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">🎯 <strong>Next Steps</strong></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
 </ul>
   </nav></div>
 

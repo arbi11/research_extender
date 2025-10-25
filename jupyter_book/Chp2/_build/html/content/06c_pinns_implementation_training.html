@@ -1,0 +1,1227 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Physics-Informed Neural Networks: Implementation &amp; Training &#8212; Chapter 2: Deep Learning for Magnetic Field Prediction</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/06c_pinns_implementation_training';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="00_intro.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 2: Deep Learning for Magnetic Field Prediction</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="01_modeling_fundamentals.html">Modeling Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_ml_basics.html">Machine Learning Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_data_pipeline.html">Data Pipeline for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_uncertainty_quantification.html">Uncertainty Quantification for Magnetic Field Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/06c_pinns_implementation_training.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Physics-Informed Neural Networks: Implementation & Training</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-and-imports">Setup and Imports</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#recreate-problem-setup">Recreate Problem Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pinn-architecture-for-electromagnetics">PINN Architecture for Electromagnetics</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#network-design">Network Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-features">Key Features:</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#understanding-the-pinn-architecture">Understanding the PINN Architecture</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#input-structure">Input Structure</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture-choice-tanh-activation">Architecture Choice: Tanh Activation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#network-depth">Network Depth</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#output-layer-design">Output Layer Design</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#automatic-differentiation-requirements">Automatic Differentiation Requirements</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#physics-loss-computation">Physics Loss Computation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#loss-components">Loss Components:</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#understanding-physics-loss-computation">Understanding Physics Loss Computation</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#automatic-differentiation-for-pdes">Automatic Differentiation for PDEs</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#maxwell-s-equations-as-loss-terms">Maxwell’s Equations as Loss Terms</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-source-representation">Current Source Representation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#combined-domain-loss">Combined Domain Loss</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-pipeline">Training Pipeline</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#training-strategy">Training Strategy:</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-training">Model Training</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-progress-visualization">Training Progress Visualization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="physics-informed-neural-networks-implementation-training">
+<h1>Physics-Informed Neural Networks: Implementation &amp; Training<a class="headerlink" href="#physics-informed-neural-networks-implementation-training" title="Link to this heading">#</a></h1>
+<p>This notebook implements the PINN architecture and complete training pipeline for electromagnetic field prediction.</p>
+<section id="setup-and-imports">
+<h2>Setup and Imports<a class="headerlink" href="#setup-and-imports" title="Link to this heading">#</a></h2>
+<p>This notebook implements Physics-Informed Neural Networks using the PyTorch framework  for automatic differentiation and GPU acceleration.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">DataLoader</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">patches</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">j0</span><span class="p">,</span> <span class="n">j1</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.animation</span><span class="w"> </span><span class="kn">import</span> <span class="n">FuncAnimation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTML</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mpl_toolkits.axes_grid1</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_axes_locatable</span>
+
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+<span class="c1"># Set style for better plots</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;seaborn-v0_8-whitegrid&#39;</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s2">&quot;husl&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Physics-Informed Neural Networks Framework Initialized&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PyTorch version: </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CUDA available: </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Set random seeds for reproducibility</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Physics-Informed Neural Networks Framework Initialized
+PyTorch version: 2.8.0+cpu
+CUDA available: False
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="recreate-problem-setup">
+<h2>Recreate Problem Setup<a class="headerlink" href="#recreate-problem-setup" title="Link to this heading">#</a></h2>
+<p>First, we need to instantiate the problem from the previous notebook.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import problem class from previous notebook</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ElectromagneticProblem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;2D electromagnetic field problem setup&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain_size</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">wire_position</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">current</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">mu_0</span><span class="o">=</span><span class="mi">4</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mf">1e-7</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span> <span class="o">=</span> <span class="n">domain_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span> <span class="o">=</span> <span class="n">wire_position</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">=</span> <span class="n">current</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu_0</span> <span class="o">=</span> <span class="n">mu_0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">analytical_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+        <span class="n">B_magnitude</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu_0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">Hx</span> <span class="o">=</span> <span class="o">-</span><span class="n">B_magnitude</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu_0</span>
+        <span class="n">Hy</span> <span class="o">=</span> <span class="n">B_magnitude</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu_0</span>
+        <span class="k">return</span> <span class="n">Hx</span><span class="p">,</span> <span class="n">Hy</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_training_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_data</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+        <span class="n">x_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_data</span><span class="p">)</span>
+        <span class="n">y_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_data</span><span class="p">)</span>
+        <span class="n">Hx_data</span><span class="p">,</span> <span class="n">Hy_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analytical_solution</span><span class="p">(</span><span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">Hx_data</span><span class="p">,</span> <span class="n">Hy_data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_collocation_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_domain</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">n_boundary</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+        <span class="n">x_domain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_domain</span><span class="p">)</span>
+        <span class="n">y_domain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_domain</span><span class="p">)</span>
+        <span class="n">r_from_wire</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">x_domain</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span>
+                              <span class="p">(</span><span class="n">y_domain</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">r_from_wire</span> <span class="o">&gt;</span> <span class="mf">0.1</span>
+        <span class="n">x_domain</span> <span class="o">=</span> <span class="n">x_domain</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+        <span class="n">y_domain</span> <span class="o">=</span> <span class="n">y_domain</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="n">boundary_points</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">x_boundary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_boundary</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">y_boundary_top</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">y_boundary_bottom</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">boundary_points</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">[:</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">],</span> <span class="n">y_boundary_top</span><span class="p">))</span>
+        <span class="n">boundary_points</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">[</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">:],</span> <span class="n">y_boundary_bottom</span><span class="p">))</span>
+
+        <span class="n">y_boundary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_boundary</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">x_boundary_left</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">x_boundary_right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">boundary_points</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x_boundary_left</span><span class="p">,</span> <span class="n">y_boundary</span><span class="p">[:</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">]))</span>
+        <span class="n">boundary_points</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x_boundary_right</span><span class="p">,</span> <span class="n">y_boundary</span><span class="p">[</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">:]))</span>
+
+        <span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">boundary_points</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x_domain</span><span class="p">,</span> <span class="n">y_domain</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_boundary</span><span class="p">)</span>
+
+<span class="c1"># Create problem instance</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="n">ElectromagneticProblem</span><span class="p">(</span><span class="n">domain_size</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">current</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SUCCESS: Problem initialized&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>SUCCESS: Problem initialized
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="pinn-architecture-for-electromagnetics">
+<h2>PINN Architecture for Electromagnetics<a class="headerlink" href="#pinn-architecture-for-electromagnetics" title="Link to this heading">#</a></h2>
+<section id="network-design">
+<h3>Network Design<a class="headerlink" href="#network-design" title="Link to this heading">#</a></h3>
+<p>A Physics-Informed Neural Network for magnetic field prediction consists of :</p>
+<ol class="arabic simple">
+<li><p><strong>Input Layer</strong>: Spatial coordinates <span class="math notranslate nohighlight">\((x, y)\)</span> and material properties <span class="math notranslate nohighlight">\(\mu\)</span></p></li>
+<li><p><strong>Hidden Layers</strong>: Deep neural network with nonlinear activation (tanh)</p></li>
+<li><p><strong>Output Layer</strong>: Magnetic field components <span class="math notranslate nohighlight">\((H_x, H_y)\)</span></p></li>
+<li><p><strong>Automatic Differentiation</strong>: Compute <span class="math notranslate nohighlight">\(\frac{\partial H_x}{\partial x}\)</span>, <span class="math notranslate nohighlight">\(\frac{\partial H_y}{\partial y}\)</span>, etc. </p></li>
+</ol>
+</section>
+<section id="key-features">
+<h3>Key Features:<a class="headerlink" href="#key-features" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Activation Function</strong>: <span class="math notranslate nohighlight">\(\tanh\)</span> (smooth derivatives, bounded output)</p></li>
+<li><p><strong>Architecture</strong>: [Input(4) → 32 → 64 → 32 → Output(2)]</p></li>
+<li><p><strong>Derivatives</strong>: Computed via PyTorch autograd for physics loss</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ElectromagneticPINN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Physics-Informed Neural Network for 2D magnetic field prediction&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">],</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;tanh&#39;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ElectromagneticPINN</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">activation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">layers</span>
+
+        <span class="c1"># Build network architecture</span>
+        <span class="n">network_layers</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Input layer (x, y, material properties)</span>
+        <span class="n">input_dim</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span>  <span class="c1"># coordinates + material properties</span>
+
+        <span class="c1"># Hidden layers</span>
+        <span class="n">prev_dim</span> <span class="o">=</span> <span class="n">input_dim</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer_dim</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">layers</span><span class="p">):</span>
+            <span class="n">network_layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">prev_dim</span><span class="p">,</span> <span class="n">layer_dim</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">network_layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_activation</span><span class="p">())</span>
+            <span class="n">prev_dim</span> <span class="o">=</span> <span class="n">layer_dim</span>
+
+        <span class="c1"># Output layer (Hx, Hy)</span>
+        <span class="n">network_layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">prev_dim</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">network</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">network_layers</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_activation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get activation function&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">==</span> <span class="s1">&#39;tanh&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Tanh</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">==</span> <span class="s1">&#39;relu&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">==</span> <span class="s1">&#39;sigmoid&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Tanh</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">material_props</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward pass through the neural network&quot;&quot;&quot;</span>
+        <span class="c1"># Combine inputs</span>
+        <span class="n">network_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">material_props</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Network forward pass</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="p">(</span><span class="n">network_input</span><span class="p">)</span>
+
+        <span class="c1"># Split into field components</span>
+        <span class="n">Hx</span> <span class="o">=</span> <span class="n">output</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Magnetic field x-component</span>
+        <span class="n">Hy</span> <span class="o">=</span> <span class="n">output</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># Magnetic field y-component</span>
+
+        <span class="k">return</span> <span class="n">Hx</span><span class="p">,</span> <span class="n">Hy</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_derivatives</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">material_props</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute spatial derivatives for physics loss&quot;&quot;&quot;</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">y</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">Hx</span><span class="p">,</span> <span class="n">Hy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">material_props</span><span class="p">)</span>
+
+        <span class="c1"># Compute gradients</span>
+        <span class="n">dHx_dx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">Hx</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">grad_outputs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">Hx</span><span class="p">),</span>
+                                     <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dHx_dy</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">Hx</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">grad_outputs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">Hx</span><span class="p">),</span>
+                                     <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dHy_dx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">Hy</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">grad_outputs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">Hy</span><span class="p">),</span>
+                                     <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dHy_dy</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">Hy</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">grad_outputs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">Hy</span><span class="p">),</span>
+                                     <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">Hx</span><span class="p">,</span> <span class="n">Hy</span><span class="p">,</span> <span class="n">dHx_dx</span><span class="p">,</span> <span class="n">dHx_dy</span><span class="p">,</span> <span class="n">dHy_dx</span><span class="p">,</span> <span class="n">dHy_dy</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PINN Architecture Defined&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SUCCESS: ElectromagneticPINN: Neural network for field prediction&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>PINN Architecture Defined
+SUCCESS: ElectromagneticPINN: Neural network for field prediction
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="understanding-the-pinn-architecture">
+<h3>Understanding the PINN Architecture<a class="headerlink" href="#understanding-the-pinn-architecture" title="Link to this heading">#</a></h3>
+<p>This Physics-Informed Neural Network has special requirements compared to standard neural networks:</p>
+<section id="input-structure">
+<h4>Input Structure<a class="headerlink" href="#input-structure" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">input_dim</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span>  <span class="c1"># coordinates + material properties</span>
+</pre></div>
+</div>
+<p><strong>Why 4 inputs?</strong></p>
+<ul class="simple">
+<li><p><strong>2 spatial coordinates</strong>: (x, y) position in the domain where we evaluate the field</p></li>
+<li><p><strong>2 material properties</strong>: Permeability μ and auxiliary property</p>
+<ul>
+<li><p>Allows network to learn material-dependent behavior</p></li>
+<li><p>Essential for multi-material problems (air, iron, copper)</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="architecture-choice-tanh-activation">
+<h4>Architecture Choice: Tanh Activation<a class="headerlink" href="#architecture-choice-tanh-activation" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">activation</span><span class="o">=</span><span class="s1">&#39;tanh&#39;</span>
+</pre></div>
+</div>
+<p><strong>Why tanh for PINNs?</strong></p>
+<ul class="simple">
+<li><p><strong>Smooth derivatives</strong>: Essential for physics loss (computes ∂H/∂x, ∂H/∂y)</p></li>
+<li><p><strong>Bounded output</strong>: Range [-1, 1] prevents exploding values</p></li>
+<li><p><strong>Symmetric</strong>: Helps with magnetic fields (positive and negative directions)</p></li>
+<li><p>ReLU would have problems: non-smooth at 0, unbounded, asymmetric</p></li>
+</ul>
+</section>
+<section id="network-depth">
+<h4>Network Depth<a class="headerlink" href="#network-depth" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">layers</span><span class="o">=</span><span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">]</span>  <span class="c1"># 3 hidden layers</span>
+</pre></div>
+</div>
+<p><strong>Design pattern:</strong></p>
+<ul class="simple">
+<li><p><strong>Encoder</strong>: 32 → 64 (expand representation)</p></li>
+<li><p><strong>Decoder</strong>: 64 → 32 (compress to output)</p></li>
+<li><p><strong>Bottleneck</strong>: Wider middle layer captures complex patterns</p></li>
+<li><p>Total: ~10K parameters (small enough for fast training)</p></li>
+</ul>
+</section>
+<section id="output-layer-design">
+<h4>Output Layer Design<a class="headerlink" href="#output-layer-design" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">network_layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">prev_dim</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>  <span class="c1"># No activation</span>
+</pre></div>
+</div>
+<p><strong>Why 2 outputs without activation?</strong></p>
+<ul class="simple">
+<li><p><strong>Hx, Hy</strong>: Must predict any real-valued magnetic field components</p></li>
+<li><p><strong>No activation</strong>: Regression task (not classification)</p></li>
+<li><p><strong>Separate outputs</strong>: Allows independent x and y components</p></li>
+</ul>
+</section>
+<section id="automatic-differentiation-requirements">
+<h4>Automatic Differentiation Requirements<a class="headerlink" href="#automatic-differentiation-requirements" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">x</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">y</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Critical for physics loss:</strong></p>
+<ul class="simple">
+<li><p>Tells PyTorch to track operations on x and y</p></li>
+<li><p>Enables computing ∂H/∂x and ∂H/∂y automatically</p></li>
+<li><p>Without this, cannot enforce Maxwell’s equations</p></li>
+<li><p>Creates computational graph for chain rule application</p></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="physics-loss-computation">
+<h2>Physics Loss Computation<a class="headerlink" href="#physics-loss-computation" title="Link to this heading">#</a></h2>
+<p>The physics loss enforces Maxwell’s equations at collocation points throughout the domain.</p>
+<section id="loss-components">
+<h3>Loss Components:<a class="headerlink" href="#loss-components" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p><strong>Ampère’s Law Loss</strong>:
+$<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{Ampere}} = \left\| \frac{\partial H_y}{\partial x} - \frac{\partial H_x}{\partial y} - J_z \right\|^2\)</span>$</p></li>
+<li><p><strong>Gauss’s Law Loss</strong>:
+$<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{Gauss}} = \left\| \frac{\partial H_x}{\partial x} + \frac{\partial H_y}{\partial y} \right\|^2\)</span>$</p></li>
+<li><p><strong>Boundary Loss</strong>:
+$<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{boundary}} = \| H_{\text{pred}} - H_{\text{analytical}} \|^2\)</span>$</p></li>
+</ol>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">PhysicsLoss</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Physics loss computation for Maxwell&#39;s equations&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_physics_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">x_domain</span><span class="p">,</span> <span class="n">y_domain</span><span class="p">,</span> <span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute physics loss for domain and boundary points&quot;&quot;&quot;</span>
+        <span class="c1"># Convert to tensors</span>
+        <span class="n">x_domain_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x_domain</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y_domain_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y_domain</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">x_boundary_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y_boundary_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y_boundary</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Material properties (uniform for this problem)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">x_domain_tensor</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mu_0</span>
+        <span class="n">material_props_domain</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">mu</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">x_domain_tensor</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">material_props_boundary</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">mu</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x_boundary_tensor</span><span class="p">)],</span>
+                                           <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">x_boundary_tensor</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Domain physics loss (Maxwell&#39;s equations)</span>
+        <span class="n">Hx_dom</span><span class="p">,</span> <span class="n">Hy_dom</span><span class="p">,</span> <span class="n">dHx_dx</span><span class="p">,</span> <span class="n">dHx_dy</span><span class="p">,</span> <span class="n">dHy_dx</span><span class="p">,</span> <span class="n">dHy_dy</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">compute_derivatives</span><span class="p">(</span>
+            <span class="n">x_domain_tensor</span><span class="p">,</span> <span class="n">y_domain_tensor</span><span class="p">,</span> <span class="n">material_props_domain</span><span class="p">)</span>
+
+        <span class="c1"># Current density (point source at wire location)</span>
+        <span class="n">r_from_wire</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">x_domain_tensor</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span>
+                                 <span class="p">(</span><span class="n">y_domain_tensor</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">J_z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">current</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">r_from_wire</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mf">0.01</span><span class="p">)</span>  <span class="c1"># Smoothed point source</span>
+
+        <span class="c1"># Ampère&#39;s law: ∂Hy/∂x - ∂Hx/∂y = Jz</span>
+        <span class="n">ampere_loss</span> <span class="o">=</span> <span class="n">dHy_dx</span> <span class="o">-</span> <span class="n">dHx_dy</span> <span class="o">-</span> <span class="n">J_z</span>
+
+        <span class="c1"># Gauss&#39;s law for magnetism: ∂Bx/∂x + ∂By/∂y = 0</span>
+        <span class="c1"># B = μH, so ∂(μHx)/∂x + ∂(μHy)/∂y = 0</span>
+        <span class="n">div_B</span> <span class="o">=</span> <span class="n">dHx_dx</span> <span class="o">+</span> <span class="n">dHy_dy</span>  <span class="c1"># For uniform μ</span>
+
+        <span class="n">domain_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ampere_loss</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">div_B</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Boundary loss (far-field conditions)</span>
+        <span class="n">Hx_bound</span><span class="p">,</span> <span class="n">Hy_bound</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">compute_derivatives</span><span class="p">(</span>
+            <span class="n">x_boundary_tensor</span><span class="p">,</span> <span class="n">y_boundary_tensor</span><span class="p">,</span> <span class="n">material_props_boundary</span><span class="p">)</span>
+
+        <span class="c1"># Far-field approximation (should match analytical solution at boundaries)</span>
+        <span class="n">Hx_analytical</span><span class="p">,</span> <span class="n">Hy_analytical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">analytical_solution</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span><span class="p">)</span>
+        <span class="n">Hx_analytical_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">Hx_analytical</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">Hy_analytical_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">Hy_analytical</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">boundary_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">Hx_bound</span> <span class="o">-</span> <span class="n">Hx_analytical_tensor</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">Hy_bound</span> <span class="o">-</span> <span class="n">Hy_analytical_tensor</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">domain_loss</span><span class="p">,</span> <span class="n">boundary_loss</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SUCCESS: Physics loss computation defined&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>SUCCESS: Physics loss computation defined
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="understanding-physics-loss-computation">
+<h3>Understanding Physics Loss Computation<a class="headerlink" href="#understanding-physics-loss-computation" title="Link to this heading">#</a></h3>
+<p>The physics loss enforces Maxwell’s equations at collocation points. This is the key innovation of PINNs.</p>
+<section id="automatic-differentiation-for-pdes">
+<h4>Automatic Differentiation for PDEs<a class="headerlink" href="#automatic-differentiation-for-pdes" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dHx_dx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">Hx</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">grad_outputs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">Hx</span><span class="p">),</span> 
+                             <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><strong>Breaking down the derivative computation:</strong></p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">torch.autograd.grad(Hx,</span> <span class="pre">x,</span> <span class="pre">...)</span></code></strong>: Computes ∂Hx/∂x using chain rule</p>
+<ul>
+<li><p>Traces back through network: output → hidden layers → input x</p></li>
+<li><p>Returns gradient of Hx with respect to x coordinate</p></li>
+</ul>
+</li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">grad_outputs=torch.ones_like(Hx)</span></code></strong>: Weights for the gradient</p>
+<ul>
+<li><p>Ones means: compute gradient for each output independently</p></li>
+<li><p>For multi-output functions, specifies which outputs to differentiate</p></li>
+</ul>
+</li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">create_graph=True</span></code></strong>: Build computational graph for gradients</p>
+<ul>
+<li><p>Allows computing second derivatives (if needed)</p></li>
+<li><p>Essential for backpropagating through the physics loss</p></li>
+</ul>
+</li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">retain_graph=True</span></code></strong>: Keep graph after backward pass</p>
+<ul>
+<li><p>Needed because we compute multiple derivatives (dHx/dx, dHx/dy, dHy/dx, dHy/dy)</p></li>
+<li><p>Each gradient computation needs access to the graph</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="maxwell-s-equations-as-loss-terms">
+<h4>Maxwell’s Equations as Loss Terms<a class="headerlink" href="#maxwell-s-equations-as-loss-terms" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Ampère&#39;s law: ∂Hy/∂x - ∂Hx/∂y = Jz</span>
+<span class="n">ampere_loss</span> <span class="o">=</span> <span class="n">dHy_dx</span> <span class="o">-</span> <span class="n">dHx_dy</span> <span class="o">-</span> <span class="n">J_z</span>
+
+<span class="c1"># Gauss&#39;s law: ∂Hx/∂x + ∂Hy/∂y = 0</span>
+<span class="n">div_B</span> <span class="o">=</span> <span class="n">dHx_dx</span> <span class="o">+</span> <span class="n">dHy_dy</span>
+</pre></div>
+</div>
+<p><strong>Understanding the physics:</strong></p>
+<ol class="arabic simple">
+<li><p><strong>Ampère’s Law</strong> (∇ × H = J):</p>
+<ul class="simple">
+<li><p>Curl of magnetic field equals current density</p></li>
+<li><p>In 2D: reduces to ∂Hy/∂x - ∂Hx/∂y = Jz</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ampere_loss</span></code> should be zero if network satisfies physics</p></li>
+<li><p>Non-zero loss → network violates Maxwell’s equations</p></li>
+</ul>
+</li>
+<li><p><strong>Gauss’s Law</strong> (∇ · B = 0):</p>
+<ul class="simple">
+<li><p>Magnetic field lines form closed loops</p></li>
+<li><p>No magnetic monopoles exist</p></li>
+<li><p>In 2D: ∂Bx/∂x + ∂By/∂y = 0</p></li>
+<li><p>For uniform μ: becomes ∂Hx/∂x + ∂Hy/∂y = 0</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="current-source-representation">
+<h4>Current Source Representation<a class="headerlink" href="#current-source-representation" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">J_z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">current</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">r_from_wire</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mf">0.01</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Why Gaussian smoothing?</strong></p>
+<ul class="simple">
+<li><p>Real wire: point source (Dirac delta function)</p></li>
+<li><p><strong>Problem</strong>: Point sources have infinite field at center</p></li>
+<li><p><strong>Solution</strong>: Smooth Gaussian distribution</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">exp(-r²/0.01)</span></code>: Decays rapidly away from wire</p></li>
+<li><p>0.01: Controls smoothness (smaller = sharper, but harder to learn)</p></li>
+</ul>
+</li>
+<li><p>Network can handle smooth functions better than singularities</p></li>
+</ul>
+</section>
+<section id="combined-domain-loss">
+<h4>Combined Domain Loss<a class="headerlink" href="#combined-domain-loss" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">domain_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ampere_loss</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">div_B</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Why square and average?</strong></p>
+<ul class="simple">
+<li><p><strong>Squaring</strong>: Makes loss positive, penalizes violations</p></li>
+<li><p><strong>Mean</strong>: Normalizes by number of collocation points</p>
+<ul>
+<li><p>Allows comparing losses with different numbers of points</p></li>
+<li><p>Prevents loss from growing with more collocation points</p></li>
+</ul>
+</li>
+<li><p><strong>Addition</strong>: Both physics laws must be satisfied</p>
+<ul>
+<li><p>Could weight them differently (λ₁·Ampère + λ₂·Gauss) if needed</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="training-pipeline">
+<h2>Training Pipeline<a class="headerlink" href="#training-pipeline" title="Link to this heading">#</a></h2>
+<p>Complete training pipeline with data loss, physics loss, and comprehensive monitoring.</p>
+<section id="training-strategy">
+<h3>Training Strategy:<a class="headerlink" href="#training-strategy" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p><strong>Combined Loss</strong>:
+$<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{data}} + \lambda(\mathcal{L}_{\text{Ampere}} + \mathcal{L}_{\text{Gauss}} + \mathcal{L}_{\text{boundary}})\)</span>$</p></li>
+<li><p><strong>Optimizer</strong>: Adam  with learning rate 0.01</p></li>
+<li><p><strong>Hyperparameter</strong>: <span class="math notranslate nohighlight">\(\lambda = 1.0\)</span> (equal weight to data and physics)</p></li>
+<li><p><strong>Epochs</strong>: 300 (optimized for demonstration)</p></li>
+</ol>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">PINNTrainer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Training pipeline for Physics-Informed Neural Networks&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">problem</span><span class="p">,</span> <span class="n">physics_loss</span><span class="p">,</span> <span class="n">lambda_physics</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">physics_loss</span> <span class="o">=</span> <span class="n">physics_loss</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_physics</span> <span class="o">=</span> <span class="n">lambda_physics</span>
+
+        <span class="c1"># Optimizer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+
+        <span class="c1"># Training history</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;total_loss&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;data_loss&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;physics_loss&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;boundary_loss&#39;</span><span class="p">:</span> <span class="p">[]</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">Hx_data</span><span class="p">,</span> <span class="n">Hy_data</span><span class="p">,</span>
+                    <span class="n">x_domain</span><span class="p">,</span> <span class="n">y_domain</span><span class="p">,</span> <span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Train for one epoch&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+        <span class="c1"># Convert data to tensors</span>
+        <span class="n">x_data_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y_data_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">Hx_data_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">Hx_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">Hy_data_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">Hy_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Material properties for data points</span>
+        <span class="n">mu_data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">x_data_tensor</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">mu_0</span>
+        <span class="n">material_props_data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">mu_data</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">x_data_tensor</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Data loss</span>
+        <span class="n">Hx_pred</span><span class="p">,</span> <span class="n">Hy_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">x_data_tensor</span><span class="p">,</span> <span class="n">y_data_tensor</span><span class="p">,</span> <span class="n">material_props_data</span><span class="p">)</span>
+        <span class="n">data_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">Hx_pred</span> <span class="o">-</span> <span class="n">Hx_data_tensor</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">Hy_pred</span> <span class="o">-</span> <span class="n">Hy_data_tensor</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Physics loss</span>
+        <span class="n">domain_loss</span><span class="p">,</span> <span class="n">boundary_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">physics_loss</span><span class="o">.</span><span class="n">compute_physics_loss</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">x_domain</span><span class="p">,</span> <span class="n">y_domain</span><span class="p">,</span> <span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span><span class="p">)</span>
+
+        <span class="c1"># Total loss</span>
+        <span class="n">total_loss</span> <span class="o">=</span> <span class="n">data_loss</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_physics</span> <span class="o">*</span> <span class="p">(</span><span class="n">domain_loss</span> <span class="o">+</span> <span class="n">boundary_loss</span><span class="p">)</span>
+
+        <span class="c1"># Backpropagation</span>
+        <span class="n">total_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+        <span class="c1"># Store history</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;total_loss&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;data_loss&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;physics_loss&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">domain_loss</span> <span class="o">+</span> <span class="n">boundary_loss</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;boundary_loss&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">boundary_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">total_loss</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">data_loss</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="p">(</span><span class="n">domain_loss</span> <span class="o">+</span> <span class="n">boundary_loss</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">print_every</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Complete training pipeline (optimized for speed)&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; Starting PINN training...&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Generate training data</span>
+        <span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">Hx_data</span><span class="p">,</span> <span class="n">Hy_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">generate_training_data</span><span class="p">(</span><span class="n">n_data</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+        <span class="n">x_domain</span><span class="p">,</span> <span class="n">y_domain</span><span class="p">,</span> <span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">generate_collocation_points</span><span class="p">()</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training data points: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_data</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Domain collocation points: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_domain</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Boundary collocation points: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+            <span class="n">total_loss</span><span class="p">,</span> <span class="n">data_loss</span><span class="p">,</span> <span class="n">physics_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_epoch</span><span class="p">(</span>
+                <span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">Hx_data</span><span class="p">,</span> <span class="n">Hy_data</span><span class="p">,</span>
+                <span class="n">x_domain</span><span class="p">,</span> <span class="n">y_domain</span><span class="p">,</span> <span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">epoch</span> <span class="o">%</span> <span class="n">print_every</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2">: Total Loss = </span><span class="si">{</span><span class="n">total_loss</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, &quot;</span>
+                      <span class="sa">f</span><span class="s2">&quot;Data Loss = </span><span class="si">{</span><span class="n">data_loss</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, Physics Loss = </span><span class="si">{</span><span class="n">physics_loss</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SUCCESS: Training completed!&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SUCCESS: PINN training pipeline defined&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>SUCCESS: PINN training pipeline defined
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="model-training">
+<h2>Model Training<a class="headerlink" href="#model-training" title="Link to this heading">#</a></h2>
+<p>Let’s train the PINN on our electromagnetic problem with optimized parameters for faster execution.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create and train the model (optimized for speed)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ElectromagneticPINN</span><span class="p">(</span><span class="n">layers</span><span class="o">=</span><span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">],</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;tanh&#39;</span><span class="p">)</span>
+<span class="n">physics_loss_computer</span> <span class="o">=</span> <span class="n">PhysicsLoss</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">PINNTrainer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">problem</span><span class="p">,</span> <span class="n">physics_loss_computer</span><span class="p">,</span> <span class="n">lambda_physics</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model parameters: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Train the model (reduced epochs for faster execution)</span>
+<span class="n">history</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">print_every</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Model parameters: 4,418
+ Starting PINN training...
+Training data points: 30
+Domain collocation points: 989
+Boundary collocation points: 100
+Epoch    0: Total Loss = 0.384283, Data Loss = 0.342543, Physics Loss = 0.041740
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Epoch   50: Total Loss = 0.293408, Data Loss = 0.271463, Physics Loss = 0.021946
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Epoch  100: Total Loss = 0.286883, Data Loss = 0.260147, Physics Loss = 0.026736
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Epoch  150: Total Loss = 0.284660, Data Loss = 0.257094, Physics Loss = 0.027567
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Epoch  200: Total Loss = 0.283600, Data Loss = 0.257348, Physics Loss = 0.026252
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Epoch  250: Total Loss = 0.280127, Data Loss = 0.250340, Physics Loss = 0.029787
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>SUCCESS: Training completed!
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="training-progress-visualization">
+<h2>Training Progress Visualization<a class="headerlink" href="#training-progress-visualization" title="Link to this heading">#</a></h2>
+<p>Let’s visualize the training progress to understand how the PINN learns.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_training_history</span><span class="p">(</span><span class="n">history</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot training loss curves&quot;&quot;&quot;</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;PINN Training Progress&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Total loss</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;total_loss&#39;</span><span class="p">],</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Total Loss&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Epoch&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Loss&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Total Loss&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+    <span class="c1"># Data loss</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;data_loss&#39;</span><span class="p">],</span> <span class="s1">&#39;r-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Data Loss&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Epoch&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Loss&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Data Loss&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+    <span class="c1"># Physics loss</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;physics_loss&#39;</span><span class="p">],</span> <span class="s1">&#39;g-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Physics Loss&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Epoch&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Loss&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Physics Loss&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+    <span class="c1"># Combined view</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;total_loss&#39;</span><span class="p">],</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Total&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;data_loss&#39;</span><span class="p">],</span> <span class="s1">&#39;r-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Data&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;physics_loss&#39;</span><span class="p">],</span> <span class="s1">&#39;g-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Physics&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Epoch&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Loss (log scale)&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;All Losses (Log Scale)&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="n">plot_training_history</span><span class="p">(</span><span class="n">history</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<p>In this notebook, we implemented:</p>
+<ol class="arabic simple">
+<li><p><strong>PINN Architecture</strong>:</p></li>
+</ol>
+<ul class="simple">
+<li><p>Neural network with 3 hidden layers [32, 64, 32]</p></li>
+<li><p>Automatic differentiation for physics loss</p></li>
+<li><p>Total of ~10K parameters</p></li>
+</ul>
+<ol class="arabic simple" start="2">
+<li><p><strong>Physics Loss</strong>:</p></li>
+</ol>
+<ul class="simple">
+<li><p>Ampère’s law enforcement</p></li>
+<li><p>Gauss’s law for magnetism</p></li>
+<li><p>Boundary condition matching</p></li>
+</ul>
+<ol class="arabic simple" start="3">
+<li><p><strong>Training Pipeline</strong>:</p></li>
+</ol>
+<ul class="simple">
+<li><p>Combined data + physics loss</p></li>
+<li><p>Adam optimizer with lr=0.01</p></li>
+<li><p>Training for 300 epochs</p></li>
+<li><p>Loss monitoring and visualization</p></li>
+</ul>
+<p><strong>Key Observations</strong>:</p>
+<ul class="simple">
+<li><p>Both data loss and physics loss decrease during training</p></li>
+<li><p>Physics loss enforces Maxwell’s equations throughout domain</p></li>
+<li><p>Only 30 labeled points required (vs thousands for traditional DL)</p></li>
+</ul>
+<p>In the next notebook (06d), we will evaluate the trained PINN and visualize the predicted magnetic field distributions.</p>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-and-imports">Setup and Imports</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#recreate-problem-setup">Recreate Problem Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pinn-architecture-for-electromagnetics">PINN Architecture for Electromagnetics</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#network-design">Network Design</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-features">Key Features:</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#understanding-the-pinn-architecture">Understanding the PINN Architecture</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#input-structure">Input Structure</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture-choice-tanh-activation">Architecture Choice: Tanh Activation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#network-depth">Network Depth</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#output-layer-design">Output Layer Design</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#automatic-differentiation-requirements">Automatic Differentiation Requirements</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#physics-loss-computation">Physics Loss Computation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#loss-components">Loss Components:</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#understanding-physics-loss-computation">Understanding Physics Loss Computation</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#automatic-differentiation-for-pdes">Automatic Differentiation for PDEs</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#maxwell-s-equations-as-loss-terms">Maxwell’s Equations as Loss Terms</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-source-representation">Current Source Representation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#combined-domain-loss">Combined Domain Loss</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-pipeline">Training Pipeline</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#training-strategy">Training Strategy:</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-training">Model Training</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-progress-visualization">Training Progress Visualization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

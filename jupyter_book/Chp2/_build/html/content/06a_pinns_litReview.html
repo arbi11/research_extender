@@ -1,0 +1,769 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Physics-Informed Neural Networks for Electromagnetic Field Prediction &#8212; Chapter 2: Deep Learning for Magnetic Field Prediction</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/06a_pinns_litReview';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="00_intro.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 2: Deep Learning for Magnetic Field Prediction</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="01_modeling_fundamentals.html">Modeling Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_ml_basics.html">Machine Learning Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_data_pipeline.html">Data Pipeline for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_uncertainty_quantification.html">Uncertainty Quantification for Magnetic Field Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/06a_pinns_litReview.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Physics-Informed Neural Networks for Electromagnetic Field Prediction</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-advantages-of-pinns">Key Advantages of PINNs:</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pinn-innovation-for-electromagnetics">PINN Innovation for Electromagnetics</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#literature-survey-pinns-in-computational-electromagnetics">Literature Survey: PINNs in Computational Electromagnetics</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#foundations-of-physics-informed-neural-networks">Foundations of Physics-Informed Neural Networks</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#applications-in-electromagnetics">Applications in Electromagnetics</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#magnetostatic-field-prediction">1. Magnetostatic Field Prediction</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#electrostatic-problems">2. Electrostatic Problems</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#time-harmonic-maxwell-s-equations">3. Time-Harmonic Maxwell’s Equations</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#inverse-problems-in-electromagnetics">4. Inverse Problems in Electromagnetics</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#advantages-over-traditional-methods">Advantages Over Traditional Methods</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#current-limitations-and-research-directions">Current Limitations and Research Directions</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-traditional-deep-learning-vs-physics-informed-approach">Comparison: Traditional Deep Learning vs Physics-Informed Approach</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#traditional-deep-learning-chapter-2-main-approach">Traditional Deep Learning (Chapter 2 Main Approach)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#physics-informed-neural-networks-this-section">Physics-Informed Neural Networks (This Section)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#when-to-use-each-approach">When to Use Each Approach?</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scope-of-this-section">Scope of This Section</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#b-methodology">06b: Methodology</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#c-implementation-training">06c: Implementation &amp; Training</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#d-results-discussion">06d: Results &amp; Discussion</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-objectives">Learning Objectives</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="physics-informed-neural-networks-for-electromagnetic-field-prediction">
+<h1>Physics-Informed Neural Networks for Electromagnetic Field Prediction<a class="headerlink" href="#physics-informed-neural-networks-for-electromagnetic-field-prediction" title="Link to this heading">#</a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
+<p>While traditional deep learning models learn mappings purely from data, <strong>Physics-Informed Neural Networks (PINNs)</strong> integrate physical laws directly into the learning process. This approach is particularly valuable for electromagnetic field prediction where the governing equations are well-established.</p>
+<section id="key-advantages-of-pinns">
+<h3>Key Advantages of PINNs:<a class="headerlink" href="#key-advantages-of-pinns" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p><strong>Physics Consistency</strong>: Predictions automatically satisfy Maxwell’s equations</p></li>
+<li><p><strong>Data Efficiency</strong>: Can learn from sparse data due to physics constraints</p></li>
+<li><p><strong>Generalization</strong>: Better extrapolation to unseen parameter regimes</p></li>
+<li><p><strong>Interpretability</strong>: Models incorporate known physical relationships</p></li>
+</ol>
+</section>
+<section id="pinn-innovation-for-electromagnetics">
+<h3>PINN Innovation for Electromagnetics<a class="headerlink" href="#pinn-innovation-for-electromagnetics" title="Link to this heading">#</a></h3>
+<p>Traditional neural networks learn from input-output pairs <span class="math notranslate nohighlight">\((x_i, y_i)\)</span>, but PINNs also incorporate the <strong>partial differential equations (PDEs)</strong> that govern the system:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{L}_{\text{total}}(\theta) = \mathcal{L}_{\text{data}}(\theta) + \lambda \mathcal{L}_{\text{physics}}(\theta)\]</div>
+<p>Where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\mathcal{L}_{\text{data}}\)</span> is the standard data loss (MSE between predictions and observations)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathcal{L}_{\text{physics}}\)</span> enforces physics constraints (PDE residuals)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\lambda\)</span> balances data and physics contributions</p></li>
+<li><p><span class="math notranslate nohighlight">\(\theta\)</span> represents the neural network parameters</p></li>
+</ul>
+</section>
+</section>
+<section id="literature-survey-pinns-in-computational-electromagnetics">
+<h2>Literature Survey: PINNs in Computational Electromagnetics<a class="headerlink" href="#literature-survey-pinns-in-computational-electromagnetics" title="Link to this heading">#</a></h2>
+<section id="foundations-of-physics-informed-neural-networks">
+<h3>Foundations of Physics-Informed Neural Networks<a class="headerlink" href="#foundations-of-physics-informed-neural-networks" title="Link to this heading">#</a></h3>
+<p>The concept of Physics-Informed Neural Networks was formalized by Raissi, Perdikaris, and Karniadakis (2019) in their seminal work demonstrating that neural networks can solve forward and inverse problems governed by partial differential equations. The key innovation was the automatic differentiation framework that enables efficient computation of PDE residuals within the training loop .</p>
+<p><strong>Core Idea</strong>: Instead of treating the neural network as a pure black-box function approximator, PINNs leverage:</p>
+<ul class="simple">
+<li><p><strong>Automatic differentiation</strong> to compute spatial/temporal derivatives</p></li>
+<li><p><strong>Collocation methods</strong> to enforce PDEs at sampled points</p></li>
+<li><p><strong>Soft constraints</strong> through loss function penalties</p></li>
+</ul>
+</section>
+<section id="applications-in-electromagnetics">
+<h3>Applications in Electromagnetics<a class="headerlink" href="#applications-in-electromagnetics" title="Link to this heading">#</a></h3>
+<p>PINNs have been successfully applied to various electromagnetic problems:</p>
+<section id="magnetostatic-field-prediction">
+<h4>1. Magnetostatic Field Prediction<a class="headerlink" href="#magnetostatic-field-prediction" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>Barmada et al. (2020) : Applied deep learning to magnetic field prediction in transformers, demonstrating orders of magnitude speedup over FEA</p></li>
+<li><p>Chen et al. (2022): Extended PINNs to handle nonlinear B-H curves in electrical machines</p></li>
+</ul>
+</section>
+<section id="electrostatic-problems">
+<h4>2. Electrostatic Problems<a class="headerlink" href="#electrostatic-problems" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>Henning &amp; Stewart (2020): Solved Poisson’s equation for electrostatic potential with complex boundary geometries</p></li>
+<li><p>Showed PINNs can handle irregular domains without mesh generation</p></li>
+</ul>
+</section>
+<section id="time-harmonic-maxwell-s-equations">
+<h4>3. Time-Harmonic Maxwell’s Equations<a class="headerlink" href="#time-harmonic-maxwell-s-equations" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>Gao et al. (2021): Applied PINNs to time-harmonic electromagnetic wave propagation</p></li>
+<li><p>Demonstrated capability to capture skin effect and eddy current distributions</p></li>
+</ul>
+</section>
+<section id="inverse-problems-in-electromagnetics">
+<h4>4. Inverse Problems in Electromagnetics<a class="headerlink" href="#inverse-problems-in-electromagnetics" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>Wang et al. (2022): Used PINNs for parameter identification (material properties, source currents)</p></li>
+<li><p>Combined sparse measurements with physics constraints for robust estimation</p></li>
+</ul>
+</section>
+</section>
+<section id="advantages-over-traditional-methods">
+<h3>Advantages Over Traditional Methods<a class="headerlink" href="#advantages-over-traditional-methods" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Aspect</p></th>
+<th class="head"><p>FEA</p></th>
+<th class="head"><p>Traditional DL</p></th>
+<th class="head"><p>PINNs</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Mesh Required</strong></p></td>
+<td><p>Yes</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Data Requirements</strong></p></td>
+<td><p>-</p></td>
+<td><p>High (1000s)</p></td>
+<td><p>Low (10-100)</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Physics Consistency</strong></p></td>
+<td><p>Exact</p></td>
+<td><p>No guarantee</p></td>
+<td><p>Enforced</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Inference Speed</strong></p></td>
+<td><p>Slow</p></td>
+<td><p>Very Fast</p></td>
+<td><p>Very Fast</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Extrapolation</strong></p></td>
+<td><p>Not applicable</p></td>
+<td><p>Poor</p></td>
+<td><p>Good</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Complex Geometry</strong></p></td>
+<td><p>Requires re-mesh</p></td>
+<td><p>Needs retraining</p></td>
+<td><p>Flexible</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="current-limitations-and-research-directions">
+<h3>Current Limitations and Research Directions<a class="headerlink" href="#current-limitations-and-research-directions" title="Link to this heading">#</a></h3>
+<p>Despite promising results, PINNs face several challenges :</p>
+<ol class="arabic simple">
+<li><p><strong>Training Difficulty</strong>:</p></li>
+</ol>
+<ul class="simple">
+<li><p>Balancing data loss and physics loss (hyperparameter <span class="math notranslate nohighlight">\(\lambda\)</span>)</p></li>
+<li><p>Multi-scale problems (sharp gradients at boundaries)</p></li>
+<li><p>Convergence can be slow for stiff PDEs</p></li>
+</ul>
+<ol class="arabic simple" start="2">
+<li><p><strong>Computational Cost</strong>:</p></li>
+</ol>
+<ul class="simple">
+<li><p>Automatic differentiation for physics loss is expensive</p></li>
+<li><p>Requires many collocation points for good coverage</p></li>
+</ul>
+<ol class="arabic simple" start="3">
+<li><p><strong>Complex Geometries</strong>:</p></li>
+</ol>
+<ul class="simple">
+<li><p>Handling material interfaces and discontinuities</p></li>
+<li><p>Boundary condition enforcement</p></li>
+</ul>
+<p><strong>Recent Advances</strong>:</p>
+<ul class="simple">
+<li><p><strong>Extended PINNs (XPINNs)</strong>: Domain decomposition for parallel training</p></li>
+<li><p><strong>Adaptive Collocation</strong>: Dynamic sampling of physics points</p></li>
+<li><p><strong>Conservative PINNs</strong>: Enforce conservation laws explicitly</p></li>
+<li><p><strong>Multi-fidelity PINNs</strong>: Combine high-fidelity (FEA) and low-fidelity (analytical) data</p></li>
+</ul>
+</section>
+</section>
+<section id="comparison-traditional-deep-learning-vs-physics-informed-approach">
+<h2>Comparison: Traditional Deep Learning vs Physics-Informed Approach<a class="headerlink" href="#comparison-traditional-deep-learning-vs-physics-informed-approach" title="Link to this heading">#</a></h2>
+<section id="traditional-deep-learning-chapter-2-main-approach">
+<h3>Traditional Deep Learning (Chapter 2 Main Approach)<a class="headerlink" href="#traditional-deep-learning-chapter-2-main-approach" title="Link to this heading">#</a></h3>
+<p>In the main body of Chapter 2, we developed a <strong>pure data-driven CNN</strong> for magnetic field prediction:</p>
+<p><strong>Approach</strong>:</p>
+<ul class="simple">
+<li><p><strong>Training Data</strong>: 45,000 FEA simulations (geometry → field distribution)</p></li>
+<li><p><strong>Architecture</strong>: Encoder-decoder CNN with dilated convolutions</p></li>
+<li><p><strong>Loss Function</strong>: Mean squared error between prediction and FEA ground truth</p></li>
+<li><p><strong>Physics</strong>: Implicitly learned from data</p></li>
+</ul>
+<p><strong>Strengths</strong>:</p>
+<ul class="simple">
+<li><p>Very high accuracy when sufficient data available (0.1-1% error)</p></li>
+<li><p>Fast inference (20-30ms per geometry)</p></li>
+<li><p>Works for complex, nonlinear problems</p></li>
+</ul>
+<p><strong>Limitations</strong>:</p>
+<ul class="simple">
+<li><p>Requires large labeled dataset (expensive to generate)</p></li>
+<li><p>No guarantee of physics consistency</p></li>
+<li><p>Poor extrapolation outside training distribution</p></li>
+</ul>
+</section>
+<section id="physics-informed-neural-networks-this-section">
+<h3>Physics-Informed Neural Networks (This Section)<a class="headerlink" href="#physics-informed-neural-networks-this-section" title="Link to this heading">#</a></h3>
+<p><strong>Approach</strong>:</p>
+<ul class="simple">
+<li><p><strong>Training Data</strong>: Sparse observations (30-100 points) + physics equations</p></li>
+<li><p><strong>Architecture</strong>: Feedforward network with automatic differentiation</p></li>
+<li><p><strong>Loss Function</strong>: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{data}} + \lambda \mathcal{L}_{\text{physics}}\)</span></p></li>
+<li><p><strong>Physics</strong>: Explicitly enforced through Maxwell’s equations</p></li>
+</ul>
+<p><strong>Strengths</strong>:</p>
+<ul class="simple">
+<li><p>Minimal labeled data required</p></li>
+<li><p>Predictions satisfy physical laws by construction</p></li>
+<li><p>Better extrapolation to unseen regimes</p></li>
+<li><p>Useful for inverse problems (parameter identification)</p></li>
+</ul>
+<p><strong>Limitations</strong>:</p>
+<ul class="simple">
+<li><p>More complex to train (multi-objective optimization)</p></li>
+<li><p>Computationally expensive during training (automatic differentiation)</p></li>
+<li><p>May sacrifice some accuracy for physics consistency</p></li>
+</ul>
+</section>
+<section id="when-to-use-each-approach">
+<h3>When to Use Each Approach?<a class="headerlink" href="#when-to-use-each-approach" title="Link to this heading">#</a></h3>
+<p><strong>Use Traditional DL (CNN) when</strong>:</p>
+<ul class="simple">
+<li><p>Large dataset available (or can be generated)</p></li>
+<li><p>Highest accuracy required</p></li>
+<li><p>Complex nonlinear phenomena</p></li>
+<li><p>Interpolation within known design space</p></li>
+</ul>
+<p><strong>Use PINNs when</strong>:</p>
+<ul class="simple">
+<li><p>Limited data available (sparse measurements)</p></li>
+<li><p>Physics consistency is critical</p></li>
+<li><p>Extrapolation to new parameter ranges</p></li>
+<li><p>Solving inverse problems</p></li>
+<li><p>Exploring novel geometries</p></li>
+</ul>
+<p><strong>Hybrid Approach</strong> (Future Work):
+Combine both methods:</p>
+<ul class="simple">
+<li><p>Pre-train PINN to learn physics</p></li>
+<li><p>Fine-tune with limited FEA data</p></li>
+<li><p>Best of both worlds: physics + data accuracy</p></li>
+</ul>
+</section>
+</section>
+<section id="scope-of-this-section">
+<h2>Scope of This Section<a class="headerlink" href="#scope-of-this-section" title="Link to this heading">#</a></h2>
+<p>In the following notebooks, we will develop a complete PINN framework for electromagnetic field prediction, organized as follows:</p>
+<section id="b-methodology">
+<h3>06b: Methodology<a class="headerlink" href="#b-methodology" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Formulation of Maxwell’s equations in 2D</p></li>
+<li><p>Problem setup: magnetic field around current-carrying wire</p></li>
+<li><p>Analytical solutions for validation</p></li>
+<li><p>Boundary conditions and domain specification</p></li>
+</ul>
+</section>
+<section id="c-implementation-training">
+<h3>06c: Implementation &amp; Training<a class="headerlink" href="#c-implementation-training" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>PINN neural network architecture</p></li>
+<li><p>Physics loss computation (enforcing Maxwell’s equations)</p></li>
+<li><p>Collocation point generation strategy</p></li>
+<li><p>Complete training pipeline</p></li>
+<li><p>Training progress monitoring</p></li>
+</ul>
+</section>
+<section id="d-results-discussion">
+<h3>06d: Results &amp; Discussion<a class="headerlink" href="#d-results-discussion" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Comprehensive field distribution predictions</p></li>
+<li><p>Vector field visualizations</p></li>
+<li><p>Quantitative error analysis</p></li>
+<li><p>Comparison with analytical solutions</p></li>
+<li><p>Integration with thesis code architecture</p></li>
+<li><p>Discussion of results and future directions</p></li>
+</ul>
+</section>
+<section id="learning-objectives">
+<h3>Learning Objectives<a class="headerlink" href="#learning-objectives" title="Link to this heading">#</a></h3>
+<p>By the end of this section, you will understand:</p>
+<ol class="arabic simple">
+<li><p>How to formulate electromagnetic problems for PINNs</p></li>
+<li><p>How to implement physics-informed loss functions</p></li>
+<li><p>How to balance data and physics contributions</p></li>
+<li><p>How to validate PINN predictions</p></li>
+<li><p>When PINNs are advantageous over traditional methods</p></li>
+</ol>
+<p>Let’s begin by formulating the mathematical foundation in the next notebook.</p>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-advantages-of-pinns">Key Advantages of PINNs:</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pinn-innovation-for-electromagnetics">PINN Innovation for Electromagnetics</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#literature-survey-pinns-in-computational-electromagnetics">Literature Survey: PINNs in Computational Electromagnetics</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#foundations-of-physics-informed-neural-networks">Foundations of Physics-Informed Neural Networks</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#applications-in-electromagnetics">Applications in Electromagnetics</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#magnetostatic-field-prediction">1. Magnetostatic Field Prediction</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#electrostatic-problems">2. Electrostatic Problems</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#time-harmonic-maxwell-s-equations">3. Time-Harmonic Maxwell’s Equations</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#inverse-problems-in-electromagnetics">4. Inverse Problems in Electromagnetics</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#advantages-over-traditional-methods">Advantages Over Traditional Methods</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#current-limitations-and-research-directions">Current Limitations and Research Directions</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-traditional-deep-learning-vs-physics-informed-approach">Comparison: Traditional Deep Learning vs Physics-Informed Approach</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#traditional-deep-learning-chapter-2-main-approach">Traditional Deep Learning (Chapter 2 Main Approach)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#physics-informed-neural-networks-this-section">Physics-Informed Neural Networks (This Section)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#when-to-use-each-approach">When to Use Each Approach?</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scope-of-this-section">Scope of This Section</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#b-methodology">06b: Methodology</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#c-implementation-training">06c: Implementation &amp; Training</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#d-results-discussion">06d: Results &amp; Discussion</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-objectives">Learning Objectives</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

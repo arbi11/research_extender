@@ -1,0 +1,835 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Physics-Informed Neural Networks: Methodology &#8212; Chapter 2: Deep Learning for Magnetic Field Prediction</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/06b_pinns_methodology';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="00_intro.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 2: Deep Learning for Magnetic Field Prediction</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="01_modeling_fundamentals.html">Modeling Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_ml_basics.html">Machine Learning Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_data_pipeline.html">Data Pipeline for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_uncertainty_quantification.html">Uncertainty Quantification for Magnetic Field Prediction</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/06b_pinns_methodology.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Physics-Informed Neural Networks: Methodology</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#maxwell-s-equations-in-2d">Maxwell’s Equations in 2D</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#governing-equations">Governing Equations</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#physical-interpretation">Physical Interpretation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pinn-formulation">PINN Formulation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#d-electromagnetic-problem-magnetic-field-around-current-carrying-wire">2D Electromagnetic Problem: Magnetic Field Around Current-Carrying Wire</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-setup">Problem Setup</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analytical-solution-biot-savart-law">Analytical Solution (Biot-Savart Law)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-analytical-solution">Visualizing the Analytical Solution</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-data-generation-strategy">Training Data Generation Strategy</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-points-sparse-observations">1. Data Points (Sparse Observations)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#domain-collocation-points">2. Domain Collocation Points</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#boundary-collocation-points">3. Boundary Collocation Points</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="physics-informed-neural-networks-methodology">
+<h1>Physics-Informed Neural Networks: Methodology<a class="headerlink" href="#physics-informed-neural-networks-methodology" title="Link to this heading">#</a></h1>
+<p>This notebook presents the mathematical formulation and problem setup for applying PINNs to electromagnetic field prediction.</p>
+<section id="maxwell-s-equations-in-2d">
+<h2>Maxwell’s Equations in 2D<a class="headerlink" href="#maxwell-s-equations-in-2d" title="Link to this heading">#</a></h2>
+<section id="governing-equations">
+<h3>Governing Equations<a class="headerlink" href="#governing-equations" title="Link to this heading">#</a></h3>
+<p>For magnetic field prediction in 2D, we work with <strong>Maxwell’s equations</strong> in the magnetostatic approximation :</p>
+<p><strong>Ampère’s Law (Magnetostatic)</strong>:
+$<span class="math notranslate nohighlight">\(\nabla \times \mathbf{H} = \mathbf{J}\)</span>$</p>
+<p><strong>Gauss’s Law for Magnetism</strong>:
+$<span class="math notranslate nohighlight">\(\nabla \cdot \mathbf{B} = 0\)</span>$</p>
+<p><strong>Constitutive Relations</strong>:
+$<span class="math notranslate nohighlight">\(\mathbf{B} = \mu \mathbf{H}\)</span>$</p>
+<p>In 2D Cartesian coordinates <span class="math notranslate nohighlight">\((x, y)\)</span> with only <span class="math notranslate nohighlight">\(z\)</span>-directed current density:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial H_y}{\partial x} - \frac{\partial H_x}{\partial y} = J_z\]</div>
+<div class="math notranslate nohighlight">
+\[\frac{\partial B_x}{\partial x} + \frac{\partial B_y}{\partial y} = 0\]</div>
+<p>where <span class="math notranslate nohighlight">\(B_x, B_y\)</span> are the magnetic flux density components and <span class="math notranslate nohighlight">\(H_x, H_y\)</span> are the magnetic field components.</p>
+</section>
+<section id="physical-interpretation">
+<h3>Physical Interpretation<a class="headerlink" href="#physical-interpretation" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Ampère’s Law</strong>: Current sources create circulating magnetic fields</p></li>
+<li><p><strong>Gauss’s Law</strong>: Magnetic field lines form closed loops (no magnetic monopoles)</p></li>
+<li><p><strong>Constitutive Relation</strong>: Material property links B-field and H-field</p></li>
+</ul>
+</section>
+<section id="pinn-formulation">
+<h3>PINN Formulation<a class="headerlink" href="#pinn-formulation" title="Link to this heading">#</a></h3>
+<p>A PINN learns a function :
+$<span class="math notranslate nohighlight">\(\mathbf{H}(x, y; \theta) = \begin{bmatrix} H_x(x, y; \theta) \\ H_y(x, y; \theta) \end{bmatrix}\)</span>$</p>
+<p>where <span class="math notranslate nohighlight">\(\theta\)</span> are the neural network parameters.</p>
+<p>The <strong>physics loss</strong> enforces Maxwell’s equations at collocation points:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{L}_{\text{physics}} = \frac{1}{N_d}\sum_{i=1}^{N_d} \left[ \left( \frac{\partial H_y}{\partial x} - \frac{\partial H_x}{\partial y} - J_z \right)^2 + \left( \frac{\partial B_x}{\partial x} + \frac{\partial B_y}{\partial y} \right)^2 \right]_i\]</div>
+<p>where <span class="math notranslate nohighlight">\(N_d\)</span> is the number of domain collocation points.</p>
+<p>The <strong>data loss</strong> matches observed measurements:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{L}_{\text{data}} = \frac{1}{N_{\text{obs}}}\sum_{j=1}^{N_{\text{obs}}} \left[ (H_x^{\text{pred}} - H_x^{\text{obs}})^2 + (H_y^{\text{pred}} - H_y^{\text{obs}})^2 \right]_j\]</div>
+</section>
+</section>
+<section id="d-electromagnetic-problem-magnetic-field-around-current-carrying-wire">
+<h2>2D Electromagnetic Problem: Magnetic Field Around Current-Carrying Wire<a class="headerlink" href="#d-electromagnetic-problem-magnetic-field-around-current-carrying-wire" title="Link to this heading">#</a></h2>
+<p>We’ll solve the classic problem of magnetic field distribution around a current-carrying wire in 2D. This problem has an analytical solution (Biot-Savart law)  making it perfect for PINN validation.</p>
+<section id="problem-setup">
+<h3>Problem Setup<a class="headerlink" href="#problem-setup" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Domain</strong>: Square region <span class="math notranslate nohighlight">\([-1, 1] \times [-1, 1]\)</span> (2m × 2m)</p></li>
+<li><p><strong>Wire</strong>: Located at origin <span class="math notranslate nohighlight">\((0, 0)\)</span> with current <span class="math notranslate nohighlight">\(I\)</span> flowing in <span class="math notranslate nohighlight">\(z\)</span>-direction</p></li>
+<li><p><strong>Physics</strong>: Magnetostatic Maxwell’s equations</p></li>
+<li><p><strong>Boundary</strong>: Far-field conditions at domain edges</p></li>
+<li><p><strong>Material</strong>: Free space with permeability <span class="math notranslate nohighlight">\(\mu_0 = 4\pi \times 10^{-7}\)</span> H/m</p></li>
+</ul>
+</section>
+<section id="analytical-solution-biot-savart-law">
+<h3>Analytical Solution (Biot-Savart Law)<a class="headerlink" href="#analytical-solution-biot-savart-law" title="Link to this heading">#</a></h3>
+<p>For an infinite straight wire carrying current <span class="math notranslate nohighlight">\(I\)</span> in the <span class="math notranslate nohighlight">\(z\)</span>-direction, the magnetic field at distance <span class="math notranslate nohighlight">\(r\)</span> is :</p>
+<div class="math notranslate nohighlight">
+\[|\mathbf{H}| = \frac{I}{2\pi r}\]</div>
+<p>The field circulates around the wire following the right-hand rule:</p>
+<div class="math notranslate nohighlight">
+\[H_x(x, y) = -\frac{I}{2\pi r^2} y\]</div>
+<div class="math notranslate nohighlight">
+\[H_y(x, y) = \frac{I}{2\pi r^2} x\]</div>
+<p>where <span class="math notranslate nohighlight">\(r = \sqrt{x^2 + y^2}\)</span>.</p>
+<p>This analytical solution serves as <strong>ground truth</strong> for validating our PINN.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ElectromagneticProblem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;2D electromagnetic field problem setup&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain_size</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">wire_position</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">current</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">mu_0</span><span class="o">=</span><span class="mi">4</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mf">1e-7</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span> <span class="o">=</span> <span class="n">domain_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span> <span class="o">=</span> <span class="n">wire_position</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">=</span> <span class="n">current</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu_0</span> <span class="o">=</span> <span class="n">mu_0</span>  <span class="c1"># Permeability of free space</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">analytical_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analytical solution using Biot-Savart law for infinite wire&quot;&quot;&quot;</span>
+        <span class="c1"># Distance from wire</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Avoid singularity at wire center</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+
+        <span class="c1"># Magnetic field magnitude (Biot-Savart law)</span>
+        <span class="n">B_magnitude</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu_0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span>
+
+        <span class="c1"># Field components (perpendicular to radial direction)</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">Hx</span> <span class="o">=</span> <span class="o">-</span><span class="n">B_magnitude</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu_0</span>
+        <span class="n">Hy</span> <span class="o">=</span> <span class="n">B_magnitude</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu_0</span>
+
+        <span class="k">return</span> <span class="n">Hx</span><span class="p">,</span> <span class="n">Hy</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_training_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_data</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate sparse training data points&quot;&quot;&quot;</span>
+        <span class="c1"># Random points in domain</span>
+        <span class="n">x_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_data</span><span class="p">)</span>
+        <span class="n">y_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_data</span><span class="p">)</span>
+
+        <span class="c1"># Get analytical solution</span>
+        <span class="n">Hx_data</span><span class="p">,</span> <span class="n">Hy_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analytical_solution</span><span class="p">(</span><span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">Hx_data</span><span class="p">,</span> <span class="n">Hy_data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_collocation_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_domain</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">n_boundary</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate collocation points for physics constraints (reduced for speed)&quot;&quot;&quot;</span>
+        <span class="c1"># Domain points (avoid wire singularity)</span>
+        <span class="n">x_domain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_domain</span><span class="p">)</span>
+        <span class="n">y_domain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_domain</span><span class="p">)</span>
+
+        <span class="c1"># Remove points too close to wire</span>
+        <span class="n">r_from_wire</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">x_domain</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span>
+                              <span class="p">(</span><span class="n">y_domain</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">r_from_wire</span> <span class="o">&gt;</span> <span class="mf">0.1</span>
+        <span class="n">x_domain</span> <span class="o">=</span> <span class="n">x_domain</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+        <span class="n">y_domain</span> <span class="o">=</span> <span class="n">y_domain</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="c1"># Boundary points</span>
+        <span class="n">boundary_points</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Top and bottom boundaries</span>
+        <span class="n">x_boundary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_boundary</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">y_boundary_top</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">y_boundary_bottom</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span>
+
+        <span class="n">boundary_points</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">[:</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">],</span> <span class="n">y_boundary_top</span><span class="p">))</span>
+        <span class="n">boundary_points</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">[</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">:],</span> <span class="n">y_boundary_bottom</span><span class="p">))</span>
+
+        <span class="c1"># Left and right boundaries</span>
+        <span class="n">y_boundary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_boundary</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">x_boundary_left</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">x_boundary_right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span>
+
+        <span class="n">boundary_points</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x_boundary_left</span><span class="p">,</span> <span class="n">y_boundary</span><span class="p">[:</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">]))</span>
+        <span class="n">boundary_points</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x_boundary_right</span><span class="p">,</span> <span class="n">y_boundary</span><span class="p">[</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">:]))</span>
+
+        <span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">boundary_points</span><span class="p">)</span>
+        <span class="n">x_boundary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">)</span>
+        <span class="n">y_boundary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_boundary</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">x_domain</span><span class="p">,</span> <span class="n">y_domain</span><span class="p">,</span> <span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span>
+
+<span class="c1"># Create problem instance</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="n">ElectromagneticProblem</span><span class="p">(</span><span class="n">domain_size</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">current</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SUCCESS: Electromagnetic problem initialized&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Domain size: </span><span class="si">{</span><span class="n">problem</span><span class="o">.</span><span class="n">domain_size</span><span class="si">}</span><span class="s2"> x </span><span class="si">{</span><span class="n">problem</span><span class="o">.</span><span class="n">domain_size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wire position: </span><span class="si">{</span><span class="n">problem</span><span class="o">.</span><span class="n">wire_position</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current: </span><span class="si">{</span><span class="n">problem</span><span class="o">.</span><span class="n">current</span><span class="si">}</span><span class="s2"> A&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>SUCCESS: Electromagnetic problem initialized
+Domain size: 2.0 x 2.0
+Wire position: (0.0, 0.0)
+Current: 1.0 A
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="visualizing-the-analytical-solution">
+<h2>Visualizing the Analytical Solution<a class="headerlink" href="#visualizing-the-analytical-solution" title="Link to this heading">#</a></h2>
+<p>Let’s visualize the ground truth magnetic field distribution to understand the problem.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate grid for visualization</span>
+<span class="n">resolution</span> <span class="o">=</span> <span class="mi">40</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">resolution</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">resolution</span><span class="p">)</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># Compute analytical solution</span>
+<span class="n">Hx_analytical</span><span class="p">,</span> <span class="n">Hy_analytical</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">analytical_solution</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+<span class="n">H_magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Hx_analytical</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">Hy_analytical</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Create visualization</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Analytical Solution: Magnetic Field Around Current-Carrying Wire&#39;</span><span class="p">,</span> 
+<span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+
+<span class="c1"># H_x component</span>
+<span class="n">im1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Hx_analytical</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;$H_x$ Component&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;x (m)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;y (m)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;ko&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Wire&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;H_x (A/m)&#39;</span><span class="p">)</span>
+
+<span class="c1"># H_y component</span>
+<span class="n">im2</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Hy_analytical</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;$H_y$ Component&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;x (m)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;y (m)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;ko&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Wire&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;H_y (A/m)&#39;</span><span class="p">)</span>
+
+<span class="c1"># Magnitude with vector field</span>
+<span class="n">im3</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">H_magnitude</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">skip</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">quiver</span><span class="p">(</span><span class="n">X</span><span class="p">[::</span><span class="n">skip</span><span class="p">,</span> <span class="p">::</span><span class="n">skip</span><span class="p">],</span> <span class="n">Y</span><span class="p">[::</span><span class="n">skip</span><span class="p">,</span> <span class="p">::</span><span class="n">skip</span><span class="p">],</span> 
+<span class="n">Hx_analytical</span><span class="p">[::</span><span class="n">skip</span><span class="p">,</span> <span class="p">::</span><span class="n">skip</span><span class="p">],</span> <span class="n">Hy_analytical</span><span class="p">[::</span><span class="n">skip</span><span class="p">,</span> <span class="p">::</span><span class="n">skip</span><span class="p">],</span>
+<span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;|H| Magnitude with Vectors&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;x (m)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;y (m)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;ro&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Wire&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im3</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;|H| (A/m)&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> Field Statistics:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Max |H|: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">H_magnitude</span><span class="p">)</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2"> A/m&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Min |H|: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">H_magnitude</span><span class="p">)</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2"> A/m&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Mean |H|: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">H_magnitude</span><span class="p">)</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2"> A/m&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/d99e8c62df369919101fde26fa6c135f062995faac877a3c1a9e01ba2e36e810.png" src="../_images/d99e8c62df369919101fde26fa6c135f062995faac877a3c1a9e01ba2e36e810.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> Field Statistics:
+ Max |H|: 4.389e+00 A/m
+ Min |H|: 1.125e-01 A/m
+ Mean |H|: 2.704e-01 A/m
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="training-data-generation-strategy">
+<h2>Training Data Generation Strategy<a class="headerlink" href="#training-data-generation-strategy" title="Link to this heading">#</a></h2>
+<p>One of the key advantages of PINNs is that they require <strong>minimal labeled data</strong>. We will use:</p>
+<section id="data-points-sparse-observations">
+<h3>1. Data Points (Sparse Observations)<a class="headerlink" href="#data-points-sparse-observations" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Only <strong>30-100 labeled points</strong> from analytical solution</p></li>
+<li><p>Randomly sampled across the domain</p></li>
+<li><p>Provide anchoring for the neural network</p></li>
+</ul>
+</section>
+<section id="domain-collocation-points">
+<h3>2. Domain Collocation Points<a class="headerlink" href="#domain-collocation-points" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>~1000 points</strong> where physics constraints are enforced</p></li>
+<li><p>No labels required—only coordinates</p></li>
+<li><p>Ensure Maxwell’s equations are satisfied throughout domain</p></li>
+<li><p>Avoid wire singularity (exclude points within 0.1m of wire)</p></li>
+</ul>
+</section>
+<section id="boundary-collocation-points">
+<h3>3. Boundary Collocation Points<a class="headerlink" href="#boundary-collocation-points" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>~100 points</strong> on domain boundaries</p></li>
+<li><p>Enforce far-field boundary conditions</p></li>
+<li><p>Match analytical solution at boundaries</p></li>
+</ul>
+<p>This demonstrates the <strong>data efficiency</strong> of PINNs: with only 30 labeled points + physics knowledge, we can predict the entire field distribution.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate different types of training data</span>
+<span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">Hx_data</span><span class="p">,</span> <span class="n">Hy_data</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">generate_training_data</span><span class="p">(</span><span class="n">n_data</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<span class="n">x_domain</span><span class="p">,</span> <span class="n">y_domain</span><span class="p">,</span> <span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">generate_collocation_points</span><span class="p">(</span>
+<span class="n">n_domain</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">n_boundary</span><span class="o">=</span><span class="mi">100</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot; Training Data Generated:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Labeled data points: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_data</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Domain collocation points: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_domain</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Boundary collocation points: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> Total points for training: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_data</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">x_domain</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; But only </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> are labeled!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> Training Data Generated:
+ Labeled data points: 30
+ Domain collocation points: 995
+ Boundary collocation points: 100
+
+ Total points for training: 1125
+ But only 30 are labeled!
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Visualize sampling strategy</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+<span class="c1"># Plot domain</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">Rectangle</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+
+<span class="c1"># Plot different point types</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x_domain</span><span class="p">,</span> <span class="n">y_domain</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Domain points (n=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_domain</span><span class="p">)</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> 
+<span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Boundary points (n=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">)</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> 
+<span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Labeled data points (n=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_data</span><span class="p">)</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">)</span>
+
+<span class="c1"># Plot wire</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;ko&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Current-carrying wire&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;x (m)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;y (m)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;PINN Training Data Sampling Strategy&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper right&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/8bc2d3063dc390f4b7063b2b6820faa46b7c3c9a436f30d7a247354fd46daf95.png" src="../_images/8bc2d3063dc390f4b7063b2b6820faa46b7c3c9a436f30d7a247354fd46daf95.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<p>In this notebook, we established:</p>
+<ol class="arabic simple">
+<li><p><strong>Mathematical Foundation</strong>:</p></li>
+</ol>
+<ul class="simple">
+<li><p>Maxwell’s equations for magnetostatics</p></li>
+<li><p>2D formulation with Ampère’s law and Gauss’s law</p></li>
+<li><p>Physics loss formulation for PINNs</p></li>
+</ul>
+<ol class="arabic simple" start="2">
+<li><p><strong>Problem Setup</strong>:</p></li>
+</ol>
+<ul class="simple">
+<li><p>Magnetic field around current-carrying wire</p></li>
+<li><p>Analytical solution from Biot-Savart law</p></li>
+<li><p>Domain and boundary specifications</p></li>
+</ul>
+<ol class="arabic simple" start="3">
+<li><p><strong>Data Strategy</strong>:</p></li>
+</ol>
+<ul class="simple">
+<li><p>Sparse labeled data (30 points)</p></li>
+<li><p>Domain collocation points (1000 points, unlabeled)</p></li>
+<li><p>Boundary collocation points (100 points)</p></li>
+</ul>
+<p><strong>Key Insight</strong>: PINNs can learn from minimal labeled data by leveraging physics knowledge encoded in Maxwell’s equations.</p>
+<p>In the next notebook (06c), we will implement the PINN architecture and training pipeline to solve this problem.</p>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#maxwell-s-equations-in-2d">Maxwell’s Equations in 2D</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#governing-equations">Governing Equations</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#physical-interpretation">Physical Interpretation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pinn-formulation">PINN Formulation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#d-electromagnetic-problem-magnetic-field-around-current-carrying-wire">2D Electromagnetic Problem: Magnetic Field Around Current-Carrying Wire</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-setup">Problem Setup</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analytical-solution-biot-savart-law">Analytical Solution (Biot-Savart Law)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-analytical-solution">Visualizing the Analytical Solution</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-data-generation-strategy">Training Data Generation Strategy</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-points-sparse-observations">1. Data Points (Sparse Observations)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#domain-collocation-points">2. Domain Collocation Points</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#boundary-collocation-points">3. Boundary Collocation Points</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
