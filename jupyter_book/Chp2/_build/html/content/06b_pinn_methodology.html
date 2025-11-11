@@ -1,0 +1,1323 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Physics-Informed Neural Networks: Methodology &#8212; Chapter 2: Deep Learning for Magnetic Field Prediction</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/06b_pinn_methodology';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Physics-Informed Neural Networks: Implementation &amp; Training" href="06c_pinn_implementation_training.html" />
+    <link rel="prev" title="Physics-Informed Neural Networks for Electromagnetic Field Prediction" href="06a_pinn_introduction_literature.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="01_intro.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 2: Deep Learning for Magnetic Field Prediction</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="02_modeling_fundamentals.html">Modeling Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_data_pipeline.html">Data Pipeline for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04a_ann_fundamentals.html">Artificial Neural Networks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04b_cnn_architecture.html">CNN Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04c_cnn_training.html">CNN Training &amp; Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04d_results_performance.html">Results &amp; Performance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_uncertainty_quantification.html">Uncertainty Quantification for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06a_pinn_introduction_literature.html">PINNs: Introduction &amp; Literature</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">PINNs: Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06c_pinn_implementation_training.html">PINNs: Implementation &amp; Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06d_pinn_results_discussion.html">PINNs: Results &amp; Discussion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_conclusion.html">Conclusion</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/06b_pinn_methodology.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Physics-Informed Neural Networks: Methodology</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#maxwell-s-equations-in-2d-magnetostatics">Maxwell’s Equations in 2D Magnetostatics</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#governing-partial-differential-equations">Governing Partial Differential Equations</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#d-cartesian-formulation">2D Cartesian Formulation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mathematical-classification-of-pdes">Mathematical Classification of PDEs</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pinn-mathematical-formulation">PINN Mathematical Formulation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#d-electromagnetic-problem-magnetic-field-around-current-carrying-wire">2D Electromagnetic Problem: Magnetic Field Around Current-Carrying Wire</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-specification">Problem Specification</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analytical-solution-biot-savart-law">Analytical Solution: Biot-Savart Law</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#magnetic-flux-density-conversion">Magnetic Flux Density Conversion</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#validation-strategy">Validation Strategy</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-analytical-solution">Visualizing the Analytical Solution</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-data-generation-strategy">Training Data Generation Strategy</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#three-types-of-points-in-pinn-training">Three Types of Points in PINN Training</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collocation-sampling-strategies">Collocation Sampling Strategies</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-pinn-problem-formulation-complete">Summary: PINN Problem Formulation Complete</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-accomplishments">Key Accomplishments</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-fea-vs-cnn-vs-pinn">Comparison: FEA vs. CNN vs. PINN</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#automatic-differentiation-the-enabling-technology">Automatic Differentiation: The Enabling Technology</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps-implementation-in-section-6c">Next Steps: Implementation in Section 6c</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="physics-informed-neural-networks-methodology">
+<h1>Physics-Informed Neural Networks: Methodology<a class="headerlink" href="#physics-informed-neural-networks-methodology" title="Link to this heading">#</a></h1>
+<p>This notebook presents the mathematical formulation and problem setup for applying PINNs to electromagnetic field prediction, following the theoretical foundation established in Section 6a <span id="id1">[]</span>.</p>
+<p><strong>Objective</strong>: Formulate a 2D magnetostatic problem suitable for PINN solution, with analytical ground truth enabling rigorous validation.</p>
+<p><strong>Structure</strong>:</p>
+<ol class="arabic simple">
+<li><p>Maxwell’s equations in 2D magnetostatics <span id="id2">[]</span></p></li>
+<li><p>Canonical problem: Magnetic field around current-carrying wire</p></li>
+<li><p>PINN loss function formulation <span id="id3">[]</span></p></li>
+<li><p>Collocation strategy and data generation</p></li>
+<li><p>Analytical solution derivation <span id="id4">[]</span></p></li>
+</ol>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><strong>Prerequisites</strong>:</p>
+<ul class="simple">
+<li><p>Section 6a: PINN fundamentals and literature review</p></li>
+<li><p>Chapter 3: FEA data generation methodology (contrast with PINN approach)</p></li>
+</ul>
+<p><strong>Next steps</strong>:</p>
+<ul class="simple">
+<li><p>Section 6c: PyTorch implementation with automatic differentiation</p></li>
+<li><p>Section 6d: Results validation and physics consistency analysis</p></li>
+</ul>
+</div>
+<section id="maxwell-s-equations-in-2d-magnetostatics">
+<h2>Maxwell’s Equations in 2D Magnetostatics<a class="headerlink" href="#maxwell-s-equations-in-2d-magnetostatics" title="Link to this heading">#</a></h2>
+<section id="governing-partial-differential-equations">
+<h3>Governing Partial Differential Equations<a class="headerlink" href="#governing-partial-differential-equations" title="Link to this heading">#</a></h3>
+<p>For magnetic field prediction in 2D, we work with <strong>Maxwell’s equations</strong> in the magnetostatic approximation (time-independent, no electric field coupling) <span id="id5">[]</span>.</p>
+<p><strong>Ampère’s Law</strong> (differential form) <span id="id6">[]</span>:
+$<span class="math notranslate nohighlight">\(\nabla \times \mathbf{H} = \mathbf{J}\)</span>$</p>
+<p>where:</p>
+<ul class="simple">
+<li><p><strong>H</strong> = magnetic field intensity [A/m]</p></li>
+<li><p><strong>J</strong> = current density [A/m²]</p></li>
+</ul>
+<p><strong>Gauss’s Law for Magnetism</strong> (no magnetic monopoles) <span id="id7">[]</span>:
+$<span class="math notranslate nohighlight">\(\nabla \cdot \mathbf{B} = 0\)</span>$</p>
+<p>where <strong>B</strong> = magnetic flux density [T, Tesla]</p>
+<p><strong>Constitutive Relation</strong> (linear, isotropic material) <span id="id8">[]</span>:
+$<span class="math notranslate nohighlight">\(\mathbf{B} = \mu \mathbf{H}\)</span>$</p>
+<p>where μ = permeability [H/m]. For free space: μ₀ = 4π × 10⁻⁷ H/m.</p>
+</section>
+<section id="d-cartesian-formulation">
+<h3>2D Cartesian Formulation<a class="headerlink" href="#d-cartesian-formulation" title="Link to this heading">#</a></h3>
+<p>In 2D Cartesian coordinates (x, y) with current flowing only in z-direction (J = J<sub>z</sub><strong>ẑ</strong>), Maxwell’s equations reduce to <span id="id9">[]</span>:</p>
+<p><strong>Ampère’s Law (component form)</strong>:
+$<span class="math notranslate nohighlight">\(\frac{\partial H_y}{\partial x} - \frac{\partial H_x}{\partial y} = J_z(x,y)\)</span>$</p>
+<p><strong>Gauss’s Law (component form)</strong>:
+$<span class="math notranslate nohighlight">\(\frac{\partial B_x}{\partial x} + \frac{\partial B_y}{\partial y} = 0\)</span>$</p>
+<p>For linear materials with B<sub>x</sub> = μH<sub>x</sub> and B<sub>y</sub> = μH<sub>y</sub>:
+$<span class="math notranslate nohighlight">\(\mu \left( \frac{\partial H_x}{\partial x} + \frac{\partial H_y}{\partial y} \right) = 0\)</span>$</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>Physical Interpretation of PDEs</strong></p>
+<p><strong>Ampère’s Law</strong> <span id="id10">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Physical meaning</strong>: Electric current creates a circulating magnetic field (right-hand rule)</p></li>
+<li><p><strong>Integral form</strong>: <span class="math notranslate nohighlight">\(\oint \mathbf{H} \cdot d\mathbf{l} = I_{\text{enclosed}}\)</span></p></li>
+<li><p><strong>EM implication</strong>: Field magnitude decreases as 1/r from current source</p></li>
+<li><p><strong>Boundary behavior</strong>: Discontinuous tangential H across current sheets</p></li>
+</ul>
+<p><strong>Gauss’s Law</strong> <span id="id11">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Physical meaning</strong>: Magnetic field lines form closed loops (no sources or sinks)</p></li>
+<li><p><strong>Integral form</strong>: <span class="math notranslate nohighlight">\(\oint \mathbf{B} \cdot d\mathbf{A} = 0\)</span> (flux conservation)</p></li>
+<li><p><strong>Mathematical consequence</strong>: B-field is solenoidal (divergence-free)</p></li>
+<li><p><strong>Numerical implication</strong>: Violation indicates non-physical solution</p></li>
+</ul>
+<p><strong>Design significance</strong>: These constraints ensure physical validity—PINN predictions that violate them are untrustworthy regardless of data fit.</p>
+</div>
+</section>
+<section id="mathematical-classification-of-pdes">
+<h3>Mathematical Classification of PDEs<a class="headerlink" href="#mathematical-classification-of-pdes" title="Link to this heading">#</a></h3>
+<p><strong>System type</strong> <span id="id12">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Elliptic PDEs</strong> (magnetostatics, no time dependence)</p></li>
+<li><p><strong>Well-posed</strong> boundary value problem (unique solution exists)</p></li>
+<li><p><strong>Regularity</strong>: Solution smooth except at singularities (e.g., point current sources)</p></li>
+</ul>
+<p><strong>Comparison with other PDE types</strong>:</p>
+<ul class="simple">
+<li><p><strong>Parabolic</strong> (heat equation): time-dependent diffusion</p></li>
+<li><p><strong>Hyperbolic</strong> (wave equation): time-dependent propagation</p></li>
+<li><p><strong>Magnetostatics</strong>: Simplest case—no wave propagation, no diffusion</p></li>
+</ul>
+</section>
+<section id="pinn-mathematical-formulation">
+<h3>PINN Mathematical Formulation<a class="headerlink" href="#pinn-mathematical-formulation" title="Link to this heading">#</a></h3>
+<p>Following Raissi et al. (2019) <span id="id13">[]</span>, a PINN learns a neural network approximation:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\mathbf{H}_{\theta}(x, y) = \begin{bmatrix} H_x(x, y; \theta) \\ H_y(x, y; \theta) \end{bmatrix}\end{split}\]</div>
+<p>where θ = {W<sup>(l)</sup>, b<sup>(l)</sup>}<sub>l=1…L</sub> are trainable parameters (weights and biases).</p>
+<p><strong>Physics loss</strong> enforces PDEs at collocation points {x<sub>i</sub>, y<sub>i</sub>}<sub>i=1…N<sub>d</sub></sub> <span id="id14">[]</span>:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{L}_{\text{physics}} = \frac{1}{N_d}\sum_{i=1}^{N_d} \left[ \mathcal{L}_{\text{Ampere}}^{(i)} + \mathcal{L}_{\text{Gauss}}^{(i)} \right]\]</div>
+<p>where:</p>
+<p><strong>Ampère residual</strong> <span id="id15">[]</span>:
+$<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{Ampere}}^{(i)} = \left( \frac{\partial H_y}{\partial x}\bigg|_i - \frac{\partial H_x}{\partial y}\bigg|_i - J_z(x_i, y_i) \right)^2\)</span>$</p>
+<p><strong>Gauss residual</strong>:
+$<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{Gauss}}^{(i)} = \left( \frac{\partial B_x}{\partial x}\bigg|_i + \frac{\partial B_y}{\partial y}\bigg|_i \right)^2 = \mu^2 \left( \frac{\partial H_x}{\partial x}\bigg|_i + \frac{\partial H_y}{\partial y}\bigg|_i \right)^2\)</span>$</p>
+<p><strong>Data loss</strong> matches sparse observations <span id="id16">[]</span>:
+$<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{data}} = \frac{1}{N_{\text{obs}}}\sum_{j=1}^{N_{\text{obs}}} \left[ (H_x^{\text{pred}}(x_j, y_j) - H_x^{\text{obs}}_j)^2 + (H_y^{\text{pred}}(x_j, y_j) - H_y^{\text{obs}}_j)^2 \right]\)</span>$</p>
+<p><strong>Total loss</strong> (multi-objective optimization) <span id="id17">[]</span>:
+$<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{data}} + \lambda_1 \mathcal{L}_{\text{physics}} + \lambda_2 \mathcal{L}_{\text{BC}}\)</span>$</p>
+<p>where:</p>
+<ul class="simple">
+<li><p>λ₁ = physics loss weight (typically 0.1-10)</p></li>
+<li><p>λ₂ = boundary condition loss weight (typically 1-100)</p></li>
+<li><p>Hyperparameters require tuning via validation <span id="id18">[]</span></p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Automatic Differentiation for Spatial Derivatives</strong></p>
+<p>Computing PDE residuals requires spatial derivatives of the neural network output <span id="id19">[]</span>:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial H_x}{\partial x}(x, y; \theta) = \frac{\partial}{\partial x} f_{\theta}(x, y)\]</div>
+<p><strong>Traditional approach</strong> (pre-deep learning): Finite differences
+$<span class="math notranslate nohighlight">\(\frac{\partial H_x}{\partial x} \approx \frac{H_x(x+\Delta x, y) - H_x(x, y)}{\Delta x}\)</span>$</p>
+<ul class="simple">
+<li><p>Requires multiple function evaluations</p></li>
+<li><p>Accuracy limited by discretization (O(Δx²))</p></li>
+</ul>
+<p><strong>Modern approach</strong> (automatic differentiation) <span id="id20">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Forward mode</strong>: Compute derivatives via chain rule during forward pass</p></li>
+<li><p><strong>Reverse mode</strong> (backpropagation): Efficient for many outputs</p></li>
+<li><p><strong>Exact to machine precision</strong> (no discretization error)</p></li>
+<li><p><strong>Implemented natively</strong> in PyTorch via <code class="docutils literal notranslate"><span class="pre">torch.autograd.grad()</span></code></p></li>
+</ul>
+<p><strong>Computational benefit</strong>: Enables efficient PDE residual evaluation at thousands of collocation points simultaneously.</p>
+</div>
+</section>
+</section>
+<section id="d-electromagnetic-problem-magnetic-field-around-current-carrying-wire">
+<h2>2D Electromagnetic Problem: Magnetic Field Around Current-Carrying Wire<a class="headerlink" href="#d-electromagnetic-problem-magnetic-field-around-current-carrying-wire" title="Link to this heading">#</a></h2>
+<p>We solve the canonical problem of magnetic field distribution around an infinite straight current-carrying wire in 2D—a fundamental configuration with analytical solution enabling rigorous PINN validation <span id="id21">[]</span>.</p>
+<p><strong>Why this problem is ideal for PINN demonstration</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Analytical solution exists</strong>: Biot-Savart law provides ground truth <span id="id22">[]</span></p></li>
+<li><p><strong>Simple geometry</strong>: Single point source, no material interfaces</p></li>
+<li><p><strong>Known singularity</strong>: Field diverges as 1/r at wire location (tests PINN robustness)</p></li>
+<li><p><strong>Rotational symmetry</strong>: Solution exhibits expected symmetry (validation check)</p></li>
+<li><p><strong>Educational value</strong>: Fundamental EM problem taught in undergraduate courses</p></li>
+</ol>
+<section id="problem-specification">
+<h3>Problem Specification<a class="headerlink" href="#problem-specification" title="Link to this heading">#</a></h3>
+<p><strong>Spatial domain</strong>: Square region Ω = [-1, 1] × [-1, 1] meters</p>
+<p><strong>Current source</strong>:</p>
+<ul class="simple">
+<li><p><strong>Location</strong>: Origin (0, 0)</p></li>
+<li><p><strong>Current</strong>: I = 1.0 A (flowing in +z direction, out of page)</p></li>
+<li><p><strong>Physical representation</strong>: Infinite straight wire perpendicular to xy-plane</p></li>
+</ul>
+<p><strong>Material properties</strong>:</p>
+<ul class="simple">
+<li><p><strong>Medium</strong>: Free space (air, vacuum)</p></li>
+<li><p><strong>Permeability</strong>: μ₀ = 4π × 10⁻⁷ H/m</p></li>
+<li><p><strong>Relative permeability</strong>: μ<sub>r</sub> = 1 (linear, isotropic)</p></li>
+</ul>
+<p><strong>Boundary conditions</strong> (far-field approximation) <span id="id23">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Type</strong>: Dirichlet BC on domain edges</p></li>
+<li><p><strong>Value</strong>: H(x<sub>boundary</sub>, y<sub>boundary</sub>) = H<sub>analytical</sub>(x<sub>boundary</sub>, y<sub>boundary</sub>)</p></li>
+<li><p><strong>Physical justification</strong>: Domain large enough that edge conditions approach analytical solution</p></li>
+</ul>
+<p><strong>Governing equations</strong> <span id="id24">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Ampère’s law</strong>: ∇ × <strong>H</strong> = <strong>J</strong> = Iδ(x)δ(y)<strong>ẑ</strong> (Dirac delta at wire)</p></li>
+<li><p><strong>Gauss’s law</strong>: ∇ · <strong>B</strong> = 0</p></li>
+</ul>
+</section>
+<section id="analytical-solution-biot-savart-law">
+<h3>Analytical Solution: Biot-Savart Law<a class="headerlink" href="#analytical-solution-biot-savart-law" title="Link to this heading">#</a></h3>
+<p>For an infinite straight wire carrying current I in the z-direction, the magnetic field at distance r from the wire is given by the Biot-Savart law <span id="id25">[]</span>:</p>
+<p><strong>Field magnitude</strong>:
+$<span class="math notranslate nohighlight">\(|\mathbf{H}(r)| = \frac{I}{2\pi r}\)</span>$</p>
+<p>The field circulates around the wire following the <strong>right-hand rule</strong>: thumb along current (+z), fingers curl in direction of <strong>H</strong>.</p>
+<p><strong>Vector field components</strong> in Cartesian coordinates <span id="id26">[]</span>:</p>
+<div class="math notranslate nohighlight">
+\[H_x(x, y) = -\frac{I}{2\pi r^2} y = -\frac{I \cdot y}{2\pi (x^2 + y^2)}\]</div>
+<div class="math notranslate nohighlight">
+\[H_y(x, y) = \frac{I}{2\pi r^2} x = \frac{I \cdot x}{2\pi (x^2 + y^2)}\]</div>
+<p>where <span class="math notranslate nohighlight">\(r = \sqrt{x^2 + y^2}\)</span> is the radial distance from the wire.</p>
+<p><strong>Verification of Maxwell’s equations</strong>:</p>
+<p><strong>Ampère’s law</strong> (away from singularity) <span id="id27">[]</span>:
+$<span class="math notranslate nohighlight">\(\nabla \times \mathbf{H} = \frac{\partial H_y}{\partial x} - \frac{\partial H_x}{\partial y} = 0 \quad \text{for } r &gt; 0\)</span>$</p>
+<p>At r = 0: ∇ × <strong>H</strong> = Iδ(x)δ(y) (Dirac delta singularity)</p>
+<p><strong>Gauss’s law</strong>:
+$<span class="math notranslate nohighlight">\(\nabla \cdot (\mu_0 \mathbf{H}) = \mu_0 \left( \frac{\partial H_x}{\partial x} + \frac{\partial H_y}{\partial y} \right) = 0 \quad \text{everywhere}\)</span>$</p>
+<p>(Exercise: Verify this analytically by computing partial derivatives)</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p><strong>Handling the Singularity</strong></p>
+<p>The analytical solution has a <strong>1/r singularity</strong> at the wire location (r → 0) {cite}`jackson1999classical,ida2015numerical}:</p>
+<div class="math notranslate nohighlight">
+\[\lim_{r \to 0} |\mathbf{H}(r)| = \lim_{r \to 0} \frac{I}{2\pi r} = \infty\]</div>
+<p><strong>Physical interpretation</strong>:</p>
+<ul class="simple">
+<li><p>Idealized point current has infinite current density</p></li>
+<li><p>Real wires have finite radius → finite field at surface</p></li>
+<li><p>Singularity is mathematical artifact of idealization</p></li>
+</ul>
+<p><strong>PINN handling strategies</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Exclude near-wire points</strong>: Sample collocation points only for r &gt; r<sub>min</sub> (e.g., 0.1 m)</p></li>
+<li><p><strong>Regularization</strong>: Add small constant to prevent division by zero: r<sub>eff</sub> = √(x² + y² + ε²)</p></li>
+<li><p><strong>Separate treatment</strong>: Special boundary condition at wire surface</p></li>
+</ol>
+<p><strong>Adopted approach</strong>: Strategy 1 (exclusion zone)—simplest and most physically reasonable for infinite wire idealization.</p>
+</div>
+</section>
+<section id="magnetic-flux-density-conversion">
+<h3>Magnetic Flux Density Conversion<a class="headerlink" href="#magnetic-flux-density-conversion" title="Link to this heading">#</a></h3>
+<p>From <strong>H</strong> to <strong>B</strong> = μ₀<strong>H</strong> <span id="id28">[]</span>:</p>
+<div class="math notranslate nohighlight">
+\[B_x(x, y) = -\frac{\mu_0 I \cdot y}{2\pi (x^2 + y^2)}\]</div>
+<div class="math notranslate nohighlight">
+\[B_y(x, y) = \frac{\mu_0 I \cdot x}{2\pi (x^2 + y^2)}\]</div>
+<p><strong>Typical field magnitudes</strong> (I = 1 A):</p>
+<ul class="simple">
+<li><p>At r = 0.1 m: |<strong>B</strong>| ≈ 2 × 10⁻⁶ T = 2 μT</p></li>
+<li><p>At r = 0.5 m: |<strong>B</strong>| ≈ 4 × 10⁻⁷ T = 0.4 μT</p></li>
+<li><p>At r = 1.0 m: |<strong>B</strong>| ≈ 2 × 10⁻⁷ T = 0.2 μT</p></li>
+</ul>
+<p><strong>For comparison</strong>: Earth’s magnetic field ≈ 50 μT; MRI scanner ≈ 1.5-3 T.</p>
+</section>
+<section id="validation-strategy">
+<h3>Validation Strategy<a class="headerlink" href="#validation-strategy" title="Link to this heading">#</a></h3>
+<p>The analytical solution serves as <strong>ground truth</strong> for PINN validation <span id="id29">[]</span>:</p>
+<p><strong>Error metrics</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Point-wise error</strong>: <span class="math notranslate nohighlight">\(e(x,y) = |\mathbf{H}_{\text{PINN}}(x,y) - \mathbf{H}_{\text{analytical}}(x,y)|\)</span></p></li>
+<li><p><strong>Relative L² error</strong>: <span class="math notranslate nohighlight">\(\epsilon_{\text{rel}} = \frac{||\mathbf{H}_{\text{PINN}} - \mathbf{H}_{\text{analytical}}||_{L^2}}{||\mathbf{H}_{\text{analytical}}||_{L^2}}\)</span></p></li>
+<li><p><strong>Physics residual</strong>: <span class="math notranslate nohighlight">\(\mathcal{R}_{\text{Gauss}} = |\nabla \cdot (\mu_0 \mathbf{H}_{\text{PINN}})|\)</span></p></li>
+</ol>
+<p><strong>Success criteria</strong>:</p>
+<ul class="simple">
+<li><p>Relative L² error &lt; 1% (comparable to FEA accuracy)</p></li>
+<li><p>Physics residual &lt; 10⁻³ (orders of magnitude below field magnitude)</p></li>
+<li><p>Visual agreement in field line topology</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ElectromagneticProblem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    2D magnetostatic problem: Magnetic field around infinite straight wire</span>
+<span class="sd">    </span>
+<span class="sd">    Implements the canonical electromagnetic problem with analytical solution</span>
+<span class="sd">    from Biot-Savart law (Sadiku 2014, Jackson 1999). Used for PINN validation.</span>
+<span class="sd">    </span>
+<span class="sd">    Mathematical model:</span>
+<span class="sd">    - Governing PDEs: Ampère&#39;s law (∇×H = J) + Gauss&#39;s law (∇·B = 0)</span>
+<span class="sd">    - Analytical solution: H(r) = I/(2πr) (azimuthal field)</span>
+<span class="sd">    - Singularity at r=0: Field diverges (infinite wire idealization)</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">        domain_size: Physical size of square computational domain [m]</span>
+<span class="sd">        wire_position: (x, y) coordinates of wire center [m]</span>
+<span class="sd">        current: Current magnitude [A], positive = out of page (+z direction)</span>
+<span class="sd">        mu_0: Permeability of free space [H/m], default = 4π×10⁻⁷</span>
+<span class="sd">    </span>
+<span class="sd">    Methods:</span>
+<span class="sd">        analytical_solution(): Compute H-field from Biot-Savart law</span>
+<span class="sd">        generate_training_data(): Sparse observations for data loss</span>
+<span class="sd">        generate_collocation_points(): Dense points for physics loss (PDE enforcement)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain_size</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">wire_position</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">current</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">mu_0</span><span class="o">=</span><span class="mi">4</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mf">1e-7</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span> <span class="o">=</span> <span class="n">domain_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span> <span class="o">=</span> <span class="n">wire_position</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">=</span> <span class="n">current</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu_0</span> <span class="o">=</span> <span class="n">mu_0</span>  <span class="c1"># Permeability of free space [H/m]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">analytical_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Analytical solution using Biot-Savart law for infinite straight wire</span>
+<span class="sd">        </span>
+<span class="sd">        Theory (Sadiku 2014, Eq. 7.40):</span>
+<span class="sd">        For infinite wire at origin with current I in +z direction:</span>
+<span class="sd">            H_magnitude = I / (2π r)</span>
+<span class="sd">            H_direction = perpendicular to radial (azimuthal)</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            x, y: Spatial coordinates [m] (can be arrays via NumPy broadcasting)</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Hx, Hy: Magnetic field components [A/m]</span>
+<span class="sd">        </span>
+<span class="sd">        Physical interpretation:</span>
+<span class="sd">        - Field circulates clockwise (viewed from +z) for I &gt; 0</span>
+<span class="sd">        - Magnitude decreases as 1/r (inverse distance law)</span>
+<span class="sd">        - At r=1m with I=1A: |H| = 1/(2π) ≈ 0.159 A/m</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Distance from wire (radial coordinate)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Avoid singularity at wire center (regularization)</span>
+        <span class="c1"># Physical interpretation: Real wires have finite radius</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>  <span class="c1"># Minimum radius = 1 μm</span>
+
+        <span class="c1"># Magnetic field magnitude from Biot-Savart law [A/m]</span>
+        <span class="n">H_magnitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span>
+
+        <span class="c1"># Azimuthal angle (for converting to Cartesian components)</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># Convert from polar (H_r=0, H_theta=H_magnitude) to Cartesian</span>
+        <span class="c1"># H points perpendicular to radial direction (right-hand rule)</span>
+        <span class="n">Hx</span> <span class="o">=</span> <span class="o">-</span><span class="n">H_magnitude</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>  <span class="c1"># x-component</span>
+        <span class="n">Hy</span> <span class="o">=</span> <span class="n">H_magnitude</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>   <span class="c1"># y-component</span>
+
+        <span class="k">return</span> <span class="n">Hx</span><span class="p">,</span> <span class="n">Hy</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_training_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_data</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate sparse training data points (labeled observations)</span>
+<span class="sd">        </span>
+<span class="sd">        PINN advantage: Requires only 30-100 labeled points vs. 30,000 for pure CNN!</span>
+<span class="sd">        </span>
+<span class="sd">        Sampling strategy:</span>
+<span class="sd">        - Uniform random distribution across domain</span>
+<span class="sd">        - Labels computed from analytical solution (simulates measurements)</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            n_data: Number of labeled observation points</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            x_data, y_data: Observation coordinates [m]</span>
+<span class="sd">            Hx_data, Hy_data: Field measurements [A/m]</span>
+<span class="sd">        </span>
+<span class="sd">        Usage: These points contribute to data loss L_data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Random points in domain (uniform distribution)</span>
+        <span class="n">x_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_data</span><span class="p">)</span>
+        <span class="n">y_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_data</span><span class="p">)</span>
+
+        <span class="c1"># Get analytical solution (simulates field measurements)</span>
+        <span class="n">Hx_data</span><span class="p">,</span> <span class="n">Hy_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analytical_solution</span><span class="p">(</span><span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">Hx_data</span><span class="p">,</span> <span class="n">Hy_data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_collocation_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_domain</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">n_boundary</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate collocation points for physics constraints (PDE enforcement)</span>
+<span class="sd">        </span>
+<span class="sd">        Key insight: These points do NOT need labels—only coordinates!</span>
+<span class="sd">        Physics loss enforces Maxwell&#39;s equations at these locations.</span>
+<span class="sd">        </span>
+<span class="sd">        Two types of collocation points:</span>
+<span class="sd">        1. Domain points: Interior of computational region (enforce PDEs)</span>
+<span class="sd">        2. Boundary points: Domain edges (enforce boundary conditions)</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            n_domain: Number of interior points for PDE enforcement</span>
+<span class="sd">            n_boundary: Number of boundary points for BC enforcement</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            x_domain, y_domain: Interior collocation points [m]</span>
+<span class="sd">            x_boundary, y_boundary: Boundary collocation points [m]</span>
+<span class="sd">        </span>
+<span class="sd">        Singularity handling: Exclude points within 0.1m of wire (r &gt; 0.1m)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Domain points (interior): Random uniform sampling</span>
+        <span class="n">x_domain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_domain</span><span class="p">)</span>
+        <span class="n">y_domain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_domain</span><span class="p">)</span>
+
+        <span class="c1"># Exclude points too close to wire (singularity avoidance)</span>
+        <span class="n">r_from_wire</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">x_domain</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span>
+                              <span class="p">(</span><span class="n">y_domain</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wire_position</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">r_from_wire</span> <span class="o">&gt;</span> <span class="mf">0.1</span>  <span class="c1"># Exclusion radius = 0.1 m</span>
+        <span class="n">x_domain</span> <span class="o">=</span> <span class="n">x_domain</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+        <span class="n">y_domain</span> <span class="o">=</span> <span class="n">y_domain</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="c1"># Boundary points: Uniformly distributed on 4 edges of square domain</span>
+        <span class="n">boundary_points</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Top and bottom boundaries (y = ±domain_size/2)</span>
+        <span class="n">x_boundary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_boundary</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">y_boundary_top</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">y_boundary_bottom</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span>
+
+        <span class="n">boundary_points</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">[:</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">],</span> <span class="n">y_boundary_top</span><span class="p">))</span>
+        <span class="n">boundary_points</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">[</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">:],</span> <span class="n">y_boundary_bottom</span><span class="p">))</span>
+
+        <span class="c1"># Left and right boundaries (x = ±domain_size/2)</span>
+        <span class="n">y_boundary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_boundary</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">x_boundary_left</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">x_boundary_right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="o">/</span><span class="mi">2</span>
+
+        <span class="n">boundary_points</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x_boundary_left</span><span class="p">,</span> <span class="n">y_boundary</span><span class="p">[:</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">]))</span>
+        <span class="n">boundary_points</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x_boundary_right</span><span class="p">,</span> <span class="n">y_boundary</span><span class="p">[</span><span class="n">n_boundary</span><span class="o">//</span><span class="mi">4</span><span class="p">:]))</span>
+
+        <span class="c1"># Convert to arrays</span>
+        <span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">boundary_points</span><span class="p">)</span>
+        <span class="n">x_boundary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">)</span>
+        <span class="n">y_boundary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_boundary</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">x_domain</span><span class="p">,</span> <span class="n">y_domain</span><span class="p">,</span> <span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span>
+
+<span class="c1"># Instantiate electromagnetic problem</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="n">ElectromagneticProblem</span><span class="p">(</span><span class="n">domain_size</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">current</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✓ SUCCESS: Electromagnetic problem initialized&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Problem Configuration:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Domain: </span><span class="si">{</span><span class="n">problem</span><span class="o">.</span><span class="n">domain_size</span><span class="si">}</span><span class="s2"> × </span><span class="si">{</span><span class="n">problem</span><span class="o">.</span><span class="n">domain_size</span><span class="si">}</span><span class="s2"> m&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Wire position: </span><span class="si">{</span><span class="n">problem</span><span class="o">.</span><span class="n">wire_position</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Current: </span><span class="si">{</span><span class="n">problem</span><span class="o">.</span><span class="n">current</span><span class="si">}</span><span class="s2"> A (flowing in +z direction)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Permeability: μ₀ = </span><span class="si">{</span><span class="n">problem</span><span class="o">.</span><span class="n">mu_0</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2"> H/m&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Field magnitude at r=0.5m: </span><span class="si">{</span><span class="n">problem</span><span class="o">.</span><span class="n">current</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mf">0.5</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> A/m&quot;</span><span class="p">)</span>
+
+<span class="c1"># :::note</span>
+<span class="c1"># **For EM Graduate Students**  </span>
+<span class="c1"># </span>
+<span class="c1"># This code implements the analytical solution you derived in undergraduate EM courses</span>
+<span class="c1"># (Griffiths Ch. 5, Sadiku Ch. 7). The singularity handling (r_min = 1e-6) is a</span>
+<span class="c1"># practical numerical consideration—real experiments measure fields at finite distances,</span>
+<span class="c1"># never exactly at the wire surface.</span>
+<span class="c1"># </span>
+<span class="c1"># **Quiz**: What happens if you remove the singularity regularization (r_min)?</span>
+<span class="c1"># Answer: Division by zero → NaN propagation → training failure.</span>
+<span class="c1"># :::</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>✓ SUCCESS: Electromagnetic problem initialized
+
+Problem Configuration:
+  Domain: 2.0 × 2.0 m
+  Wire position: (0.0, 0.0)
+  Current: 1.0 A (flowing in +z direction)
+  Permeability: μ₀ = 1.257e-06 H/m
+
+Field magnitude at r=0.5m: 0.3183 A/m
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="visualizing-the-analytical-solution">
+<h2>Visualizing the Analytical Solution<a class="headerlink" href="#visualizing-the-analytical-solution" title="Link to this heading">#</a></h2>
+<p>Let’s visualize the ground truth magnetic field distribution to understand the problem.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate grid for visualization</span>
+<span class="n">resolution</span> <span class="o">=</span> <span class="mi">40</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">resolution</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">resolution</span><span class="p">)</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># Compute analytical solution</span>
+<span class="n">Hx_analytical</span><span class="p">,</span> <span class="n">Hy_analytical</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">analytical_solution</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+<span class="n">H_magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Hx_analytical</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">Hy_analytical</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Create visualization</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Analytical Solution: Magnetic Field Around Current-Carrying Wire&#39;</span><span class="p">,</span> 
+<span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+
+<span class="c1"># H_x component</span>
+<span class="n">im1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Hx_analytical</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;$H_x$ Component&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;x (m)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;y (m)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;ko&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Wire&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;H_x (A/m)&#39;</span><span class="p">)</span>
+
+<span class="c1"># H_y component</span>
+<span class="n">im2</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Hy_analytical</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;$H_y$ Component&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;x (m)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;y (m)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;ko&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Wire&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;H_y (A/m)&#39;</span><span class="p">)</span>
+
+<span class="c1"># Magnitude with vector field</span>
+<span class="n">im3</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">H_magnitude</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">skip</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">quiver</span><span class="p">(</span><span class="n">X</span><span class="p">[::</span><span class="n">skip</span><span class="p">,</span> <span class="p">::</span><span class="n">skip</span><span class="p">],</span> <span class="n">Y</span><span class="p">[::</span><span class="n">skip</span><span class="p">,</span> <span class="p">::</span><span class="n">skip</span><span class="p">],</span> 
+<span class="n">Hx_analytical</span><span class="p">[::</span><span class="n">skip</span><span class="p">,</span> <span class="p">::</span><span class="n">skip</span><span class="p">],</span> <span class="n">Hy_analytical</span><span class="p">[::</span><span class="n">skip</span><span class="p">,</span> <span class="p">::</span><span class="n">skip</span><span class="p">],</span>
+<span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;|H| Magnitude with Vectors&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;x (m)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;y (m)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;ro&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Wire&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im3</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;|H| (A/m)&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> Field Statistics:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Max |H|: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">H_magnitude</span><span class="p">)</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2"> A/m&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Min |H|: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">H_magnitude</span><span class="p">)</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2"> A/m&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Mean |H|: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">H_magnitude</span><span class="p">)</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2"> A/m&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/8ec156c6f7746a4d127fda5e55c57c760dab1e16dd5b554f468fc3abf255b540.png" src="../_images/8ec156c6f7746a4d127fda5e55c57c760dab1e16dd5b554f468fc3abf255b540.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> Field Statistics:
+ Max |H|: 4.389e+00 A/m
+ Min |H|: 1.125e-01 A/m
+ Mean |H|: 2.704e-01 A/m
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="training-data-generation-strategy">
+<h2>Training Data Generation Strategy<a class="headerlink" href="#training-data-generation-strategy" title="Link to this heading">#</a></h2>
+<p>One of the key advantages of PINNs is <strong>data efficiency</strong>—requiring minimal labeled observations <span id="id30">[]</span>.</p>
+<section id="three-types-of-points-in-pinn-training">
+<h3>Three Types of Points in PINN Training<a class="headerlink" href="#three-types-of-points-in-pinn-training" title="Link to this heading">#</a></h3>
+<p><strong>1. Labeled Data Points</strong> (sparse observations) <span id="id31">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Count</strong>: Only 30-100 points (vs. 30,000 for pure CNN in Section 4!)</p></li>
+<li><p><strong>Purpose</strong>: Anchor network predictions to observations</p></li>
+<li><p><strong>Source</strong>: Measurements, simulations, or analytical solution</p></li>
+<li><p><strong>Loss contribution</strong>: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{data}}\)</span> = MSE between prediction and observation</p></li>
+<li><p><strong>Physical interpretation</strong>: These are “ground truth” field measurements</p></li>
+</ul>
+<p><strong>2. Domain Collocation Points</strong> (unlabeled) <span id="id32">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Count</strong>: ~1,000 points across interior</p></li>
+<li><p><strong>Purpose</strong>: Enforce Maxwell’s equations via PDE residuals</p></li>
+<li><p><strong>No labels required</strong>—only coordinates (x, y)</p></li>
+<li><p><strong>Loss contribution</strong>: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{PDE}}\)</span> = squared residual of ∇×<strong>H</strong>=<strong>J</strong> and ∇·<strong>B</strong>=0</p></li>
+<li><p><strong>Singularity handling</strong>: Exclude points within 0.1 m of wire (r &gt; 0.1 m)</p></li>
+<li><p><strong>Physical interpretation</strong>: Locations where physics must be satisfied</p></li>
+</ul>
+<p><strong>3. Boundary Collocation Points</strong> (unlabeled or labeled) <span id="id33">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Count</strong>: ~100 points on domain edges</p></li>
+<li><p><strong>Purpose</strong>: Enforce boundary conditions (Dirichlet, Neumann, or Robin)</p></li>
+<li><p><strong>Loss contribution</strong>: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{BC}}\)</span> = deviation from BC specification</p></li>
+<li><p><strong>For this problem</strong>: Dirichlet BC (H = H<sub>analytical</sub> at edges)</p></li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>Data Efficiency Comparison</strong></p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Approach</p></th>
+<th class="head"><p>Labeled Points</p></th>
+<th class="head"><p>Unlabeled Points</p></th>
+<th class="head"><p>Total Cost</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Pure CNN</strong> (Section 4) <span id="id34">[]</span></p></td>
+<td><p>30,000</p></td>
+<td><p>0</p></td>
+<td><p>$150k (30k FEA simulations)</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>PINN</strong> (this section) <span id="id35">[]</span></p></td>
+<td><p>30-100</p></td>
+<td><p>1,000-2,000</p></td>
+<td><p>$500 (100 FEA simulations)</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Savings</strong></p></td>
+<td><p><strong>300-1000×</strong></p></td>
+<td><p>N/A</p></td>
+<td><p><strong>300×</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Key insight</strong>: Physics constraints (which are free!) substitute for expensive labeled data <span id="id36">[]</span>.</p>
+<p><strong>Trade-off</strong>: PINNs require 5-10× longer training time due to automatic differentiation overhead, but upfront data generation savings dominate for expensive simulations/experiments.</p>
+</div>
+</section>
+<section id="collocation-sampling-strategies">
+<h3>Collocation Sampling Strategies<a class="headerlink" href="#collocation-sampling-strategies" title="Link to this heading">#</a></h3>
+<p><strong>Uniform random sampling</strong> (used here) <span id="id37">[]</span>:</p>
+<ul class="simple">
+<li><p>Simple, general-purpose</p></li>
+<li><p>Works well for smooth solutions</p></li>
+<li><p>May undersample regions with high gradients</p></li>
+</ul>
+<p><strong>Adaptive sampling</strong> <span id="id38">[]</span>:</p>
+<ul class="simple">
+<li><p>Sample more densely where PDE residual is high</p></li>
+<li><p>Iterative: train → evaluate residuals → resample → retrain</p></li>
+<li><p>2-5× more efficient for problems with sharp gradients</p></li>
+</ul>
+<p><strong>Latin Hypercube Sampling</strong> (LHS) <span id="id39">[]</span>:</p>
+<ul class="simple">
+<li><p>Better space-filling properties than pure random</p></li>
+<li><p>Ensures coverage across all regions</p></li>
+<li><p>Used in Section 3 for FEA data generation</p></li>
+</ul>
+<p><strong>Recommendation for EM problems</strong>: Start with uniform random, switch to adaptive if physics loss fails to converge <span id="id40">[]</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate different types of training data</span>
+<span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">Hx_data</span><span class="p">,</span> <span class="n">Hy_data</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">generate_training_data</span><span class="p">(</span><span class="n">n_data</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<span class="n">x_domain</span><span class="p">,</span> <span class="n">y_domain</span><span class="p">,</span> <span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">generate_collocation_points</span><span class="p">(</span>
+<span class="n">n_domain</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">n_boundary</span><span class="o">=</span><span class="mi">100</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot; Training Data Generated:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Labeled data points: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_data</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Domain collocation points: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_domain</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Boundary collocation points: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> Total points for training: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_data</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">x_domain</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; But only </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> are labeled!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> Training Data Generated:
+ Labeled data points: 30
+ Domain collocation points: 990
+ Boundary collocation points: 100
+
+ Total points for training: 1120
+ But only 30 are labeled!
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Visualize sampling strategy</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+<span class="c1"># Plot domain</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">Rectangle</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+
+<span class="c1"># Plot different point types</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x_domain</span><span class="p">,</span> <span class="n">y_domain</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Domain points (n=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_domain</span><span class="p">)</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">,</span> <span class="n">y_boundary</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> 
+<span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Boundary points (n=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_boundary</span><span class="p">)</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> 
+<span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Labeled data points (n=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_data</span><span class="p">)</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">)</span>
+
+<span class="c1"># Plot wire</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;ko&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Current-carrying wire&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;x (m)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;y (m)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;PINN Training Data Sampling Strategy&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper right&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/39e5cee3551732102d8fc60cc73842d86e28e528a265c3905ee3608bc922d7c6.png" src="../_images/39e5cee3551732102d8fc60cc73842d86e28e528a265c3905ee3608bc922d7c6.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="summary-pinn-problem-formulation-complete">
+<h2>Summary: PINN Problem Formulation Complete<a class="headerlink" href="#summary-pinn-problem-formulation-complete" title="Link to this heading">#</a></h2>
+<p>This notebook established the complete mathematical and computational framework for applying PINNs to electromagnetic field prediction.</p>
+<section id="key-accomplishments">
+<h3>Key Accomplishments<a class="headerlink" href="#key-accomplishments" title="Link to this heading">#</a></h3>
+<p><strong>1. Mathematical Foundation</strong> <span id="id41">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Governing PDEs</strong>: Maxwell’s equations in 2D magnetostatics</p>
+<ul>
+<li><p>Ampère’s law: ∇ × <strong>H</strong> = <strong>J</strong></p></li>
+<li><p>Gauss’s law: ∇ · <strong>B</strong> = 0</p></li>
+</ul>
+</li>
+<li><p><strong>2D formulation</strong>: Component-wise PDEs for implementation</p></li>
+<li><p><strong>PDE classification</strong>: Elliptic boundary value problem (well-posed)</p></li>
+</ul>
+<p><strong>2. PINN Loss Formulation</strong> <span id="id42">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Physics loss</strong>: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{physics}} = \mathcal{L}_{\text{Ampere}} + \mathcal{L}_{\text{Gauss}}\)</span></p></li>
+<li><p><strong>Data loss</strong>: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{data}}\)</span> on sparse observations (30-100 points)</p></li>
+<li><p><strong>Boundary loss</strong>: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{BC}}\)</span> on domain edges</p></li>
+<li><p><strong>Total loss</strong>: Multi-objective optimization with weights λ₁, λ₂</p></li>
+</ul>
+<p><strong>3. Canonical Problem</strong> <span id="id43">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Configuration</strong>: Magnetic field around infinite straight wire</p></li>
+<li><p><strong>Analytical solution</strong>: Biot-Savart law (H = I/(2πr))</p></li>
+<li><p><strong>Validation</strong>: Ground truth for rigorous PINN accuracy assessment</p></li>
+<li><p><strong>Singularity handling</strong>: Exclusion zone (r &gt; 0.1 m) for numerical stability</p></li>
+</ul>
+<p><strong>4. Data Efficiency</strong> <span id="id44">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Labeled data</strong>: 30-100 points (300× less than CNN)</p></li>
+<li><p><strong>Collocation points</strong>: ~1,000 unlabeled (enforce physics)</p></li>
+<li><p><strong>Cost savings</strong>: ~<span class="math notranslate nohighlight">\(500 vs. \)</span>150k for equivalent pure data-driven approach</p></li>
+</ul>
+</section>
+<section id="comparison-fea-vs-cnn-vs-pinn">
+<h3>Comparison: FEA vs. CNN vs. PINN<a class="headerlink" href="#comparison-fea-vs-cnn-vs-pinn" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Aspect</p></th>
+<th class="head"><p>FEA <span id="id45">[]</span></p></th>
+<th class="head"><p>CNN (Section 4) <span id="id46">[]</span></p></th>
+<th class="head"><p>PINN (Section 6) <span id="id47">[]</span></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Governing equations</strong></p></td>
+<td><p>Explicit (variational)</p></td>
+<td><p>Implicit (learned)</p></td>
+<td><p>Explicit (loss penalty)</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Mesh required</strong></p></td>
+<td><p>Yes (critical)</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Labeled data</strong></p></td>
+<td><p>None</p></td>
+<td><p>30,000</p></td>
+<td><p>30-100</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Training time</strong></p></td>
+<td><p>N/A</p></td>
+<td><p>15 hours</p></td>
+<td><p>40 hours</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Inference time</strong></p></td>
+<td><p>1 hour</p></td>
+<td><p>30 ms</p></td>
+<td><p>30 ms</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Physics guarantee</strong></p></td>
+<td><p>Exact</p></td>
+<td><p>None</p></td>
+<td><p>Soft constraint</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Best use case</strong></p></td>
+<td><p>Validation</p></td>
+<td><p>Interpolation</p></td>
+<td><p>Limited data</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="automatic-differentiation-the-enabling-technology">
+<h3>Automatic Differentiation: The Enabling Technology<a class="headerlink" href="#automatic-differentiation-the-enabling-technology" title="Link to this heading">#</a></h3>
+<p><strong>Why PINNs became viable in 2017-2019</strong> <span id="id48">[]</span>:</p>
+<ul class="simple">
+<li><p><strong>Pre-2015</strong>: Computing PDE residuals required manual derivatives or finite differences</p></li>
+<li><p><strong>2015+</strong>: TensorFlow, PyTorch provide automatic differentiation (autodiff)</p></li>
+<li><p><strong>Impact</strong>: Spatial derivatives computed efficiently and exactly via chain rule</p></li>
+<li><p><strong>Result</strong>: PINNs practical for complex PDEs without hand-deriving Jacobians</p></li>
+</ul>
+<p><strong>Mathematical operation</strong> <span id="id49">[]</span>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>∂H_x/∂x = autograd(neural_network_output, input_x)
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Exact</strong> (to machine precision, no discretization error)</p></li>
+<li><p><strong>Fast</strong> (single backward pass computes all derivatives)</p></li>
+<li><p><strong>General</strong> (works for arbitrary network architectures)</p></li>
+</ul>
+</section>
+<section id="next-steps-implementation-in-section-6c">
+<h3>Next Steps: Implementation in Section 6c<a class="headerlink" href="#next-steps-implementation-in-section-6c" title="Link to this heading">#</a></h3>
+<p>With the problem mathematically formulated, Section 6c implements:</p>
+<p><strong>1. PINN Neural Network Architecture</strong> <span id="id50">[]</span>:</p>
+<ul class="simple">
+<li><p>Feedforward network: (x, y) → (H<sub>x</sub>, H<sub>y</sub>)</p></li>
+<li><p>Hidden layers: 4-6 layers × 50-100 neurons</p></li>
+<li><p>Activation: tanh or softplus (smooth for automatic differentiation)</p></li>
+</ul>
+<p><strong>2. Physics Loss Computation</strong> <span id="id51">[]</span>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">torch.autograd.grad()</span></code> for spatial derivatives</p></li>
+<li><p>PDE residual evaluation at collocation points</p></li>
+<li><p>Loss balancing strategies</p></li>
+</ul>
+<p><strong>3. Training Pipeline</strong> <span id="id52">[]</span>:</p>
+<ul class="simple">
+<li><p>Optimizer: Adam (early training) + L-BFGS (fine-tuning)</p></li>
+<li><p>Learning rate schedules</p></li>
+<li><p>Loss monitoring and convergence criteria</p></li>
+</ul>
+<p><strong>4. Results Validation</strong> (Section 6d):</p>
+<ul class="simple">
+<li><p>Comparison with analytical solution</p></li>
+<li><p>Physics consistency checks (∇·<strong>B</strong> = 0)</p></li>
+<li><p>Error analysis and failure modes</p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><strong>Forward references</strong>:</p>
+<ul class="simple">
+<li><p>Section 6c: Complete PyTorch implementation with autodiff</p></li>
+<li><p>Section 6d: Results, validation, and physics consistency analysis</p></li>
+<li><p>Chapter 7: Conclusion synthesizing CNN and PINN approaches</p></li>
+</ul>
+</div>
+<p><strong>Key takeaway</strong>: PINNs leverage physics knowledge to achieve data efficiency—trading computational cost (longer training) for reduced data generation cost (fewer simulations) <span id="id53">[]</span>.</p>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="06a_pinn_introduction_literature.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Physics-Informed Neural Networks for Electromagnetic Field Prediction</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="06c_pinn_implementation_training.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Physics-Informed Neural Networks: Implementation &amp; Training</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#maxwell-s-equations-in-2d-magnetostatics">Maxwell’s Equations in 2D Magnetostatics</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#governing-partial-differential-equations">Governing Partial Differential Equations</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#d-cartesian-formulation">2D Cartesian Formulation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mathematical-classification-of-pdes">Mathematical Classification of PDEs</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pinn-mathematical-formulation">PINN Mathematical Formulation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#d-electromagnetic-problem-magnetic-field-around-current-carrying-wire">2D Electromagnetic Problem: Magnetic Field Around Current-Carrying Wire</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-specification">Problem Specification</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analytical-solution-biot-savart-law">Analytical Solution: Biot-Savart Law</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#magnetic-flux-density-conversion">Magnetic Flux Density Conversion</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#validation-strategy">Validation Strategy</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-analytical-solution">Visualizing the Analytical Solution</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-data-generation-strategy">Training Data Generation Strategy</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#three-types-of-points-in-pinn-training">Three Types of Points in PINN Training</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collocation-sampling-strategies">Collocation Sampling Strategies</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-pinn-problem-formulation-complete">Summary: PINN Problem Formulation Complete</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-accomplishments">Key Accomplishments</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-fea-vs-cnn-vs-pinn">Comparison: FEA vs. CNN vs. PINN</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#automatic-differentiation-the-enabling-technology">Automatic Differentiation: The Enabling Technology</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps-implementation-in-section-6c">Next Steps: Implementation in Section 6c</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

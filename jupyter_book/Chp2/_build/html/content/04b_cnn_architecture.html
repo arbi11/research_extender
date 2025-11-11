@@ -1,0 +1,1428 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Convolutional Neural Network Architecture &#8212; Chapter 2: Deep Learning for Magnetic Field Prediction</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'content/04b_cnn_architecture';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="CNN Training and Optimization" href="04c_cnn_training.html" />
+    <link rel="prev" title="Artificial Neural Networks: Fundamentals" href="04a_ann_fundamentals.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="01_intro.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Chapter 2: Deep Learning for Magnetic Field Prediction</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="02_modeling_fundamentals.html">Modeling Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_data_pipeline.html">Data Pipeline for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04a_ann_fundamentals.html">Artificial Neural Networks</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">CNN Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04c_cnn_training.html">CNN Training &amp; Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04d_results_performance.html">Results &amp; Performance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_uncertainty_quantification.html">Uncertainty Quantification for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06a_pinn_introduction_literature.html">PINNs: Introduction &amp; Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06b_pinn_methodology.html">PINNs: Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06c_pinn_implementation_training.html">PINNs: Implementation &amp; Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06d_pinn_results_discussion.html">PINNs: Results &amp; Discussion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_conclusion.html">Conclusion</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/content/04b_cnn_architecture.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Convolutional Neural Network Architecture</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cnn-fundamentals">CNN Fundamentals</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#main-layer-types-in-cnn-architecture">Main Layer Types in CNN Architecture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convolutional-layer-conv">1. Convolutional Layer (CONV)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pooling-layer-pool">2. Pooling Layer (POOL)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fully-connected-layer-fc">3. Fully Connected Layer (FC)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dilated-convolutions">Dilated Convolutions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#standard-vs-dilated-convolution">Standard vs. Dilated Convolution</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mathematical-formulation">Mathematical Formulation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#motivation-for-magnetic-field-prediction">Motivation for Magnetic Field Prediction</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-details">Implementation Details</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#encoder-decoder-architecture">Encoder-Decoder Architecture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#encoder-section-contracting-path">Encoder Section (Contracting Path)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#decoder-section-expanding-path">Decoder Section (Expanding Path)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#skip-connections-critical-innovation">Skip Connections (Critical Innovation)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-to-u-net">Comparison to U-Net</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#network-specifications">Network Specifications</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#layer-configuration">Layer Configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convolution-details">Convolution Details</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-capacity-and-generalization">Model Capacity and Generalization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#model-selection-process">Model Selection Process</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#architectural-components">Architectural Components</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id23">Network Specifications</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-insight-for-em-field-prediction">Key Insight for EM Field Prediction</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="convolutional-neural-network-architecture">
+<h1>Convolutional Neural Network Architecture<a class="headerlink" href="#convolutional-neural-network-architecture" title="Link to this heading">#</a></h1>
+<p>This section details the Convolutional Neural Network (CNN) architecture designed for magnetic field prediction. CNNs are specifically suited for processing structured grid data by exploiting spatial relationships through local connectivity and parameter sharing <span id="id1">[]</span>.</p>
+<p><strong>Key Architectural Innovations for Electromagnetic Field Prediction</strong>:</p>
+<ul class="simple">
+<li><p><strong>Encoder-decoder structure</strong> <span id="id2">[]</span> for dense spatial regression</p></li>
+<li><p><strong>Dilated convolutions</strong> <span id="id3">[]</span> to capture long-range electromagnetic interactions</p></li>
+<li><p><strong>Skip connections</strong> to preserve fine-grained flux density details</p></li>
+<li><p><strong>Batch normalization</strong> <span id="id4">[]</span> for stable training on FEA-generated data</p></li>
+</ul>
+<section id="cnn-fundamentals">
+<h2>CNN Fundamentals<a class="headerlink" href="#cnn-fundamentals" title="Link to this heading">#</a></h2>
+<p>Convolutional Neural Networks are similar to ordinary neural networks in that they are made up of learnable weights and biases <span id="id5">[]</span>. However, CNNs make an explicit assumption that <strong>input data follows a structured pattern</strong> to store information (usually in the form of a uniform grid such as images, time-series events, or magnetic field distributions).</p>
+<p>This assumption introduces certain properties in the architecture which help in:</p>
+<ol class="arabic simple">
+<li><p><strong>Reducing the number of parameters</strong> in the network (critical advantage over fully-connected ANNs)</p></li>
+<li><p><strong>Making the training process easier</strong> and more efficient through parameter sharing</p></li>
+<li><p><strong>Exploiting spatial relationships</strong> in the data through local connectivity</p></li>
+</ol>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>Why CNNs for Electromagnetic Field Prediction</strong></p>
+<p>Magnetic field distributions are naturally represented as 2D spatial grids:</p>
+<ul class="simple">
+<li><p><strong>Structured data</strong>: Each pixel represents flux density at a specific (x, y) location</p></li>
+<li><p><strong>Spatial correlations</strong>: Maxwell’s equations dictate that field at one point depends on nearby regions (∇×B = μJ, ∇·B = 0)</p></li>
+<li><p><strong>Translation equivariance</strong>: Physics laws apply uniformly across the spatial domain</p></li>
+<li><p><strong>Hierarchical patterns</strong>: Local flux gradients → regional saturation zones → global field topology</p></li>
+</ul>
+<p><strong>Quantitative advantage</strong>: For a 256×256 field distribution:</p>
+<ul class="simple">
+<li><p>Fully-connected network (Section 4a): ~65 million weights in first layer alone</p></li>
+<li><p>CNN with 3×3 filters and 64 channels: Only <strong>576 weights</strong> per layer</p></li>
+<li><p><strong>Parameter reduction</strong>: &gt;100,000× fewer parameters while maintaining accuracy</p></li>
+</ul>
+</div>
+</section>
+<section id="main-layer-types-in-cnn-architecture">
+<h2>Main Layer Types in CNN Architecture<a class="headerlink" href="#main-layer-types-in-cnn-architecture" title="Link to this heading">#</a></h2>
+<p>There are three main types of layers present in CNN architecture for electromagnetic field prediction:</p>
+<section id="convolutional-layer-conv">
+<h3>1. Convolutional Layer (CONV)<a class="headerlink" href="#convolutional-layer-conv" title="Link to this heading">#</a></h3>
+<p>The convolutional layer computes the connection of each neuron with a local region of the input volume <span id="id6">[]</span>. It consists of a set of learnable filters (also called kernels) that extract spatial features.</p>
+<figure class="align-default" id="fig-conv-kernel">
+<a class="reference internal image-reference" href="../_images/FIG2A.pdf"><img alt="../_images/FIG2A.pdf" src="../_images/FIG2A.pdf" style="width: 60%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 5 </span><span class="caption-text">Convolution kernel visualization. Blue represents the input map, cyan represents the output map. The filter slides across the input, computing dot products.</span><a class="headerlink" href="#fig-conv-kernel" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<p><strong>Key Properties</strong>:</p>
+<ul class="simple">
+<li><p><strong>Small spatial extent</strong>: Each filter is typically 3×3 or 5×5 (much smaller than input)</p></li>
+<li><p><strong>Sliding window</strong>: Filter slides across entire input with stride (typically 1)</p></li>
+<li><p><strong>Dot product computation</strong>: At each position, compute element-wise multiplication and sum</p></li>
+<li><p><strong>Feature map output</strong>: 2D activation map showing filter response at each spatial location</p></li>
+<li><p><strong>Multiple filters</strong>: Stack of K filters learns K different features, producing K feature maps</p></li>
+</ul>
+<p><strong>Mathematical Operation</strong>:</p>
+<p>For a 2D convolution at position (i,j):
+$<span class="math notranslate nohighlight">\(
+Y[i,j] = \sum_{m} \sum_{n} X[i+m, j+n] \cdot K[m,n] + b
+\)</span>$</p>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(X\)</span> is the input (e.g., geometry image or previous layer’s feature maps)</p></li>
+<li><p><span class="math notranslate nohighlight">\(K\)</span> is the kernel/filter (learnable weights)</p></li>
+<li><p><span class="math notranslate nohighlight">\(Y\)</span> is the output feature map</p></li>
+<li><p><span class="math notranslate nohighlight">\(b\)</span> is the bias term (one per filter)</p></li>
+</ul>
+<p><strong>Vectorized form</strong> for entire spatial map:
+$<span class="math notranslate nohighlight">\(
+Y = X \ast K + b
+\)</span>$</p>
+<p>where <span class="math notranslate nohighlight">\(\ast\)</span> denotes the convolution operation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Electromagnetic Interpretation</strong></p>
+<p>What do convolutional filters learn for magnetic field prediction?</p>
+<p><strong>Early layers</strong> (close to input):</p>
+<ul class="simple">
+<li><p><strong>Local flux gradients</strong>: Detect sharp changes in B-field magnitude</p></li>
+<li><p><strong>Material boundaries</strong>: Identify transitions between air, iron core, magnets</p></li>
+<li><p><strong>Geometric features</strong>: Recognize edges of slots, poles, magnets</p></li>
+</ul>
+<p><strong>Middle layers</strong>:</p>
+<ul class="simple">
+<li><p><strong>Saturation patterns</strong>: Detect regions where core material saturates (nonlinear B-H)</p></li>
+<li><p><strong>Flux paths</strong>: Learn typical flux return paths through iron</p></li>
+<li><p><strong>Interaction zones</strong>: Recognize areas where multiple sources interact</p></li>
+</ul>
+<p><strong>Deep layers</strong>:</p>
+<ul class="simple">
+<li><p><strong>Global topology</strong>: Understand overall field distribution symmetry</p></li>
+<li><p><strong>Source localization</strong>: Relate excitation sources to far-field responses</p></li>
+<li><p><strong>Design patterns</strong>: Learn relationships between geometry parameters and field shapes</p></li>
+</ul>
+<p>This hierarchical feature learning mirrors the multi-scale nature of electromagnetic phenomena—from local Ampere’s law (∇×H = J) to global flux conservation (∮B·dA = 0).</p>
+</div>
+<p><strong>Parameter Sharing</strong>:</p>
+<ul class="simple">
+<li><p>Same filter applied at every spatial location</p></li>
+<li><p>A 3×3 filter has only 9 weights (plus 1 bias) regardless of input size</p></li>
+<li><p>For 64 filters: 64 × (9+1) = <strong>640 parameters</strong> vs. millions for fully-connected layer</p></li>
+</ul>
+</section>
+<section id="pooling-layer-pool">
+<h3>2. Pooling Layer (POOL)<a class="headerlink" href="#pooling-layer-pool" title="Link to this heading">#</a></h3>
+<p>The pooling layer is responsible for downsampling the spatial dimensions of the input <span id="id7">[]</span>. Pooling layers are periodically inserted in-between convolutional layers to progressively reduce spatial resolution.</p>
+<p><strong>Purpose</strong>:</p>
+<ul class="simple">
+<li><p><strong>Reduce parameters</strong>: Smaller spatial dimensions → fewer computations in subsequent layers</p></li>
+<li><p><strong>Increase receptive field</strong>: Each neuron “sees” a larger region of the original input</p></li>
+<li><p><strong>Provide translation invariance</strong>: Small shifts in input don’t change output significantly</p></li>
+<li><p><strong>Control overfitting</strong>: Reduces model capacity, preventing memorization of training geometries</p></li>
+</ul>
+<p><strong>Most Popular Form</strong>: Max pooling with <span class="math notranslate nohighlight">\(2 \times 2\)</span> filters applied with stride of 2:</p>
+<ul class="simple">
+<li><p>Down-samples every depth slice by 2 along both width and height</p></li>
+<li><p><strong>Dimension reduction</strong>: H×W → H/2×W/2 (75% spatial reduction)</p></li>
+<li><p><strong>Channel preservation</strong>: Depth dimension remains unchanged</p></li>
+<li><p><strong>Operation</strong>: <span class="math notranslate nohighlight">\(Y[i,j] = \max(X[2i:2i+2, 2j:2j+2])\)</span> for each channel</p></li>
+</ul>
+<p><strong>Hyperparameters</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Filter Size (F)</strong>: Typically <span class="math notranslate nohighlight">\(2 \times 2\)</span> or <span class="math notranslate nohighlight">\(3 \times 3\)</span></p></li>
+<li><p><strong>Stride (S)</strong>: Step size for sliding the filter (typically 2 for max pooling)</p></li>
+</ol>
+<p><strong>Output dimensions</strong>:
+$<span class="math notranslate nohighlight">\(
+H_{\text{out}} = \lfloor (H_{\text{in}} - F) / S \rfloor + 1
+\)</span><span class="math notranslate nohighlight">\(
+\)</span><span class="math notranslate nohighlight">\(
+W_{\text{out}} = \lfloor (W_{\text{in}} - F) / S \rfloor + 1
+\)</span>$</p>
+<p><strong>Example</strong>: A <span class="math notranslate nohighlight">\(4 \times 4\)</span> input with <span class="math notranslate nohighlight">\(2 \times 2\)</span> max pooling (stride 2) produces a <span class="math notranslate nohighlight">\(2 \times 2\)</span> output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Input (4×4):                    Output (2×2) after max pooling:
+[1  3  | 2  4]                  [3 | 4]
+[5  6  | 1  2]                  [6 | 2]
+-------+------                  ---+---
+[7  2  | 8  3]                  [7 | 8]
+[1  0  | 4  1]                  [1 | 4]
+
+Takes max of each 2×2 block
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Trade-offs for Electromagnetic Field Prediction</strong></p>
+<p><strong>Advantages</strong>:</p>
+<ul class="simple">
+<li><p><strong>Computational efficiency</strong>: Training and inference speed increases significantly</p></li>
+<li><p><strong>Receptive field growth</strong>: Deeper layers can “see” larger portions of the motor geometry</p></li>
+<li><p><strong>Abstraction</strong>: Forces network to learn high-level electromagnetic patterns</p></li>
+</ul>
+<p><strong>Disadvantages</strong>:</p>
+<ul class="simple">
+<li><p><strong>Spatial information loss</strong>: Precise flux density locations become blurred</p></li>
+<li><p><strong>Boundary details</strong>: Sharp transitions (air-iron interfaces) may be smeared</p></li>
+<li><p><strong>Resolution reduction</strong>: Difficult to predict fine-grained field variations</p></li>
+</ul>
+<p><strong>Solution in this work</strong>: The encoder-decoder architecture with <strong>skip connections</strong> (Section below) recovers lost spatial information during upsampling, combining coarse semantic features from encoder with fine spatial details from early layers.</p>
+</div>
+</section>
+<section id="fully-connected-layer-fc">
+<h3>3. Fully Connected Layer (FC)<a class="headerlink" href="#fully-connected-layer-fc" title="Link to this heading">#</a></h3>
+<p>Neurons in fully connected layers have dense connections with all activations in the previous layer, similar to regular neural networks.</p>
+<p><strong>Differences from CONV Layers</strong>:</p>
+<ul class="simple">
+<li><p><strong>Structure</strong>: CONV layers exhibit local connectivity and parameter sharing</p></li>
+<li><p><strong>Function</strong>: Both compute dot products between weights and activations, followed by non-linear activation</p></li>
+</ul>
+<p><strong>Purpose</strong>:</p>
+<ul class="simple">
+<li><p>Balance the locality-context tradeoff</p></li>
+<li><p>Relate all features learned by CONV layers</p></li>
+<li><p>Develop patterns that capture global trends</p></li>
+</ul>
+<p><strong>Note</strong>: In modern encoder-decoder architectures for dense prediction (like field estimation), FC layers are often omitted in favor of fully convolutional architectures.</p>
+</section>
+</section>
+<section id="dilated-convolutions">
+<h2>Dilated Convolutions<a class="headerlink" href="#dilated-convolutions" title="Link to this heading">#</a></h2>
+<p>A key innovation in the magnetic field prediction architecture is the use of <strong>dilated convolutions</strong> (also called atrous convolutions) <span id="id8">[]</span>. This technique is critical for capturing long-range electromagnetic interactions without increasing computational cost.</p>
+<section id="standard-vs-dilated-convolution">
+<h3>Standard vs. Dilated Convolution<a class="headerlink" href="#standard-vs-dilated-convolution" title="Link to this heading">#</a></h3>
+<p><strong>Standard Convolution</strong>: Dense kernel captures only immediate neighbors</p>
+<figure class="align-default" id="fig-standard-conv">
+<a class="reference internal image-reference" href="../_images/FIG2A.pdf"><img alt="../_images/FIG2A.pdf" src="../_images/FIG2A.pdf" style="width: 45%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 6 </span><span class="caption-text">Non-dilated convolutional filter with padding. All kernel elements are contiguous.</span><a class="headerlink" href="#fig-standard-conv" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<p><strong>Dilated Convolution</strong>: Sparse kernel captures distant relationships</p>
+<figure class="align-default" id="fig-dilated-conv">
+<a class="reference internal image-reference" href="../_images/FIG2B.pdf"><img alt="../_images/FIG2B.pdf" src="../_images/FIG2B.pdf" style="width: 45%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 7 </span><span class="caption-text">Dilated filter with dilation rate of 1. Kernel elements are spaced apart, expanding the receptive field without increasing parameters.</span><a class="headerlink" href="#fig-dilated-conv" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="mathematical-formulation">
+<h3>Mathematical Formulation<a class="headerlink" href="#mathematical-formulation" title="Link to this heading">#</a></h3>
+<p><strong>Standard convolution</strong>:
+$<span class="math notranslate nohighlight">\(
+Y[i,j] = \sum_{m=0}^{k-1} \sum_{n=0}^{k-1} X[i+m, j+n] \cdot K[m,n]
+\)</span>$</p>
+<p><strong>Dilated convolution</strong> with dilation rate <span class="math notranslate nohighlight">\(r\)</span>:
+$<span class="math notranslate nohighlight">\(
+Y[i,j] = \sum_{m=0}^{k-1} \sum_{n=0}^{k-1} X[i+r \cdot m, j+r \cdot n] \cdot K[m,n]
+\)</span>$</p>
+<p><strong>Receptive field</strong>: Effective filter size becomes <span class="math notranslate nohighlight">\((k-1) \cdot r + 1\)</span></p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(r=1\)</span> (standard): 3×3 filter has receptive field of 3×3 = 9 pixels</p></li>
+<li><p><span class="math notranslate nohighlight">\(r=2\)</span> (dilation=1): 3×3 filter has receptive field of 5×5 = 25 pixels</p></li>
+<li><p><span class="math notranslate nohighlight">\(r=3\)</span> (dilation=2): 3×3 filter has receptive field of 7×7 = 49 pixels</p></li>
+</ul>
+<p><strong>Key advantage</strong>: Exponential receptive field growth without parameter increase!</p>
+</section>
+<section id="motivation-for-magnetic-field-prediction">
+<h3>Motivation for Magnetic Field Prediction<a class="headerlink" href="#motivation-for-magnetic-field-prediction" title="Link to this heading">#</a></h3>
+<p><strong>Physical Insight from Electromagnetic Theory</strong>:</p>
+<p>The magnetic field at a point is determined by the <strong>Biot-Savart law</strong>:
+$<span class="math notranslate nohighlight">\(
+\mathbf{B}(\mathbf{r}) = \frac{\mu_0}{4\pi} \int \frac{\mathbf{J}(\mathbf{r'}) \times (\mathbf{r} - \mathbf{r'})}{|\mathbf{r} - \mathbf{r'}|^3} dV'
+\)</span>$</p>
+<p>This shows that <strong>the field at location <span class="math notranslate nohighlight">\(\mathbf{r}\)</span> depends on current density <span class="math notranslate nohighlight">\(\mathbf{J}\)</span> at ALL locations <span class="math notranslate nohighlight">\(\mathbf{r'}\)</span></strong>—including spatially distant regions. The <span class="math notranslate nohighlight">\(1/|\mathbf{r} - \mathbf{r'}|^2\)</span> falloff means distant sources still contribute significantly.</p>
+<p><strong>Practical implications</strong>:</p>
+<ul class="simple">
+<li><p><strong>Airgap flux</strong> in a motor is influenced by rotor magnets, stator windings, AND iron saturation in the back iron (cm away)</p></li>
+<li><p><strong>Fringing fields</strong> extend far from slot openings</p></li>
+<li><p><strong>Mutual coupling</strong> between coils separated by multiple slots</p></li>
+<li><p><strong>Leakage flux paths</strong> through air can span the entire motor diameter</p></li>
+</ul>
+<p><strong>Why standard 3×3 convolutions are insufficient</strong>:</p>
+<ul class="simple">
+<li><p>With stride=1 and no pooling, receptive field after <span class="math notranslate nohighlight">\(N\)</span> layers is only <span class="math notranslate nohighlight">\((2N+1) \times (2N+1)\)</span></p></li>
+<li><p>For 10 layers: receptive field = 21×21 pixels</p></li>
+<li><p>For a 256×256 motor image: Only sees 8% of spatial dimension</p></li>
+<li><p>To see entire motor would need ~128 layers (infeasible to train)</p></li>
+</ul>
+<p><strong>Why dilated convolutions solve this</strong> <span id="id9">[]</span>:</p>
+<ul class="simple">
+<li><p>Alternating dilated layers exponentially expand receptive field</p></li>
+<li><p>After 10 layers with alternating dilation [1,2,1,2,…]: receptive field ~200×200 pixels</p></li>
+<li><p>Sees ~78% of spatial domain with 10× fewer layers</p></li>
+<li><p><strong>Same parameter count</strong> as standard convolutions (still 3×3 filters)</p></li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>Empirical Results from This Work</strong></p>
+<p>Ablation studies (Section 4d) demonstrate:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Architecture</p></th>
+<th class="head"><p>Test NMSE</p></th>
+<th class="head"><p>Receptive Field</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Standard CNN (no dilation)</p></td>
+<td><p>1.2%</p></td>
+<td><p>~60×60 pixels</p></td>
+</tr>
+<tr class="row-odd"><td><p>CNN with dilated layers</p></td>
+<td><p><strong>0.4%</strong></p></td>
+<td><p>~200×200 pixels</p></td>
+</tr>
+<tr class="row-even"><td><p>Improvement</p></td>
+<td><p><strong>3× better</strong></p></td>
+<td><p><strong>11× larger</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Conclusion</strong>: Dilated convolutions are <strong>essential</strong> for accurate electromagnetic field prediction. Standard CNNs cannot capture the long-range interactions dictated by Maxwell’s equations without prohibitively deep architectures.</p>
+</div>
+</section>
+<section id="implementation-details">
+<h3>Implementation Details<a class="headerlink" href="#implementation-details" title="Link to this heading">#</a></h3>
+<p>In this work:</p>
+<ul class="simple">
+<li><p><strong>Dilation pattern</strong>: Alternating [1, 2, 1, 2, …] in encoder layers</p></li>
+<li><p><strong>Kernel size</strong>: 3×3 (compact even with dilation)</p></li>
+<li><p><strong>Placement</strong>: Applied in encoder layers 2, 4, 6 (after initial feature extraction)</p></li>
+<li><p><strong>Decoder</strong>: Standard convolutions (dilation not needed for reconstruction)</p></li>
+</ul>
+</section>
+</section>
+<section id="encoder-decoder-architecture">
+<h2>Encoder-Decoder Architecture<a class="headerlink" href="#encoder-decoder-architecture" title="Link to this heading">#</a></h2>
+<p>The deep learning model for magnetic field prediction uses an <strong>encoder-decoder architecture</strong> <span id="id10">[]</span>, similar to the U-Net architecture designed for medical image segmentation but adapted for dense regression instead of classification.</p>
+<figure class="align-default" id="fig-network-arch">
+<a class="reference internal image-reference" href="../_images/Network_arch.png"><img alt="../_images/Network_arch.png" src="../_images/Network_arch.png" style="width: 95%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 8 </span><span class="caption-text">Encoder-Decoder based Convolutional Neural Network Architecture for magnetic field prediction. The encoder (left half) progressively downsamples to extract abstract features. The decoder (right half) upsamples to reconstruct the spatial field distribution. Skip connections (horizontal arrows) preserve fine-grained details.</span><a class="headerlink" href="#fig-network-arch" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<section id="encoder-section-contracting-path">
+<h3>Encoder Section (Contracting Path)<a class="headerlink" href="#encoder-section-contracting-path" title="Link to this heading">#</a></h3>
+<p>The encoder extracts hierarchical features from the input geometry representation:</p>
+<p><strong>Progressive abstraction</strong> (left side of network):</p>
+<ol class="arabic simple">
+<li><p><strong>Layer 1-2</strong> (256×256 → 128×128): Local geometric features</p>
+<ul class="simple">
+<li><p>Slot edges, magnet boundaries, winding positions</p></li>
+<li><p>Learns: “Where are the materials located?”</p></li>
+</ul>
+</li>
+<li><p><strong>Layer 3-4</strong> (128×128 → 64×64): Regional electromagnetic patterns</p>
+<ul class="simple">
+<li><p>Flux concentration zones, saturation regions</p></li>
+<li><p>Learns: “Where will flux be high/low?”</p></li>
+</ul>
+</li>
+<li><p><strong>Layer 5-6</strong> (64×64 → 32×32): Global field topology</p>
+<ul class="simple">
+<li><p>Flux return paths, symmetry patterns</p></li>
+<li><p>Learns: “What is the overall field structure?”</p></li>
+</ul>
+</li>
+<li><p><strong>Bottleneck</strong> (32×32): Compressed latent representation</p>
+<ul class="simple">
+<li><p>Most discriminative features for this geometry</p></li>
+<li><p>Learns: “What are the key electromagnetic relationships?”</p></li>
+</ul>
+</li>
+</ol>
+<p><strong>Technical components per encoder block</strong>:</p>
+<ul class="simple">
+<li><p>Two <span class="math notranslate nohighlight">\(3 \times 3\)</span> convolutional layers (some with dilation)</p></li>
+<li><p>ReLU activation after each convolution <span id="id11">[]</span></p></li>
+<li><p>Batch normalization for stable training <span id="id12">[]</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(2 \times 2\)</span> max-pooling with stride 2 (75% spatial reduction)</p></li>
+<li><p>Dropout (rate=0.5) for regularization <span id="id13">[]</span></p></li>
+</ul>
+<p><strong>Feature channel growth</strong>: 32 → 64 → 128 → 256 as spatial dimensions shrink</p>
+<ul class="simple">
+<li><p>Compensates for spatial information loss with richer feature representations</p></li>
+<li><p>Total information capacity remains approximately constant</p></li>
+</ul>
+</section>
+<section id="decoder-section-expanding-path">
+<h3>Decoder Section (Expanding Path)<a class="headerlink" href="#decoder-section-expanding-path" title="Link to this heading">#</a></h3>
+<p>The decoder reconstructs the full-resolution field distribution from the compressed latent representation:</p>
+<p><strong>Progressive reconstruction</strong> (right side of network):</p>
+<ol class="arabic simple">
+<li><p><strong>Bottleneck → Layer 7-8</strong> (32×32 → 64×64): Coarse field structure</p>
+<ul class="simple">
+<li><p>Major flux paths, high-level topology</p></li>
+<li><p>Reconstructs: “Overall field shape”</p></li>
+</ul>
+</li>
+<li><p><strong>Layer 9-10</strong> (64×64 → 128×128): Regional field details</p>
+<ul class="simple">
+<li><p>Saturation zone boundaries, flux gradients</p></li>
+<li><p>Reconstructs: “Regional variations”</p></li>
+</ul>
+</li>
+<li><p><strong>Layer 11-12</strong> (128×128 → 256×256): Fine-grained field distribution</p>
+<ul class="simple">
+<li><p>Precise flux density at each spatial location</p></li>
+<li><p>Reconstructs: “Pixel-level predictions”</p></li>
+</ul>
+</li>
+</ol>
+<p><strong>Technical components per decoder block</strong>:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(2 \times 2\)</span> transposed convolution (upsampling) with stride 2</p></li>
+<li><p>Concatenation with corresponding encoder feature maps (skip connections)</p></li>
+<li><p>Two <span class="math notranslate nohighlight">\(3 \times 3\)</span> convolutional layers</p></li>
+<li><p>ReLU activation and batch normalization</p></li>
+<li><p>Dropout for regularization</p></li>
+</ul>
+<p><strong>Feature channel reduction</strong>: 256 → 128 → 64 → 32 → 1 as spatial dimensions grow</p>
+<ul class="simple">
+<li><p>Progressively focuses on spatial precision over feature diversity</p></li>
+<li><p>Final layer: 1 channel = predicted flux density magnitude</p></li>
+</ul>
+</section>
+<section id="skip-connections-critical-innovation">
+<h3>Skip Connections (Critical Innovation)<a class="headerlink" href="#skip-connections-critical-innovation" title="Link to this heading">#</a></h3>
+<p>Skip connections directly connect encoder layers to corresponding decoder layers <span id="id14">[]</span>:</p>
+<p><strong>Why skip connections are essential</strong>:</p>
+<p><strong>Problem</strong>: Spatial information is lost during encoder downsampling</p>
+<ul class="simple">
+<li><p>Max-pooling discards 75% of spatial positions at each step</p></li>
+<li><p>After 4 pooling operations: 256×256 → 16×16 (99.6% spatial reduction)</p></li>
+<li><p>Decoder must reconstruct field from highly compressed representation</p></li>
+<li><p><strong>Result without skip connections</strong>: Blurry predictions, poor boundary localization</p></li>
+</ul>
+<p><strong>Solution</strong>: Concatenate encoder feature maps with decoder feature maps</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Decoder Layer 9 input = [Upsampled Layer 8] ⊕ [Encoder Layer 3]
+                        (low-res features)    (high-res features)
+</pre></div>
+</div>
+<p>where ⊕ denotes channel-wise concatenation.</p>
+<p><strong>Benefits</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Precise localization</strong>: Encoder features preserve exact positions of geometric boundaries</p></li>
+<li><p><strong>Sharp transitions</strong>: Air-iron interfaces, magnet edges remain crisp</p></li>
+<li><p><strong>Gradient flow</strong>: Direct paths from output to early layers improve training</p></li>
+<li><p><strong>Multi-scale fusion</strong>: Combines semantic (what) and spatial (where) information</p></li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p><strong>Electromagnetic Context</strong></p>
+<p>Skip connections are particularly important for magnetic field prediction because:</p>
+<ul class="simple">
+<li><p><strong>Material boundaries</strong>: Sharp flux density transitions at air-iron interfaces (B changes by 1000×) must be precisely localized</p></li>
+<li><p><strong>Slot openings</strong>: Fringing fields have strong spatial gradients requiring accurate positioning</p></li>
+<li><p><strong>Airgap flux</strong>: Small airgap (1-2mm) needs sub-pixel accuracy to predict torque correctly</p></li>
+<li><p><strong>Saturation zones</strong>: Exact spatial extent of core saturation affects overall performance</p></li>
+</ul>
+<p><strong>Quantitative impact</strong> (ablation study, Section 4d):</p>
+<ul class="simple">
+<li><p>With skip connections: 0.4% NMSE, sharp boundaries</p></li>
+<li><p>Without skip connections: 2.1% NMSE, blurry boundaries</p></li>
+<li><p><strong>5× accuracy improvement</strong> from skip connections alone!</p></li>
+</ul>
+</div>
+</section>
+<section id="comparison-to-u-net">
+<h3>Comparison to U-Net<a class="headerlink" href="#comparison-to-u-net" title="Link to this heading">#</a></h3>
+<p>This architecture is inspired by U-Net <span id="id15">[]</span> but adapted for electromagnetic field prediction:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Aspect</p></th>
+<th class="head"><p>U-Net (Medical Imaging)</p></th>
+<th class="head"><p>This Work (EM Fields)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Task</strong></p></td>
+<td><p>Segmentation (classification)</p></td>
+<td><p>Regression (continuous values)</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Output</strong></p></td>
+<td><p>Class labels per pixel</p></td>
+<td><p>Flux density per pixel</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Output activation</strong></p></td>
+<td><p>Softmax</p></td>
+<td><p>Linear (no activation)</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Loss function</strong></p></td>
+<td><p>Cross-entropy</p></td>
+<td><p>Mean Squared Error</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Innovation added</strong></p></td>
+<td><p>-</p></td>
+<td><p><strong>Dilated convolutions</strong> for long-range EM interactions</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Receptive field</strong></p></td>
+<td><p>Standard</p></td>
+<td><p><strong>Exponentially expanded</strong> via dilation</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Key insight</strong>: U-Net’s architecture is well-suited for any dense prediction task requiring both semantic understanding (encoder) and precise localization (decoder + skip connections).</p>
+</section>
+</section>
+<section id="network-specifications">
+<h2>Network Specifications<a class="headerlink" href="#network-specifications" title="Link to this heading">#</a></h2>
+<p>The complete deep learning model consists of:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Component</p></th>
+<th class="head"><p>Count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Total Layers</strong></p></td>
+<td><p>32</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Trainable Convolutional Layers</strong></p></td>
+<td><p>16</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Pooling/Up-sampling Layers</strong></p></td>
+<td><p>8</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Dropout Layers</strong></p></td>
+<td><p>8</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Total Parameters</strong></p></td>
+<td><p>2.4 Million</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<section id="layer-configuration">
+<h3>Layer Configuration<a class="headerlink" href="#layer-configuration" title="Link to this heading">#</a></h3>
+<p>Each encoder/decoder block consists of:</p>
+<ol class="arabic simple">
+<li><p>Two sets of <span class="math notranslate nohighlight">\(3 \times 3\)</span> convolution layers</p></li>
+<li><p>ReLU activation after each convolution</p></li>
+<li><p>Batch normalization layer <span id="id16">[]</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(2 \times 2\)</span> max-pooling (encoder) or up-sampling (decoder) with stride 2</p></li>
+<li><p>Dropout for regularization <span id="id17">[]</span> (typically 0.5 dropout rate)</p></li>
+</ol>
+<p><strong>Exception</strong>: The last two convolutional layers do not follow this pattern due to a network design constraint to fit the field distribution dimensionality.</p>
+</section>
+<section id="convolution-details">
+<h3>Convolution Details<a class="headerlink" href="#convolution-details" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Kernel Size</strong>: <span class="math notranslate nohighlight">\(3 \times 3\)</span> (with some <span class="math notranslate nohighlight">\(5 \times 5\)</span>)</p></li>
+<li><p><strong>Stride</strong>: 1 for all convolutional layers</p></li>
+<li><p><strong>Number of Filters (K)</strong>: Varies by layer, typically K=32 or K=64</p></li>
+<li><p><strong>Dilation</strong>: Alternate dilated layers in encoder with dilation rate of 1</p></li>
+</ul>
+</section>
+</section>
+<section id="model-capacity-and-generalization">
+<h2>Model Capacity and Generalization<a class="headerlink" href="#model-capacity-and-generalization" title="Link to this heading">#</a></h2>
+<p>For the network to train successfully, it must have <strong>sufficient capacity</strong> to satisfactorily capture the complexity of the electromagnetic field prediction problem. This capability is achieved by choosing appropriate values for <span id="id18">[]</span>:</p>
+<ol class="arabic simple">
+<li><p><strong>Number of Layers</strong>: Depth of the network (32 total layers)</p></li>
+<li><p><strong>Kernel Size</strong>: Size of convolutional filters (<span class="math notranslate nohighlight">\(3 \times 3\)</span>, <span class="math notranslate nohighlight">\(5 \times 5\)</span>)</p></li>
+<li><p><strong>Number of Kernels</strong>: Filters per layer (K=32, K=64)</p></li>
+<li><p><strong>Regularization Parameters</strong>: Dropout rate, batch normalization</p></li>
+</ol>
+<section id="model-selection-process">
+<h3>Model Selection Process<a class="headerlink" href="#model-selection-process" title="Link to this heading">#</a></h3>
+<p>Model selection is performed by <span id="id19">[]</span>:</p>
+<ul class="simple">
+<li><p>Investigating a set of candidate models</p></li>
+<li><p>Choosing the model with best balance between fit and complexity</p></li>
+<li><p>Using random search and grid search for hyperparameter optimization</p></li>
+</ul>
+<p><strong>Result</strong>: A total of 35 networks with different configurations were trained during the model selection process before arriving at the final architecture described here.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Understanding This Visualization</strong><br />
+This demonstration shows how a convolutional filter processes input data:</p>
+<ol class="arabic simple">
+<li><p><strong>Input (5×5)</strong>: Could represent a small patch of a magnetic field or geometry image</p></li>
+<li><p><strong>Kernel (3×3)</strong>: Learnable filter that detects specific patterns (e.g., edges, gradients)</p></li>
+<li><p><strong>Feature Map (3×3)</strong>: Output showing where the pattern is detected (high values = strong match)</p></li>
+</ol>
+<p>The red box on the input shows the <strong>receptive field</strong>—the region that influences one output pixel. The filter slides across the entire input, computing the dot product at each position.</p>
+<p><strong>For electromagnetic field prediction</strong>: Early-layer filters learn to detect geometric features (slot edges, magnet boundaries), while deeper filters learn electromagnetic patterns (flux concentration zones, saturation regions).</p>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Visualization of CNN architecture components</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rectangle</span><span class="p">,</span> <span class="n">FancyArrowPatch</span><span class="p">,</span> <span class="n">FancyBboxPatch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearSegmentedColormap</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">visualize_convolution_detailed</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Comprehensive demonstration of convolution operation with step-by-step breakdown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+    <span class="n">gs</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_gridspec</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">hspace</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">wspace</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    
+    <span class="c1"># Create sample input (simulating a magnetic field patch)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+    <span class="n">input_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="c1"># Add some structure (simulate flux gradient)</span>
+    <span class="n">input_data</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">0.5</span>
+    
+    <span class="c1"># Define an edge detection kernel (simulates learning flux gradients)</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                       <span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                       <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span> <span class="o">/</span> <span class="mf">4.0</span>  <span class="c1"># Sobel-like filter</span>
+    
+    <span class="c1"># Compute actual convolution (valid padding)</span>
+    <span class="n">output_size</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">output_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">output_size</span><span class="p">,</span> <span class="n">output_size</span><span class="p">))</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">output_size</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">output_size</span><span class="p">):</span>
+            <span class="n">patch</span> <span class="o">=</span> <span class="n">input_data</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span><span class="n">j</span><span class="o">+</span><span class="mi">3</span><span class="p">]</span>
+            <span class="n">output_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">patch</span> <span class="o">*</span> <span class="n">kernel</span><span class="p">)</span>
+    
+    <span class="c1"># ===== Top Row: Input, Kernel, Output =====</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">im1</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Input Feature Map (5×5)</span><span class="se">\n</span><span class="s1">(Could be flux density or geometry)&#39;</span><span class="p">,</span> 
+                  <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+    
+    <span class="c1"># Highlight first receptive field</span>
+    <span class="n">rect</span> <span class="o">=</span> <span class="n">Rectangle</span><span class="p">((</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.7</span><span class="p">,</span> <span class="s1">&#39;Receptive field</span><span class="se">\n</span><span class="s1">(contributes to output[0,0])&#39;</span><span class="p">,</span> 
+             <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Add colorbar</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax1</span><span class="p">,</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.046</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    
+    <span class="c1"># Kernel visualization</span>
+    <span class="n">ax2</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">im2</span> <span class="o">=</span> <span class="n">ax2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Convolutional Kernel (3×3)</span><span class="se">\n</span><span class="s1">(Detects vertical edges/gradients)&#39;</span><span class="p">,</span> 
+                  <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+    
+    <span class="c1"># Annotate kernel values</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">ax2</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">kernel</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">]</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                           <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span>
+                           <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span> <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">kernel</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mf">0.2</span> <span class="k">else</span> <span class="s1">&#39;black&#39;</span><span class="p">)</span>
+    
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.046</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    
+    <span class="c1"># Output feature map</span>
+    <span class="n">ax3</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+    <span class="n">im3</span> <span class="o">=</span> <span class="n">ax3</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">output_data</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;plasma&#39;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Output Feature Map (3×3)</span><span class="se">\n</span><span class="s1">(Edge strength at each location)&#39;</span><span class="p">,</span> 
+                  <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+    
+    <span class="c1"># Annotate output values</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">output_size</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">output_size</span><span class="p">):</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">ax3</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">]</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                           <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span>
+                           <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span> <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">output_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mf">0.5</span> <span class="k">else</span> <span class="s1">&#39;black&#39;</span><span class="p">)</span>
+    
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im3</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax3</span><span class="p">,</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.046</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    
+    <span class="c1"># ===== Middle Row: Computation breakdown for one output pixel =====</span>
+    <span class="n">ax4</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">ax4</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    
+    <span class="c1"># Extract the first 3x3 patch</span>
+    <span class="n">patch</span> <span class="o">=</span> <span class="n">input_data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+    
+    <span class="c1"># Show computation</span>
+    <span class="n">computation_text</span> <span class="o">=</span> <span class="s2">&quot;Computing Output[0,0]:</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+    <span class="n">computation_text</span> <span class="o">+=</span> <span class="s2">&quot;Patch (input[0:3, 0:3])  ⊙  Kernel  =  Element-wise products  →  Sum</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+    
+    <span class="c1"># Create visual equation</span>
+    <span class="n">patch_str</span> <span class="o">=</span> <span class="s2">&quot;[&quot;</span>
+    <span class="n">kernel_str</span> <span class="o">=</span> <span class="s2">&quot;[&quot;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">patch_str</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span>
+            <span class="n">kernel_str</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span>
+        <span class="n">patch_str</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">patch</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="si">:</span><span class="s2">5.2f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)])</span>
+        <span class="n">kernel_str</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kernel</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="si">:</span><span class="s2">5.2f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">patch_str</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> &quot;</span>
+            <span class="n">kernel_str</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> &quot;</span>
+    <span class="n">patch_str</span> <span class="o">+=</span> <span class="s2">&quot;]&quot;</span>
+    <span class="n">kernel_str</span> <span class="o">+=</span> <span class="s2">&quot;]&quot;</span>
+    
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">patch</span> <span class="o">*</span> <span class="n">kernel</span><span class="p">)</span>
+    <span class="n">computation_text</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">patch_str</span><span class="si">}</span><span class="s2">  ⊙  </span><span class="si">{</span><span class="n">kernel_str</span><span class="si">}</span><span class="s2">  =  </span><span class="si">{</span><span class="n">result</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span>
+    
+    <span class="n">ax4</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">computation_text</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+             <span class="n">fontfamily</span><span class="o">=</span><span class="s1">&#39;monospace&#39;</span><span class="p">,</span>
+             <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s1">&#39;round&#39;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;wheat&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">))</span>
+    
+    <span class="c1"># ===== Bottom Row: Dilated convolution comparison =====</span>
+    <span class="n">ax5</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">ax5</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Standard 3×3 Convolution</span><span class="se">\n</span><span class="s1">Receptive Field = 3×3&#39;</span><span class="p">,</span> 
+                  <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+    
+    <span class="c1"># Create a larger input for dilation demo</span>
+    <span class="n">large_input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+    <span class="n">large_input</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">5</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">0.5</span>
+    
+    <span class="n">im5</span> <span class="o">=</span> <span class="n">ax5</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">large_input</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+    <span class="c1"># Highlight 3x3 receptive field</span>
+    <span class="n">rect_std</span> <span class="o">=</span> <span class="n">Rectangle</span><span class="p">((</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">),</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">ax5</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">rect_std</span><span class="p">)</span>
+    <span class="n">ax5</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">))</span>
+    <span class="n">ax5</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">))</span>
+    <span class="n">ax5</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    
+    <span class="c1"># Mark kernel positions</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">):</span>
+            <span class="n">ax5</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="s1">&#39;r*&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    
+    <span class="n">ax6</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">ax6</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Dilated 3×3 (dilation=2)</span><span class="se">\n</span><span class="s1">Receptive Field = 5×5&#39;</span><span class="p">,</span> 
+                  <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+    
+    <span class="n">im6</span> <span class="o">=</span> <span class="n">ax6</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">large_input</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+    <span class="c1"># Highlight 5x5 effective receptive field</span>
+    <span class="n">rect_dil</span> <span class="o">=</span> <span class="n">Rectangle</span><span class="p">((</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">ax6</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">rect_dil</span><span class="p">)</span>
+    <span class="n">ax6</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">))</span>
+    <span class="n">ax6</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">))</span>
+    <span class="n">ax6</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    
+    <span class="c1"># Mark sparse kernel positions (dilation = 2)</span>
+    <span class="n">positions</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> 
+                 <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                 <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">positions</span><span class="p">:</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="s1">&#39;b*&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    
+    <span class="n">ax7</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+    <span class="n">ax7</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+    <span class="n">ax7</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax7</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    
+    <span class="n">comparison_text</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    Key Difference:</span>
+<span class="s2">    </span>
+<span class="s2">    Standard Convolution:</span>
+<span class="s2">    • Kernel elements: contiguous</span>
+<span class="s2">    • Receptive field: 3×3 = 9 pixels</span>
+<span class="s2">    • Parameter count: 9 weights</span>
+<span class="s2">    • Captures: local patterns only</span>
+<span class="s2">    </span>
+<span class="s2">    Dilated Convolution (dilation=2):</span>
+<span class="s2">    • Kernel elements: spaced apart</span>
+<span class="s2">    • Receptive field: 5×5 = 25 pixels</span>
+<span class="s2">    • Parameter count: 9 weights (same!)</span>
+<span class="s2">    • Captures: distant patterns</span>
+<span class="s2">    </span>
+<span class="s2">    For EM field prediction:</span>
+<span class="s2">    → Standard: Detects slot edges</span>
+<span class="s2">    → Dilated: Detects flux interactions</span>
+<span class="s2">       across multiple slots</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    
+    <span class="n">ax7</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">comparison_text</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+             <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s1">&#39;round&#39;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;lightblue&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">))</span>
+    
+    <span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Convolutional Neural Network: Core Operations&#39;</span><span class="p">,</span> 
+                 <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.98</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    
+    <span class="c1"># Print summary</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">80</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;CNN Architecture Summary for Magnetic Field Prediction&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">80</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[Layer Type]       [Purpose]                        [EM Application]&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Convolution        Feature extraction               Detect flux patterns&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;                   Local connectivity               Learn Maxwell&#39;s laws&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;                   Parameter sharing                Apply physics uniformly&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dilated Conv       Long-range interactions          Capture Biot-Savart law&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;                   Exponential receptive field      Model distant sources&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;                   Same parameter count             Efficient computation&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Pooling            Spatial downsampling             Coarse field structure&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;                   Reduce parameters                Enable deep networks&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;                   Translation invariance           Robust to shifts&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Skip Connections   Preserve spatial details         Sharp material boundaries&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;                   Multi-scale fusion               Airgap flux accuracy&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;                   Gradient flow                    Stable training&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">80</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Result: 2.4M parameters predict 256×256 field in 10-100ms&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;        (vs. FEA: millions of mesh elements, 2-8 hours)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">80</span><span class="p">)</span>
+
+<span class="n">visualize_convolution_detailed</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>C:\Users\MK\AppData\Local\Temp\ipykernel_32076\869473918.py:196: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  plt.tight_layout()
+</pre></div>
+</div>
+<img alt="../_images/0c3e9e7b80cbeea8e9ebeeb45ee6e7785bf4081bee49db5d9a936dff115ae5ee.png" src="../_images/0c3e9e7b80cbeea8e9ebeeb45ee6e7785bf4081bee49db5d9a936dff115ae5ee.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>================================================================================
+CNN Architecture Summary for Magnetic Field Prediction
+================================================================================
+
+[Layer Type]       [Purpose]                        [EM Application]
+--------------------------------------------------------------------------------
+Convolution        Feature extraction               Detect flux patterns
+                   Local connectivity               Learn Maxwell&#39;s laws
+                   Parameter sharing                Apply physics uniformly
+
+Dilated Conv       Long-range interactions          Capture Biot-Savart law
+                   Exponential receptive field      Model distant sources
+                   Same parameter count             Efficient computation
+
+Pooling            Spatial downsampling             Coarse field structure
+                   Reduce parameters                Enable deep networks
+                   Translation invariance           Robust to shifts
+
+Skip Connections   Preserve spatial details         Sharp material boundaries
+                   Multi-scale fusion               Airgap flux accuracy
+                   Gradient flow                    Stable training
+
+================================================================================
+Result: 2.4M parameters predict 256×256 field in 10-100ms
+        (vs. FEA: millions of mesh elements, 2-8 hours)
+================================================================================
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<p>This section established the CNN architecture for electromagnetic field prediction, detailing each component’s role in capturing Maxwell’s equations from data.</p>
+<section id="architectural-components">
+<h3>Architectural Components<a class="headerlink" href="#architectural-components" title="Link to this heading">#</a></h3>
+<p><strong>1. Convolutional Layers</strong> <span id="id20">[]</span></p>
+<ul class="simple">
+<li><p>Local connectivity (3×3 filters) captures spatial relationships</p></li>
+<li><p>Parameter sharing applies physics laws uniformly across domain</p></li>
+<li><p>Feature hierarchy: geometric features → regional patterns → global topology</p></li>
+</ul>
+<p><strong>2. Dilated Convolutions</strong> <span id="id21">[]</span> <em>(Key Innovation)</em></p>
+<ul class="simple">
+<li><p>Physics motivation: Biot-Savart law shows field depends on distant sources</p></li>
+<li><p>Receptive field grows exponentially (3×3 → 200×200) without parameter increase</p></li>
+<li><p>Enables long-range electromagnetic interactions</p></li>
+</ul>
+<p><strong>3. Pooling Layers</strong></p>
+<ul class="simple">
+<li><p>Spatial downsampling (2×2, stride 2) reduces dimensions 75% per layer</p></li>
+<li><p>Enables deep networks to “see” entire motor geometry</p></li>
+<li><p>Trade-off: loses precision, recovered by skip connections</p></li>
+</ul>
+<p><strong>4. Encoder-Decoder Structure</strong> <span id="id22">[]</span></p>
+<ul class="simple">
+<li><p>Encoder: Progressive abstraction (256×256 → 32×32 bottleneck)</p></li>
+<li><p>Decoder: Progressive reconstruction (32×32 → 256×256 field prediction)</p></li>
+<li><p>Symmetric design balances compression with reconstruction</p></li>
+</ul>
+<p><strong>5. Skip Connections</strong> <em>(Critical for Accuracy)</em></p>
+<ul class="simple">
+<li><p>Preserve spatial information lost during pooling</p></li>
+<li><p>Concatenate encoder features with decoder features</p></li>
+<li><p>Essential for sharp material boundaries (5× accuracy improvement)</p></li>
+</ul>
+</section>
+<section id="id23">
+<h3>Network Specifications<a class="headerlink" href="#id23" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Component</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Total layers</p></td>
+<td><p>32</p></td>
+</tr>
+<tr class="row-odd"><td><p>Trainable layers</p></td>
+<td><p>16 (convolutional)</p></td>
+</tr>
+<tr class="row-even"><td><p>Total parameters</p></td>
+<td><p>2.4 Million</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pooling/Upsampling</p></td>
+<td><p>8 (4 encoder + 4 decoder)</p></td>
+</tr>
+<tr class="row-even"><td><p>Dropout layers</p></td>
+<td><p>8 (regularization)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="key-insight-for-em-field-prediction">
+<h3>Key Insight for EM Field Prediction<a class="headerlink" href="#key-insight-for-em-field-prediction" title="Link to this heading">#</a></h3>
+<p>The architecture exploits the structured 2D nature of magnetic fields through:</p>
+<ul class="simple">
+<li><p><strong>Spatial structure preservation</strong>: CNNs maintain grid representation</p></li>
+<li><p><strong>Multi-scale physics</strong>: Encoder-decoder mirrors local → regional → global scales</p></li>
+<li><p><strong>Long-range interactions</strong>: Dilated convolutions capture non-local Biot-Savart effects</p></li>
+<li><p><strong>Precise localization</strong>: Skip connections preserve material boundary positions</p></li>
+</ul>
+<p><strong>Result</strong>: 2.4M-parameter network predicts 256×256 fields in 10-100ms—crucial for design optimization requiring thousands of evaluations.</p>
+<hr class="docutils" />
+<p>Section 4c examines the training process optimizing these 2.4 million parameters on 30,000 FEA-generated field distributions.</p>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./content"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="04a_ann_fundamentals.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Artificial Neural Networks: Fundamentals</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="04c_cnn_training.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">CNN Training and Optimization</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cnn-fundamentals">CNN Fundamentals</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#main-layer-types-in-cnn-architecture">Main Layer Types in CNN Architecture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convolutional-layer-conv">1. Convolutional Layer (CONV)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pooling-layer-pool">2. Pooling Layer (POOL)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fully-connected-layer-fc">3. Fully Connected Layer (FC)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dilated-convolutions">Dilated Convolutions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#standard-vs-dilated-convolution">Standard vs. Dilated Convolution</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mathematical-formulation">Mathematical Formulation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#motivation-for-magnetic-field-prediction">Motivation for Magnetic Field Prediction</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-details">Implementation Details</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#encoder-decoder-architecture">Encoder-Decoder Architecture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#encoder-section-contracting-path">Encoder Section (Contracting Path)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#decoder-section-expanding-path">Decoder Section (Expanding Path)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#skip-connections-critical-innovation">Skip Connections (Critical Innovation)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-to-u-net">Comparison to U-Net</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#network-specifications">Network Specifications</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#layer-configuration">Layer Configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convolution-details">Convolution Details</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-capacity-and-generalization">Model Capacity and Generalization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#model-selection-process">Model Selection Process</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#architectural-components">Architectural Components</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id23">Network Specifications</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-insight-for-em-field-prediction">Key Insight for EM Field Prediction</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Thesis Author
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
