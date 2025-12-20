@@ -62,8 +62,8 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'content/05_uncertainty_quantification';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Conclusion" href="07_conclusion.html" />
-    <link rel="prev" title="Data Pipeline for Magnetic Field Prediction" href="03_data_pipeline.html" />
+    <link rel="next" title="Physics-Informed Neural Networks for Electromagnetic Field Prediction" href="06a_pinn_introduction_literature.html" />
+    <link rel="prev" title="Results and Performance Analysis" href="04d_results_performance.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -170,7 +170,15 @@
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="02_modeling_fundamentals.html">Modeling Fundamentals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="03_data_pipeline.html">Data Pipeline for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04a_ann_fundamentals.html">Artificial Neural Networks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04b_cnn_architecture.html">CNN Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04c_cnn_training.html">CNN Training &amp; Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04d_results_performance.html">Results &amp; Performance</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Uncertainty Quantification for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06a_pinn_introduction_literature.html">PINNs: Introduction &amp; Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06b_pinn_methodology.html">PINNs: Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06c_pinn_implementation_training.html">PINNs: Implementation &amp; Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06d_pinn_results_discussion.html">PINNs: Results &amp; Discussion</a></li>
 <li class="toctree-l1"><a class="reference internal" href="07_conclusion.html">Conclusion</a></li>
 </ul>
 
@@ -372,7 +380,7 @@ document.write(`
 <ul class="simple">
 <li><p><strong>Sources of Uncertainty</strong>: Aleatoric vs epistemic uncertainty in physics-based models <span id="id3">[]</span></p></li>
 <li><p><strong>Bayesian Neural Networks</strong>: Probabilistic deep learning for uncertainty estimation <span id="id4">[]</span></p></li>
-<li><p><strong>Monte Carlo Dropout</strong>: Practical uncertainty quantification method <span id="id5">[]</span></p></li>
+<li><p><strong>Monte Carlo Dropout</strong>: Practical uncertainty quantification method <span id="id5">[<a class="reference internal" href="07_conclusion.html#id118" title="Yarin Gal and Zoubin Ghahramani. Dropout as a bayesian approximation: representing model uncertainty in deep learning. In international conference on machine learning, 1050–1059. 2016.">Gal and Ghahramani, 2016</a>]</span></p></li>
 <li><p><strong>Deep Ensembles</strong>: Model averaging for robust uncertainty estimates <span id="id6">[]</span></p></li>
 <li><p><strong>Calibration and Validation</strong>: Ensuring reliable uncertainty estimates <span id="id7">[]</span></p></li>
 </ul>
@@ -473,8 +481,8 @@ document.write(`
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Libraries imported successfully
-PyTorch version: 2.8.0+cpu
-NumPy version: 2.3.3
+PyTorch version: 2.9.0+cpu
+NumPy version: 2.2.6
 </pre></div>
 </div>
 </div>
@@ -496,9 +504,9 @@ with Bernoulli distribution over network weights (Gal &amp; Ghahramani, 2016).</
 <h2>Monte Carlo Dropout: Practical Uncertainty Quantification<a class="headerlink" href="#monte-carlo-dropout-practical-uncertainty-quantification" title="Link to this heading">#</a></h2>
 <section id="theoretical-foundation">
 <h3>1. Theoretical Foundation<a class="headerlink" href="#theoretical-foundation" title="Link to this heading">#</a></h3>
-<p>Monte Carlo Dropout provides a computationally efficient approximation to Bayesian inference in deep neural networks <span id="id15">[]</span>.</p>
+<p>Monte Carlo Dropout provides a computationally efficient approximation to Bayesian inference in deep neural networks <span id="id15">[<a class="reference internal" href="07_conclusion.html#id118" title="Yarin Gal and Zoubin Ghahramani. Dropout as a bayesian approximation: representing model uncertainty in deep learning. In international conference on machine learning, 1050–1059. 2016.">Gal and Ghahramani, 2016</a>]</span>.</p>
 <p><strong>Key insight</strong>: Dropout during inference samples from an approximate posterior over network weights, enabling uncertainty quantification without explicitly training a Bayesian neural network <span id="id16">[]</span>.</p>
-<p><strong>Mathematical foundation</strong> <span id="id17">[]</span>:</p>
+<p><strong>Mathematical foundation</strong> <span id="id17">[<a class="reference internal" href="07_conclusion.html#id118" title="Yarin Gal and Zoubin Ghahramani. Dropout as a bayesian approximation: representing model uncertainty in deep learning. In international conference on machine learning, 1050–1059. 2016.">Gal and Ghahramani, 2016</a>]</span>:</p>
 <p><strong>Variational inference objective</strong>: Minimize KL divergence between approximate posterior <span class="math notranslate nohighlight">\(q_{\theta}(w)\)</span> and true posterior <span class="math notranslate nohighlight">\(p(w|\mathcal{D})\)</span>:</p>
 <div class="math notranslate nohighlight">
 \[\mathcal{L}(\theta) = \text{KL}[q_{\theta}(w) || p(w)] - \mathbb{E}_{q_{\theta}(w)}[\log p(\mathcal{D}|w)]\]</div>
@@ -512,13 +520,13 @@ with Bernoulli distribution over network weights (Gal &amp; Ghahramani, 2016).</
 </section>
 <section id="implementation-strategy">
 <h3>2. Implementation Strategy<a class="headerlink" href="#implementation-strategy" title="Link to this heading">#</a></h3>
-<p><strong>Training phase</strong> <span id="id20">[]</span>:</p>
+<p><strong>Training phase</strong> <span id="id20">[<a class="reference internal" href="07_conclusion.html#id119" title="Nitish Srivastava, Geoffrey Hinton, Alex Krizhevsky, Ilya Sutskever, and Ruslan Salakhutdinov. Dropout: a simple way to prevent neural networks from overfitting. The journal of machine learning research, 15(1):1929–1958, 2014.">Srivastava <em>et al.</em>, 2014</a>]</span>:</p>
 <ul class="simple">
 <li><p>Standard dropout with probability <span class="math notranslate nohighlight">\(p\)</span> (typically 0.1-0.5)</p></li>
 <li><p>Optimize weights using backpropagation and gradient descent</p></li>
 <li><p>No special modifications to loss function</p></li>
 </ul>
-<p><strong>Inference phase</strong> <span id="id21">[]</span>:</p>
+<p><strong>Inference phase</strong> <span id="id21">[<a class="reference internal" href="07_conclusion.html#id118" title="Yarin Gal and Zoubin Ghahramani. Dropout as a bayesian approximation: representing model uncertainty in deep learning. In international conference on machine learning, 1050–1059. 2016.">Gal and Ghahramani, 2016</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Critical difference</strong>: Keep dropout enabled (<code class="docutils literal notranslate"><span class="pre">model.train()</span></code> in PyTorch)</p></li>
 <li><p>Perform <span class="math notranslate nohighlight">\(T\)</span> stochastic forward passes (typically T=50-100)</p></li>
@@ -797,21 +805,21 @@ $<span class="math notranslate nohighlight">\(\text{CI}_{95\%} = [\hat{y}(x) - 1
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> Training MC Dropout model...
 Epoch [50/200], Loss: 0.0986
+Epoch [100/200], Loss: 0.0776
+Epoch [150/200], Loss: 0.0639
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Epoch [100/200], Loss: 0.0776
-Epoch [150/200], Loss: 0.0639
-Epoch [200/200], Loss: 0.0596
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Epoch [200/200], Loss: 0.0596
 
  Generating uncertainty estimates (T=50 MC samples)...
 </pre></div>
 </div>
-<img alt="../_images/942f2d91df11b9c1925a602d28ef2b17b7bd1b5ba15dfc219e07391add4b206d.png" src="../_images/942f2d91df11b9c1925a602d28ef2b17b7bd1b5ba15dfc219e07391add4b206d.png" />
+<img alt="../_images/1a4e935c5defd28d73e23abba03027ae6891f0492f05a63769920f29bda15788.png" src="../_images/1a4e935c5defd28d73e23abba03027ae6891f0492f05a63769920f29bda15788.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> Results Summary:
-  MSE: 0.0362
-  90% Coverage: 53.0% (ideal: 90%)
+  MSE: 0.0363
+  90% Coverage: 52.0% (ideal: 90%)
   Mean Uncertainty: 0.1086
-  Uncertainty Range: [0.0142, 0.7528]
+  Uncertainty Range: [0.0141, 0.7521]
 </pre></div>
 </div>
 </div>
@@ -900,7 +908,7 @@ $<span class="math notranslate nohighlight">\(f_{\text{ensemble}}(x) = \frac{1}{
 <div class="admonition important">
 <p class="admonition-title">Important</p>
 <p><strong>Computational Trade-offs: MC Dropout vs. Deep Ensembles</strong></p>
-<p><strong>MC Dropout</strong> <span id="id30">[]</span>:</p>
+<p><strong>MC Dropout</strong> <span id="id30">[<a class="reference internal" href="07_conclusion.html#id118" title="Yarin Gal and Zoubin Ghahramani. Dropout as a bayesian approximation: representing model uncertainty in deep learning. In international conference on machine learning, 1050–1059. 2016.">Gal and Ghahramani, 2016</a>]</span>:</p>
 <ul class="simple">
 <li><p>Training: 1× network (fast)</p></li>
 <li><p>Inference: T forward passes (~50-100× single prediction)</p></li>
@@ -1109,40 +1117,50 @@ $<span class="math notranslate nohighlight">\(f_{\text{ensemble}}(x) = \frac{1}{
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>    Epoch [100/150], Loss: 0.1052
-    Epoch [150/150], Loss: 0.0956
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>    Epoch [150/150], Loss: 0.0956
   Training model 2/5...
     Epoch [50/150], Loss: 0.1559
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>    Epoch [100/150], Loss: 0.1184
-    Epoch [150/150], Loss: 0.0910
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>    Epoch [150/150], Loss: 0.0911
   Training model 3/5...
     Epoch [50/150], Loss: 0.1888
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>    Epoch [100/150], Loss: 0.1101
-    Epoch [150/150], Loss: 0.1146
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>    Epoch [150/150], Loss: 0.1146
   Training model 4/5...
     Epoch [50/150], Loss: 0.1283
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>    Epoch [100/150], Loss: 0.0906
-    Epoch [150/150], Loss: 0.0841
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>    Epoch [150/150], Loss: 0.0841
   Training model 5/5...
     Epoch [50/150], Loss: 0.1623
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>    Epoch [100/150], Loss: 0.1060
-    Epoch [150/150], Loss: 0.0818
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>    Epoch [150/150], Loss: 0.0818
 
  Generating ensemble predictions...
 </pre></div>
 </div>
-<img alt="../_images/ee3ac652f086c5f689a7e89606e9e1d8229dd95bfc2e7d78d88187f3e0634351.png" src="../_images/ee3ac652f086c5f689a7e89606e9e1d8229dd95bfc2e7d78d88187f3e0634351.png" />
+<img alt="../_images/f89fd096a4ec723a89700b4e4b3bea6ebd724754bcd9c9244447691c8fe6b1b9.png" src="../_images/f89fd096a4ec723a89700b4e4b3bea6ebd724754bcd9c9244447691c8fe6b1b9.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> Ensemble Results Summary:
   Ensemble MSE: 0.1995
   Mean Uncertainty: 0.1056
-  Uncertainty Range: [0.0230, 0.4707]
+  Uncertainty Range: [0.0230, 0.4706]
 </pre></div>
 </div>
 </div>
@@ -1176,7 +1194,7 @@ $<span class="math notranslate nohighlight">\(f_{\text{ensemble}}(x) = \frac{1}{
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><strong>MC Dropout</strong> <span id="id33">[]</span></p></td>
+<tr class="row-even"><td><p><strong>MC Dropout</strong> <span id="id33">[<a class="reference internal" href="07_conclusion.html#id118" title="Yarin Gal and Zoubin Ghahramani. Dropout as a bayesian approximation: representing model uncertainty in deep learning. In international conference on machine learning, 1050–1059. 2016.">Gal and Ghahramani, 2016</a>]</span></p></td>
 <td><p>1×</p></td>
 <td><p>50-100×</p></td>
 <td><p>Good</p></td>
@@ -1248,7 +1266,7 @@ $<span class="math notranslate nohighlight">\(f_{\text{ensemble}}(x) = \frac{1}{
 <li><p>Target: 90% CI should contain 85-95% of true values (±5% acceptable)</p></li>
 <li><p>Recalibrate if systematic bias detected</p></li>
 </ul>
-<p><strong>2. Physical Consistency Checks</strong> <span id="id40">[]</span>:</p>
+<p><strong>2. Physical Consistency Checks</strong> <span id="id40">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:</p>
 <ul class="simple">
 <li><p>Uncertainty should respect physics: higher near boundaries, saturation regions</p></li>
 <li><p>Zero uncertainty at known boundary conditions indicates model defect</p></li>
@@ -1260,7 +1278,7 @@ $<span class="math notranslate nohighlight">\(f_{\text{ensemble}}(x) = \frac{1}{
 <li><p>Low epistemic + high aleatoric → noisy region (acceptable)</p></li>
 <li><p>Implement automated flagging for epistemic uncertainty &gt; 2× training median</p></li>
 </ul>
-<p><strong>4. Active Learning Integration</strong> <span id="id42">[]</span>:</p>
+<p><strong>4. Active Learning Integration</strong> <span id="id42">[<a class="reference internal" href="07_conclusion.html#id40" title="Burr Settles. Active learning literature survey. Computer Sciences Technical Report 1648, University of Wisconsin–Madison, 2009.">Settles, 2009</a>]</span>:</p>
 <ul class="simple">
 <li><p>Use uncertainty to guide FEA sample collection</p></li>
 <li><p>Query simulator at max(epistemic uncertainty) locations</p></li>
@@ -1276,8 +1294,8 @@ $<span class="math notranslate nohighlight">\(f_{\text{ensemble}}(x) = \frac{1}{
 <section id="connections-to-advanced-topics">
 <h3>Connections to Advanced Topics<a class="headerlink" href="#connections-to-advanced-topics" title="Link to this heading">#</a></h3>
 <p><strong>Chapter 6 Preview: Physics-Informed Neural Networks (PINNs)</strong></p>
-<p>This chapter established epistemic uncertainty quantification via dropout and ensembles. Chapter 6 explores an orthogonal approach: <strong>reducing epistemic uncertainty by incorporating physics constraints</strong> <span id="id44">[]</span>.</p>
-<p><strong>Key connection</strong>: While uncertainty quantification identifies <em>when</em> predictions are unreliable, PINNs aim to make predictions more reliable by enforcing Maxwell’s equations <span id="id45">[]</span>:</p>
+<p>This chapter established epistemic uncertainty quantification via dropout and ensembles. Chapter 6 explores an orthogonal approach: <strong>reducing epistemic uncertainty by incorporating physics constraints</strong> <span id="id44">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>.</p>
+<p><strong>Key connection</strong>: While uncertainty quantification identifies <em>when</em> predictions are unreliable, PINNs aim to make predictions more reliable by enforcing Maxwell’s equations <span id="id45">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:</p>
 <div class="math notranslate nohighlight">
 \[\nabla \times \mathbf{H} = \mathbf{J}, \quad \nabla \cdot \mathbf{B} = 0\]</div>
 <p><strong>Synergy</strong>: Combine both approaches—PINNs for physics-consistent predictions + MC dropout for remaining uncertainty quantification—yielding reliable predictions with trustworthy confidence intervals <span id="id46">[]</span>.</p>
@@ -1326,20 +1344,20 @@ $<span class="math notranslate nohighlight">\(f_{\text{ensemble}}(x) = \frac{1}{
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="03_data_pipeline.html"
+       href="04d_results_performance.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Data Pipeline for Magnetic Field Prediction</p>
+        <p class="prev-next-title">Results and Performance Analysis</p>
       </div>
     </a>
     <a class="right-next"
-       href="07_conclusion.html"
+       href="06a_pinn_introduction_literature.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Conclusion</p>
+        <p class="prev-next-title">Physics-Informed Neural Networks for Electromagnetic Field Prediction</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

@@ -32,7 +32,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
     <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -62,7 +62,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'content/03_data_pipeline';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Uncertainty Quantification for Magnetic Field Prediction" href="05_uncertainty_quantification.html" />
+    <link rel="next" title="Artificial Neural Networks: Fundamentals" href="04a_ann_fundamentals.html" />
     <link rel="prev" title="Modeling Fundamentals" href="02_modeling_fundamentals.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -170,7 +170,15 @@
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="02_modeling_fundamentals.html">Modeling Fundamentals</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Data Pipeline for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04a_ann_fundamentals.html">Artificial Neural Networks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04b_cnn_architecture.html">CNN Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04c_cnn_training.html">CNN Training &amp; Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04d_results_performance.html">Results &amp; Performance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="05_uncertainty_quantification.html">Uncertainty Quantification for Magnetic Field Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06a_pinn_introduction_literature.html">PINNs: Introduction &amp; Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06b_pinn_methodology.html">PINNs: Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06c_pinn_implementation_training.html">PINNs: Implementation &amp; Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06d_pinn_results_discussion.html">PINNs: Results &amp; Discussion</a></li>
 <li class="toctree-l1"><a class="reference internal" href="07_conclusion.html">Conclusion</a></li>
 </ul>
 
@@ -354,15 +362,15 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="data-pipeline-for-magnetic-field-prediction">
 <h1>Data Pipeline for Magnetic Field Prediction<a class="headerlink" href="#data-pipeline-for-magnetic-field-prediction" title="Link to this heading">#</a></h1>
-<p>This chapter develops a comprehensive data pipeline for generating training data using <strong>FEMM (Finite Element Method Magnetics)</strong> <span id="id1">[]</span> for three distinct electromagnetic problems. FEMM is chosen for this work due to its open-source availability and excellent Python scripting support through PyFEMM. However, the methodology presented here is applicable to any FEA software with sufficient scripting capabilities—the author has successfully employed this approach with commercial software such as MAGNET <span id="id2">[]</span> during their PhD research at McGill University. We explore the theoretical foundations of sampling, feature engineering, and physics-informed data generation that enable robust deep learning models for magnetic field prediction.</p>
+<p>This chapter develops a comprehensive data pipeline for generating training data using <strong>FEMM (Finite Element Method Magnetics)</strong> <span id="id1">[<a class="reference internal" href="07_conclusion.html#id474" title="David Meeker. FEMM: finite element method magnetics. 2015. Open source finite element magnetics solver. URL: https://www.femm.info.">Meeker, 2015</a>]</span> for three distinct electromagnetic problems. FEMM is chosen for this work due to its open-source availability and excellent Python scripting support through PyFEMM. However, the methodology presented here is applicable to any FEA software with sufficient scripting capabilities—the author has successfully employed this approach with commercial software such as MAGNET <span id="id2">[]</span> during their PhD research at McGill University. We explore the theoretical foundations of sampling, feature engineering, and physics-informed data generation that enable robust deep learning models for magnetic field prediction.</p>
 <section id="learning-objectives">
 <h2>Learning Objectives<a class="headerlink" href="#learning-objectives" title="Link to this heading">#</a></h2>
 <p>After completing this notebook, you will understand:</p>
 <ul class="simple">
 <li><p><strong>Sampling Theory</strong>: Mathematical foundations of experimental design and parameter space exploration</p></li>
-<li><p><strong>Latin Hypercube Sampling</strong>: Optimal space-filling design for multidimensional parameter spaces <span id="id3">[]</span></p></li>
+<li><p><strong>Latin Hypercube Sampling</strong>: Optimal space-filling design for multidimensional parameter spaces <span id="id3">[<a class="reference internal" href="07_conclusion.html#id473" title="Michael D McKay, Richard J Beckman, and William J Conover. A comparison of three methods for selecting values of input variables in the analysis of output from a computer code. Technometrics, 42(1):55–61, 2000.">McKay <em>et al.</em>, 2000</a>]</span></p></li>
 <li><p><strong>Feature Engineering</strong>: Mathematical transformation of physical parameters for neural network inputs</p></li>
-<li><p><strong>FEMM Integration</strong>: Theory and practice of finite element method integration for data generation <span id="id4">[]</span></p></li>
+<li><p><strong>FEMM Integration</strong>: Theory and practice of finite element method integration for data generation <span id="id4">[<a class="reference internal" href="07_conclusion.html#id474" title="David Meeker. FEMM: finite element method magnetics. 2015. Open source finite element magnetics solver. URL: https://www.femm.info.">Meeker, 2015</a>]</span></p></li>
 <li><p><strong>Multi-geometry Data Generation</strong>: Strategies for diverse electromagnetic problems</p></li>
 <li><p><strong>Data Validation</strong>: Quality assurance and physics consistency checking</p></li>
 </ul>
@@ -381,7 +389,7 @@ document.write(`
 <li><p>Validation: 10,000 samples</p></li>
 <li><p>Test: 5,000 samples</p></li>
 </ul>
-<p>All three problems are parametrized and simulated using FEA software. Material properties including non-linear B-H relations are incorporated from FEMM’s material library <span id="id5">[]</span>.</p>
+<p>All three problems are parametrized and simulated using FEA software. Material properties including non-linear B-H relations are incorporated from FEMM’s material library <span id="id5">[<a class="reference internal" href="07_conclusion.html#id474" title="David Meeker. FEMM: finite element method magnetics. 2015. Open source finite element magnetics solver. URL: https://www.femm.info.">Meeker, 2015</a>]</span>.</p>
 </section>
 <section id="problem-1-simple-coil-in-air">
 <h2>Problem 1: Simple Coil in Air<a class="headerlink" href="#problem-1-simple-coil-in-air" title="Link to this heading">#</a></h2>
@@ -398,7 +406,7 @@ document.write(`
 <li><p>Radius is determined first, then center position is adjusted accordingly</p></li>
 </ul>
 <figure class="align-default" id="fig-coil-geometry">
-<a class="reference internal image-reference" href="../_images/Geo_coil.png"><img alt="../_images/Geo_coil.png" src="../_images/Geo_coil.png" style="width: 50%;" />
+<a class="reference internal image-reference" href="_static/figures/Geo_coil.png"><img alt="_static/figures/Geo_coil.png" src="_static/figures/Geo_coil.png" style="width: 50%;" />
 </a>
 <figcaption>
 <p><span class="caption-number">Fig. 1 </span><span class="caption-text">Parametrized geometry for the simple coil problem.</span><a class="headerlink" href="#fig-coil-geometry" title="Link to this image">#</a></p>
@@ -410,7 +418,7 @@ document.write(`
 <p>A transformer with two coils is considered as the second problem, which is more complex than the coil in terms of geometry, material, and field distribution.</p>
 <p><strong>Materials</strong>:</p>
 <ul class="simple">
-<li><p><strong>Core</strong>: M19 silicon steel with non-linear B-H characteristics <span id="id6">[]</span></p></li>
+<li><p><strong>Core</strong>: M19 silicon steel with non-linear B-H characteristics <span id="id6">[<a class="reference internal" href="07_conclusion.html#id474" title="David Meeker. FEMM: finite element method magnetics. 2015. Open source finite element magnetics solver. URL: https://www.femm.info.">Meeker, 2015</a>]</span></p></li>
 <li><p><strong>Coils</strong>: Copper windings</p></li>
 </ul>
 <p><strong>Fixed Parameters</strong>:</p>
@@ -453,7 +461,7 @@ document.write(`
 </table>
 </div>
 <figure class="align-default" id="fig-transformer-geometry">
-<a class="reference internal image-reference" href="../_images/Geo_Tf.png"><img alt="../_images/Geo_Tf.png" src="../_images/Geo_Tf.png" style="width: 60%;" />
+<a class="reference internal image-reference" href="_static/figures/Geo_Tf.png"><img alt="_static/figures/Geo_Tf.png" src="_static/figures/Geo_Tf.png" style="width: 60%;" />
 </a>
 <figcaption>
 <p><span class="caption-number">Fig. 2 </span><span class="caption-text">Parametrized geometry for the transformer problem with magnetic core.</span><a class="headerlink" href="#fig-transformer-geometry" title="Link to this image">#</a></p>
@@ -465,9 +473,9 @@ document.write(`
 <p>A 4-Pole, 24-slot Interior Permanent Magnet (IPM) motor is analyzed as the most complex problem in this work.</p>
 <p><strong>Materials</strong>:</p>
 <ul class="simple">
-<li><p><strong>Stator/Rotor Core</strong>: M19 silicon steel with non-linear B-H characteristics <span id="id7">[]</span></p></li>
+<li><p><strong>Stator/Rotor Core</strong>: M19 silicon steel with non-linear B-H characteristics <span id="id7">[<a class="reference internal" href="07_conclusion.html#id474" title="David Meeker. FEMM: finite element method magnetics. 2015. Open source finite element magnetics solver. URL: https://www.femm.info.">Meeker, 2015</a>]</span></p></li>
 <li><p><strong>Windings</strong>: Copper</p></li>
-<li><p><strong>Magnets</strong>: NdFeB (Neodymium Iron Boron) grade N42 <span id="id8">[]</span></p></li>
+<li><p><strong>Magnets</strong>: NdFeB (Neodymium Iron Boron) grade N42 <span id="id8">[<a class="reference internal" href="07_conclusion.html#id474" title="David Meeker. FEMM: finite element method magnetics. 2015. Open source finite element magnetics solver. URL: https://www.femm.info.">Meeker, 2015</a>]</span></p></li>
 </ul>
 <p><strong>Fixed Parameters</strong>:</p>
 <ul class="simple">
@@ -516,7 +524,7 @@ document.write(`
 </table>
 </div>
 <figure class="align-default" id="fig-motor-geometry">
-<a class="reference internal image-reference" href="../_images/Geo_motor.png"><img alt="../_images/Geo_motor.png" src="../_images/Geo_motor.png" style="width: 55%;" />
+<a class="reference internal image-reference" href="_static/figures/Geo_motor.png"><img alt="_static/figures/Geo_motor.png" src="_static/figures/Geo_motor.png" style="width: 55%;" />
 </a>
 <figcaption>
 <p><span class="caption-number">Fig. 3 </span><span class="caption-text">Parametrized geometry for the IPM motor showing the five design variables.</span><a class="headerlink" href="#fig-motor-geometry" title="Link to this image">#</a></p>
@@ -561,7 +569,7 @@ document.write(`
 <div class="math notranslate nohighlight">
 \[N(d, \epsilon) \propto \epsilon^{-d}\]</div>
 <p>where <span class="math notranslate nohighlight">\(d\)</span> is the dimension and <span class="math notranslate nohighlight">\(\epsilon\)</span> is the desired resolution.</p>
-<p><strong>Latin Hypercube Sampling</strong> addresses this by ensuring <strong>uniform projection</strong> onto each one-dimensional subspace <span id="id10">[]</span>.</p>
+<p><strong>Latin Hypercube Sampling</strong> addresses this by ensuring <strong>uniform projection</strong> onto each one-dimensional subspace <span id="id10">[<a class="reference internal" href="07_conclusion.html#id473" title="Michael D McKay, Richard J Beckman, and William J Conover. A comparison of three methods for selecting values of input variables in the analysis of output from a computer code. Technometrics, 42(1):55–61, 2000.">McKay <em>et al.</em>, 2000</a>]</span>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install required packages</span>
@@ -590,9 +598,9 @@ document.write(`
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Libraries imported successfully
-NumPy version: 2.3.3
+NumPy version: 2.2.6
 Matplotlib version: 3.10.7
-SciPy version: 1.16.2
+SciPy version: 1.16.3
 </pre></div>
 </div>
 </div>
@@ -1039,7 +1047,7 @@ Key Insight for EM Data Generation:
 <h2>Latin Hypercube Sampling: Theory and Implementation<a class="headerlink" href="#latin-hypercube-sampling-theory-and-implementation" title="Link to this heading">#</a></h2>
 <section id="mathematical-foundation">
 <h3>1. Mathematical Foundation<a class="headerlink" href="#mathematical-foundation" title="Link to this heading">#</a></h3>
-<p><strong>Latin Hypercube Sampling (LHS)</strong> is a stratified sampling method that ensures uniform coverage of each parameter dimension <span id="id11">[]</span>. For <span class="math notranslate nohighlight">\(n\)</span> samples in <span class="math notranslate nohighlight">\(d\)</span> dimensions:</p>
+<p><strong>Latin Hypercube Sampling (LHS)</strong> is a stratified sampling method that ensures uniform coverage of each parameter dimension <span id="id11">[<a class="reference internal" href="07_conclusion.html#id473" title="Michael D McKay, Richard J Beckman, and William J Conover. A comparison of three methods for selecting values of input variables in the analysis of output from a computer code. Technometrics, 42(1):55–61, 2000.">McKay <em>et al.</em>, 2000</a>]</span>. For <span class="math notranslate nohighlight">\(n\)</span> samples in <span class="math notranslate nohighlight">\(d\)</span> dimensions:</p>
 <p><strong>Algorithm Steps</strong>:</p>
 <ol class="arabic simple">
 <li><p>Divide each dimension into <span class="math notranslate nohighlight">\(n\)</span> equal intervals: <span class="math notranslate nohighlight">\([0,1/n), [1/n,2/n), \ldots, [(n-1)/n,1]\)</span></p></li>
@@ -1049,7 +1057,7 @@ Key Insight for EM Data Generation:
 <p><strong>Mathematical Properties</strong>:</p>
 <ul class="simple">
 <li><p><strong>Unbiased</strong>: <span class="math notranslate nohighlight">\(\mathbb{E}[f(\mathbf{X})] = \int_0^1 f(\mathbf{x}) d\mathbf{x}\)</span></p></li>
-<li><p><strong>Lower Variance</strong>: <span class="math notranslate nohighlight">\(\text{Var}[\hat{\mu}_{LHS}] \leq \text{Var}[\hat{\mu}_{MC}]\)</span> <span id="id12">[]</span></p></li>
+<li><p><strong>Lower Variance</strong>: <span class="math notranslate nohighlight">\(\text{Var}[\hat{\mu}_{LHS}] \leq \text{Var}[\hat{\mu}_{MC}]\)</span> <span id="id12">[<a class="reference internal" href="07_conclusion.html#id473" title="Michael D McKay, Richard J Beckman, and William J Conover. A comparison of three methods for selecting values of input variables in the analysis of output from a computer code. Technometrics, 42(1):55–61, 2000.">McKay <em>et al.</em>, 2000</a>]</span></p></li>
 <li><p><strong>Perfect Projection</strong>: Each 1D projection has exactly one sample per interval</p></li>
 </ul>
 </section>
@@ -1080,14 +1088,14 @@ Basic LHS ensures uniform 1D projections, but the placement within each interval
 <section id="summary">
 <h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
 <p>This chapter developed a comprehensive data pipeline for generating high-quality training data for electromagnetic field prediction using deep learning. The key contributions are:</p>
-<p><strong>Theoretical Foundations</strong>: We established the mathematical basis for optimal experimental design <span id="id14">[]</span> and demonstrated why Latin Hypercube Sampling <span id="id15">[]</span> is superior to random or grid-based sampling for high-dimensional parameter spaces. Maximin optimization <span id="id16">[]</span> further improves space-filling properties by 10-30%.</p>
+<p><strong>Theoretical Foundations</strong>: We established the mathematical basis for optimal experimental design <span id="id14">[]</span> and demonstrated why Latin Hypercube Sampling <span id="id15">[<a class="reference internal" href="07_conclusion.html#id473" title="Michael D McKay, Richard J Beckman, and William J Conover. A comparison of three methods for selecting values of input variables in the analysis of output from a computer code. Technometrics, 42(1):55–61, 2000.">McKay <em>et al.</em>, 2000</a>]</span> is superior to random or grid-based sampling for high-dimensional parameter spaces. Maximin optimization <span id="id16">[]</span> further improves space-filling properties by 10-30%.</p>
 <p><strong>Three Electromagnetic Problems</strong>: The pipeline generates training data for problems of increasing complexity:</p>
 <ol class="arabic simple">
 <li><p><strong>Simple Coil</strong> (3 parameters): Radius, position, current</p></li>
 <li><p><strong>Transformer</strong> (4 parameters): Core dimensions with non-linear M19 steel</p></li>
 <li><p><strong>IPM Motor</strong> (5 parameters): Stator, rotor, and magnet geometry</p></li>
 </ol>
-<p><strong>Dataset Generation</strong>: Using FEMM <span id="id17">[]</span>, we generated <strong>45,000 samples</strong> via optimized Latin Hypercube Sampling, split into training (30,000), validation (10,000), and test (5,000) sets. This approach ensures efficient coverage of the design space while minimizing redundant simulations.</p>
+<p><strong>Dataset Generation</strong>: Using FEMM <span id="id17">[<a class="reference internal" href="07_conclusion.html#id474" title="David Meeker. FEMM: finite element method magnetics. 2015. Open source finite element magnetics solver. URL: https://www.femm.info.">Meeker, 2015</a>]</span>, we generated <strong>45,000 samples</strong> via optimized Latin Hypercube Sampling, split into training (30,000), validation (10,000), and test (5,000) sets. This approach ensures efficient coverage of the design space while minimizing redundant simulations.</p>
 <p><strong>Practical Impact</strong>: For expensive FEA simulations (2-8 hours each), efficient sampling is critical. LHS reduces the number of required simulations by 20-40% compared to random sampling while maintaining model accuracy. This enables the development of CNN surrogate models that can evaluate new designs in milliseconds rather than hours.</p>
 <p><strong>Connection to Subsequent Sections</strong>: The data generated here directly enables the CNN architectures developed in Section 4, where we design encoder-decoder networks for spatial field prediction. Section 5 addresses uncertainty quantification to identify when predictions should not be trusted for out-of-distribution inputs.</p>
 <hr class="docutils" />
@@ -1135,11 +1143,11 @@ Basic LHS ensures uniform 1D projections, but the placement within each interval
       </div>
     </a>
     <a class="right-next"
-       href="05_uncertainty_quantification.html"
+       href="04a_ann_fundamentals.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Uncertainty Quantification for Magnetic Field Prediction</p>
+        <p class="prev-next-title">Artificial Neural Networks: Fundamentals</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

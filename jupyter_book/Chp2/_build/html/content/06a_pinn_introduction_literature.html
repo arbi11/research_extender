@@ -32,7 +32,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
     <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -376,26 +376,26 @@ document.write(`
 <h1>Physics-Informed Neural Networks for Electromagnetic Field Prediction<a class="headerlink" href="#physics-informed-neural-networks-for-electromagnetic-field-prediction" title="Link to this heading">#</a></h1>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
-<p>While traditional deep learning models learn mappings purely from data, <strong>Physics-Informed Neural Networks (PINNs)</strong> integrate physical laws directly into the learning process <span id="id1">[]</span>. This approach is particularly valuable for electromagnetic field prediction where Maxwell’s equations provide rigorous governing constraints <span id="id2">[]</span>.</p>
+<p>While traditional deep learning models learn mappings purely from data, <strong>Physics-Informed Neural Networks (PINNs)</strong> integrate physical laws directly into the learning process <span id="id1">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>. This approach is particularly valuable for electromagnetic field prediction where Maxwell’s equations provide rigorous governing constraints <span id="id2">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>.</p>
 <p><strong>Chapter context</strong>: Sections 4-5 developed data-driven CNNs with uncertainty quantification, achieving 0.3-0.6% NMSE on magnetic field prediction. However, these models required 30,000+ FEA training samples and provided no guarantee of physics consistency (e.g., ∇·<strong>B</strong> = 0 may be violated locally).</p>
-<p><strong>PINN alternative</strong>: This section explores an orthogonal paradigm—incorporating Maxwell’s equations as soft constraints during training—enabling physics-consistent predictions from sparse data <span id="id3">[]</span>.</p>
+<p><strong>PINN alternative</strong>: This section explores an orthogonal paradigm—incorporating Maxwell’s equations as soft constraints during training—enabling physics-consistent predictions from sparse data <span id="id3">[<a class="reference internal" href="07_conclusion.html#id462" title="Shengze Cai, Zhicheng Wang, Sifan Wang, Paris Perdikaris, and George Em Karniadakis. Physics-informed neural networks for heat transfer problems. Journal of Heat Transfer, 143(6):060801, 2021.">Cai <em>et al.</em>, 2021</a>, <a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>.</p>
 <section id="key-advantages-of-pinns-for-electromagnetics">
 <h3>Key Advantages of PINNs for Electromagnetics<a class="headerlink" href="#key-advantages-of-pinns-for-electromagnetics" title="Link to this heading">#</a></h3>
 <ol class="arabic simple">
-<li><p><strong>Physics consistency</strong> <span id="id4">[]</span>: Predictions automatically satisfy Maxwell’s equations</p>
+<li><p><strong>Physics consistency</strong> <span id="id4">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>: Predictions automatically satisfy Maxwell’s equations</p>
 <ul class="simple">
 <li><p>∇×<strong>H</strong> = <strong>J</strong> (Ampere’s law)</p></li>
 <li><p>∇·<strong>B</strong> = 0 (Gauss’s law for magnetism)</p></li>
 <li><p>Boundary conditions enforced via loss function</p></li>
 </ul>
 </li>
-<li><p><strong>Data efficiency</strong> <span id="id5">[]</span>: Learn from sparse observations (10-100 points vs. 30,000 for pure data-driven)</p>
+<li><p><strong>Data efficiency</strong> <span id="id5">[<a class="reference internal" href="07_conclusion.html#id462" title="Shengze Cai, Zhicheng Wang, Sifan Wang, Paris Perdikaris, and George Em Karniadakis. Physics-informed neural networks for heat transfer problems. Journal of Heat Transfer, 143(6):060801, 2021.">Cai <em>et al.</em>, 2021</a>]</span>: Learn from sparse observations (10-100 points vs. 30,000 for pure data-driven)</p>
 <ul class="simple">
 <li><p>Physics constraints regularize solution space</p></li>
 <li><p>Prior knowledge reduces dependence on data</p></li>
 </ul>
 </li>
-<li><p><strong>Improved extrapolation</strong> <span id="id6">[]</span>: Better generalization to unseen parameter regimes</p>
+<li><p><strong>Improved extrapolation</strong> <span id="id6">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>: Better generalization to unseen parameter regimes</p>
 <ul class="simple">
 <li><p>Physical laws hold beyond training distribution</p></li>
 <li><p>Reduces epistemic uncertainty from Chapter 5</p></li>
@@ -413,7 +413,7 @@ document.write(`
 <h3>PINN Mathematical Framework<a class="headerlink" href="#pinn-mathematical-framework" title="Link to this heading">#</a></h3>
 <p><strong>Traditional supervised learning</strong>:
 $<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{data}}(\theta) = \frac{1}{N}\sum_{i=1}^{N} ||y_i - f_{\theta}(x_i)||^2\)</span>$</p>
-<p><strong>Physics-Informed learning</strong> <span id="id8">[]</span>:
+<p><strong>Physics-Informed learning</strong> <span id="id8">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:
 $<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{total}}(\theta) = \underbrace{\mathcal{L}_{\text{data}}(\theta)}_{\text{Match observations}} + \lambda \underbrace{\mathcal{L}_{\text{physics}}(\theta)}_{\text{Satisfy PDEs}}\)</span>$</p>
 <p>where:</p>
 <ul class="simple">
@@ -430,7 +430,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{total}}(\theta)
 \[\frac{\partial f_{\theta}(x,y)}{\partial x} = \text{autograd}(f_{\theta}, x)\]</div>
 <p>This allows direct evaluation of PDE residuals:
 $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla \times f_{\theta}(x,y) - J(x,y)\)</span>$</p>
-<p>without manual derivative implementation—a critical enabler for PINNs <span id="id10">[]</span>.</p>
+<p>without manual derivative implementation—a critical enabler for PINNs <span id="id10">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>.</p>
 </div>
 </section>
 </section>
@@ -438,8 +438,8 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <h2>Literature Survey: PINNs in Computational Electromagnetics<a class="headerlink" href="#literature-survey-pinns-in-computational-electromagnetics" title="Link to this heading">#</a></h2>
 <section id="foundations-of-physics-informed-neural-networks">
 <h3>Foundations of Physics-Informed Neural Networks<a class="headerlink" href="#foundations-of-physics-informed-neural-networks" title="Link to this heading">#</a></h3>
-<p>The concept of Physics-Informed Neural Networks was formalized by Raissi, Perdikaris, and Karniadakis (2019) <span id="id11">[]</span> in their seminal work demonstrating that neural networks can solve forward and inverse problems governed by partial differential equations. Subsequent developments <span id="id12">[]</span> established PINNs as a powerful framework for scientific machine learning.</p>
-<p><strong>Core innovations</strong> <span id="id13">[]</span>:</p>
+<p>The concept of Physics-Informed Neural Networks was formalized by Raissi, Perdikaris, and Karniadakis (2019) <span id="id11">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span> in their seminal work demonstrating that neural networks can solve forward and inverse problems governed by partial differential equations. Subsequent developments <span id="id12">[<a class="reference internal" href="07_conclusion.html#id462" title="Shengze Cai, Zhicheng Wang, Sifan Wang, Paris Perdikaris, and George Em Karniadakis. Physics-informed neural networks for heat transfer problems. Journal of Heat Transfer, 143(6):060801, 2021.">Cai <em>et al.</em>, 2021</a>]</span> established PINNs as a powerful framework for scientific machine learning.</p>
+<p><strong>Core innovations</strong> <span id="id13">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Automatic differentiation</strong>: Compute spatial/temporal derivatives via backpropagation</p></li>
 <li><p><strong>Collocation methods</strong>: Enforce PDEs at randomly sampled points in the domain</p></li>
@@ -452,7 +452,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <h3>Applications in Computational Electromagnetics<a class="headerlink" href="#applications-in-computational-electromagnetics" title="Link to this heading">#</a></h3>
 <section id="magnetostatic-field-prediction">
 <h4>1. Magnetostatic Field Prediction<a class="headerlink" href="#magnetostatic-field-prediction" title="Link to this heading">#</a></h4>
-<p><strong>Barmada et al. (2020)</strong> <span id="id15">[]</span>: First application of deep learning to transformer magnetic fields</p>
+<p><strong>Barmada et al. (2020)</strong> <span id="id15">[<a class="reference internal" href="07_conclusion.html#id410" title="Sami Barmada, Nunzia Fontana, Luca Sani, Dimitri Thomopulos, and Mauro Tucci. Deep learning and reduced models for fast optimization in electromagnetics. IEEE Transactions on Magnetics, 56(3):1–4, 2020.">Barmada <em>et al.</em>, 2020</a>]</span>: First application of deep learning to transformer magnetic fields</p>
 <ul class="simple">
 <li><p>Problem: 2D magnetostatic field distribution in power transformers</p></li>
 <li><p>Approach: Feedforward NN with physics-informed training</p></li>
@@ -519,7 +519,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <th class="head"><p>FEA <span id="id23">[]</span></p></th>
 <th class="head"><p>Boundary Element Method <span id="id24">[]</span></p></th>
 <th class="head"><p>Traditional DL</p></th>
-<th class="head"><p>PINNs <span id="id25">[]</span></p></th>
+<th class="head"><p>PINNs <span id="id25">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span></p></th>
 </tr>
 </thead>
 <tbody>
@@ -571,14 +571,14 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><strong>When PINNs Excel vs. FEA</strong></p>
-<p><strong>PINN advantages</strong> <span id="id26">[]</span>:</p>
+<p><strong>PINN advantages</strong> <span id="id26">[<a class="reference internal" href="07_conclusion.html#id462" title="Shengze Cai, Zhicheng Wang, Sifan Wang, Paris Perdikaris, and George Em Karniadakis. Physics-informed neural networks for heat transfer problems. Journal of Heat Transfer, 143(6):060801, 2021.">Cai <em>et al.</em>, 2021</a>]</span>:</p>
 <ol class="arabic simple">
 <li><p><strong>Parametric studies</strong>: Once trained, instant evaluation across parameter space</p></li>
 <li><p><strong>Inverse problems</strong>: Naturally handle parameter identification</p></li>
 <li><p><strong>Sparse data</strong>: Augment limited measurements with physics</p></li>
 <li><p><strong>Mesh-free</strong>: Complex geometries without mesh generation expertise</p></li>
 </ol>
-<p><strong>FEA advantages</strong> <span id="id27">[]</span>:</p>
+<p><strong>FEA advantages</strong> <span id="id27">[<a class="reference internal" href="07_conclusion.html#id474" title="David Meeker. FEMM: finite element method magnetics. 2015. Open source finite element magnetics solver. URL: https://www.femm.info.">Meeker, 2015</a>]</span>:</p>
 <ol class="arabic simple">
 <li><p><strong>Accuracy</strong>: Sub-0.1% error with sufficient mesh refinement</p></li>
 <li><p><strong>Maturity</strong>: 50+ years of development, extensive validation</p></li>
@@ -617,7 +617,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <li><p>Material interfaces with discontinuous derivatives</p></li>
 <li><p><strong>Approaches</strong>: Exact imposition of BCs <span id="id33">[]</span>, interface-aware sampling</p></li>
 </ul>
-<p><strong>Recent methodological advances</strong> <span id="id34">[]</span>:</p>
+<p><strong>Recent methodological advances</strong> <span id="id34">[<a class="reference internal" href="07_conclusion.html#id462" title="Shengze Cai, Zhicheng Wang, Sifan Wang, Paris Perdikaris, and George Em Karniadakis. Physics-informed neural networks for heat transfer problems. Journal of Heat Transfer, 143(6):060801, 2021.">Cai <em>et al.</em>, 2021</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Extended PINNs (XPINNs)</strong> <span id="id35">[]</span>: Domain decomposition for parallel training</p></li>
 <li><p><strong>Conservative PINNs (cPINNs)</strong> <span id="id36">[]</span>: Enforce conservation laws explicitly</p></li>
@@ -641,7 +641,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <h2>Comparison: Traditional Deep Learning vs Physics-Informed Approach<a class="headerlink" href="#comparison-traditional-deep-learning-vs-physics-informed-approach" title="Link to this heading">#</a></h2>
 <section id="traditional-deep-learning-sections-4-5-pure-data-driven-cnn">
 <h3>Traditional Deep Learning (Sections 4-5: Pure Data-Driven CNN)<a class="headerlink" href="#traditional-deep-learning-sections-4-5-pure-data-driven-cnn" title="Link to this heading">#</a></h3>
-<p>In Sections 4-5, we developed a <strong>pure data-driven CNN</strong> for magnetic field prediction, representative of standard deep learning practice <span id="id40">[]</span>:</p>
+<p>In Sections 4-5, we developed a <strong>pure data-driven CNN</strong> for magnetic field prediction, representative of standard deep learning practice <span id="id40">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>, <a class="reference internal" href="01_intro.html#id212" title="Yann LeCun, Yoshua Bengio, and Geoffrey Hinton. Deep learning. Nature, 521(7553):436–444, 2015.">LeCun <em>et al.</em>, 2015</a>]</span>:</p>
 <p><strong>Approach</strong>:</p>
 <ul class="simple">
 <li><p><strong>Training data</strong>: 30,000 FEA simulations (geometry → field distribution)</p></li>
@@ -649,14 +649,14 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <li><p><strong>Loss function</strong>: <span class="math notranslate nohighlight">\(\mathcal{L} = \text{MSE}(B_{\text{pred}}, B_{\text{FEA}})\)</span></p></li>
 <li><p><strong>Physics</strong>: Implicitly learned from training data patterns</p></li>
 </ul>
-<p><strong>Strengths</strong> <span id="id41">[]</span>:</p>
+<p><strong>Strengths</strong> <span id="id41">[<a class="reference internal" href="01_intro.html#id212" title="Yann LeCun, Yoshua Bengio, and Geoffrey Hinton. Deep learning. Nature, 521(7553):436–444, 2015.">LeCun <em>et al.</em>, 2015</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>High accuracy</strong>: 0.3-0.6% NMSE when sufficient data available</p></li>
 <li><p><strong>Fast inference</strong>: 20-30 ms per geometry (30,000× faster than FEA)</p></li>
 <li><p><strong>Complex phenomena</strong>: Handles nonlinearity, saturation, multi-material naturally</p></li>
 <li><p><strong>Mature tooling</strong>: Well-established training pipelines, debugging tools</p></li>
 </ul>
-<p><strong>Limitations</strong> <span id="id42">[]</span>:</p>
+<p><strong>Limitations</strong> <span id="id42">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>, <a class="reference internal" href="07_conclusion.html#id83" title="Christopher M. Bishop. Pattern Recognition and Machine Learning. Springer, New York, 2006.">Bishop, 2006</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Data hungry</strong>: Requires 10,000-50,000 labeled samples (expensive FEA cost)</p></li>
 <li><p><strong>No physics guarantee</strong>: May violate ∇·<strong>B</strong> = 0 locally (divergence errors up to 5%)</p></li>
@@ -666,14 +666,14 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 </section>
 <section id="physics-informed-neural-networks-section-6-pinns">
 <h3>Physics-Informed Neural Networks (Section 6: PINNs)<a class="headerlink" href="#physics-informed-neural-networks-section-6-pinns" title="Link to this heading">#</a></h3>
-<p><strong>Approach</strong> <span id="id43">[]</span>:</p>
+<p><strong>Approach</strong> <span id="id43">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Training data</strong>: Sparse observations (50-100 points) + Maxwell’s equations</p></li>
 <li><p><strong>Architecture</strong>: Feedforward network with automatic differentiation</p></li>
 <li><p><strong>Loss function</strong>: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{data}} + \lambda \mathcal{L}_{\text{physics}}\)</span></p></li>
 <li><p><strong>Physics</strong>: Explicitly enforced through PDE residuals</p></li>
 </ul>
-<p><strong>Strengths</strong> <span id="id44">[]</span>:</p>
+<p><strong>Strengths</strong> <span id="id44">[<a class="reference internal" href="07_conclusion.html#id462" title="Shengze Cai, Zhicheng Wang, Sifan Wang, Paris Perdikaris, and George Em Karniadakis. Physics-informed neural networks for heat transfer problems. Journal of Heat Transfer, 143(6):060801, 2021.">Cai <em>et al.</em>, 2021</a>, <a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Data efficient</strong>: 100-500× less labeled data required</p></li>
 <li><p><strong>Physics consistent</strong>: Predictions satisfy Maxwell’s equations by construction (residual &lt; 10⁻³)</p></li>
@@ -735,7 +735,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 </section>
 <section id="when-to-use-each-approach">
 <h3>When to Use Each Approach?<a class="headerlink" href="#when-to-use-each-approach" title="Link to this heading">#</a></h3>
-<p><strong>Use Traditional DL (CNN) when</strong> <span id="id46">[]</span>:</p>
+<p><strong>Use Traditional DL (CNN) when</strong> <span id="id46">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>, <a class="reference internal" href="01_intro.html#id212" title="Yann LeCun, Yoshua Bengio, and Geoffrey Hinton. Deep learning. Nature, 521(7553):436–444, 2015.">LeCun <em>et al.</em>, 2015</a>]</span>:</p>
 <ul class="simple">
 <li><p>✓ Large labeled dataset available (or can afford to generate)</p></li>
 <li><p>✓ Highest accuracy required (&lt; 0.5% error needed)</p></li>
@@ -743,7 +743,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <li><p>✓ Interpolation within well-sampled design space</p></li>
 <li><p>✓ Production deployment requires maximum speed</p></li>
 </ul>
-<p><strong>Use PINNs when</strong> <span id="id47">[]</span>:</p>
+<p><strong>Use PINNs when</strong> <span id="id47">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <ul class="simple">
 <li><p>✓ Limited data available (expensive experiments/simulations)</p></li>
 <li><p>✓ Physics consistency is critical (regulatory, safety-critical)</p></li>
@@ -779,7 +779,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <ul class="simple">
 <li><p><strong>DeepONet</strong> <span id="id50">[]</span>: Operator learning with physics</p></li>
 <li><p><strong>Fourier Neural Operator</strong> <span id="id51">[]</span>: Resolution-invariant physics learning</p></li>
-<li><p><strong>Multi-fidelity modeling</strong> <span id="id52">[]</span>: Combine analytical (cheap) + numerical (accurate) data</p></li>
+<li><p><strong>Multi-fidelity modeling</strong> <span id="id52">[<a class="reference internal" href="07_conclusion.html#id260" title="M. Giselle Fernández-Godino, Chanyoung Park, Nam-Ho Kim, and Raphael T. Haftka. Review of multi-fidelity models. arXiv preprint arXiv:1609.07196, 2016.">Fernández-Godino <em>et al.</em>, 2016</a>]</span>: Combine analytical (cheap) + numerical (accurate) data</p></li>
 </ul>
 </div>
 </section>
@@ -791,9 +791,9 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <h3>Section 6a: Introduction &amp; Literature (Current)<a class="headerlink" href="#section-6a-introduction-literature-current" title="Link to this heading">#</a></h3>
 <p><strong>Content covered</strong>:</p>
 <ul class="simple">
-<li><p>PINN fundamentals and mathematical framework <span id="id53">[]</span></p></li>
-<li><p>Comprehensive literature review of PINNs in electromagnetics <span id="id54">[]</span></p></li>
-<li><p>Comparison with traditional ML (Sections 4-5) and FEA <span id="id55">[]</span></p></li>
+<li><p>PINN fundamentals and mathematical framework <span id="id53">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span></p></li>
+<li><p>Comprehensive literature review of PINNs in electromagnetics <span id="id54">[<a class="reference internal" href="07_conclusion.html#id410" title="Sami Barmada, Nunzia Fontana, Luca Sani, Dimitri Thomopulos, and Mauro Tucci. Deep learning and reduced models for fast optimization in electromagnetics. IEEE Transactions on Magnetics, 56(3):1–4, 2020.">Barmada <em>et al.</em>, 2020</a>]</span></p></li>
+<li><p>Comparison with traditional ML (Sections 4-5) and FEA <span id="id55">[<a class="reference internal" href="07_conclusion.html#id474" title="David Meeker. FEMM: finite element method magnetics. 2015. Open source finite element magnetics solver. URL: https://www.femm.info.">Meeker, 2015</a>]</span></p></li>
 <li><p>When to use PINNs vs. data-driven approaches</p></li>
 </ul>
 </section>
@@ -801,7 +801,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <h3>Section 6b: Methodology &amp; Problem Formulation<a class="headerlink" href="#section-6b-methodology-problem-formulation" title="Link to this heading">#</a></h3>
 <p><strong>Content to be covered</strong>:</p>
 <ul class="simple">
-<li><p><strong>Maxwell’s equations in 2D magnetostatics</strong> <span id="id56">[]</span>:</p>
+<li><p><strong>Maxwell’s equations in 2D magnetostatics</strong> <span id="id56">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:</p>
 <ul>
 <li><p>Governing PDEs: <span class="math notranslate nohighlight">\(\nabla \times \mathbf{H} = \mathbf{J}\)</span>, <span class="math notranslate nohighlight">\(\nabla \cdot \mathbf{B} = 0\)</span></p></li>
 <li><p>Boundary conditions: Dirichlet, Neumann, interface conditions</p></li>
@@ -817,7 +817,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <h3>Section 6c: Implementation &amp; Training<a class="headerlink" href="#section-6c-implementation-training" title="Link to this heading">#</a></h3>
 <p><strong>Content to be covered</strong>:</p>
 <ul class="simple">
-<li><p><strong>PINN architecture</strong>: Feedforward network with automatic differentiation <span id="id58">[]</span></p></li>
+<li><p><strong>PINN architecture</strong>: Feedforward network with automatic differentiation <span id="id58">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span></p></li>
 <li><p><strong>Physics loss computation</strong>:</p>
 <ul>
 <li><p>PDE residual: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{PDE}} = ||\\nabla \\times f_{\\theta}(x,y) - J(x,y)||^2\)</span></p></li>
@@ -828,7 +828,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <li><p><strong>Training pipeline</strong>:</p>
 <ul>
 <li><p>Collocation point generation (Latin Hypercube Sampling)</p></li>
-<li><p>Optimizer selection (Adam vs. L-BFGS) <span id="id59">[]</span></p></li>
+<li><p>Optimizer selection (Adam vs. L-BFGS) <span id="id59">[<a class="reference internal" href="07_conclusion.html#id215" title="Diederik Kingma and Jimmy Ba. Adam: a method for stochastic optimization. arXiv preprint arXiv:1412.6980, 2014.">Kingma and Ba, 2014</a>]</span></p></li>
 <li><p>Loss balancing strategies <span id="id60">[]</span></p></li>
 </ul>
 </li>
@@ -859,7 +859,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <p>By completing Sections 6a-6d, you will be able to:</p>
 <p><strong>Theoretical understanding</strong>:</p>
 <ol class="arabic simple">
-<li><p>Explain how PINNs incorporate physics constraints into neural network training <span id="id61">[]</span></p></li>
+<li><p>Explain how PINNs incorporate physics constraints into neural network training <span id="id61">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span></p></li>
 <li><p>Formulate electromagnetic problems as physics-informed learning tasks</p></li>
 <li><p>Understand trade-offs between data-driven and physics-informed approaches</p></li>
 </ol>
@@ -882,7 +882,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{R}_{\text{PDE}} = \nabla 
 <li><p><strong>Hands-on implementation</strong> (6c): Complete working code with explanations</p></li>
 <li><p><strong>Critical evaluation</strong> (6d): Results, validation, lessons learned</p></li>
 </ol>
-<p><strong>Recommendation</strong>: Work through sections sequentially, running code as you read. Understanding emerges from experimentation <span id="id67">[]</span>.</p>
+<p><strong>Recommendation</strong>: Work through sections sequentially, running code as you read. Understanding emerges from experimentation <span id="id67">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>]</span>.</p>
 </div>
 </section>
 <section id="connection-to-broader-thesis-narrative">

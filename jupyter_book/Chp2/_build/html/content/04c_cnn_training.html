@@ -390,8 +390,8 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="cnn-training-and-optimization">
 <h1>CNN Training and Optimization<a class="headerlink" href="#cnn-training-and-optimization" title="Link to this heading">#</a></h1>
-<p>This section examines the training process for the magnetic field prediction CNN, detailing optimization algorithms, convergence analysis, and model selection strategies <span id="id1">[]</span>.</p>
-<p><strong>Key Focus</strong>: The critical empirical discovery that <strong>dilated convolutions</strong> <span id="id2">[]</span> significantly improve performance without increasing model parameters—a finding with important implications for electromagnetic field prediction.</p>
+<p>This section examines the training process for the magnetic field prediction CNN, detailing optimization algorithms, convergence analysis, and model selection strategies <span id="id1">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>, <a class="reference internal" href="07_conclusion.html#id222" title="Sergey Ioffe and Christian Szegedy. Batch normalization: accelerating deep network training by reducing internal covariate shift. In International Conference on Machine Learning, 448–456. 2015.">Ioffe and Szegedy, 2015</a>, <a class="reference internal" href="07_conclusion.html#id215" title="Diederik Kingma and Jimmy Ba. Adam: a method for stochastic optimization. arXiv preprint arXiv:1412.6980, 2014.">Kingma and Ba, 2014</a>]</span>.</p>
+<p><strong>Key Focus</strong>: The critical empirical discovery that <strong>dilated convolutions</strong> <span id="id2">[<a class="reference internal" href="07_conclusion.html#id100" title="Fisher Yu and Vladlen Koltun. Multi-scale context aggregation by dilated convolutions. In International Conference on Learning Representations (ICLR). 2016.">Yu and Koltun, 2016</a>]</span> significantly improve performance without increasing model parameters—a finding with important implications for electromagnetic field prediction.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><strong>Architecture Recap</strong> (from Section 4b):</p>
@@ -417,7 +417,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} \sqrt{\frac{1}{M} \sum_{j=1}^{M} (B_{ij}^{\text{F
 <ul class="simple">
 <li><p><span class="math notranslate nohighlight">\(N\)</span> = batch size (16 samples per batch)</p></li>
 <li><p><span class="math notranslate nohighlight">\(M\)</span> = number of spatial pixels (256×256 = 65,536 per field map)</p></li>
-<li><p><span class="math notranslate nohighlight">\(B_{ij}^{\text{FEA}}\)</span> = ground truth flux density from FEMM simulation <span id="id3">[]</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(B_{ij}^{\text{FEA}}\)</span> = ground truth flux density from FEMM simulation <span id="id3">[<a class="reference internal" href="07_conclusion.html#id474" title="David Meeker. FEMM: finite element method magnetics. 2015. Open source finite element magnetics solver. URL: https://www.femm.info.">Meeker, 2015</a>]</span></p></li>
 <li><p><span class="math notranslate nohighlight">\(B_{ij}^{\text{pred}}\)</span> = CNN prediction for the same spatial location</p></li>
 </ul>
 <p><strong>Why RMSE for electromagnetic fields?</strong>:</p>
@@ -436,7 +436,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} \sqrt{\frac{1}{M} \sum_{j=1}^{M} (B_{ij}^{\text{F
 </section>
 <section id="backpropagation-through-the-network">
 <h3>Backpropagation Through the Network<a class="headerlink" href="#backpropagation-through-the-network" title="Link to this heading">#</a></h3>
-<p>The loss is minimized via <strong>backpropagation</strong> <span id="id4">[]</span>, computing gradients:</p>
+<p>The loss is minimized via <strong>backpropagation</strong> <span id="id4">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>]</span>, computing gradients:</p>
 <div class="math notranslate nohighlight">
 \[
 \frac{\partial L}{\partial w_{ij}^{(l)}} = \frac{\partial L}{\partial B^{\text{pred}}} \cdot \frac{\partial B^{\text{pred}}}{\partial a^{(L)}} \cdot \ldots \cdot \frac{\partial a^{(l)}}{\partial w_{ij}^{(l)}}
@@ -462,7 +462,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} \sqrt{\frac{1}{M} \sum_{j=1}^{M} (B_{ij}^{\text{F
 </section>
 <section id="model-selection-and-hyperparameter-optimization">
 <h2>Model Selection and Hyperparameter Optimization<a class="headerlink" href="#model-selection-and-hyperparameter-optimization" title="Link to this heading">#</a></h2>
-<p>Model selection identifies the architecture and hyperparameters that optimize the bias-variance tradeoff <span id="id5">[]</span>. This process is critical for electromagnetic field prediction where insufficient capacity underfits complex saturation patterns while excessive capacity overfits training geometries.</p>
+<p>Model selection identifies the architecture and hyperparameters that optimize the bias-variance tradeoff <span id="id5">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>, <a class="reference internal" href="07_conclusion.html#id83" title="Christopher M. Bishop. Pattern Recognition and Machine Learning. Springer, New York, 2006.">Bishop, 2006</a>]</span>. This process is critical for electromagnetic field prediction where insufficient capacity underfits complex saturation patterns while excessive capacity overfits training geometries.</p>
 <section id="search-strategies">
 <h3>Search Strategies<a class="headerlink" href="#search-strategies" title="Link to this heading">#</a></h3>
 <p>Two primary approaches were employed for hyperparameter optimization:</p>
@@ -509,7 +509,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} \sqrt{\frac{1}{M} \sum_{j=1}^{M} (B_{ij}^{\text{F
 <li><p>Options: Enabled vs. Disabled</p></li>
 <li><p><strong>Finding</strong>: Essential for spatial accuracy (5× improvement, see Section 4b)</p></li>
 </ul>
-<p><strong>6. Dropout Rate</strong> <span id="id7">[]</span>:</p>
+<p><strong>6. Dropout Rate</strong> <span id="id7">[<a class="reference internal" href="07_conclusion.html#id119" title="Nitish Srivastava, Geoffrey Hinton, Alex Krizhevsky, Ilya Sutskever, and Ruslan Salakhutdinov. Dropout: a simple way to prevent neural networks from overfitting. The journal of machine learning research, 15(1):1929–1958, 2014.">Srivastava <em>et al.</em>, 2014</a>]</span>:</p>
 <ul class="simple">
 <li><p>Options: 0.3, 0.5, 0.7</p></li>
 <li><p><strong>Finding</strong>: 0.5 provides best regularization without underfitting</p></li>
@@ -519,7 +519,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} \sqrt{\frac{1}{M} \sum_{j=1}^{M} (B_{ij}^{\text{F
 <li><p>Options: 8, 16, 32</p></li>
 <li><p><strong>Finding</strong>: 16 balances gradient estimate quality with memory constraints</p></li>
 </ul>
-<p><strong>8. Learning Rate</strong> (with Adam optimizer <span id="id8">[]</span>):</p>
+<p><strong>8. Learning Rate</strong> (with Adam optimizer <span id="id8">[<a class="reference internal" href="07_conclusion.html#id215" title="Diederik Kingma and Jimmy Ba. Adam: a method for stochastic optimization. arXiv preprint arXiv:1412.6980, 2014.">Kingma and Ba, 2014</a>]</span>):</p>
 <ul class="simple">
 <li><p>Options: <span class="math notranslate nohighlight">\(10^{-3}\)</span>, <span class="math notranslate nohighlight">\(10^{-4}\)</span>, <span class="math notranslate nohighlight">\(10^{-5}\)</span></p></li>
 <li><p><strong>Finding</strong>: Initial <span class="math notranslate nohighlight">\(\eta = 10^{-3}\)</span> with decay schedule converges fastest</p></li>
@@ -555,7 +555,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} \sqrt{\frac{1}{M} \sum_{j=1}^{M} (B_{ij}^{\text{F
 </section>
 <section id="empirical-validation-dilated-convolutions">
 <h2>Empirical Validation: Dilated Convolutions<a class="headerlink" href="#empirical-validation-dilated-convolutions" title="Link to this heading">#</a></h2>
-<p>The most significant finding during model selection: <strong>dilated convolutions</strong> <span id="id9">[]</span> provide 3× error reduction without increasing parameters, validating the physics-motivated architectural choice (Section 4b).</p>
+<p>The most significant finding during model selection: <strong>dilated convolutions</strong> <span id="id9">[<a class="reference internal" href="07_conclusion.html#id100" title="Fisher Yu and Vladlen Koltun. Multi-scale context aggregation by dilated convolutions. In International Conference on Learning Representations (ICLR). 2016.">Yu and Koltun, 2016</a>]</span> provide 3× error reduction without increasing parameters, validating the physics-motivated architectural choice (Section 4b).</p>
 <section id="experimental-setup">
 <h3>Experimental Setup<a class="headerlink" href="#experimental-setup" title="Link to this heading">#</a></h3>
 <p>Controlled comparison between two 32-layer networks:</p>
@@ -569,7 +569,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} \sqrt{\frac{1}{M} \sum_{j=1}^{M} (B_{ij}^{\text{F
 <section id="training-dynamics">
 <h3>Training Dynamics<a class="headerlink" href="#training-dynamics" title="Link to this heading">#</a></h3>
 <figure class="align-default" id="fig-training-curves">
-<a class="reference internal image-reference" href="../_images/Training_results3.png"><img alt="../_images/Training_results3.png" src="../_images/Training_results3.png" style="width: 100%;" />
+<a class="reference internal image-reference" href="_static/figures/Training_results3.png"><img alt="_static/figures/Training_results3.png" src="_static/figures/Training_results3.png" style="width: 100%;" />
 </a>
 <figcaption>
 <p><span class="caption-number">Fig. 9 </span><span class="caption-text">Training curves with Normalized Prediction Error on validation set for three electromagnetic problems. Networks with dilated convolutions (blue) consistently converge faster and achieve lower final error than dense convolutions (red).</span><a class="headerlink" href="#fig-training-curves" title="Link to this image">#</a></p>
@@ -615,7 +615,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} \sqrt{\frac{1}{M} \sum_{j=1}^{M} (B_{ij}^{\text{F
 </section>
 <section id="architectural-insight">
 <h3>Architectural Insight<a class="headerlink" href="#architectural-insight" title="Link to this heading">#</a></h3>
-<p><strong>Key takeaway</strong> <span id="id10">[]</span>: Performance improved by <strong>changing filter behavior</strong> (receptive field expansion), not adding capacity.</p>
+<p><strong>Key takeaway</strong> <span id="id10">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>, <a class="reference internal" href="07_conclusion.html#id100" title="Fisher Yu and Vladlen Koltun. Multi-scale context aggregation by dilated convolutions. In International Conference on Learning Representations (ICLR). 2016.">Yu and Koltun, 2016</a>]</span>: Performance improved by <strong>changing filter behavior</strong> (receptive field expansion), not adding capacity.</p>
 <p>Comparison:</p>
 <ul class="simple">
 <li><p>Adding 50% more parameters (K=64 → K=96) with dense convolutions: +5% improvement, 2× training time</p></li>
@@ -630,7 +630,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} \sqrt{\frac{1}{M} \sum_{j=1}^{M} (B_{ij}^{\text{F
 </section>
 <section id="empirical-finding-dilated-convolutions-for-electromagnetic-fields">
 <h2>Empirical Finding: Dilated Convolutions for Electromagnetic Fields<a class="headerlink" href="#empirical-finding-dilated-convolutions-for-electromagnetic-fields" title="Link to this heading">#</a></h2>
-<p>The most significant empirical discovery during model selection was that <strong>dilated convolutions</strong> <span id="id11">[]</span> dramatically improve performance without increasing parameters—validating the physics-motivated architectural choice (Section 4b).</p>
+<p>The most significant empirical discovery during model selection was that <strong>dilated convolutions</strong> <span id="id11">[<a class="reference internal" href="07_conclusion.html#id100" title="Fisher Yu and Vladlen Koltun. Multi-scale context aggregation by dilated convolutions. In International Conference on Learning Representations (ICLR). 2016.">Yu and Koltun, 2016</a>]</span> dramatically improve performance without increasing parameters—validating the physics-motivated architectural choice (Section 4b).</p>
 <section id="id12">
 <h3>Experimental Setup<a class="headerlink" href="#id12" title="Link to this heading">#</a></h3>
 <p><strong>Controlled comparison</strong> (all else equal):</p>
@@ -649,7 +649,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} \sqrt{\frac{1}{M} \sum_{j=1}^{M} (B_{ij}^{\text{F
 </section>
 <section id="physical-motivation-brief-recap-from-section-4b">
 <h3>Physical Motivation (Brief Recap from Section 4b)<a class="headerlink" href="#physical-motivation-brief-recap-from-section-4b" title="Link to this heading">#</a></h3>
-<p>The magnetic field at a point depends on <strong>distant</strong> current sources per Biot-Savart law <span id="id13">[]</span>:</p>
+<p>The magnetic field at a point depends on <strong>distant</strong> current sources per Biot-Savart law <span id="id13">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:</p>
 <div class="math notranslate nohighlight">
 \[
 \mathbf{B}(\mathbf{r}) \propto \int \frac{\mathbf{J}(\mathbf{r'})}{|\mathbf{r} - \mathbf{r'}|^2} dV'
@@ -659,7 +659,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} \sqrt{\frac{1}{M} \sum_{j=1}^{M} (B_{ij}^{\text{F
 <section id="experimental-results">
 <h3>Experimental Results<a class="headerlink" href="#experimental-results" title="Link to this heading">#</a></h3>
 <figure class="align-default" id="fig-training-curves-detailed">
-<a class="reference internal image-reference" href="../_images/Training_results3.png"><img alt="../_images/Training_results3.png" src="../_images/Training_results3.png" style="width: 100%;" />
+<a class="reference internal image-reference" href="_static/figures/Training_results3.png"><img alt="_static/figures/Training_results3.png" src="_static/figures/Training_results3.png" style="width: 100%;" />
 </a>
 <figcaption>
 <p><span class="caption-number">Fig. 10 </span><span class="caption-text">Training curves showing Normalized Prediction Error on validation set for three electromagnetic problems: (a) Coil, (b) Transformer, (c) IPM Motor. Networks with dilated convolutions (blue curves) consistently outperform dense convolutions (red curves) across all problem complexities.</span><a class="headerlink" href="#fig-training-curves-detailed" title="Link to this image">#</a></p>
@@ -739,7 +739,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} \sqrt{\frac{1}{M} \sum_{j=1}^{M} (B_{ij}^{\text{F
 </section>
 <section id="id14">
 <h3>Architectural Insight<a class="headerlink" href="#id14" title="Link to this heading">#</a></h3>
-<p><strong>Key takeaway</strong>: <strong>Performance improved not by adding neurons, but by changing filter behavior</strong> <span id="id15">[]</span>.</p>
+<p><strong>Key takeaway</strong>: <strong>Performance improved not by adding neurons, but by changing filter behavior</strong> <span id="id15">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>, <a class="reference internal" href="07_conclusion.html#id100" title="Fisher Yu and Vladlen Koltun. Multi-scale context aggregation by dilated convolutions. In International Conference on Learning Representations (ICLR). 2016.">Yu and Koltun, 2016</a>]</span>.</p>
 <p>This demonstrates that <strong>architectural innovations</strong> (motivated by physics) can be more important than brute-force capacity increases:</p>
 <ul class="simple">
 <li><p>Adding 50% more parameters (K=64 → K=96) with dense convolutions: +5% improvement</p></li>
@@ -903,7 +903,7 @@ This code demonstrates the characteristic training behavior of dilated vs. dense
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>C:\Users\MK\AppData\Local\Temp\ipykernel_28136\3300691616.py:100: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>C:\Users\akhan147\AppData\Local\Temp\ipykernel_12884\3300691616.py:100: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
   plt.tight_layout()
 </pre></div>
 </div>
@@ -981,7 +981,7 @@ Conclusion:
 <section id="convergence-criteria">
 <h3>Convergence Criteria<a class="headerlink" href="#convergence-criteria" title="Link to this heading">#</a></h3>
 <p>Training terminates when one of the following conditions is met:</p>
-<p><strong>1. Early Stopping</strong> <span id="id16">[]</span> (Primary criterion):</p>
+<p><strong>1. Early Stopping</strong> <span id="id16">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>, <a class="reference internal" href="07_conclusion.html#id83" title="Christopher M. Bishop. Pattern Recognition and Machine Learning. Springer, New York, 2006.">Bishop, 2006</a>]</span> (Primary criterion):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">validation_loss</span> <span class="n">has</span> <span class="ow">not</span> <span class="n">improved</span> <span class="k">for</span> <span class="mi">10</span> <span class="n">consecutive</span> <span class="n">epochs</span><span class="p">:</span>
     <span class="n">stop_training</span><span class="p">()</span>
     <span class="n">restore_weights_from_best_epoch</span><span class="p">()</span>
@@ -1091,13 +1091,13 @@ Conclusion:
 <li><p>Most effective single technique</p></li>
 <li><p>Automatically finds optimal stopping point</p></li>
 </ul>
-<p><strong>2. Dropout</strong> <span id="id17">[]</span> (rate=0.5)</p>
+<p><strong>2. Dropout</strong> <span id="id17">[<a class="reference internal" href="07_conclusion.html#id119" title="Nitish Srivastava, Geoffrey Hinton, Alex Krizhevsky, Ilya Sutskever, and Ruslan Salakhutdinov. Dropout: a simple way to prevent neural networks from overfitting. The journal of machine learning research, 15(1):1929–1958, 2014.">Srivastava <em>et al.</em>, 2014</a>]</span> (rate=0.5)</p>
 <ul class="simple">
 <li><p>During training: randomly zero 50% of activations each batch</p></li>
 <li><p>Forces network to learn redundant representations</p></li>
 <li><p>Prevents co-adaptation of neurons</p></li>
 </ul>
-<p><strong>3. Batch Normalization</strong> <span id="id18">[]</span></p>
+<p><strong>3. Batch Normalization</strong> <span id="id18">[<a class="reference internal" href="07_conclusion.html#id222" title="Sergey Ioffe and Christian Szegedy. Batch normalization: accelerating deep network training by reducing internal covariate shift. In International Conference on Machine Learning, 448–456. 2015.">Ioffe and Szegedy, 2015</a>]</span></p>
 <ul class="simple">
 <li><p>Reduces internal covariate shift</p></li>
 <li><p>Acts as regularizer (adds noise from batch statistics)</p></li>
@@ -1189,21 +1189,21 @@ Conclusion:
 <p>This section detailed the training process achieving 0.3-0.6% prediction accuracy across three electromagnetic problems.</p>
 <section id="training-configuration">
 <h3>Training Configuration<a class="headerlink" href="#training-configuration" title="Link to this heading">#</a></h3>
-<p><strong>Optimization</strong> <span id="id19">[]</span>:</p>
+<p><strong>Optimization</strong> <span id="id19">[<a class="reference internal" href="07_conclusion.html#id215" title="Diederik Kingma and Jimmy Ba. Adam: a method for stochastic optimization. arXiv preprint arXiv:1412.6980, 2014.">Kingma and Ba, 2014</a>, <a class="reference internal" href="07_conclusion.html#id200" title="Ilya Loshchilov and Frank Hutter. Sgdr: stochastic gradient descent with warm restarts. In International Conference on Learning Representations (ICLR). 2017.">Loshchilov and Hutter, 2017</a>]</span>:</p>
 <ul class="simple">
 <li><p>Adam optimizer (η=10⁻³, cosine annealing schedule)</p></li>
 <li><p>Batch size: 16 samples</p></li>
 <li><p>Convergence: 60-100 epochs (12-17 hours on NVIDIA 1080 Ti)</p></li>
 <li><p>Early stopping (patience=10 epochs)</p></li>
 </ul>
-<p><strong>Dataset</strong> <span id="id20">[]</span>:</p>
+<p><strong>Dataset</strong> <span id="id20">[<a class="reference internal" href="07_conclusion.html#id473" title="Michael D McKay, Richard J Beckman, and William J Conover. A comparison of three methods for selecting values of input variables in the analysis of output from a computer code. Technometrics, 42(1):55–61, 2000.">McKay <em>et al.</em>, 2000</a>]</span>:</p>
 <ul class="simple">
 <li><p>Training: 30,000 samples (67%) for gradient descent</p></li>
 <li><p>Validation: 10,000 samples (22%) for hyperparameter tuning</p></li>
 <li><p>Test: 5,000 samples (11%) for final evaluation</p></li>
 <li><p>Latin Hypercube Sampling ensures design space coverage</p></li>
 </ul>
-<p><strong>Regularization</strong> <span id="id21">[]</span>:</p>
+<p><strong>Regularization</strong> <span id="id21">[<a class="reference internal" href="07_conclusion.html#id222" title="Sergey Ioffe and Christian Szegedy. Batch normalization: accelerating deep network training by reducing internal covariate shift. In International Conference on Machine Learning, 448–456. 2015.">Ioffe and Szegedy, 2015</a>, <a class="reference internal" href="07_conclusion.html#id119" title="Nitish Srivastava, Geoffrey Hinton, Alex Krizhevsky, Ilya Sutskever, and Ruslan Salakhutdinov. Dropout: a simple way to prevent neural networks from overfitting. The journal of machine learning research, 15(1):1929–1958, 2014.">Srivastava <em>et al.</em>, 2014</a>]</span>:</p>
 <ul class="simple">
 <li><p>Dropout (rate=0.5) prevents overfitting</p></li>
 <li><p>Batch normalization stabilizes training</p></li>
@@ -1224,7 +1224,7 @@ Conclusion:
 </section>
 <section id="critical-finding-dilated-convolutions">
 <h3>Critical Finding: Dilated Convolutions<a class="headerlink" href="#critical-finding-dilated-convolutions" title="Link to this heading">#</a></h3>
-<p><strong>Most significant discovery</strong>: Dilated convolutions <span id="id23">[]</span> provide <strong>3× error reduction</strong> without parameter increase.</p>
+<p><strong>Most significant discovery</strong>: Dilated convolutions <span id="id23">[<a class="reference internal" href="07_conclusion.html#id100" title="Fisher Yu and Vladlen Koltun. Multi-scale context aggregation by dilated convolutions. In International Conference on Learning Representations (ICLR). 2016.">Yu and Koltun, 2016</a>]</span> provide <strong>3× error reduction</strong> without parameter increase.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Problem</p></th>
@@ -1252,8 +1252,8 @@ Conclusion:
 </tbody>
 </table>
 </div>
-<p><strong>Physical basis</strong> <span id="id24">[]</span>: Biot-Savart law dictates field at point depends on distant sources. Dilated filters expand receptive field from 21×21 (standard) to 200×200 pixels, capturing long-range interactions.</p>
-<p><strong>Architectural insight</strong> <span id="id25">[]</span>: Physics-motivated design (understanding electromagnetic coupling) outperforms brute-force capacity increases.</p>
+<p><strong>Physical basis</strong> <span id="id24">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>: Biot-Savart law dictates field at point depends on distant sources. Dilated filters expand receptive field from 21×21 (standard) to 200×200 pixels, capturing long-range interactions.</p>
+<p><strong>Architectural insight</strong> <span id="id25">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>]</span>: Physics-motivated design (understanding electromagnetic coupling) outperforms brute-force capacity increases.</p>
 </section>
 <section id="key-lessons-for-ml-in-physics">
 <h3>Key Lessons for ML in Physics<a class="headerlink" href="#key-lessons-for-ml-in-physics" title="Link to this heading">#</a></h3>

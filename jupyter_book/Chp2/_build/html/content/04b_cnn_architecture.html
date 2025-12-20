@@ -377,17 +377,17 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="convolutional-neural-network-architecture">
 <h1>Convolutional Neural Network Architecture<a class="headerlink" href="#convolutional-neural-network-architecture" title="Link to this heading">#</a></h1>
-<p>This section details the Convolutional Neural Network (CNN) architecture designed for magnetic field prediction. CNNs are specifically suited for processing structured grid data by exploiting spatial relationships through local connectivity and parameter sharing <span id="id1">[]</span>.</p>
+<p>This section details the Convolutional Neural Network (CNN) architecture designed for magnetic field prediction. CNNs are specifically suited for processing structured grid data by exploiting spatial relationships through local connectivity and parameter sharing <span id="id1">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>, <a class="reference internal" href="01_intro.html#id214" title="Alex Krizhevsky, Ilya Sutskever, and Geoffrey E Hinton. Imagenet classification with deep convolutional neural networks. In Advances in neural information processing systems, 1097–1105. 2012.">Krizhevsky <em>et al.</em>, 2012</a>, <a class="reference internal" href="01_intro.html#id211" title="Yann LeCun, Léon Bottou, Yoshua Bengio, and Patrick Haffner. Gradient-based learning applied to document recognition. Proceedings of the IEEE, 86(11):2278–2324, 1998.">LeCun <em>et al.</em>, 1998</a>]</span>.</p>
 <p><strong>Key Architectural Innovations for Electromagnetic Field Prediction</strong>:</p>
 <ul class="simple">
-<li><p><strong>Encoder-decoder structure</strong> <span id="id2">[]</span> for dense spatial regression</p></li>
-<li><p><strong>Dilated convolutions</strong> <span id="id3">[]</span> to capture long-range electromagnetic interactions</p></li>
+<li><p><strong>Encoder-decoder structure</strong> <span id="id2">[<a class="reference internal" href="07_conclusion.html#id68" title="Olaf Ronneberger, Philipp Fischer, and Thomas Brox. U-net: convolutional networks for biomedical image segmentation. In Medical Image Computing and Computer-Assisted Intervention (MICCAI), 234–241. Springer, 2015.">Ronneberger <em>et al.</em>, 2015</a>]</span> for dense spatial regression</p></li>
+<li><p><strong>Dilated convolutions</strong> <span id="id3">[<a class="reference internal" href="07_conclusion.html#id100" title="Fisher Yu and Vladlen Koltun. Multi-scale context aggregation by dilated convolutions. In International Conference on Learning Representations (ICLR). 2016.">Yu and Koltun, 2016</a>]</span> to capture long-range electromagnetic interactions</p></li>
 <li><p><strong>Skip connections</strong> to preserve fine-grained flux density details</p></li>
-<li><p><strong>Batch normalization</strong> <span id="id4">[]</span> for stable training on FEA-generated data</p></li>
+<li><p><strong>Batch normalization</strong> <span id="id4">[<a class="reference internal" href="07_conclusion.html#id222" title="Sergey Ioffe and Christian Szegedy. Batch normalization: accelerating deep network training by reducing internal covariate shift. In International Conference on Machine Learning, 448–456. 2015.">Ioffe and Szegedy, 2015</a>]</span> for stable training on FEA-generated data</p></li>
 </ul>
 <section id="cnn-fundamentals">
 <h2>CNN Fundamentals<a class="headerlink" href="#cnn-fundamentals" title="Link to this heading">#</a></h2>
-<p>Convolutional Neural Networks are similar to ordinary neural networks in that they are made up of learnable weights and biases <span id="id5">[]</span>. However, CNNs make an explicit assumption that <strong>input data follows a structured pattern</strong> to store information (usually in the form of a uniform grid such as images, time-series events, or magnetic field distributions).</p>
+<p>Convolutional Neural Networks are similar to ordinary neural networks in that they are made up of learnable weights and biases <span id="id5">[<a class="reference internal" href="01_intro.html#id214" title="Alex Krizhevsky, Ilya Sutskever, and Geoffrey E Hinton. Imagenet classification with deep convolutional neural networks. In Advances in neural information processing systems, 1097–1105. 2012.">Krizhevsky <em>et al.</em>, 2012</a>, <a class="reference internal" href="01_intro.html#id211" title="Yann LeCun, Léon Bottou, Yoshua Bengio, and Patrick Haffner. Gradient-based learning applied to document recognition. Proceedings of the IEEE, 86(11):2278–2324, 1998.">LeCun <em>et al.</em>, 1998</a>]</span>. However, CNNs make an explicit assumption that <strong>input data follows a structured pattern</strong> to store information (usually in the form of a uniform grid such as images, time-series events, or magnetic field distributions).</p>
 <p>This assumption introduces certain properties in the architecture which help in:</p>
 <ol class="arabic simple">
 <li><p><strong>Reducing the number of parameters</strong> in the network (critical advantage over fully-connected ANNs)</p></li>
@@ -417,9 +417,9 @@ document.write(`
 <p>There are three main types of layers present in CNN architecture for electromagnetic field prediction:</p>
 <section id="convolutional-layer-conv">
 <h3>1. Convolutional Layer (CONV)<a class="headerlink" href="#convolutional-layer-conv" title="Link to this heading">#</a></h3>
-<p>The convolutional layer computes the connection of each neuron with a local region of the input volume <span id="id6">[]</span>. It consists of a set of learnable filters (also called kernels) that extract spatial features.</p>
+<p>The convolutional layer computes the connection of each neuron with a local region of the input volume <span id="id6">[<a class="reference internal" href="01_intro.html#id211" title="Yann LeCun, Léon Bottou, Yoshua Bengio, and Patrick Haffner. Gradient-based learning applied to document recognition. Proceedings of the IEEE, 86(11):2278–2324, 1998.">LeCun <em>et al.</em>, 1998</a>]</span>. It consists of a set of learnable filters (also called kernels) that extract spatial features.</p>
 <figure class="align-default" id="fig-conv-kernel">
-<a class="reference internal image-reference" href="../_images/FIG2A.pdf"><img alt="../_images/FIG2A.pdf" src="../_images/FIG2A.pdf" style="width: 60%;" />
+<a class="reference internal image-reference" href="_static/figures/FIG2A.pdf"><img alt="_static/figures/FIG2A.pdf" src="_static/figures/FIG2A.pdf" style="width: 60%;" />
 </a>
 <figcaption>
 <p><span class="caption-number">Fig. 5 </span><span class="caption-text">Convolution kernel visualization. Blue represents the input map, cyan represents the output map. The filter slides across the input, computing dot products.</span><a class="headerlink" href="#fig-conv-kernel" title="Link to this image">#</a></p>
@@ -483,7 +483,7 @@ Y = X \ast K + b
 </section>
 <section id="pooling-layer-pool">
 <h3>2. Pooling Layer (POOL)<a class="headerlink" href="#pooling-layer-pool" title="Link to this heading">#</a></h3>
-<p>The pooling layer is responsible for downsampling the spatial dimensions of the input <span id="id7">[]</span>. Pooling layers are periodically inserted in-between convolutional layers to progressively reduce spatial resolution.</p>
+<p>The pooling layer is responsible for downsampling the spatial dimensions of the input <span id="id7">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>, <a class="reference internal" href="01_intro.html#id211" title="Yann LeCun, Léon Bottou, Yoshua Bengio, and Patrick Haffner. Gradient-based learning applied to document recognition. Proceedings of the IEEE, 86(11):2278–2324, 1998.">LeCun <em>et al.</em>, 1998</a>]</span>. Pooling layers are periodically inserted in-between convolutional layers to progressively reduce spatial resolution.</p>
 <p><strong>Purpose</strong>:</p>
 <ul class="simple">
 <li><p><strong>Reduce parameters</strong>: Smaller spatial dimensions → fewer computations in subsequent layers</p></li>
@@ -558,12 +558,12 @@ Takes max of each 2×2 block
 </section>
 <section id="dilated-convolutions">
 <h2>Dilated Convolutions<a class="headerlink" href="#dilated-convolutions" title="Link to this heading">#</a></h2>
-<p>A key innovation in the magnetic field prediction architecture is the use of <strong>dilated convolutions</strong> (also called atrous convolutions) <span id="id8">[]</span>. This technique is critical for capturing long-range electromagnetic interactions without increasing computational cost.</p>
+<p>A key innovation in the magnetic field prediction architecture is the use of <strong>dilated convolutions</strong> (also called atrous convolutions) <span id="id8">[<a class="reference internal" href="07_conclusion.html#id100" title="Fisher Yu and Vladlen Koltun. Multi-scale context aggregation by dilated convolutions. In International Conference on Learning Representations (ICLR). 2016.">Yu and Koltun, 2016</a>]</span>. This technique is critical for capturing long-range electromagnetic interactions without increasing computational cost.</p>
 <section id="standard-vs-dilated-convolution">
 <h3>Standard vs. Dilated Convolution<a class="headerlink" href="#standard-vs-dilated-convolution" title="Link to this heading">#</a></h3>
 <p><strong>Standard Convolution</strong>: Dense kernel captures only immediate neighbors</p>
 <figure class="align-default" id="fig-standard-conv">
-<a class="reference internal image-reference" href="../_images/FIG2A.pdf"><img alt="../_images/FIG2A.pdf" src="../_images/FIG2A.pdf" style="width: 45%;" />
+<a class="reference internal image-reference" href="_static/figures/FIG2A.pdf"><img alt="_static/figures/FIG2A.pdf" src="_static/figures/FIG2A.pdf" style="width: 45%;" />
 </a>
 <figcaption>
 <p><span class="caption-number">Fig. 6 </span><span class="caption-text">Non-dilated convolutional filter with padding. All kernel elements are contiguous.</span><a class="headerlink" href="#fig-standard-conv" title="Link to this image">#</a></p>
@@ -571,7 +571,7 @@ Takes max of each 2×2 block
 </figure>
 <p><strong>Dilated Convolution</strong>: Sparse kernel captures distant relationships</p>
 <figure class="align-default" id="fig-dilated-conv">
-<a class="reference internal image-reference" href="../_images/FIG2B.pdf"><img alt="../_images/FIG2B.pdf" src="../_images/FIG2B.pdf" style="width: 45%;" />
+<a class="reference internal image-reference" href="_static/figures/FIG2B.pdf"><img alt="_static/figures/FIG2B.pdf" src="_static/figures/FIG2B.pdf" style="width: 45%;" />
 </a>
 <figcaption>
 <p><span class="caption-number">Fig. 7 </span><span class="caption-text">Dilated filter with dilation rate of 1. Kernel elements are spaced apart, expanding the receptive field without increasing parameters.</span><a class="headerlink" href="#fig-dilated-conv" title="Link to this image">#</a></p>
@@ -618,7 +618,7 @@ $<span class="math notranslate nohighlight">\(
 <li><p>For a 256×256 motor image: Only sees 8% of spatial dimension</p></li>
 <li><p>To see entire motor would need ~128 layers (infeasible to train)</p></li>
 </ul>
-<p><strong>Why dilated convolutions solve this</strong> <span id="id9">[]</span>:</p>
+<p><strong>Why dilated convolutions solve this</strong> <span id="id9">[<a class="reference internal" href="07_conclusion.html#id100" title="Fisher Yu and Vladlen Koltun. Multi-scale context aggregation by dilated convolutions. In International Conference on Learning Representations (ICLR). 2016.">Yu and Koltun, 2016</a>]</span>:</p>
 <ul class="simple">
 <li><p>Alternating dilated layers exponentially expand receptive field</p></li>
 <li><p>After 10 layers with alternating dilation [1,2,1,2,…]: receptive field ~200×200 pixels</p></li>
@@ -668,9 +668,9 @@ $<span class="math notranslate nohighlight">\(
 </section>
 <section id="encoder-decoder-architecture">
 <h2>Encoder-Decoder Architecture<a class="headerlink" href="#encoder-decoder-architecture" title="Link to this heading">#</a></h2>
-<p>The deep learning model for magnetic field prediction uses an <strong>encoder-decoder architecture</strong> <span id="id10">[]</span>, similar to the U-Net architecture designed for medical image segmentation but adapted for dense regression instead of classification.</p>
+<p>The deep learning model for magnetic field prediction uses an <strong>encoder-decoder architecture</strong> <span id="id10">[<a class="reference internal" href="07_conclusion.html#id68" title="Olaf Ronneberger, Philipp Fischer, and Thomas Brox. U-net: convolutional networks for biomedical image segmentation. In Medical Image Computing and Computer-Assisted Intervention (MICCAI), 234–241. Springer, 2015.">Ronneberger <em>et al.</em>, 2015</a>]</span>, similar to the U-Net architecture designed for medical image segmentation but adapted for dense regression instead of classification.</p>
 <figure class="align-default" id="fig-network-arch">
-<a class="reference internal image-reference" href="../_images/Network_arch.png"><img alt="../_images/Network_arch.png" src="../_images/Network_arch.png" style="width: 95%;" />
+<a class="reference internal image-reference" href="_static/figures/Network_arch.png"><img alt="_static/figures/Network_arch.png" src="_static/figures/Network_arch.png" style="width: 95%;" />
 </a>
 <figcaption>
 <p><span class="caption-number">Fig. 8 </span><span class="caption-text">Encoder-Decoder based Convolutional Neural Network Architecture for magnetic field prediction. The encoder (left half) progressively downsamples to extract abstract features. The decoder (right half) upsamples to reconstruct the spatial field distribution. Skip connections (horizontal arrows) preserve fine-grained details.</span><a class="headerlink" href="#fig-network-arch" title="Link to this image">#</a></p>
@@ -710,9 +710,9 @@ $<span class="math notranslate nohighlight">\(
 <ul class="simple">
 <li><p>Two <span class="math notranslate nohighlight">\(3 \times 3\)</span> convolutional layers (some with dilation)</p></li>
 <li><p>ReLU activation after each convolution <span id="id11">[]</span></p></li>
-<li><p>Batch normalization for stable training <span id="id12">[]</span></p></li>
+<li><p>Batch normalization for stable training <span id="id12">[<a class="reference internal" href="07_conclusion.html#id222" title="Sergey Ioffe and Christian Szegedy. Batch normalization: accelerating deep network training by reducing internal covariate shift. In International Conference on Machine Learning, 448–456. 2015.">Ioffe and Szegedy, 2015</a>]</span></p></li>
 <li><p><span class="math notranslate nohighlight">\(2 \times 2\)</span> max-pooling with stride 2 (75% spatial reduction)</p></li>
-<li><p>Dropout (rate=0.5) for regularization <span id="id13">[]</span></p></li>
+<li><p>Dropout (rate=0.5) for regularization <span id="id13">[<a class="reference internal" href="07_conclusion.html#id119" title="Nitish Srivastava, Geoffrey Hinton, Alex Krizhevsky, Ilya Sutskever, and Ruslan Salakhutdinov. Dropout: a simple way to prevent neural networks from overfitting. The journal of machine learning research, 15(1):1929–1958, 2014.">Srivastava <em>et al.</em>, 2014</a>]</span></p></li>
 </ul>
 <p><strong>Feature channel growth</strong>: 32 → 64 → 128 → 256 as spatial dimensions shrink</p>
 <ul class="simple">
@@ -760,7 +760,7 @@ $<span class="math notranslate nohighlight">\(
 </section>
 <section id="skip-connections-critical-innovation">
 <h3>Skip Connections (Critical Innovation)<a class="headerlink" href="#skip-connections-critical-innovation" title="Link to this heading">#</a></h3>
-<p>Skip connections directly connect encoder layers to corresponding decoder layers <span id="id14">[]</span>:</p>
+<p>Skip connections directly connect encoder layers to corresponding decoder layers <span id="id14">[<a class="reference internal" href="07_conclusion.html#id68" title="Olaf Ronneberger, Philipp Fischer, and Thomas Brox. U-net: convolutional networks for biomedical image segmentation. In Medical Image Computing and Computer-Assisted Intervention (MICCAI), 234–241. Springer, 2015.">Ronneberger <em>et al.</em>, 2015</a>]</span>:</p>
 <p><strong>Why skip connections are essential</strong>:</p>
 <p><strong>Problem</strong>: Spatial information is lost during encoder downsampling</p>
 <ul class="simple">
@@ -802,7 +802,7 @@ $<span class="math notranslate nohighlight">\(
 </section>
 <section id="comparison-to-u-net">
 <h3>Comparison to U-Net<a class="headerlink" href="#comparison-to-u-net" title="Link to this heading">#</a></h3>
-<p>This architecture is inspired by U-Net <span id="id15">[]</span> but adapted for electromagnetic field prediction:</p>
+<p>This architecture is inspired by U-Net <span id="id15">[<a class="reference internal" href="07_conclusion.html#id68" title="Olaf Ronneberger, Philipp Fischer, and Thomas Brox. U-net: convolutional networks for biomedical image segmentation. In Medical Image Computing and Computer-Assisted Intervention (MICCAI), 234–241. Springer, 2015.">Ronneberger <em>et al.</em>, 2015</a>]</span> but adapted for electromagnetic field prediction:</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Aspect</p></th>
@@ -875,9 +875,9 @@ $<span class="math notranslate nohighlight">\(
 <ol class="arabic simple">
 <li><p>Two sets of <span class="math notranslate nohighlight">\(3 \times 3\)</span> convolution layers</p></li>
 <li><p>ReLU activation after each convolution</p></li>
-<li><p>Batch normalization layer <span id="id16">[]</span></p></li>
+<li><p>Batch normalization layer <span id="id16">[<a class="reference internal" href="07_conclusion.html#id222" title="Sergey Ioffe and Christian Szegedy. Batch normalization: accelerating deep network training by reducing internal covariate shift. In International Conference on Machine Learning, 448–456. 2015.">Ioffe and Szegedy, 2015</a>]</span></p></li>
 <li><p><span class="math notranslate nohighlight">\(2 \times 2\)</span> max-pooling (encoder) or up-sampling (decoder) with stride 2</p></li>
-<li><p>Dropout for regularization <span id="id17">[]</span> (typically 0.5 dropout rate)</p></li>
+<li><p>Dropout for regularization <span id="id17">[<a class="reference internal" href="07_conclusion.html#id119" title="Nitish Srivastava, Geoffrey Hinton, Alex Krizhevsky, Ilya Sutskever, and Ruslan Salakhutdinov. Dropout: a simple way to prevent neural networks from overfitting. The journal of machine learning research, 15(1):1929–1958, 2014.">Srivastava <em>et al.</em>, 2014</a>]</span> (typically 0.5 dropout rate)</p></li>
 </ol>
 <p><strong>Exception</strong>: The last two convolutional layers do not follow this pattern due to a network design constraint to fit the field distribution dimensionality.</p>
 </section>
@@ -893,7 +893,7 @@ $<span class="math notranslate nohighlight">\(
 </section>
 <section id="model-capacity-and-generalization">
 <h2>Model Capacity and Generalization<a class="headerlink" href="#model-capacity-and-generalization" title="Link to this heading">#</a></h2>
-<p>For the network to train successfully, it must have <strong>sufficient capacity</strong> to satisfactorily capture the complexity of the electromagnetic field prediction problem. This capability is achieved by choosing appropriate values for <span id="id18">[]</span>:</p>
+<p>For the network to train successfully, it must have <strong>sufficient capacity</strong> to satisfactorily capture the complexity of the electromagnetic field prediction problem. This capability is achieved by choosing appropriate values for <span id="id18">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>]</span>:</p>
 <ol class="arabic simple">
 <li><p><strong>Number of Layers</strong>: Depth of the network (32 total layers)</p></li>
 <li><p><strong>Kernel Size</strong>: Size of convolutional filters (<span class="math notranslate nohighlight">\(3 \times 3\)</span>, <span class="math notranslate nohighlight">\(5 \times 5\)</span>)</p></li>
@@ -1154,7 +1154,7 @@ This demonstration shows how a convolutional filter processes input data:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>C:\Users\MK\AppData\Local\Temp\ipykernel_32076\869473918.py:196: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>C:\Users\akhan147\AppData\Local\Temp\ipykernel_21692\869473918.py:196: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
   plt.tight_layout()
 </pre></div>
 </div>
@@ -1196,13 +1196,13 @@ Result: 2.4M parameters predict 256×256 field in 10-100ms
 <p>This section established the CNN architecture for electromagnetic field prediction, detailing each component’s role in capturing Maxwell’s equations from data.</p>
 <section id="architectural-components">
 <h3>Architectural Components<a class="headerlink" href="#architectural-components" title="Link to this heading">#</a></h3>
-<p><strong>1. Convolutional Layers</strong> <span id="id20">[]</span></p>
+<p><strong>1. Convolutional Layers</strong> <span id="id20">[<a class="reference internal" href="01_intro.html#id211" title="Yann LeCun, Léon Bottou, Yoshua Bengio, and Patrick Haffner. Gradient-based learning applied to document recognition. Proceedings of the IEEE, 86(11):2278–2324, 1998.">LeCun <em>et al.</em>, 1998</a>]</span></p>
 <ul class="simple">
 <li><p>Local connectivity (3×3 filters) captures spatial relationships</p></li>
 <li><p>Parameter sharing applies physics laws uniformly across domain</p></li>
 <li><p>Feature hierarchy: geometric features → regional patterns → global topology</p></li>
 </ul>
-<p><strong>2. Dilated Convolutions</strong> <span id="id21">[]</span> <em>(Key Innovation)</em></p>
+<p><strong>2. Dilated Convolutions</strong> <span id="id21">[<a class="reference internal" href="07_conclusion.html#id100" title="Fisher Yu and Vladlen Koltun. Multi-scale context aggregation by dilated convolutions. In International Conference on Learning Representations (ICLR). 2016.">Yu and Koltun, 2016</a>]</span> <em>(Key Innovation)</em></p>
 <ul class="simple">
 <li><p>Physics motivation: Biot-Savart law shows field depends on distant sources</p></li>
 <li><p>Receptive field grows exponentially (3×3 → 200×200) without parameter increase</p></li>
@@ -1214,7 +1214,7 @@ Result: 2.4M parameters predict 256×256 field in 10-100ms
 <li><p>Enables deep networks to “see” entire motor geometry</p></li>
 <li><p>Trade-off: loses precision, recovered by skip connections</p></li>
 </ul>
-<p><strong>4. Encoder-Decoder Structure</strong> <span id="id22">[]</span></p>
+<p><strong>4. Encoder-Decoder Structure</strong> <span id="id22">[<a class="reference internal" href="07_conclusion.html#id68" title="Olaf Ronneberger, Philipp Fischer, and Thomas Brox. U-net: convolutional networks for biomedical image segmentation. In Medical Image Computing and Computer-Assisted Intervention (MICCAI), 234–241. Springer, 2015.">Ronneberger <em>et al.</em>, 2015</a>]</span></p>
 <ul class="simple">
 <li><p>Encoder: Progressive abstraction (256×256 → 32×32 bottleneck)</p></li>
 <li><p>Decoder: Progressive reconstruction (32×32 → 256×256 field prediction)</p></li>

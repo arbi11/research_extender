@@ -32,7 +32,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
     <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -385,11 +385,11 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="physics-informed-neural-networks-implementation-training">
 <h1>Physics-Informed Neural Networks: Implementation &amp; Training<a class="headerlink" href="#physics-informed-neural-networks-implementation-training" title="Link to this heading">#</a></h1>
-<p>This notebook implements the complete PINN architecture and training pipeline for electromagnetic field prediction, translating the mathematical formulation from Section 6b into executable PyTorch code <span id="id1">[]</span>.</p>
+<p>This notebook implements the complete PINN architecture and training pipeline for electromagnetic field prediction, translating the mathematical formulation from Section 6b into executable PyTorch code <span id="id1">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>.</p>
 <p><strong>Learning objectives</strong>:</p>
 <ol class="arabic simple">
 <li><p>Implement PINN architecture with automatic differentiation <span id="id2">[]</span></p></li>
-<li><p>Compute physics loss from Maxwell’s equations <span id="id3">[]</span></p></li>
+<li><p>Compute physics loss from Maxwell’s equations <span id="id3">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span></p></li>
 <li><p>Balance data loss and physics loss via hyperparameter tuning <span id="id4">[]</span></p></li>
 <li><p>Train and monitor PINN convergence</p></li>
 <li><p>Understand practical challenges and solutions</p></li>
@@ -419,7 +419,7 @@ document.write(`
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><strong>Automatic Differentiation Requirement</strong></p>
-<p>PINNs fundamentally rely on automatic differentiation to compute spatial derivatives <span id="id7">[]</span>:</p>
+<p>PINNs fundamentally rely on automatic differentiation to compute spatial derivatives <span id="id7">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <div class="math notranslate nohighlight">
 \[\frac{\partial H_x}{\partial x}(x, y; \theta) = \text{autograd}\left(f_\theta(x, y)\right)\]</div>
 <p><strong>Why PyTorch/TensorFlow?</strong> <span id="id8">[]</span>:</p>
@@ -466,7 +466,7 @@ document.write(`
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Physics-Informed Neural Networks Framework Initialized
-PyTorch version: 2.8.0+cpu
+PyTorch version: 2.9.0+cpu
 CUDA available: False
 </pre></div>
 </div>
@@ -545,7 +545,7 @@ CUDA available: False
 <h2>PINN Architecture for Electromagnetics<a class="headerlink" href="#pinn-architecture-for-electromagnetics" title="Link to this heading">#</a></h2>
 <section id="network-design-philosophy">
 <h3>Network Design Philosophy<a class="headerlink" href="#network-design-philosophy" title="Link to this heading">#</a></h3>
-<p>A Physics-Informed Neural Network for magnetic field prediction consists of several key components <span id="id11">[]</span>:</p>
+<p>A Physics-Informed Neural Network for magnetic field prediction consists of several key components <span id="id11">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>, <a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <p><strong>1. Input Layer</strong>: Spatial coordinates (x, y) + material properties (μ)</p>
 <ul class="simple">
 <li><p><strong>Rationale</strong>: Network must know <em>where</em> (position) and <em>in what</em> (material) to predict fields</p></li>
@@ -577,7 +577,7 @@ CUDA available: False
 <li><p><strong>Symmetric</strong>: Natural for electromagnetic fields (bidirectional)</p></li>
 <li><p><strong>Alternative</strong>: Softplus, sine activation (recent PINN research)</p></li>
 </ul>
-<p><strong>Why not ReLU?</strong> <span id="id13">[]</span></p>
+<p><strong>Why not ReLU?</strong> <span id="id13">[<a class="reference internal" href="07_conclusion.html#id137" title="Ian Goodfellow, Yoshua Bengio, and Aaron Courville. Deep learning. MIT press, 2016.">Goodfellow <em>et al.</em>, 2016</a>]</span></p>
 <ul class="simple">
 <li><p>Non-smooth at zero → problematic for computing ∂²f/∂x²</p></li>
 <li><p>Unbounded → can cause training instability</p></li>
@@ -586,14 +586,14 @@ CUDA available: False
 <div class="admonition important">
 <p class="admonition-title">Important</p>
 <p><strong>PINN vs. Standard NN Architecture Differences</strong></p>
-<p><strong>Standard CNN</strong> (Section 4) <span id="id14">[]</span>:</p>
+<p><strong>Standard CNN</strong> (Section 4) <span id="id14">[<a class="reference internal" href="01_intro.html#id212" title="Yann LeCun, Yoshua Bengio, and Geoffrey Hinton. Deep learning. Nature, 521(7553):436–444, 2015.">LeCun <em>et al.</em>, 2015</a>, <a class="reference internal" href="07_conclusion.html#id68" title="Olaf Ronneberger, Philipp Fischer, and Thomas Brox. U-net: convolutional networks for biomedical image segmentation. In Medical Image Computing and Computer-Assisted Intervention (MICCAI), 234–241. Springer, 2015.">Ronneberger <em>et al.</em>, 2015</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Input</strong>: Geometry image (256×256 pixels)</p></li>
 <li><p><strong>Architecture</strong>: Convolutional layers with spatial structure</p></li>
 <li><p><strong>Output</strong>: Field distribution (256×256 grid)</p></li>
 <li><p><strong>Training</strong>: MSE on labeled field maps</p></li>
 </ul>
-<p><strong>PINN</strong> (this section) <span id="id15">[]</span>:</p>
+<p><strong>PINN</strong> (this section) <span id="id15">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Input</strong>: Coordinate pairs (x, y) + material properties</p></li>
 <li><p><strong>Architecture</strong>: Fully-connected layers (no spatial bias)</p></li>
@@ -764,11 +764,11 @@ SUCCESS: ElectromagneticPINN: Neural network for field prediction
 </section>
 <section id="physics-loss-computation-enforcing-maxwell-s-equations">
 <h2>Physics Loss Computation: Enforcing Maxwell’s Equations<a class="headerlink" href="#physics-loss-computation-enforcing-maxwell-s-equations" title="Link to this heading">#</a></h2>
-<p>The physics loss enforces Maxwell’s equations at collocation points throughout the domain—this is the <strong>key innovation</strong> of PINNs <span id="id16">[]</span>.</p>
+<p>The physics loss enforces Maxwell’s equations at collocation points throughout the domain—this is the <strong>key innovation</strong> of PINNs <span id="id16">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>.</p>
 <section id="loss-component-formulation">
 <h3>Loss Component Formulation<a class="headerlink" href="#loss-component-formulation" title="Link to this heading">#</a></h3>
-<p>Following Raissi et al. (2019) <span id="id17">[]</span>, the physics loss consists of three terms:</p>
-<p><strong>1. Ampère’s Law Residual</strong> <span id="id18">[]</span>:
+<p>Following Raissi et al. (2019) <span id="id17">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>, the physics loss consists of three terms:</p>
+<p><strong>1. Ampère’s Law Residual</strong> <span id="id18">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:
 $<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{Ampere}} = \frac{1}{N_d}\sum_{i=1}^{N_d}\left\| \frac{\partial H_y}{\partial x}\bigg|_i - \frac{\partial H_x}{\partial y}\bigg|_i - J_z(x_i, y_i) \right\|^2\)</span>$</p>
 <p><strong>Physical meaning</strong>: Current density creates circulating magnetic field (right-hand rule)<br />
 <strong>Mathematical form</strong>: ∇ × <strong>H</strong> = <strong>J</strong> (differential form of Ampère’s law)<br />
@@ -1014,7 +1014,7 @@ $<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{BC}} = \frac{1}
 <ul class="simple">
 <li><p>Data and physics equally weighted</p></li>
 <li><p>Best generalization performance</p></li>
-<li><p>Typical range: 0.5-2.0 <span id="id22">[]</span></p></li>
+<li><p>Typical range: 0.5-2.0 <span id="id22">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span></p></li>
 </ul>
 <p><strong>Adaptive weighting</strong> <span id="id23">[]</span>:
 $<span class="math notranslate nohighlight">\(\lambda(t) = \frac{\mathcal{L}_{\text{data}}}{\mathcal{L}_{\text{physics}}} \quad \text{(dynamic balancing)}\)</span>$</p>
@@ -1022,13 +1022,13 @@ $<span class="math notranslate nohighlight">\(\lambda(t) = \frac{\mathcal{L}_{\t
 </section>
 <section id="optimizer-configuration">
 <h3>Optimizer Configuration<a class="headerlink" href="#optimizer-configuration" title="Link to this heading">#</a></h3>
-<p><strong>Adam optimizer</strong> <span id="id24">[]</span>:</p>
+<p><strong>Adam optimizer</strong> <span id="id24">[<a class="reference internal" href="07_conclusion.html#id215" title="Diederik Kingma and Jimmy Ba. Adam: a method for stochastic optimization. arXiv preprint arXiv:1412.6980, 2014.">Kingma and Ba, 2014</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Learning rate</strong>: η = 0.01 (typical for PINNs)</p></li>
 <li><p><strong>Momentum</strong>: β₁ = 0.9, β₂ = 0.999 (defaults)</p></li>
 <li><p><strong>Rationale</strong>: Adaptive learning rates handle multiple loss scales</p></li>
 </ul>
-<p><strong>Alternative: L-BFGS</strong> <span id="id25">[]</span>:</p>
+<p><strong>Alternative: L-BFGS</strong> <span id="id25">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <ul class="simple">
 <li><p>Second-order quasi-Newton method</p></li>
 <li><p>Better convergence for smooth problems</p></li>
@@ -1040,7 +1040,7 @@ $<span class="math notranslate nohighlight">\(\lambda(t) = \frac{\mathcal{L}_{\t
 <h3>Training Epochs<a class="headerlink" href="#training-epochs" title="Link to this heading">#</a></h3>
 <p><strong>Number of epochs</strong>: 300 (optimized for demonstration)</p>
 <ul class="simple">
-<li><p>Full training: 1000-5000 epochs typical <span id="id26">[]</span></p></li>
+<li><p>Full training: 1000-5000 epochs typical <span id="id26">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span></p></li>
 <li><p>Early stopping: Monitor validation physics loss</p></li>
 <li><p>Convergence criterion: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{physics}} &lt; 10^{-3}\)</span></p></li>
 </ul>
@@ -1261,7 +1261,7 @@ Epoch    0: Total Loss = 0.384283, Data Loss = 0.342543, Physics Loss = 0.041740
 </section>
 <section id="summary-pinn-implementation-complete">
 <h2>Summary: PINN Implementation Complete<a class="headerlink" href="#summary-pinn-implementation-complete" title="Link to this heading">#</a></h2>
-<p>This notebook implemented the complete Physics-Informed Neural Network framework for electromagnetic field prediction, translating mathematical theory into executable code <span id="id30">[]</span>.</p>
+<p>This notebook implemented the complete Physics-Informed Neural Network framework for electromagnetic field prediction, translating mathematical theory into executable code <span id="id30">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>.</p>
 <section id="key-implementation-components">
 <h3>Key Implementation Components<a class="headerlink" href="#key-implementation-components" title="Link to this heading">#</a></h3>
 <p><strong>1. PINN Architecture</strong> {cite}`raissi2019physics,goodfellow2016deep}:</p>
@@ -1374,7 +1374,7 @@ Epoch    0: Total Loss = 0.384283, Data Loss = 0.342543, Physics Loss = 0.041740
 <section id="next-steps-validation-section-6d">
 <h3>Next Steps: Validation (Section 6d)<a class="headerlink" href="#next-steps-validation-section-6d" title="Link to this heading">#</a></h3>
 <p>With the PINN trained, Section 6d validates predictions through:</p>
-<p><strong>1. Comparison with analytical solution</strong> <span id="id33">[]</span>:</p>
+<p><strong>1. Comparison with analytical solution</strong> <span id="id33">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:</p>
 <ul class="simple">
 <li><p>Point-wise error: |<strong>H</strong><sub>PINN</sub> - <strong>H</strong><sub>analytical</sub>|</p></li>
 <li><p>Relative L² error: <span class="math notranslate nohighlight">\(\epsilon_{rel} = \frac{||\\mathbf{H}_{\\text{PINN}} - \\mathbf{H}_{\\text{analytical}}||}{||\\mathbf{H}_{\\text{analytical}}||}\)</span></p></li>
@@ -1405,7 +1405,7 @@ Epoch    0: Total Loss = 0.384283, Data Loss = 0.342543, Physics Loss = 0.041740
 <li><p>Section 5: Uncertainty quantification (can be applied to PINNs too)</p></li>
 </ul>
 </div>
-<p><strong>Concluding remark</strong>: This implementation demonstrates that PINNs can learn electromagnetic field distributions from minimal data by leveraging known physics <span id="id34">[]</span>—a powerful paradigm for scientific machine learning when labeled data is expensive but governing equations are known.</p>
+<p><strong>Concluding remark</strong>: This implementation demonstrates that PINNs can learn electromagnetic field distributions from minimal data by leveraging known physics <span id="id34">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>—a powerful paradigm for scientific machine learning when labeled data is expensive but governing equations are known.</p>
 </section>
 </section>
 </section>

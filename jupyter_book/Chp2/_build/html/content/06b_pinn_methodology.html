@@ -32,7 +32,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
     <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -368,15 +368,15 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="physics-informed-neural-networks-methodology">
 <h1>Physics-Informed Neural Networks: Methodology<a class="headerlink" href="#physics-informed-neural-networks-methodology" title="Link to this heading">#</a></h1>
-<p>This notebook presents the mathematical formulation and problem setup for applying PINNs to electromagnetic field prediction, following the theoretical foundation established in Section 6a <span id="id1">[]</span>.</p>
+<p>This notebook presents the mathematical formulation and problem setup for applying PINNs to electromagnetic field prediction, following the theoretical foundation established in Section 6a <span id="id1">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>.</p>
 <p><strong>Objective</strong>: Formulate a 2D magnetostatic problem suitable for PINN solution, with analytical ground truth enabling rigorous validation.</p>
 <p><strong>Structure</strong>:</p>
 <ol class="arabic simple">
-<li><p>Maxwell’s equations in 2D magnetostatics <span id="id2">[]</span></p></li>
+<li><p>Maxwell’s equations in 2D magnetostatics <span id="id2">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span></p></li>
 <li><p>Canonical problem: Magnetic field around current-carrying wire</p></li>
-<li><p>PINN loss function formulation <span id="id3">[]</span></p></li>
+<li><p>PINN loss function formulation <span id="id3">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span></p></li>
 <li><p>Collocation strategy and data generation</p></li>
-<li><p>Analytical solution derivation <span id="id4">[]</span></p></li>
+<li><p>Analytical solution derivation <span id="id4">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span></p></li>
 </ol>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
@@ -395,8 +395,8 @@ document.write(`
 <h2>Maxwell’s Equations in 2D Magnetostatics<a class="headerlink" href="#maxwell-s-equations-in-2d-magnetostatics" title="Link to this heading">#</a></h2>
 <section id="governing-partial-differential-equations">
 <h3>Governing Partial Differential Equations<a class="headerlink" href="#governing-partial-differential-equations" title="Link to this heading">#</a></h3>
-<p>For magnetic field prediction in 2D, we work with <strong>Maxwell’s equations</strong> in the magnetostatic approximation (time-independent, no electric field coupling) <span id="id5">[]</span>.</p>
-<p><strong>Ampère’s Law</strong> (differential form) <span id="id6">[]</span>:
+<p>For magnetic field prediction in 2D, we work with <strong>Maxwell’s equations</strong> in the magnetostatic approximation (time-independent, no electric field coupling) <span id="id5">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>.</p>
+<p><strong>Ampère’s Law</strong> (differential form) <span id="id6">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:
 $<span class="math notranslate nohighlight">\(\nabla \times \mathbf{H} = \mathbf{J}\)</span>$</p>
 <p>where:</p>
 <ul class="simple">
@@ -412,7 +412,7 @@ $<span class="math notranslate nohighlight">\(\mathbf{B} = \mu \mathbf{H}\)</spa
 </section>
 <section id="d-cartesian-formulation">
 <h3>2D Cartesian Formulation<a class="headerlink" href="#d-cartesian-formulation" title="Link to this heading">#</a></h3>
-<p>In 2D Cartesian coordinates (x, y) with current flowing only in z-direction (J = J<sub>z</sub><strong>ẑ</strong>), Maxwell’s equations reduce to <span id="id9">[]</span>:</p>
+<p>In 2D Cartesian coordinates (x, y) with current flowing only in z-direction (J = J<sub>z</sub><strong>ẑ</strong>), Maxwell’s equations reduce to <span id="id9">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:</p>
 <p><strong>Ampère’s Law (component form)</strong>:
 $<span class="math notranslate nohighlight">\(\frac{\partial H_y}{\partial x} - \frac{\partial H_x}{\partial y} = J_z(x,y)\)</span>$</p>
 <p><strong>Gauss’s Law (component form)</strong>:
@@ -422,7 +422,7 @@ $<span class="math notranslate nohighlight">\(\mu \left( \frac{\partial H_x}{\pa
 <div class="admonition important">
 <p class="admonition-title">Important</p>
 <p><strong>Physical Interpretation of PDEs</strong></p>
-<p><strong>Ampère’s Law</strong> <span id="id10">[]</span>:</p>
+<p><strong>Ampère’s Law</strong> <span id="id10">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Physical meaning</strong>: Electric current creates a circulating magnetic field (right-hand rule)</p></li>
 <li><p><strong>Integral form</strong>: <span class="math notranslate nohighlight">\(\oint \mathbf{H} \cdot d\mathbf{l} = I_{\text{enclosed}}\)</span></p></li>
@@ -456,19 +456,19 @@ $<span class="math notranslate nohighlight">\(\mu \left( \frac{\partial H_x}{\pa
 </section>
 <section id="pinn-mathematical-formulation">
 <h3>PINN Mathematical Formulation<a class="headerlink" href="#pinn-mathematical-formulation" title="Link to this heading">#</a></h3>
-<p>Following Raissi et al. (2019) <span id="id13">[]</span>, a PINN learns a neural network approximation:</p>
+<p>Following Raissi et al. (2019) <span id="id13">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>, a PINN learns a neural network approximation:</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\mathbf{H}_{\theta}(x, y) = \begin{bmatrix} H_x(x, y; \theta) \\ H_y(x, y; \theta) \end{bmatrix}\end{split}\]</div>
 <p>where θ = {W<sup>(l)</sup>, b<sup>(l)</sup>}<sub>l=1…L</sub> are trainable parameters (weights and biases).</p>
-<p><strong>Physics loss</strong> enforces PDEs at collocation points {x<sub>i</sub>, y<sub>i</sub>}<sub>i=1…N<sub>d</sub></sub> <span id="id14">[]</span>:</p>
+<p><strong>Physics loss</strong> enforces PDEs at collocation points {x<sub>i</sub>, y<sub>i</sub>}<sub>i=1…N<sub>d</sub></sub> <span id="id14">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <div class="math notranslate nohighlight">
 \[\mathcal{L}_{\text{physics}} = \frac{1}{N_d}\sum_{i=1}^{N_d} \left[ \mathcal{L}_{\text{Ampere}}^{(i)} + \mathcal{L}_{\text{Gauss}}^{(i)} \right]\]</div>
 <p>where:</p>
-<p><strong>Ampère residual</strong> <span id="id15">[]</span>:
+<p><strong>Ampère residual</strong> <span id="id15">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:
 $<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{Ampere}}^{(i)} = \left( \frac{\partial H_y}{\partial x}\bigg|_i - \frac{\partial H_x}{\partial y}\bigg|_i - J_z(x_i, y_i) \right)^2\)</span>$</p>
 <p><strong>Gauss residual</strong>:
 $<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{Gauss}}^{(i)} = \left( \frac{\partial B_x}{\partial x}\bigg|_i + \frac{\partial B_y}{\partial y}\bigg|_i \right)^2 = \mu^2 \left( \frac{\partial H_x}{\partial x}\bigg|_i + \frac{\partial H_y}{\partial y}\bigg|_i \right)^2\)</span>$</p>
-<p><strong>Data loss</strong> matches sparse observations <span id="id16">[]</span>:
+<p><strong>Data loss</strong> matches sparse observations <span id="id16">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:
 $<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{data}} = \frac{1}{N_{\text{obs}}}\sum_{j=1}^{N_{\text{obs}}} \left[ (H_x^{\text{pred}}(x_j, y_j) - H_x^{\text{obs}}_j)^2 + (H_y^{\text{pred}}(x_j, y_j) - H_y^{\text{obs}}_j)^2 \right]\)</span>$</p>
 <p><strong>Total loss</strong> (multi-objective optimization) <span id="id17">[]</span>:
 $<span class="math notranslate nohighlight">\(\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{data}} + \lambda_1 \mathcal{L}_{\text{physics}} + \lambda_2 \mathcal{L}_{\text{BC}}\)</span>$</p>
@@ -503,10 +503,10 @@ $<span class="math notranslate nohighlight">\(\frac{\partial H_x}{\partial x} \a
 </section>
 <section id="d-electromagnetic-problem-magnetic-field-around-current-carrying-wire">
 <h2>2D Electromagnetic Problem: Magnetic Field Around Current-Carrying Wire<a class="headerlink" href="#d-electromagnetic-problem-magnetic-field-around-current-carrying-wire" title="Link to this heading">#</a></h2>
-<p>We solve the canonical problem of magnetic field distribution around an infinite straight current-carrying wire in 2D—a fundamental configuration with analytical solution enabling rigorous PINN validation <span id="id21">[]</span>.</p>
+<p>We solve the canonical problem of magnetic field distribution around an infinite straight current-carrying wire in 2D—a fundamental configuration with analytical solution enabling rigorous PINN validation <span id="id21">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>.</p>
 <p><strong>Why this problem is ideal for PINN demonstration</strong>:</p>
 <ol class="arabic simple">
-<li><p><strong>Analytical solution exists</strong>: Biot-Savart law provides ground truth <span id="id22">[]</span></p></li>
+<li><p><strong>Analytical solution exists</strong>: Biot-Savart law provides ground truth <span id="id22">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span></p></li>
 <li><p><strong>Simple geometry</strong>: Single point source, no material interfaces</p></li>
 <li><p><strong>Known singularity</strong>: Field diverges as 1/r at wire location (tests PINN robustness)</p></li>
 <li><p><strong>Rotational symmetry</strong>: Solution exhibits expected symmetry (validation check)</p></li>
@@ -533,7 +533,7 @@ $<span class="math notranslate nohighlight">\(\frac{\partial H_x}{\partial x} \a
 <li><p><strong>Value</strong>: H(x<sub>boundary</sub>, y<sub>boundary</sub>) = H<sub>analytical</sub>(x<sub>boundary</sub>, y<sub>boundary</sub>)</p></li>
 <li><p><strong>Physical justification</strong>: Domain large enough that edge conditions approach analytical solution</p></li>
 </ul>
-<p><strong>Governing equations</strong> <span id="id24">[]</span>:</p>
+<p><strong>Governing equations</strong> <span id="id24">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Ampère’s law</strong>: ∇ × <strong>H</strong> = <strong>J</strong> = Iδ(x)δ(y)<strong>ẑ</strong> (Dirac delta at wire)</p></li>
 <li><p><strong>Gauss’s law</strong>: ∇ · <strong>B</strong> = 0</p></li>
@@ -541,11 +541,11 @@ $<span class="math notranslate nohighlight">\(\frac{\partial H_x}{\partial x} \a
 </section>
 <section id="analytical-solution-biot-savart-law">
 <h3>Analytical Solution: Biot-Savart Law<a class="headerlink" href="#analytical-solution-biot-savart-law" title="Link to this heading">#</a></h3>
-<p>For an infinite straight wire carrying current I in the z-direction, the magnetic field at distance r from the wire is given by the Biot-Savart law <span id="id25">[]</span>:</p>
+<p>For an infinite straight wire carrying current I in the z-direction, the magnetic field at distance r from the wire is given by the Biot-Savart law <span id="id25">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:</p>
 <p><strong>Field magnitude</strong>:
 $<span class="math notranslate nohighlight">\(|\mathbf{H}(r)| = \frac{I}{2\pi r}\)</span>$</p>
 <p>The field circulates around the wire following the <strong>right-hand rule</strong>: thumb along current (+z), fingers curl in direction of <strong>H</strong>.</p>
-<p><strong>Vector field components</strong> in Cartesian coordinates <span id="id26">[]</span>:</p>
+<p><strong>Vector field components</strong> in Cartesian coordinates <span id="id26">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:</p>
 <div class="math notranslate nohighlight">
 \[H_x(x, y) = -\frac{I}{2\pi r^2} y = -\frac{I \cdot y}{2\pi (x^2 + y^2)}\]</div>
 <div class="math notranslate nohighlight">
@@ -581,7 +581,7 @@ $<span class="math notranslate nohighlight">\(\nabla \cdot (\mu_0 \mathbf{H}) = 
 </section>
 <section id="magnetic-flux-density-conversion">
 <h3>Magnetic Flux Density Conversion<a class="headerlink" href="#magnetic-flux-density-conversion" title="Link to this heading">#</a></h3>
-<p>From <strong>H</strong> to <strong>B</strong> = μ₀<strong>H</strong> <span id="id28">[]</span>:</p>
+<p>From <strong>H</strong> to <strong>B</strong> = μ₀<strong>H</strong> <span id="id28">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:</p>
 <div class="math notranslate nohighlight">
 \[B_x(x, y) = -\frac{\mu_0 I \cdot y}{2\pi (x^2 + y^2)}\]</div>
 <div class="math notranslate nohighlight">
@@ -596,7 +596,7 @@ $<span class="math notranslate nohighlight">\(\nabla \cdot (\mu_0 \mathbf{H}) = 
 </section>
 <section id="validation-strategy">
 <h3>Validation Strategy<a class="headerlink" href="#validation-strategy" title="Link to this heading">#</a></h3>
-<p>The analytical solution serves as <strong>ground truth</strong> for PINN validation <span id="id29">[]</span>:</p>
+<p>The analytical solution serves as <strong>ground truth</strong> for PINN validation <span id="id29">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <p><strong>Error metrics</strong>:</p>
 <ol class="arabic simple">
 <li><p><strong>Point-wise error</strong>: <span class="math notranslate nohighlight">\(e(x,y) = |\mathbf{H}_{\text{PINN}}(x,y) - \mathbf{H}_{\text{analytical}}(x,y)|\)</span></p></li>
@@ -881,10 +881,10 @@ Field magnitude at r=0.5m: 0.3183 A/m
 </section>
 <section id="training-data-generation-strategy">
 <h2>Training Data Generation Strategy<a class="headerlink" href="#training-data-generation-strategy" title="Link to this heading">#</a></h2>
-<p>One of the key advantages of PINNs is <strong>data efficiency</strong>—requiring minimal labeled observations <span id="id30">[]</span>.</p>
+<p>One of the key advantages of PINNs is <strong>data efficiency</strong>—requiring minimal labeled observations <span id="id30">[<a class="reference internal" href="07_conclusion.html#id462" title="Shengze Cai, Zhicheng Wang, Sifan Wang, Paris Perdikaris, and George Em Karniadakis. Physics-informed neural networks for heat transfer problems. Journal of Heat Transfer, 143(6):060801, 2021.">Cai <em>et al.</em>, 2021</a>, <a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>.</p>
 <section id="three-types-of-points-in-pinn-training">
 <h3>Three Types of Points in PINN Training<a class="headerlink" href="#three-types-of-points-in-pinn-training" title="Link to this heading">#</a></h3>
-<p><strong>1. Labeled Data Points</strong> (sparse observations) <span id="id31">[]</span>:</p>
+<p><strong>1. Labeled Data Points</strong> (sparse observations) <span id="id31">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Count</strong>: Only 30-100 points (vs. 30,000 for pure CNN in Section 4!)</p></li>
 <li><p><strong>Purpose</strong>: Anchor network predictions to observations</p></li>
@@ -892,7 +892,7 @@ Field magnitude at r=0.5m: 0.3183 A/m
 <li><p><strong>Loss contribution</strong>: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{data}}\)</span> = MSE between prediction and observation</p></li>
 <li><p><strong>Physical interpretation</strong>: These are “ground truth” field measurements</p></li>
 </ul>
-<p><strong>2. Domain Collocation Points</strong> (unlabeled) <span id="id32">[]</span>:</p>
+<p><strong>2. Domain Collocation Points</strong> (unlabeled) <span id="id32">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Count</strong>: ~1,000 points across interior</p></li>
 <li><p><strong>Purpose</strong>: Enforce Maxwell’s equations via PDE residuals</p></li>
@@ -920,12 +920,12 @@ Field magnitude at r=0.5m: 0.3183 A/m
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><strong>Pure CNN</strong> (Section 4) <span id="id34">[]</span></p></td>
+<tr class="row-even"><td><p><strong>Pure CNN</strong> (Section 4) <span id="id34">[<a class="reference internal" href="01_intro.html#id212" title="Yann LeCun, Yoshua Bengio, and Geoffrey Hinton. Deep learning. Nature, 521(7553):436–444, 2015.">LeCun <em>et al.</em>, 2015</a>]</span></p></td>
 <td><p>30,000</p></td>
 <td><p>0</p></td>
 <td><p>$150k (30k FEA simulations)</p></td>
 </tr>
-<tr class="row-odd"><td><p><strong>PINN</strong> (this section) <span id="id35">[]</span></p></td>
+<tr class="row-odd"><td><p><strong>PINN</strong> (this section) <span id="id35">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span></p></td>
 <td><p>30-100</p></td>
 <td><p>1,000-2,000</p></td>
 <td><p>$500 (100 FEA simulations)</p></td>
@@ -938,13 +938,13 @@ Field magnitude at r=0.5m: 0.3183 A/m
 </tbody>
 </table>
 </div>
-<p><strong>Key insight</strong>: Physics constraints (which are free!) substitute for expensive labeled data <span id="id36">[]</span>.</p>
+<p><strong>Key insight</strong>: Physics constraints (which are free!) substitute for expensive labeled data <span id="id36">[<a class="reference internal" href="07_conclusion.html#id462" title="Shengze Cai, Zhicheng Wang, Sifan Wang, Paris Perdikaris, and George Em Karniadakis. Physics-informed neural networks for heat transfer problems. Journal of Heat Transfer, 143(6):060801, 2021.">Cai <em>et al.</em>, 2021</a>]</span>.</p>
 <p><strong>Trade-off</strong>: PINNs require 5-10× longer training time due to automatic differentiation overhead, but upfront data generation savings dominate for expensive simulations/experiments.</p>
 </div>
 </section>
 <section id="collocation-sampling-strategies">
 <h3>Collocation Sampling Strategies<a class="headerlink" href="#collocation-sampling-strategies" title="Link to this heading">#</a></h3>
-<p><strong>Uniform random sampling</strong> (used here) <span id="id37">[]</span>:</p>
+<p><strong>Uniform random sampling</strong> (used here) <span id="id37">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <ul class="simple">
 <li><p>Simple, general-purpose</p></li>
 <li><p>Works well for smooth solutions</p></li>
@@ -983,10 +983,10 @@ Field magnitude at r=0.5m: 0.3183 A/m
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> Training Data Generated:
  Labeled data points: 30
- Domain collocation points: 990
+ Domain collocation points: 991
  Boundary collocation points: 100
 
- Total points for training: 1120
+ Total points for training: 1121
  But only 30 are labeled!
 </pre></div>
 </div>
@@ -1023,7 +1023,7 @@ Field magnitude at r=0.5m: 0.3183 A/m
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/39e5cee3551732102d8fc60cc73842d86e28e528a265c3905ee3608bc922d7c6.png" src="../_images/39e5cee3551732102d8fc60cc73842d86e28e528a265c3905ee3608bc922d7c6.png" />
+<img alt="../_images/c60e2d6887024f8d3933ab3af1070e29049c168304511c129e0b71821872f27a.png" src="../_images/c60e2d6887024f8d3933ab3af1070e29049c168304511c129e0b71821872f27a.png" />
 </div>
 </div>
 </section>
@@ -1033,7 +1033,7 @@ Field magnitude at r=0.5m: 0.3183 A/m
 <p>This notebook established the complete mathematical and computational framework for applying PINNs to electromagnetic field prediction.</p>
 <section id="key-accomplishments">
 <h3>Key Accomplishments<a class="headerlink" href="#key-accomplishments" title="Link to this heading">#</a></h3>
-<p><strong>1. Mathematical Foundation</strong> <span id="id41">[]</span>:</p>
+<p><strong>1. Mathematical Foundation</strong> <span id="id41">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Governing PDEs</strong>: Maxwell’s equations in 2D magnetostatics</p>
 <ul>
@@ -1044,21 +1044,21 @@ Field magnitude at r=0.5m: 0.3183 A/m
 <li><p><strong>2D formulation</strong>: Component-wise PDEs for implementation</p></li>
 <li><p><strong>PDE classification</strong>: Elliptic boundary value problem (well-posed)</p></li>
 </ul>
-<p><strong>2. PINN Loss Formulation</strong> <span id="id42">[]</span>:</p>
+<p><strong>2. PINN Loss Formulation</strong> <span id="id42">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Physics loss</strong>: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{physics}} = \mathcal{L}_{\text{Ampere}} + \mathcal{L}_{\text{Gauss}}\)</span></p></li>
 <li><p><strong>Data loss</strong>: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{data}}\)</span> on sparse observations (30-100 points)</p></li>
 <li><p><strong>Boundary loss</strong>: <span class="math notranslate nohighlight">\(\mathcal{L}_{\text{BC}}\)</span> on domain edges</p></li>
 <li><p><strong>Total loss</strong>: Multi-objective optimization with weights λ₁, λ₂</p></li>
 </ul>
-<p><strong>3. Canonical Problem</strong> <span id="id43">[]</span>:</p>
+<p><strong>3. Canonical Problem</strong> <span id="id43">[<a class="reference internal" href="07_conclusion.html#id38" title="Matthew N. O. Sadiku. Elements of Electromagnetics. Oxford University Press, New York, 6 edition, 2014.">Sadiku, 2014</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Configuration</strong>: Magnetic field around infinite straight wire</p></li>
 <li><p><strong>Analytical solution</strong>: Biot-Savart law (H = I/(2πr))</p></li>
 <li><p><strong>Validation</strong>: Ground truth for rigorous PINN accuracy assessment</p></li>
 <li><p><strong>Singularity handling</strong>: Exclusion zone (r &gt; 0.1 m) for numerical stability</p></li>
 </ul>
-<p><strong>4. Data Efficiency</strong> <span id="id44">[]</span>:</p>
+<p><strong>4. Data Efficiency</strong> <span id="id44">[<a class="reference internal" href="07_conclusion.html#id462" title="Shengze Cai, Zhicheng Wang, Sifan Wang, Paris Perdikaris, and George Em Karniadakis. Physics-informed neural networks for heat transfer problems. Journal of Heat Transfer, 143(6):060801, 2021.">Cai <em>et al.</em>, 2021</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Labeled data</strong>: 30-100 points (300× less than CNN)</p></li>
 <li><p><strong>Collocation points</strong>: ~1,000 unlabeled (enforce physics)</p></li>
@@ -1071,8 +1071,8 @@ Field magnitude at r=0.5m: 0.3183 A/m
 <thead>
 <tr class="row-odd"><th class="head"><p>Aspect</p></th>
 <th class="head"><p>FEA <span id="id45">[]</span></p></th>
-<th class="head"><p>CNN (Section 4) <span id="id46">[]</span></p></th>
-<th class="head"><p>PINN (Section 6) <span id="id47">[]</span></p></th>
+<th class="head"><p>CNN (Section 4) <span id="id46">[<a class="reference internal" href="01_intro.html#id212" title="Yann LeCun, Yoshua Bengio, and Geoffrey Hinton. Deep learning. Nature, 521(7553):436–444, 2015.">LeCun <em>et al.</em>, 2015</a>]</span></p></th>
+<th class="head"><p>PINN (Section 6) <span id="id47">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span></p></th>
 </tr>
 </thead>
 <tbody>
@@ -1117,7 +1117,7 @@ Field magnitude at r=0.5m: 0.3183 A/m
 </section>
 <section id="automatic-differentiation-the-enabling-technology">
 <h3>Automatic Differentiation: The Enabling Technology<a class="headerlink" href="#automatic-differentiation-the-enabling-technology" title="Link to this heading">#</a></h3>
-<p><strong>Why PINNs became viable in 2017-2019</strong> <span id="id48">[]</span>:</p>
+<p><strong>Why PINNs became viable in 2017-2019</strong> <span id="id48">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <ul class="simple">
 <li><p><strong>Pre-2015</strong>: Computing PDE residuals required manual derivatives or finite differences</p></li>
 <li><p><strong>2015+</strong>: TensorFlow, PyTorch provide automatic differentiation (autodiff)</p></li>
@@ -1137,7 +1137,7 @@ Field magnitude at r=0.5m: 0.3183 A/m
 <section id="next-steps-implementation-in-section-6c">
 <h3>Next Steps: Implementation in Section 6c<a class="headerlink" href="#next-steps-implementation-in-section-6c" title="Link to this heading">#</a></h3>
 <p>With the problem mathematically formulated, Section 6c implements:</p>
-<p><strong>1. PINN Neural Network Architecture</strong> <span id="id50">[]</span>:</p>
+<p><strong>1. PINN Neural Network Architecture</strong> <span id="id50">[<a class="reference internal" href="07_conclusion.html#id67" title="Maziar Raissi, Paris Perdikaris, and George E. Karniadakis. Physics-informed neural networks: a deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378:686–707, 2019.">Raissi <em>et al.</em>, 2019</a>]</span>:</p>
 <ul class="simple">
 <li><p>Feedforward network: (x, y) → (H<sub>x</sub>, H<sub>y</sub>)</p></li>
 <li><p>Hidden layers: 4-6 layers × 50-100 neurons</p></li>
@@ -1149,7 +1149,7 @@ Field magnitude at r=0.5m: 0.3183 A/m
 <li><p>PDE residual evaluation at collocation points</p></li>
 <li><p>Loss balancing strategies</p></li>
 </ul>
-<p><strong>3. Training Pipeline</strong> <span id="id52">[]</span>:</p>
+<p><strong>3. Training Pipeline</strong> <span id="id52">[<a class="reference internal" href="07_conclusion.html#id215" title="Diederik Kingma and Jimmy Ba. Adam: a method for stochastic optimization. arXiv preprint arXiv:1412.6980, 2014.">Kingma and Ba, 2014</a>]</span>:</p>
 <ul class="simple">
 <li><p>Optimizer: Adam (early training) + L-BFGS (fine-tuning)</p></li>
 <li><p>Learning rate schedules</p></li>
@@ -1170,7 +1170,7 @@ Field magnitude at r=0.5m: 0.3183 A/m
 <li><p>Chapter 7: Conclusion synthesizing CNN and PINN approaches</p></li>
 </ul>
 </div>
-<p><strong>Key takeaway</strong>: PINNs leverage physics knowledge to achieve data efficiency—trading computational cost (longer training) for reduced data generation cost (fewer simulations) <span id="id53">[]</span>.</p>
+<p><strong>Key takeaway</strong>: PINNs leverage physics knowledge to achieve data efficiency—trading computational cost (longer training) for reduced data generation cost (fewer simulations) <span id="id53">[<a class="reference internal" href="07_conclusion.html#id462" title="Shengze Cai, Zhicheng Wang, Sifan Wang, Paris Perdikaris, and George Em Karniadakis. Physics-informed neural networks for heat transfer problems. Journal of Heat Transfer, 143(6):060801, 2021.">Cai <em>et al.</em>, 2021</a>]</span>.</p>
 </section>
 </section>
 </section>
