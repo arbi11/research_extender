@@ -4,31 +4,31 @@
 
 The simulation of low-frequency electromagnetic devices constitutes a multi-scale, multi-physics computational challenge characterized by complex geometries, nonlinear material properties, and coupled field interactions {cite}`bilgin2019modeling,rosu2017multiphysics`. This section establishes the theoretical foundations and practical methodologies underlying electromagnetic modeling, providing the context necessary for understanding why machine learning approaches represent not a replacement for physics-based simulation but rather a strategic acceleration technique enabling design space exploration at previously infeasible scales.
 
-The fundamental challenge in electromagnetic device modeling arises from the need to solve Maxwell's equations—a system of coupled partial differential equations—over complex three-dimensional domains containing materials with highly nonlinear magnetic permeability, permanent magnet sources with temperature-dependent properties, and current-carrying conductors exhibiting skin and proximity effects {cite}`salon1995finite,silvester1996finite`. The computational cost of numerically solving these equations through discretization methods scales unfavorably with geometric complexity and desired solution accuracy, motivating the development of approximation methods spanning the spectrum from analytical closed-form solutions (seconds of computational time, 10-30% typical errors) through numerical simulation (hours to days, 1-5% errors) to experimental measurement (weeks to months, 2-5% measurement uncertainties) {cite}`bilgin2019modeling,schmidt2011finite`.
+The fundamental challenge in electromagnetic device modeling arises from the need to solve Maxwell's equations - a system of coupled partial differential equations—over complex three-dimensional domains containing materials with highly nonlinear magnetic permeability, permanent magnet sources with temperature-dependent properties, and current-carrying conductors exhibiting skin and proximity effects {cite}`salon1995finite,silvester1996finite`. The computational cost of numerically solving these equations through discretization methods scales unfavorably with geometric complexity and desired solution accuracy, motivating the development of approximation methods spanning the spectrum from analytical closed-form solutions (seconds of computational time, 10-30% typical errors) through numerical simulation (hours to days, 1-5% errors) to experimental measurement (weeks to months, 2-5% measurement uncertainties) {cite}`bilgin2019modeling,schmidt2011finite`.
 
 ## Maxwell's Equations and Electromagnetic Field Theory
 
 The behavior of electromagnetic fields in low-frequency devices (quasi-static approximation valid for frequencies below 1-10 kHz) is governed by magnetostatic and electrostatic formulations of Maxwell's equations {cite}`sadiku2014elements,silvester1996finite`:
 
 **Ampère's Law** (magnetostatic regime, displacement current neglected):
-$$\nabla \times \mathbf{H} = \mathbf{J}$$
+$\nabla \times \mathbf{H} = \mathbf{J}$
 
 **Gauss's Law for Magnetism**:
-$$\nabla \cdot \mathbf{B} = 0$$
+$\nabla \cdot \mathbf{B} = 0$
 
 **Constitutive Relationship** (magnetic materials):
-$$\mathbf{B} = \mu(\mathbf{H}) \mathbf{H} = \mu_0 \mu_r(\mathbf{H}) \mathbf{H}$$
+$\mathbf{B} = \mu(\mathbf{H}) \mathbf{H} = \mu_0 \mu_r(\mathbf{H}) \mathbf{H}$
 
-where $\mathbf{H}$ represents magnetic field intensity [A/m], $\mathbf{B}$ represents magnetic flux density [T], $\mathbf{J}$ represents current density [A/m²], and $\mu(\mathbf{H})$ represents the potentially nonlinear magnetic permeability [H/m]. The nonlinearity in the constitutive relationship—arising from magnetic saturation in ferromagnetic materials—represents the primary source of computational complexity in electromagnetic device simulation {cite}`salon1995finite`.
+where $\mathbf{H}$ represents magnetic field intensity [A/m], $\mathbf{B}$ represents magnetic flux density [T], $\mathbf{J}$ represents current density [A/m^2], and $\mu(\mathbf{H})$ represents the potentially nonlinear magnetic permeability [H/m]. The nonlinearity in the constitutive relationship - arising from magnetic saturation in ferromagnetic materials—represents the primary source of computational complexity in electromagnetic device simulation {cite}`salon1995finite`.
 
-**Magnetic Vector Potential Formulation**: The divergence-free constraint on magnetic flux density (∇·B = 0) is automatically satisfied by introducing the magnetic vector potential $\mathbf{A}$ such that:
-$$\mathbf{B} = \nabla \times \mathbf{A}$$
+**Magnetic Vector Potential Formulation**: The divergence-free constraint on magnetic flux density ($\nabla \cdot \mathbf{B} = 0$) is automatically satisfied by introducing the magnetic vector potential $\mathbf{A}$ such that:
+$\mathbf{B} = \nabla \times \mathbf{A}$
 
 Substituting into Ampère's law yields:
-$$\nabla \times \left(\frac{1}{\mu} \nabla \times \mathbf{A}\right) = \mathbf{J}$$
+$\nabla \times \left(\frac{1}{\mu} \nabla \times \mathbf{A}\right) = \mathbf{J}$
 
 For two-dimensional problems (geometry invariant in z-direction, current flowing only in z-direction), this reduces to a scalar partial differential equation for $A_z$:
-$$\nabla \cdot \left(\frac{1}{\mu} \nabla A_z \right) = -J_z$$
+$\nabla \cdot \left(\frac{1}{\mu} \nabla A_z \right) = -J_z$
 
 This formulation provides the foundation for finite element analysis of electromagnetic devices, as the variational (weak) form of this equation yields a symmetric system of algebraic equations amenable to efficient numerical solution {cite}`silvester1996finite,salon1995finite`.
 
@@ -40,7 +40,7 @@ Accurate electromagnetic device modeling confronts several fundamental challenge
 
 Ferromagnetic materials (electrical steels, soft magnetic composites) exhibit highly nonlinear relationships between magnetic field intensity $\mathbf{H}$ and magnetic flux density $\mathbf{B}$, typically characterized by B-H curves or relative permeability curves $\mu_r(H)$ {cite}`salon1995finite`. For electrical steel laminations commonly employed in motors and transformers, the relative permeability varies from $\mu_r \approx 5000$ at low flux densities to $\mu_r \approx 100$ in deep saturation (B > 1.8 Tesla), representing a 50× variation over the operating range. This nonlinearity necessitates iterative solution procedures, as the material properties depend on the unknown field solution itself {cite}`silvester1996finite,schmidt2011finite`.
 
-Linear analytical solutions—which assume constant permeability—yield errors of 10-30% when applied to devices operating in saturation regimes (typical for high-performance motors optimized for torque density). Nonlinear analytical perturbation methods can reduce errors to 5-15% but require problem-specific derivations and remain inapplicable to complex geometries {cite}`bilgin2019modeling`.
+Linear analytical solutions-which assume constant permeability-yield errors of 10-30% when applied to devices operating in saturation regimes (typical for high-performance motors optimized for torque density). Nonlinear analytical perturbation methods can reduce errors to 5-15% but require problem-specific derivations and remain inapplicable to complex geometries {cite}`bilgin2019modeling`.
 
 ### Geometric Complexity and Design Parameterization
 
@@ -50,7 +50,7 @@ Modern electric machine geometries incorporate numerous interdependent design pa
 
 Electromagnetic device performance in practical applications depends critically on coupled multi-physics phenomena {cite}`rosu2017multiphysics`:
 
-- **Electromagnetic-Thermal Coupling**: Resistive losses in windings and core losses in laminations generate heat; elevated temperatures reduce permanent magnet remanence (−0.08 to −0.12%/°C for NdFeB) and modify electrical steel B-H curves. Accurate performance prediction requires iterative solution of coupled electromagnetic and thermal field equations
+- **Electromagnetic-Thermal Coupling**: Resistive losses in windings and core losses in laminations generate heat; elevated temperatures reduce permanent magnet remanence (-0.08 to -0.12%/°C for NdFeB) and modify electrical steel B-H curves. Accurate performance prediction requires iterative solution of coupled electromagnetic and thermal field equations
 - **Electromagnetic-Structural Coupling**: Maxwell stress distributions generate forces that induce vibrations; structural resonances amplify acoustic noise. Electric vehicle traction motors require coupled electromagnetic-structural-acoustic analysis to predict cabin noise levels
 - **Electromagnetic-Circuit Coupling**: Motor performance depends on inverter control strategies (voltage constraints, current limits, field weakening algorithms); system-level optimization requires co-simulation of electromagnetic finite element models with circuit simulators
 
@@ -196,7 +196,7 @@ Schmidt (2011) surveyed modern FEA validation studies for electrical machines {c
 **Theoretical Foundation**: Boundary element method (BEM) reformulates the electromagnetic problem using Green's functions, reducing dimensionality from volume integrals to surface integrals {cite}`salon1995finite`. For linear materials, only boundaries require discretization; fields at interior points computed via integration.
 
 **Advantages**:
-- Reduced dimensionality (2D domain → 1D boundary discretization)
+- Reduced dimensionality (2D domain -> 1D boundary discretization)
 - Natural handling of unbounded domains (external field problems)
 - No volume mesh generation required
 
@@ -240,7 +240,7 @@ The selection of FEA as the exclusive data generation method for electromagnetic
 
 **Requirement 2 - Spatial Resolution**: CNN training for field distribution prediction requires pixel-wise ground truth at sufficient spatial resolution to capture local phenomena such as saturation and flux concentration. Analytical methods provide global quantities only; MEC provides lumped reluctance element fluxes; only FEA and experimental measurements provide the required spatial field distributions {cite}`salon1995finite`.
 
-**Requirement 3 - Physical Consistency**: Training data must satisfy Maxwell's equations (particularly ∇·B = 0) to avoid spurious correlations that degrade generalization. FEA solutions automatically satisfy governing equations through variational formulation; analytical approximations may violate field continuity at material boundaries; experimental measurements contain instrument noise and calibration errors {cite}`salon1995finite,silvester1996finite`.
+**Requirement 3 - Physical Consistency**: Training data must satisfy Maxwell's equations (particularly $\nabla \cdot \mathbf{B} = 0$) to avoid spurious correlations that degrade generalization. FEA solutions automatically satisfy governing equations through variational formulation; analytical approximations may violate field continuity at material boundaries; experimental measurements contain instrument noise and calibration errors {cite}`salon1995finite,silvester1996finite`.
 
 **Requirement 4 - Automation**: Training dataset generation requires scripted batch execution of thousands of simulations with parametric geometry variation. Modern FEA software provides Python/MATLAB/Lua APIs; MEC requires manual flux tube definition per topology; analytical methods require problem-specific derivations {cite}`schmidt2011finite,bilgin2019modeling`.
 
@@ -248,7 +248,7 @@ The selection of FEA as the exclusive data generation method for electromagnetic
 
 **Quantitative Justification**: While individual 2D FEA analyses require 1-4 hours, parallelization across 10-20 node computing clusters enables generation of 5,000-10,000 training samples within 1-4 weeks—a one-time investment enabling millions of subsequent 10-100 millisecond neural network inferences, yielding 100-1000× return on investment for optimization studies requiring 10,000-100,000 evaluations {cite}`silva2017surrogate,ibrahim2020surrogate`.
 
-With finite element analysis established as the optimal training data source, the remainder of this chapter develops the machine learning architectures (convolutional neural networks and physics-informed neural networks), training methodologies, and validation studies that demonstrate surrogate models can approximate FEA solutions with sub-1% errors while providing 10,000-180,000× computational acceleration.
+With finite element analysis established as the optimal training data source, the remainder of this chapter develops the machine learning architectures (convolutional neural networks and physics-informed neural networks), training methodologies, and validation studies that demonstrate surrogate models can approximate FEA solutions with sub-1% errors while providing 10-1000× computational acceleration.
 
 ## References
 
