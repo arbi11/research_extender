@@ -85,3 +85,29 @@ Width-4× gives no lift on FSCW at the 60-design scale (standalone 0.737 vs 0.75
 
 ## Notebooks
 All of C3/01–08: 0 error outputs (56 code cells). The C3/01 `IndexError` reported on 2026-10-09 was a missing-data artefact, not a code bug.
+
+---
+
+# Book build — whole-book PDF (2026-10-11)
+
+`_book/_build/exports/compem_book.pdf` — 501 pages, 29.2 MB (final build 13:47), all 38 pages of C1–C5 + AppA with a numbered TOC, notebook outputs/figures, the thesis figures, and one consolidated bibliography at the end. Rebuild (≈3 min, no LaTeX needed):
+```
+cd _book && ../.venv/bin/python stage.py && ./build_pdf.sh
+```
+Toolchain: Jupyter Book 2.1.7 (MyST v1.11, installs its own Node 22) for the typst export, typst 0.14.1 in `_book/tools/bin` for the compile. 0.15 removed `diff` (MyST's `\partial`), 0.13 lacks `xrightarrow`. Jupyter Book 2 has no EPUB export; the user chose PDF only.
+
+Staging (`_book/stage.py`) never edits the chapter folders: it copies the notebooks, swaps in error-free executed copies from `_runs/executed/` for notebooks that have no outputs, rewrites `{admonition}`→`{note}` and unwraps the `{grid}` in C4/02 (the typst exporter drops both silently), copies the thesis figures from `<project>/_static/figures/`, and draws grey placeholders only for figures that exist nowhere. `build_pdf.sh` then patches the exported typst: shims for LaTeX macros MyST passes through, `#link("")`, citations with keys missing from `references.bib` (rendered as red `[key]`), and links to missing/duplicated labels.
+
+## Notebook execution status (fresh run 2026-10-11 13:43–13:47, CPU, 2 threads, inline backend, copies in `_runs/executed/`)
+(A first run at 13:04 had `MPLBACKEND=Agg` set, which silently drops every `plt.show()` figure; the copies were redone without it.)
+- Clean (0 errors): AppA/00; C2/04b; C3/01–08 (also re-verified today); C4/00–06; C5/02, 04, 08. C2/04a, 04c, 05, 06a, 06b carry the Kaggle-v2 outputs placed on 2026-10-11 00:22.
+- Not executed: C1 (prose only), C2/01, 02, 07 (prose only), C2/03 (needs a FEMM session).
+- Failing — missing data: C4/07 cell 4 `designs/synrm_diag/synrm_diag_results.json`; C5/05 cell 15 and C5/07 cells 2–12 `designs/{ppo_v2_run,a2c_v2_run}/training_stats.json`; C5/06 cell 8 `designs/env_probe/*.json`.
+- Failing — code bugs in the Notion source: C5/01 cells 4 and 6 (`SyntaxError`, misplaced quotes), C5/03 cell 1 (`np.log10(3**2500)` overflows).
+- C4 `q_learn_improved` (other session, `_runs/queue_c4b.log`) stopped at episode 150/200 at 11:23 without an rc line; `designs/q_improved/training_stats_improved.json` from that checkpoint is what C4/06 reads.
+
+## Content gaps visible in the PDF
+- Thesis figures: the Notion export carried none of the 36 files the notebooks reference as `../_static/figures/*` / `../content/designs/*`. 33 were recovered on 2026-10-11 from the user's repo `github.com/arbi11/research_extender` (`thesis_latex/Figures/`; the other session's clone under its scratchpad) into the new `compem_book/_static/figures/` (`v_design_cycle.png` is "The V-Design and Manufacturing Cycle.jpg" converted). Still missing anywhere: C4/04's `content/designs/step_34_trajectory.png`, `q_position/learning_curve_position.png`, `q_position/policy_position.png` — grey "FIGURE MISSING" boxes in the PDF.
+- 16 citation keys are not in `C2/references.bib` (C1/01: unfccc2015paris; C4/01–05: mnih2015human, watkins1989learning, goldberg1989genetic, holland1992adaptation, lucchini2022topology, lee2021gta, nishanth2022review, otomo2021gabor, sato2015synrm, zhao2016topology_ga_synrm, barmada2021deep, bourdin2001filters, brown2022deep, guest2004achieving, khan2022reinforcement) — shown in red.
+- C5/01 cites with `[[Author year]]` wiki links (24), rendered as plain text; AppA's table of contents links `#section1…8` have no targets.
+- C5 headings carry their own numbers, so MyST's numbering doubles them ("5.1 1. Introduction…"). C2/06b cell 2 has a unicode middle dot inside `\text{}` (`T·mm`): fine in typst, a KaTeX error in the HTML build.
