@@ -60,6 +60,7 @@ case "${1:-}" in
     push "$ROOT/jupyter_book/_runs" "jupyter_book/_runs"
     push "$ROOT/jupyter_book/_kaggle" "jupyter_book/_kaggle" --include "*.json"   # Kaggle metadata only; data is on Kaggle
     push "$ROOT/jupyter_book/_source" "jupyter_book/_source"   # original Notion export
+    push "$ROOT/jupyter_book/_archive" "jupyter_book/_archive"  # files removed from chapters (lean-ups)
     card
     ;;
   upload-legacy)
@@ -70,6 +71,7 @@ case "${1:-}" in
     push "$W/_runs" "jupyter_book/_runs"
     push "$W/_kaggle" "jupyter_book/_kaggle" --include "*.json"
     push "$W/compem_book_notion.zip" "jupyter_book/_source/compem_book_notion.zip"
+    push "$W/_archive" "jupyter_book/_archive"
     card
     ;;
   *)
