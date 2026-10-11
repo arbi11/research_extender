@@ -37,7 +37,7 @@ def train_one_fold(
     Tiny dataset (~40 samples), so we forgo mini-batching: each epoch is one
     forward + backward over the full training set.
     """
-    device = torch.device("cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     mse = nn.MSELoss()
@@ -65,6 +65,7 @@ def train_one_fold(
         if epoch == 1 or epoch == epochs or (log_every and epoch % log_every == 0):
             log.info("  [%s] ep %4d/%d  train=%.5f  val=%.5f",
                      fold_name, epoch, epochs, hist.train_loss[-1], val_loss)
+    model.cpu()  # callers predict/save on CPU
     return hist
 
 
@@ -103,7 +104,7 @@ def train_one_fold_masked(
     tensor and rely on the mask to zero those positions in the loss. Full-batch
     Adam + masked MSE.
     """
-    device = torch.device("cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
@@ -136,4 +137,5 @@ def train_one_fold_masked(
         if epoch == 1 or epoch == epochs or (log_every and epoch % log_every == 0):
             log.info("  [%s] ep %4d/%d  train=%.5f  val=%.5f",
                      fold_name, epoch, epochs, hist.train_loss[-1], val_loss)
+    model.cpu()  # callers predict/save on CPU
     return hist

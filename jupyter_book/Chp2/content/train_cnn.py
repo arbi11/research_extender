@@ -14,7 +14,17 @@ Usage:
     python train_cnn.py --problem-type coil --epochs 100 --batch-size 16
     python train_cnn.py --problem-type ipm --epochs 150 --batch-size 32 --learning-rate 5e-4
     python train_cnn.py --problem-type transformer --epochs 25 --batch-size 128
-    
+
+Mesh -> grid conversion is precomputed once per (dataset file, resolution, bounds) by
+grid_cache.py and reused on every epoch and every later run (hash-keyed, under
+dataset/grid_cache/). Pass --no-grid-cache to convert on the fly instead (original, ~30x slower).
+
+Normalisation: the target |B| and the current-density channel are divided by their training-set
+peaks (B_scale, J_scale; stored in the checkpoint and summary). Raw targets are ~1e-5 T, and with
+plain MSE on raw values the network only learns to shrink its output and never beats predicting
+zero. Losses are therefore in normalised units; multiply sqrt(MSE) by B_scale for Tesla. The
+script prints the predict-zero and predict-mean-field reference losses so a loss value can be
+judged. Pass --no-normalize for the original raw-Tesla behaviour.
 """
 
 import argparse
@@ -33,6 +43,7 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 
 from femm_solver import MeshInterpolator
+from grid_cache import GridCache
 
 # Device configuration
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -50,41 +61,64 @@ class FEMMDataset(Dataset):
     Converts unstructured triangular mesh to uniform grids for CNN training.
     """
 
-    def __init__(self, samples, resolution=256, bounds=None):
+    def __init__(self, samples, resolution=256, bounds=None, grid_cache=None, rows=None,
+                 B_scale=1.0, J_scale=1.0):
         """
         Args:
             samples: List of sample dicts from generate_cnn_training_data.py
             resolution: Grid resolution (e.g., 256 for 256×256)
             bounds: (xmin, xmax, ymin, ymax) in mm - ensures consistent spatial mapping
+            grid_cache: GridCache with the precomputed grids for this resolution/bounds
+                        (see grid_cache.py). None = convert each mesh on the fly.
+            rows: row index of each sample in grid_cache (same order as `samples`)
+            B_scale, J_scale: the target |B| and the current-density channel are divided by
+                        these (training-set peaks from compute_scales); 1.0 = raw units
         """
         self.samples = samples
         self.resolution = resolution
         self.bounds = bounds
+        self.grid_cache = grid_cache
+        self.rows = None if rows is None else np.asarray(rows)
+        self.B_scale = float(B_scale)
+        self.J_scale = float(J_scale)
 
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        sample = self.samples[idx]
-        mesh_data = sample['mesh_data']
+        if self.grid_cache is not None:
+            # Precomputed path: the same arrays, read from the memory-mapped grid cache
+            r = int(self.rows[idx])
+            material_mask = self.grid_cache.mask[r].astype(np.float32)
+            source_current = np.array(self.grid_cache.J[r], dtype=np.float32)
+            B_magnitude = np.array(self.grid_cache.B[r], dtype=np.float32)
+        else:
+            sample = self.samples[idx]
+            mesh_data = sample['mesh_data']
 
-        # Interpolate mesh to uniform grid
-        interp = MeshInterpolator(mesh_data)
-        grid = interp.interpolate_to_grid(
-            resolution=self.resolution,
-            bounds=self.bounds
-        )
+            # Interpolate mesh to uniform grid
+            interp = MeshInterpolator(mesh_data)
+            grid = interp.interpolate_to_grid(
+                resolution=self.resolution,
+                bounds=self.bounds
+            )
 
-        xx, yy = grid['grid_coords']
+            xx, yy = grid['grid_coords']
 
-        # Channel 0: Material mask (geometry)
-        material_mask = interp.generate_semantic_mask(xx, yy).astype(np.float32)
+            # Channel 0: Material mask (geometry)
+            material_mask = interp.generate_semantic_mask(xx, yy).astype(np.float32)
 
-        # Channel 1: Excitation (source current density)
-        source_current = grid['source_current_density'].astype(np.float32)
+            # Channel 1: Excitation (source current density)
+            source_current = grid['source_current_density'].astype(np.float32)
 
-        # Target: B magnitude
-        B_magnitude = grid['B_magnitude'].astype(np.float32)
+            # Target: B magnitude
+            B_magnitude = grid['B_magnitude'].astype(np.float32)
+
+        # Normalise to O(1) units (see module docstring)
+        if self.J_scale != 1.0:
+            source_current = source_current / np.float32(self.J_scale)
+        if self.B_scale != 1.0:
+            B_magnitude = B_magnitude / np.float32(self.B_scale)
 
         # Stack into tensors
         X = np.stack([material_mask, source_current], axis=0)  # (2, H, W)
@@ -140,6 +174,48 @@ def compute_global_bounds(samples, margin=1.1):
     ymax = y_center + max_range / 2
 
     return (xmin, xmax, ymin, ymax)
+
+
+# ============================================================================
+# Normalisation scales and reference losses
+# ============================================================================
+
+def compute_scales(train_dataset):
+    """
+    Training-set peaks of |B| and |J|, used to normalise the target and the excitation channel.
+
+    Instant from the grid cache; without it (--no-grid-cache) every training mesh is converted
+    once, which is slow. Call on a dataset whose scales are still 1.0.
+    """
+    gc = train_dataset.grid_cache
+    if gc is not None:
+        B_scale = max(float(gc.B[int(r)].max()) for r in train_dataset.rows)
+        J_scale = max(float(np.abs(gc.J[int(r)]).max()) for r in train_dataset.rows)
+    else:
+        B_scale = J_scale = 0.0
+        for i in tqdm(range(len(train_dataset)), desc="Computing scales"):
+            X, Y = train_dataset[i]
+            B_scale = max(B_scale, float(Y.max()))
+            J_scale = max(J_scale, float(X[1].abs().max()))
+    return (B_scale or 1.0), (J_scale or 1.0)
+
+
+def baseline_losses(train_dataset, val_dataset):
+    """
+    MSE on the validation split (same units as the training loss) of two trivial predictors:
+    zero everywhere, and the mean training field. A useful model must get well below both.
+    """
+    mean_field = None
+    for i in range(len(train_dataset)):
+        Y = train_dataset[i][1].numpy().astype(np.float64)
+        mean_field = Y if mean_field is None else mean_field + Y
+    mean_field /= len(train_dataset)
+    mse_zero = mse_mean = 0.0
+    for i in range(len(val_dataset)):
+        Y = val_dataset[i][1].numpy().astype(np.float64)
+        mse_zero += float((Y ** 2).mean())
+        mse_mean += float(((Y - mean_field) ** 2).mean())
+    return mse_zero / len(val_dataset), mse_mean / len(val_dataset)
 
 
 # ============================================================================
@@ -309,9 +385,10 @@ def visualize_predictions(model, test_dataset, device, problem_type, output_dir,
         with torch.no_grad():
             Y_pred = model(X_input)
 
+        B_scale = getattr(test_dataset, 'B_scale', 1.0)   # back to Tesla
         X = X.cpu().numpy()
-        Y_true = Y_true.cpu().numpy()[0]
-        Y_pred = Y_pred.cpu().numpy()[0, 0]
+        Y_true = Y_true.cpu().numpy()[0] * B_scale
+        Y_pred = Y_pred.cpu().numpy()[0, 0] * B_scale
 
         # Plot material mask
         axes[i, 0].imshow(X[0], cmap='viridis', interpolation='nearest')
@@ -320,13 +397,13 @@ def visualize_predictions(model, test_dataset, device, problem_type, output_dir,
 
         # Plot ground truth
         im1 = axes[i, 1].imshow(Y_true, cmap='hot', interpolation='bilinear')
-        axes[i, 1].set_title('Ground Truth |B|', fontsize=11)
+        axes[i, 1].set_title('Ground Truth |B| [T]', fontsize=11)
         axes[i, 1].axis('off')
         plt.colorbar(im1, ax=axes[i, 1], fraction=0.046, pad=0.04)
 
         # Plot prediction
         im2 = axes[i, 2].imshow(Y_pred, cmap='hot', interpolation='bilinear')
-        axes[i, 2].set_title('CNN Prediction |B|', fontsize=11)
+        axes[i, 2].set_title('CNN Prediction |B| [T]', fontsize=11)
         axes[i, 2].axis('off')
         plt.colorbar(im2, ax=axes[i, 2], fraction=0.046, pad=0.04)
 
@@ -369,6 +446,14 @@ def parse_args():
                        help='Random seed')
     parser.add_argument('--num-workers', type=int, default=0,
                        help='DataLoader workers (0=main process only)')
+    parser.add_argument('--no-grid-cache', action='store_true',
+                       help='Convert meshes on the fly in __getitem__ (original, slow) instead of '
+                            'using the precomputed grid cache')
+    parser.add_argument('--cache-workers', type=int, default=2,
+                       help='CPU processes used to build the grid cache when it is missing')
+    parser.add_argument('--no-normalize', action='store_true',
+                       help='Train on raw Tesla targets and raw current density (original behaviour; '
+                            'does not learn, kept for reference)')
 
     return parser.parse_args()
 
@@ -420,26 +505,59 @@ def main():
     print(f"  Global bounds (mm): xmin={bounds[0]:.2f}, xmax={bounds[1]:.2f}, "
           f"ymin={bounds[2]:.2f}, ymax={bounds[3]:.2f}")
 
-    # Train/val/test split
+    # Train/val/test split (on indices, so every sample keeps its row in the grid cache;
+    # same random_state => identical split to splitting the sample list directly)
     print("\nSplitting dataset...")
-    train_samples, test_samples = train_test_split(
-        samples, test_size=args.test_split, random_state=args.seed
+    train_idx, test_idx = train_test_split(
+        np.arange(len(samples)), test_size=args.test_split, random_state=args.seed
     )
-    train_samples, val_samples = train_test_split(
-        train_samples,
+    train_idx, val_idx = train_test_split(
+        train_idx,
         test_size=args.val_split / (1 - args.test_split),
         random_state=args.seed
     )
+    train_samples = [samples[i] for i in train_idx]
+    val_samples = [samples[i] for i in val_idx]
+    test_samples = [samples[i] for i in test_idx]
 
     print(f"  Train: {len(train_samples)} samples ({len(train_samples)/len(samples)*100:.1f}%)")
     print(f"  Val:   {len(val_samples)} samples ({len(val_samples)/len(samples)*100:.1f}%)")
     print(f"  Test:  {len(test_samples)} samples ({len(test_samples)/len(samples)*100:.1f}%)")
 
+    # Precomputed mesh->grid cache: built once per (dataset file, resolution, bounds), reused after
+    grid_cache = None
+    if not args.no_grid_cache:
+        print("\nLoading grid cache...")
+        grid_cache = GridCache.load_or_build(samples, dataset_path, args.resolution, bounds,
+                                             workers=args.cache_workers)
+
     # Create datasets
     print("\nCreating datasets...")
-    train_dataset = FEMMDataset(train_samples, resolution=args.resolution, bounds=bounds)
-    val_dataset = FEMMDataset(val_samples, resolution=args.resolution, bounds=bounds)
-    test_dataset = FEMMDataset(test_samples, resolution=args.resolution, bounds=bounds)
+    train_dataset = FEMMDataset(train_samples, resolution=args.resolution, bounds=bounds,
+                                grid_cache=grid_cache, rows=train_idx)
+    val_dataset = FEMMDataset(val_samples, resolution=args.resolution, bounds=bounds,
+                              grid_cache=grid_cache, rows=val_idx)
+    test_dataset = FEMMDataset(test_samples, resolution=args.resolution, bounds=bounds,
+                               grid_cache=grid_cache, rows=test_idx)
+
+    # Normalisation (see module docstring)
+    if args.no_normalize:
+        B_scale, J_scale = 1.0, 1.0
+        print("\nNormalisation OFF: raw Tesla targets")
+    else:
+        print("\nComputing normalisation scales from the training split...")
+        B_scale, J_scale = compute_scales(train_dataset)
+    for ds in (train_dataset, val_dataset, test_dataset):
+        ds.B_scale, ds.J_scale = B_scale, J_scale
+    print(f"  B_scale = {B_scale:.4e} T (peak |B| in train), J_scale = {J_scale:.4e} (peak |J| in train)")
+    print(f"  Losses below are MSE in normalised units; RMSE [T] = sqrt(MSE) * B_scale")
+
+    mse_zero = mse_mean = None
+    if grid_cache is not None:
+        mse_zero, mse_mean = baseline_losses(train_dataset, val_dataset)
+        print(f"\nReference losses on the validation split (a useful model must be well below):")
+        print(f"  predict zero everywhere:     MSE {mse_zero:.3e}  (RMSE {np.sqrt(mse_zero) * B_scale:.3e} T)")
+        print(f"  predict mean training field: MSE {mse_mean:.3e}  (RMSE {np.sqrt(mse_mean) * B_scale:.3e} T)")
 
     # Create dataloaders
     train_loader = DataLoader(
@@ -497,8 +615,9 @@ def main():
         epoch_time = time.time() - epoch_start
 
         print(f"Epoch {epoch+1:3d}/{args.epochs} | "
-              f"Train Loss: {train_loss:.6f} | "
-              f"Val Loss: {val_loss:.6f} | "
+              f"Train Loss: {train_loss:.3e} | "
+              f"Val Loss: {val_loss:.3e} | "
+              f"Val RMSE: {np.sqrt(val_loss) * B_scale:.3e} T | "
               f"Time: {epoch_time:.1f}s")
 
         # Save best model
@@ -512,7 +631,9 @@ def main():
                 'val_loss': val_loss,
                 'bounds': bounds,
                 'resolution': args.resolution,
-                'problem_type': args.problem_type
+                'problem_type': args.problem_type,
+                'B_scale': B_scale,          # target |B| was divided by this (Tesla)
+                'J_scale': J_scale           # current-density channel was divided by this
             }, output_dir / f'{args.problem_type}_best_model.pth')
 
     # Test evaluation
@@ -521,10 +642,13 @@ def main():
     print("=" * 80)
 
     test_loss = validate_epoch(model, test_loader, criterion, DEVICE)
-    test_rmse = np.sqrt(test_loss)
+    test_rmse = np.sqrt(test_loss) * B_scale          # Tesla
 
-    print(f"Test MSE:  {test_loss:.6f}")
-    print(f"Test RMSE: {test_rmse:.6f} T")
+    print(f"Test MSE (normalised): {test_loss:.4e}")
+    print(f"Test RMSE: {test_rmse:.4e} T")
+    if mse_zero is not None:
+        print(f"  reference: predict-zero RMSE {np.sqrt(mse_zero) * B_scale:.3e} T, "
+              f"mean-field RMSE {np.sqrt(mse_mean) * B_scale:.3e} T  (validation split)")
 
     # Save training history
     with open(output_dir / f'{args.problem_type}_history.pkl', 'wb') as f:
@@ -545,7 +669,15 @@ def main():
         'test_loss': float(test_loss),
         'test_rmse': float(test_rmse),
         'total_params': total_params,
-        'bounds': bounds
+        'bounds': bounds,
+        'normalized': not args.no_normalize,
+        'B_scale': float(B_scale),
+        'J_scale': float(J_scale),
+        'loss_units': 'MSE of |B|/B_scale; RMSE [T] = sqrt(MSE) * B_scale',
+        'test_rmse_T': float(test_rmse),
+        'val_baseline_mse_zero': None if mse_zero is None else float(mse_zero),
+        'val_baseline_mse_mean_field': None if mse_mean is None else float(mse_mean),
+        'grid_cache': None if grid_cache is None else str(grid_cache.directory),
     }
 
     with open(output_dir / f'{args.problem_type}_summary.json', 'w') as f:
