@@ -23,16 +23,22 @@ Artifacts (designs/q_improved/):
     episodes/ep_NNN_mask.png       iron mask at the end of each episode
     episodes/ep_NNN_final.fem      FEMM model of the final step of each episode
     q_table.npz                    learned Q-table
+    checkpoint.pkl                 full training state after the last finished
+                                   episode (Q-table, epsilon, histories, RNG state)
 
 Usage
 -----
     python q_learn_improved.py                 # 200 episodes x 34 steps (default)
     python q_learn_improved.py --episodes 20   # smoke test
+    python q_learn_improved.py --resume        # continue from checkpoint.pkl; the
+                                               # result is identical to an
+                                               # uninterrupted run
 """
 
 import argparse
 import json
 import os
+import pickle
 import shutil
 import sys
 from collections import defaultdict
@@ -165,9 +171,47 @@ def _save_ep_snapshot(env, ep_num, total_reward, results_dir):
         shutil.copyfile(cenv._TMP_FEM, os.path.join(ep_dir, f'ep_{ep_num:03d}_final.fem'))
 
 
+# ── Checkpoint / resume ──────────────────────────────────────────────────────
+
+CHECKPOINT_FILE = 'checkpoint.pkl'
+
+
+def _save_checkpoint(results_dir, ep, epsilon, episode_rewards, epsilon_history,
+                     q_size_history, best_reward, best_ep_num):
+    """Write the full training state after episode `ep` (atomic replace)."""
+    state = {
+        'episode':         ep,
+        'epsilon':         epsilon,
+        'q':               {k: v.copy() for k, v in Q.items()},
+        'episode_rewards': episode_rewards,
+        'epsilon_history': epsilon_history,
+        'q_size_history':  q_size_history,
+        'best_reward':     best_reward,
+        'best_ep_num':     best_ep_num,
+        'rng_state':       np.random.get_state(),
+    }
+    path = os.path.join(results_dir, CHECKPOINT_FILE)
+    with open(path + '.tmp', 'wb') as f:
+        pickle.dump(state, f)
+    os.replace(path + '.tmp', path)
+
+
+def _load_checkpoint(results_dir):
+    path = os.path.join(results_dir, CHECKPOINT_FILE)
+    if not os.path.exists(path):
+        print(f"ERROR: --resume given but {path} does not exist")
+        sys.exit(1)
+    with open(path, 'rb') as f:
+        state = pickle.load(f)
+    Q.clear()
+    Q.update(state['q'])
+    np.random.set_state(state['rng_state'])
+    return state
+
+
 # ── Training loop ────────────────────────────────────────────────────────────
 
-def train(n_episodes=N_EPISODES, results_dir=RESULTS_DIR):
+def train(n_episodes=N_EPISODES, results_dir=RESULTS_DIR, resume=False):
     os.makedirs(results_dir, exist_ok=True)
 
     print("=" * 72)
@@ -190,8 +234,21 @@ def train(n_episodes=N_EPISODES, results_dir=RESULTS_DIR):
     q_size_history  = []
     best_reward     = -float('inf')
     best_ep_num     = -1
+    start_ep        = 1
 
-    for ep in range(1, n_episodes + 1):
+    if resume:
+        ck              = _load_checkpoint(results_dir)
+        epsilon         = ck['epsilon']
+        episode_rewards = ck['episode_rewards']
+        epsilon_history = ck['epsilon_history']
+        q_size_history  = ck['q_size_history']
+        best_reward     = ck['best_reward']
+        best_ep_num     = ck['best_ep_num']
+        start_ep        = ck['episode'] + 1
+        print(f"  Resumed after episode {ck['episode']}  (|Q|={len(Q)}, eps={epsilon:.3f}, "
+              f"best={best_reward:.2f} at ep {best_ep_num})", flush=True)
+
+    for ep in range(start_ep, n_episodes + 1):
         env.reset()
         if RANDOM_START:
             random_start(env)
@@ -217,6 +274,9 @@ def train(n_episodes=N_EPISODES, results_dir=RESULTS_DIR):
         if total_reward > best_reward:
             best_reward = total_reward
             best_ep_num = ep
+
+        _save_checkpoint(results_dir, ep, epsilon, episode_rewards, epsilon_history,
+                         q_size_history, best_reward, best_ep_num)
 
         if ep % CHECKPOINT_EVERY == 0 or ep == n_episodes:
             stats = {
@@ -271,13 +331,15 @@ def _parse_args():
     p.add_argument('--results-dir', type=str, default=RESULTS_DIR,
                    help=f'output dir (default {RESULTS_DIR})')
     p.add_argument('--seed', type=int, default=42, help='RNG seed')
+    p.add_argument('--resume', action='store_true',
+                   help=f'continue from <results-dir>/{CHECKPOINT_FILE}')
     return p.parse_args()
 
 
 def main():
     args = _parse_args()
-    np.random.seed(args.seed)
-    train(args.episodes, args.results_dir)
+    np.random.seed(args.seed)          # replaced by the saved RNG state on --resume
+    train(args.episodes, args.results_dir, resume=args.resume)
 
 
 if __name__ == '__main__':
