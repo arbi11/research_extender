@@ -1,8 +1,10 @@
 """
 PINN building blocks used by 06b_pinns_methodology.ipynb.
 
-- PINN: MLP on random Fourier features of (x, y) [domain scale and wire scale], optional
-  physical-parameter conditioning; B = curl(A_z) via autograd (compute_B_field).
+- PINN: tanh MLP on an input encoding of (x, y) -- 'radial' (x/500, y/500, r/500, ln r: the
+  coordinates the 2-D Poisson solution is built from; used by 06b) or the earlier 'fourier'
+  (random Fourier features at domain and wire scale) -- with optional physical-parameter
+  conditioning; B = curl(A_z) via autograd (compute_B_field).
 - PINNDataset: loads the sample_*.pkl files written by generate_pinns_data.py.
 - PINNTrainer: device/optimizer setup, the plain data / physics / boundary losses and the
   full-grid validation (NMSE). The notebook subclasses it with wire-scale nondimensional losses.
@@ -30,10 +32,18 @@ class PINN(nn.Module):
     this, a network that only sees (x,y) cannot distinguish a 10 A wire from a
     100 A wire and the training loss becomes incoherent across samples.
 
-    Input encoding:
-      - (x, y): random Fourier features [sin(Bx), cos(Bx)] to overcome spectral
-                bias (Tancik et al. 2020).  Fourier matrix B is fixed at init.
-      - params: concatenated raw (after [0,1] normalisation); NO Fourier encoding —
+    Input encoding (encoding=):
+      - 'radial' (default): [x/500, y/500, r/500, ln((r + 1 mm)/500)].  The field of a
+                 current-carrying wire is a function of r and the 2-D Green's function of
+                 the Poisson equation is ln r, so the network receives the coordinates the
+                 solution is built from and only has to learn the smooth correction imposed
+                 by the A_z = 0 walls.  A plain tanh MLP on (x/500, y/500) alone cannot
+                 resolve the 1/r field of a 14 mm wire in a 1000 mm box.
+      - 'fourier': random Fourier features [sin(Bx), cos(Bx)] at domain scale (x/500) and,
+                 for the coil, at wire scale (x/r_w) (Tancik et al. 2020).  Kept for
+                 reference: with 100 sparse observations the wire-scale features overfit
+                 (data loss ~1e-6 while the field away from the points is wrong).
+      - params: concatenated raw (after [0,1] normalisation); no coordinate encoding —
                 they are scalar scalings, not spatial coordinates.
 
     Ref: Beltrán-Pulido et al. (2022) IEEE Trans. Energy Conv., arxiv 2202.04041.
@@ -51,37 +61,45 @@ class PINN(nn.Module):
     }
 
     def __init__(self, hidden_layers=[64, 128, 128, 64], normalize=True, b_scale=1e6,
-                 n_fourier=16, problem_type='coil'):
+                 n_fourier=16, problem_type='coil', encoding='radial'):
         """
         Args:
             hidden_layers: MLP hidden layer widths
-            normalize: (kept for backward compat; Fourier encoding replaces coord normalisation)
+            normalize: (kept for backward compat; the input encoding replaces coord normalisation)
             b_scale: B-field scaling factor (problem-specific)
-            n_fourier: Number of Fourier frequency pairs for (x,y) encoding
+            n_fourier: Number of Fourier frequency pairs for (x,y) encoding ('fourier' only)
             problem_type: Key into PARAM_BOUNDS; determines n_params and normalisation
+            encoding: 'radial' (x/500, y/500, r/500, ln r) or 'fourier' (random Fourier features)
         """
         super().__init__()
+        if encoding not in ('radial', 'fourier'):
+            raise ValueError(f"encoding must be 'radial' or 'fourier', got {encoding!r}")
 
         self.normalize = normalize
         self.coord_scale = 500.0  # Domain is [-500, 500] mm
         self.B_scale = b_scale
         self.n_fourier = n_fourier
         self.problem_type = problem_type
+        self.encoding = encoding
 
-        # Fourier feature matrix B ∈ R^{n_fourier × 2}: fixed random frequencies
-        # Input (x_norm, y_norm) maps to [sin(Bx), cos(Bx)] ∈ R^{2*n_fourier}
-        torch.manual_seed(0)
-        B_mat = torch.randn(n_fourier, 2) * 1.0  # σ=1 — moderate frequency bandwidth (Tancik 2020)
-        self.register_buffer('B_mat', B_mat)
+        if encoding == 'fourier':
+            # Fourier feature matrix B ∈ R^{n_fourier × 2}: fixed random frequencies
+            # Input (x_norm, y_norm) maps to [sin(Bx), cos(Bx)] ∈ R^{2*n_fourier}
+            torch.manual_seed(0)
+            B_mat = torch.randn(n_fourier, 2) * 1.0  # σ=1 — moderate frequency bandwidth (Tancik 2020)
+            self.register_buffer('B_mat', B_mat)
 
-        # Geometry-aware Fourier encoding: second set of features using coordinates
-        # normalised by wire_radius (x/r_w, y/r_w).  This lets the network capture
-        # fine-scale structure near the wire regardless of absolute wire size.
-        # Only used for 'coil' since that is the only problem type with a wire_radius param.
-        self.use_wire_scale = (problem_type == 'coil')
-        if self.use_wire_scale:
-            B_mat_wire = torch.randn(n_fourier, 2) * 1.0
-            self.register_buffer('B_mat_wire', B_mat_wire)
+            # Geometry-aware Fourier encoding: second set of features using coordinates
+            # normalised by wire_radius (x/r_w, y/r_w).
+            # Only used for 'coil' since that is the only problem type with a wire_radius param.
+            self.use_wire_scale = (problem_type == 'coil')
+            if self.use_wire_scale:
+                B_mat_wire = torch.randn(n_fourier, 2) * 1.0
+                self.register_buffer('B_mat_wire', B_mat_wire)
+            coord_dim = 2 * n_fourier + (2 * n_fourier if self.use_wire_scale else 0)
+        else:
+            self.use_wire_scale = False
+            coord_dim = 4   # x/500, y/500, r/500, ln((r + 1 mm)/500)
 
         # Determine number of physical parameters for this problem type
         bounds = self.PARAM_BOUNDS.get(problem_type, {})
@@ -89,12 +107,8 @@ class PINN(nn.Module):
         self.param_bounds = list(bounds.values())
         n_params = len(self.param_names)
 
-        # Network input dimension:
-        #   domain-scale Fourier: 2*n_fourier
-        #   wire-scale Fourier (coil only): 2*n_fourier
-        #   physical parameters: n_params
-        wire_feat_dim = 2 * n_fourier if self.use_wire_scale else 0
-        in_dim = 2 * n_fourier + wire_feat_dim + n_params
+        # Network input: coordinate features + physical parameters
+        in_dim = coord_dim + n_params
         layers = []
         for h_dim in hidden_layers:
             layers.append(nn.Linear(in_dim, h_dim))
@@ -103,17 +117,31 @@ class PINN(nn.Module):
         layers.append(nn.Linear(in_dim, 1))  # → A_z
 
         self.net = nn.Sequential(*layers)
+        # Xavier init (Glorot & Bengio 2010), the standard choice for tanh MLPs and the same
+        # init as the VanillaPINN of 06a, so the two notebooks differ only in what 06b adds.
+        for m in self.net:
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                nn.init.zeros_(m.bias)
 
     def _encode_coords(self, x, y, params_dict=None):
         """
-        Random Fourier features for (x, y). x,y in mm.
+        Coordinate features for (x, y) in mm.
 
-        For coil problems, also adds wire-scale features using coordinates
-        normalised by wire_radius (x/r_w_mm, y/r_w_mm).  This gives the network
-        a scale-invariant view of the wire geometry regardless of r_w.
+        'radial':  [x/500, y/500, r/500, ln((r + 1 mm)/500)].  r and ln r are the coordinates
+                   the wire field and the 2-D Poisson Green's function depend on; the +1 mm
+                   keeps the log finite on the axis.
+        'fourier': random Fourier features at domain scale and, for coil problems, at wire
+                   scale (coordinates normalised by r_w, clamped to ±10 r_w).
         """
         x_norm = x / self.coord_scale   # → [-1, 1]
         y_norm = y / self.coord_scale
+
+        if self.encoding == 'radial':
+            r = torch.sqrt(x**2 + y**2 + 1e-6)   # +1e-6 mm²: finite second derivatives at r = 0
+            return torch.cat([x_norm, y_norm, r / self.coord_scale,
+                              torch.log((r + 1.0) / self.coord_scale)], dim=-1)   # (N, 4)
+
         xy = torch.cat([x_norm, y_norm], dim=-1)       # (N, 2)
         proj = xy @ self.B_mat.T                        # (N, n_fourier)
         domain_feat = torch.cat([torch.sin(proj), torch.cos(proj)], dim=-1)  # (N, 2*n_fourier)
@@ -163,7 +191,7 @@ class PINN(nn.Module):
                          If None, parameter inputs are all zeros (single-sample mode).
         """
         device = x.device
-        feat = self._encode_coords(x, y, params_dict)              # (N, 2*n_fourier) or (N, 4*n_fourier)
+        feat = self._encode_coords(x, y, params_dict)              # (N, 4) radial, or (N, 2*n_fourier)/(N, 4*n_fourier) fourier
         p = self._encode_params(params_dict, x.shape[0], device) if params_dict else \
             torch.zeros(x.shape[0], len(self.param_names), device=device)
         inp = torch.cat([feat, p], dim=-1)

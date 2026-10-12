@@ -3,6 +3,10 @@
 --smoke   inject a cell before the baseline-training cell that swaps the loaders for tiny subsets,
           so every cell runs in ~2 min (checks code paths, not results); output goes to --out only.
 --inplace write the executed notebook (with outputs) back over the book notebook when no cell errored.
+--femm-shim  for notebooks that drive FEMM: inject a first cell (removed again before saving) that makes
+          femm-qt behave like Windows pyFEMM for the book code: openfemm() reuses the session already open
+          in the kernel instead of connecting a second client (which femm-qt refuses), and runs headless
+          even for FEMMSolver(debug_mode=True), which would otherwise open femm_gui on the desktop.
 """
 import argparse, os, re, sys, time
 import nbformat
@@ -14,6 +18,7 @@ ap.add_argument('--nb', default='04c_cnn_training.ipynb', help='notebook file na
 ap.add_argument('--smoke', action='store_true')
 ap.add_argument('--out', default=os.environ.get('NB_OUT'))
 ap.add_argument('--inplace', action='store_true')
+ap.add_argument('--femm-shim', action='store_true')
 args = ap.parse_args()
 NB = f'{C2}/{args.nb}'
 if args.out is None:
@@ -39,6 +44,20 @@ elif args.smoke:
         "test_loader  = DataLoader(Subset(test_ds, range(4)), batch_size=2)\n"
         "print('[smoke] tiny loaders injected')\n"))
     print(f"[driver] smoke mode: injected tiny-loader cell at index {k}")
+
+FEMM_SHIM = '''# [run_notebook.py --femm-shim] femm-qt compat for the book code; this cell is not saved.
+import femm as _femm
+_openfemm_orig = _femm.openfemm
+def _openfemm_reuse(*arg):
+    return _femm._default if _femm._default is not None else _openfemm_orig(1)   # 1 = headless
+_femm.openfemm = _openfemm_reuse
+print('[femm-shim] openfemm() reuses the open session; always headless')
+'''
+shim_idx = None
+if args.femm_shim:
+    nb.cells.insert(0, nbformat.v4.new_code_cell(FEMM_SHIM)); shim_idx = 0
+    if k is not None: k += 1
+    print("[driver] femm shim cell injected at index 0 (not saved)")
 
 t_start = {}
 def on_start(cell, cell_index):
@@ -66,6 +85,8 @@ client.execute()
 n_err = sum(1 for c in nb.cells if c.cell_type == 'code' for o in c.get('outputs', []) if o.get('output_type') == 'error')
 if k is not None:
     del nb.cells[k]   # do not keep the injected cell in any saved copy
+if shim_idx is not None:
+    del nb.cells[shim_idx]
 os.makedirs(os.path.dirname(args.out), exist_ok=True)
 nbformat.write(nb, args.out)
 print(f"[driver] finished in {(time.time()-t0)/60:.1f} min, {n_err} cell errors, wrote {args.out}")
