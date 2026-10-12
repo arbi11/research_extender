@@ -26,8 +26,8 @@ c_core_params = []
 for u in lhs_samples:
     params = CCoreParams(
         coil_current=-50 + (50 - (-50)) * u[0],
-        armature_gap=0.5 + (5.0 - 0.5) * u[1],
-        core_width=30 + (45 - 30) * u[2],
+        armature_gap=2.5 + (25.0 - 2.5) * u[1],
+        core_width=150 + (225 - 150) * u[2],
         coil_turns=int(300 + (700 - 300) * u[3])
     )
     c_core_params.append(params)

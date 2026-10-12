@@ -25,12 +25,30 @@ from dataclasses import dataclass
 from scipy.interpolate import LinearNDInterpolator
 from matplotlib.tri import Triangulation
 
-# FEMM path - hardcoded as specified
+# FEMM path - only meaningful for FEMM 4.2 on Windows. FEMM 5 (femm-qt) finds
+# femm_gui/femm_headless on PATH (or via the FEMM_DIR environment variable).
 FEMM_PATH = "C:\\femm42"
 
-# FEMM is required
+# FEMM is required (works with FEMM 4.2 pyfemm and FEMM 5 femm-qt bindings)
 import femm
 FEMM_AVAILABLE = True
+
+STEEL = 'M-19 Steel'
+
+
+def get_steel_material() -> None:
+    """
+    Load M-19 steel into the current document under the name STEEL.
+
+    FEMM 4.2's library calls it 'M-19 Steel'; FEMM 5's library has no such
+    name, so load 'M-19 14 mil' and rename it so block labels and material
+    maps can keep using the FEMM 4.2 name.
+    """
+    try:
+        femm.mi_getmaterial(STEEL)
+    except Exception:
+        femm.mi_getmaterial('M-19 14 mil')
+        femm.mi_modifymaterial('M-19 14 mil', 0, STEEL)
 
 
 @dataclass
@@ -688,7 +706,7 @@ class FEMMSolver:
 
             # Define materials
             femm.mi_getmaterial('Air')
-            femm.mi_getmaterial('M-19 Steel')
+            get_steel_material()
             femm.mi_getmaterial('Copper')
             femm.mi_addmaterial('NdFeB_42', 1.05, 1.05, 890000, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0)
 
@@ -888,14 +906,14 @@ class FEMMSolver:
 
             mesh_data = self._extract_mesh(material_map)
 
-            # Calculate torque on rotor (sum of rotor steel group 3 and magnets group 4)
-            # Code 2 = energy, Code 20 = Maxwell stress tensor torque (for planar)
-            torque = 0.0
-            for g in (3, 4):
-                femm.mo_groupselectblock(g)
-                torque += femm.mo_blockintegral(20)  # Maxwell stress tensor torque
-                femm.mo_clearblock()
-            mesh_data.torque = torque
+            # Calculate torque on rotor (rotor steel group 3 + magnets group 4)
+            # Both groups must be selected together: the weighted stress tensor
+            # needs a selection surrounded by air, and the steel abuts the magnets.
+            # Code 22 = steady-state weighted stress tensor torque
+            femm.mo_groupselectblock(3)
+            femm.mo_groupselectblock(4)
+            mesh_data.torque = femm.mo_blockintegral(22)
+            femm.mo_clearblock()
             mesh_data.analysis_time = time.time() - start_time
             femm.mo_close()
             return mesh_data
@@ -953,7 +971,7 @@ class FEMMSolver:
         # Define materials
         femm.mi_getmaterial('Air')
         femm.mi_getmaterial('Copper')
-        femm.mi_getmaterial('M-19 Steel')
+        get_steel_material()
 
         # Define coil circuit BEFORE using it in block labels
         femm.mi_addcircprop('coil', coil_current, 1)
@@ -1055,8 +1073,8 @@ class FEMMSolver:
             print("\n[DEBUG] Calculating force on armature (group 2)...")
 
         femm.mo_groupselectblock(2)
-        Fx = femm.mo_blockintegral(19)  # x-component force
-        Fy = femm.mo_blockintegral(20)  # y-component force
+        Fx = femm.mo_blockintegral(18)  # x-component weighted stress tensor force
+        Fy = femm.mo_blockintegral(19)  # y-component weighted stress tensor force
 
         if self.debug_mode:
             print(f"[DEBUG] Raw force values: Fx={Fx}, Fy={Fy}")
