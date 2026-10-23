@@ -1,9 +1,11 @@
 # FEMM 5 interactive companion
 
-The new [FEMM Assistant](femm_assistant/README.md) provides a Linux-native C-core
-geometry preview, queued FEMM solves, optional natural-language configuration,
-and portable Lua/Python exports. See its README for local setup, single-VPS
-Docker deployment, scope, and numerical verification.
+The [FEMM Assistant](femm_assistant/README.md) creates and modifies 2D planar DC
+magnetic models from circles, rectangles and simple polygons, alongside a C-core
+example. It validates structured AI model plans, previews geometry, queues native
+Linux FEMM solves, and exports complete Lua scripts with Python launchers. See its
+README for supported physics, OpenRouter setup, local or single-VPS deployment,
+and numerical verification.
 
 ---
 

@@ -1,26 +1,35 @@
 # An interactive FEMM companion
 
-The repository now includes a companion application in
+The repository includes a companion application in
 [`femm_assistant/`](https://github.com/arbi11/research_extender/tree/main/femm_assistant).
-It lets a reader configure a C-core actuator, preview its geometry, run a native
-FEMM 5 solve, and download the complete geometry/solve script and results.
+Readers can describe a new geometry, modify an existing model plan, inspect its
+preview, run native FEMM 5, and download the complete scripts and results.
 
-The initial model uses two-dimensional planar DC magnetostatics with a linear
-core permeability. Its paired winding cross-sections, pole gaps, stack depth,
-mesh size, and excitation are recorded explicitly. These assumptions make the
-model suitable for a reproducible teaching workflow; saturation and losses are
-outside its scope.
+General geometry mode supports circles, rectangles and simple polygons, including
+separate or nested material regions. It models two-dimensional planar DC
+magnetostatics with specified linear isotropic permeability, DC circuits, an
+out-of-plane depth, and an outer zero-potential boundary. Contours cannot touch,
+cross, or share edges. Axisymmetric models, AC, nonlinear B-H curves, permanent
+magnets and full 3D CAD are outside this version. A separate C-core example keeps
+its parameter form and established pole-gap refinement.
 
-Natural-language configuration proposes a model specification for the reader to
-inspect. FEMM computes the fields and forces. These results are distinct from
-the neural-network surrogate predictions discussed elsewhere in this chapter.
+The AI proposes a structured plan rather than executable code. Geometry, labels,
+references, physics and mesh budgets are validated before the application
+compiles the plan to Lua. Missing physical inputs produce questions; the reader
+reviews the plan before solving. FEMM supplies numerical fields and quantities,
+which are distinct from the surrogate predictions discussed in this chapter.
 
-The download contains an editable Lua script and a standalone Python launcher.
-It can be rerun with FEMM 5 without the assistant, its API key, or the repository.
-Use the [application instructions](https://github.com/arbi11/research_extender/blob/main/femm_assistant/README.md)
-to run it locally or deploy it on a Linux server.
+A source download contains `model.lua`, the complete editable model and solve
+script, a standalone Python launcher `run.py`, and the validated `spec.json`.
+After a successful solve, the full download also includes the FEMM model and
+solution, field CSV, quantities and logs. Rerunning the scripts requires FEMM 5,
+without the assistant, its AI key, or a repository checkout. See the
+[application instructions](https://github.com/arbi11/research_extender/blob/main/femm_assistant/README.md)
+for setup and deployment.
 
-Useful exercises are to vary current and examine flux/force scaling, increase
-the air gap, and repeat a solve with a finer mesh. For a linear material, flux
-linkage scales with current and force scales with its square. Numerical results
-should be checked for mesh and outer-boundary convergence before interpretation.
+The round-wire example supports comparison with Ampere's law,
+$B=\mu_0 I/(2\pi r)$ outside the conductor. Further exercises include refining
+the mesh, varying current and comparing energy scaling. The C-core example adds
+air-gap sensitivity and force scaling: for linear materials, flux scales with
+current and force with its square. Check mesh and outer-boundary convergence
+before interpreting quantitative results.
