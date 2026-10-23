@@ -75,3 +75,25 @@ depth and unsupported AC requests must stop at preflight without a draft.
 four draft calls occur in a full run, subject to the production deadlines and
 6000-token draft limit. Public-prompt drafts are recorded for diagnosing fidelity
 failures. No paid test runs automatically in CI.
+
+## Independent numerical references
+
+```bash
+docker run --rm --memory=2g --cpus=2 \
+  -e FEMM_LIVE_TEST=1 -e FEMM_MESH_EXPORT=1 femm-assistant:dev \
+  python -m unittest discover -s tests -p 'test_*live.py' -v
+```
+
+The additional reference suite uses the thick-wire solution from
+[OpenStax, Ampère's law, Example 12.7](https://openstax.org/books/university-physics-volume-2/pages/12-5-amperes-law):
+inside a uniform wire, `B = mu0 I r / (2 pi a²)`; outside,
+`B = mu0 I / (2 pi r)`. Probes test both vector components, several radii and
+quadrants. Separate runs vary mesh size and outer-domain radius. A coaxial case
+adds a nested air cavity and equal opposite return current: in the return shell,
+`I_enclosed = I [1 - (r²-b²)/(c²-b²)]`; outside it the ideal field is zero.
+
+These are planar infinite-length, linear-material symmetry references. A centered
+circular outer boundary preserves that symmetry; agreement across its radii is
+not evidence of general open-boundary convergence. Assertions use explicit
+tolerances and print actual measurements in CI. They do not establish accuracy
+for arbitrary geometry, nonlinear materials or finite-length conductors.

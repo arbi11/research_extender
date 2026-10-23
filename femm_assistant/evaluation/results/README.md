@@ -18,6 +18,10 @@ no API keys, authorization headers, user model history or environment dumps.
   include verified native exports. The first draft failed deterministic validation
   for explicit air definitions and a duplicate domain region; the existing one-
   repair loop corrected it before fidelity approval or execution.
+* `2026-10-24/numerical-references.json`: actual native Docker FEMM measurements
+  for the new thick-wire and coaxial return-current tests. Thick-wire vector
+  errors stay below 1.7% in all measured runs. The coaxial exterior residual is
+  below 1 microtesla, against the ideal zero field outside equal opposite currents.
 
 The baseline and final runs are separate stochastic measurements, not paired
 samples or an independently labeled holdout. No runtime threshold was tuned.

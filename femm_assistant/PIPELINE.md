@@ -97,6 +97,12 @@ local Compose edits when updating.
    unsupported AC. The wire probe error was 0.74% and double-current energy scaled
    by 4.0. This seed set is not an independent holdout or a calibrated confidence
    guarantee; runtime settings remain unchanged.
+   Native references now also check the thick-wire interior and exterior field
+   vectors, mesh refinement with fixed domain, domain-radius changes with fixed
+   mesh, and a nested coaxial return-current shell including exterior cancellation.
+   Both new reference tests passed in the development Docker image. Measurements
+   are saved in `evaluation/results/2026-10-24/numerical-references.json`; these
+   circular symmetry cases do not establish convergence for arbitrary boundaries.
 3. **Broader physics and CAD.** Axisymmetry, AC, nonlinear B-H curves, permanent
    magnets, shared-edge Boolean geometry and 3D remain future work. Add each with
    explicit schemas, deterministic validation and native reference tests.
