@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import tempfile
 import unittest
+import zipfile
 
 from app.jobs import JobStore, SolverWorker
 from app.plan import GeometryPlan, wire_example
@@ -43,6 +44,10 @@ class PlanLiveTests(unittest.TestCase):
                 self.assertEqual(completed["status"], "completed", f'{completed["error"]}\n{log}')
                 self.assertGreater((folder / "model.ans").stat().st_size, 100)
                 self.assertTrue((folder / "download.zip").is_file())
+                with zipfile.ZipFile(folder / "download.zip") as archive:
+                    self.assertIn("model.py", archive.namelist())
+                    self.assertIn("mesh.svg", archive.namelist())
+                    self.assertEqual(json.loads(archive.read("mesh-report.json"))["status"], "passed")
                 return {name: quantity["value"] for name, quantity in completed["result"].items()}
 
             base = solve()

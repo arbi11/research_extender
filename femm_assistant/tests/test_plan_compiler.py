@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import re
 import runpy
 import subprocess
@@ -9,6 +10,8 @@ import unittest
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 from pydantic import ValidationError
 
@@ -141,6 +144,49 @@ class PlanCompilerTests(unittest.TestCase):
             self.assertNotIn("__import__", target.with_name("model.lua").read_text())
             parsed = ET.fromstring(target.with_name("geometry.svg").read_text())
             self.assertFalse(any(element.tag.endswith("script") for element in parsed.iter()))
+
+    def test_mesh_rerun_clears_downloaded_solve_outputs_and_stale_mesh_exports(self):
+        stale_outputs = (
+            "model.fem", "model.ans", "results.csv", "results.json", "field.csv",
+            "field.svg", "download.zip", "mesh.csv", "mesh.svg", "mesh-report.json", "model.node",
+            "model.ele", "model.edge", "model.1.node", "model.1.ele", "model.1.edge",
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            target = root / "model.py"
+            target.write_text(python_script(wire_example()))
+            module = runpy.run_path(str(target))
+            module["MODEL"]["circuits"][0]["current_a"] = 2.0
+            for native_exit_code in (0, 1):
+                with self.subTest(native_exit_code=native_exit_code):
+                    for name in stale_outputs:
+                        (root / name).write_text("old solved geometry and measurements")
+                    (root / "personal_notes.txt").write_text("Keep this unrelated file")
+
+                    def launch_stock_femm(*args, **kwargs):
+                        # Check at the launch boundary: stale outputs cannot
+                        # survive even when FEMM fails or exports no mesh files.
+                        self.assertFalse(any((root / name).exists() for name in stale_outputs))
+                        if native_exit_code == 0:
+                            (root / "model.fem").write_text("new edited model")
+                            (root / "mesh.csv").write_text("status\ncomplete\n")
+                        return SimpleNamespace(returncode=native_exit_code, pid=12345, wait=lambda **kwargs: native_exit_code)
+
+                    local_socket = mock.MagicMock()
+                    local_socket.__enter__.return_value = local_socket
+                    local_socket.getsockname.return_value = ("127.0.0.1", 49221)
+                    with mock.patch.dict(os.environ, {"FEMM_LUA": sys.executable}), mock.patch("subprocess.Popen", side_effect=launch_stock_femm), mock.patch("os.killpg"), mock.patch("socket.socket", return_value=local_socket):
+                        if native_exit_code:
+                            with self.assertRaisesRegex(SystemExit, "FEMM exited with an error"):
+                                module["main"](["--mesh-only"])
+                        else:
+                            module["main"](["--mesh-only"])
+                    for name in stale_outputs:
+                        if native_exit_code == 0 and name in ("model.fem", "mesh.csv"):
+                            continue
+                        self.assertFalse((root / name).exists(), name)
+                    self.assertEqual((root / "personal_notes.txt").read_text(), "Keep this unrelated file")
+                    self.assertEqual(json.loads((root / "spec.json").read_text())["circuits"][0]["current_a"], 2.0)
 
     def test_compilation_rejects_models_mutated_after_validation(self):
         unchecked = wire_example().model_copy(update={"depth_mm": float("nan")})

@@ -199,16 +199,19 @@ class SolverWorker:
                     if self.process:
                         self.process.wait(timeout=5)
                     self.process = None
+            mesh_report = validate_mesh(folder, spec) if is_plan else None
+            if mesh_report is not None:
+                (folder / "mesh-report.json").write_text(json.dumps(mesh_report, indent=2, allow_nan=False))
             if mesh_only:
                 if (folder / "model.ans").exists() or (folder / "results.csv").exists():
                     raise RuntimeError("A mesh-only job unexpectedly produced a field solution.")
-                result = validate_mesh(folder, spec)
+                result = mesh_report
             else:
                 result = read_results(folder, expected)
                 field_plot(folder)
             result["runtime"] = {"value": round(time.monotonic()-started, 3), "unit": "s"}
             (folder / "results.json").write_text(json.dumps(result, indent=2, allow_nan=False))
-            allowed = ["model.lua", "model.py", "run.py", "spec.json", "geometry.svg", "README.txt", "model.fem", "model.ans", "results.csv", "field.csv", "field.svg", "results.json", "solver.log", "mesh.svg", "model.node", "model.ele", "model.edge", "model.1.node", "model.1.ele", "model.1.edge"]
+            allowed = ["model.lua", "model.py", "run.py", "spec.json", "geometry.svg", "README.txt", "model.fem", "model.ans", "results.csv", "field.csv", "field.svg", "results.json", "solver.log", "mesh.csv", "mesh.svg", "mesh-report.json", "model.node", "model.ele", "model.edge", "model.1.node", "model.1.ele", "model.1.edge"]
             with zipfile.ZipFile(folder / "download.zip", "w", zipfile.ZIP_DEFLATED) as archive:
                 for name in allowed:
                     if (folder / name).is_file():

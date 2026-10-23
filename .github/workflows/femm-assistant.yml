@@ -69,3 +69,16 @@ jobs:
           cache-to: type=gha,mode=max
       - name: Validate real FEMM solves
         run: docker run --rm --memory=2g --cpus=2 -e FEMM_LIVE_TEST=1 -e FEMM_MESH_EXPORT=1 femm-assistant:test python -m unittest discover -s tests -p 'test_*live.py' -v
+      - name: Export tested Linux image
+        run: |
+          docker image tag femm-assistant:test research-extender-femm:local
+          docker image save research-extender-femm:local | gzip -1 > femm-assistant-linux-amd64.tar.gz
+          sha256sum femm-assistant-linux-amd64.tar.gz > femm-assistant-linux-amd64.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: femm-linux-amd64-image
+          path: |
+            femm-assistant-linux-amd64.tar.gz
+            femm-assistant-linux-amd64.tar.gz.sha256
+          retention-days: 3
+          compression-level: 0

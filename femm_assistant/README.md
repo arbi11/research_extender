@@ -10,24 +10,34 @@ the original numeric form and solver. Axisymmetric models, AC analysis,
 permanent magnets, nonlinear B-H curves, shared-edge Boolean operations and
 full 3D CAD remain outside this version.
 
-The [implementation pipeline](PIPELINE.md) distinguishes this working harness
-from planned mesh-only stages, complete Python model exports and Jev decisions.
+The [implementation pipeline](PIPELINE.md) records the implemented stages and
+remaining validation and physics extensions.
 
 ## What a reader can do
 
 1. Describe a new geometry or a modification in natural language, load a round-wire
    example, or use the C-core numeric form.
-2. Inspect the geometry and all assumptions before submitting a solve.
-3. Run a queued FEMM 5 simulation and inspect energy, circuit quantities, field
+2. Inspect the geometry and assumptions, then select **Check mesh**. Inspect the
+   actual triangular mesh, counts, minimum angle, domain coverage and region labels.
+3. Select **Solve** after the mesh check passes. Inspect energy, circuit quantities, field
    probes, optional force and a sampled magnetic-field plot.
-4. Download a complete ZIP: the editable source script `model.lua`, a standalone
-   Python launcher `run.py`, `spec.json`,
-   geometry preview, FEMM model and solution, field CSV, quantities, and solver log.
+4. Download a ZIP containing an editable Python CAD script `model.py`, native Lua
+   bridge `model.lua`, compatibility launcher `run.py`, `spec.json`, previews and
+   available mesh/solve artifacts, field CSV, quantities and solver log.
 
 Source-only downloads work before a solve and without an AI credential. They do
 not contain a FEMM model/solution or numerical results. The portable scripts need
-FEMM 5 but need no repository checkout or AI API key. The Lua script creates,
-meshes, solves, and exports the model; the Python script launches it.
+FEMM 5 but need no repository checkout, third-party Python package or AI API key.
+Edit the `MODEL` dictionary in `model.py`; its named Python CAD stages regenerate
+the complete Lua construction, material, boundary, mesh, solve and extraction
+sequence. Run `python3 model.py`, `python3 model.py --mesh-only`, or
+`python3 model.py --write-only`; `python3 run.py` invokes the same pipeline.
+
+The general-geometry backend requires a passed mesh job for the exact current
+specification before accepting a solve. Any model edit requires another mesh
+check. This gate detects invalid mesh structure and missing coverage; it is not
+proof of field accuracy or convergence. The separate C-core numeric form retains
+its original solve flow.
 
 ## Run locally, without Docker
 
@@ -43,35 +53,49 @@ uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000 --workers 1
 
 Open <http://127.0.0.1:8000>. Without FEMM installed, previews and source exports
 work; the UI identifies the unavailable solver and disables solving. Without an
-AI key/model, the numeric form remains usable and the natural-language control
+AI key, the numeric form remains usable and the natural-language control
 is disabled. Local development has no access token by default; keep it on loopback.
 
 For actual solves, build/install [FEMM 5](https://femm.info/doku/doku.php?id=download5)
 using its [Linux instructions](https://femm.info/doku/doku.php?id=bindingsetup).
-Put `femm-lua` on PATH, or set `FEMM_LUA` to its full launcher path. This application
-uses FEMM 5's bundled Lua launcher and its headless engine. It does not use the
+Put `femm-lua` on PATH, or set `FEMM_LUA` to its full launcher path. General-mode
+mesh checks also need the opt-in native mesh export patch included by the Docker
+build; stock FEMM 5 keeps this pre-solve mesh in memory. Portable model scripts
+can still run with stock FEMM 5, but detailed diagnostic mesh files require the
+patch. This application uses FEMM 5's bundled Lua launcher and its headless engine.
+It does not use the
 old PyPI `pyfemm` package, Wine, a display server, or Windows automation.
 
-To enable natural-language requests, set these variables before starting:
+To enable natural-language requests, set the API key before starting:
 
 ```text
 OPENROUTER_API_KEY=your-key-kept-on-the-server
-AI_MODEL=openai/gpt-4.1-mini
 ```
 
-For Docker, put them in the existing `.env`; plain `uvicorn` needs exported
-variables. `AI_BASE_URL` defaults to OpenRouter's API. Keep the key out of Git and
-chat. Requests send the prompt and, when modifying a model, its current geometry
-plan to the provider.
+Only the API key is required for the default AI configuration. The draft model
+defaults to `openai/gpt-4.1-mini` and the semantic decision model to
+`typesafe/jev-1.14`; blank model settings use these defaults. Optional overrides
+are `AI_MODEL`, `DECISION_MODEL` and `DECISION_THRESHOLD` (default `0.90`). For
+ordinary Docker use, add only the key to the existing `.env`; the supplied Compose
+file forwards the key and `AI_MODEL` and uses the decision defaults. Custom
+decision settings also need explicit forwarding in the Compose `environment`
+section; adding them to `.env` alone does not forward them. Plain `uvicorn` uses
+exported environment variables for all these settings.
+`AI_BASE_URL` defaults to OpenRouter's API. Keep the key on the server, out of Git
+and chat. Requests send the prompt, current plan when present, and proposed plan
+for the fidelity check to the provider.
 
 The AI returns a structured model plan rather than executable Lua or Python.
 The application validates contours, region labels, material/circuit references,
-physics, and mesh budgets, then compiles the accepted plan into the same Lua used
-by the worker and the download. New models need not use a template. Missing
-physical inputs or unsupported requests produce clarification questions. General
-geometry requests allow at most two provider calls: an initial proposal and one
-validation-guided repair, each capped at 6000 generated tokens, within a total
-60 second deadline. Review the proposed model before solving.
+physics, and mesh budgets, then compiles the accepted plan. General AI planning
+requires Jev semantic preflight and a fidelity check of the resulting plan through
+OpenRouter's Decisions API. Jev probabilities concern intent, not numerical
+accuracy; the `0.90` threshold is provisional until calibrated on labeled cases.
+Arithmetic, topology, validation and stage gates remain deterministic. Missing
+physical inputs or unsupported requests produce clarification questions. A
+request allows at most two Jev calls and two draft-model calls, including one
+validation-guided repair capped at 6000 generated tokens per draft, within a
+90 second total deadline. Review the proposed model before checking its mesh.
 
 ## Deploy on a single Linux VPS
 
@@ -88,7 +112,8 @@ cp .env.example .env
 ```
 
 Edit `.env`: replace `ASSISTANT_TOKEN` with a long random value. Add your API key
-and selected model if you want natural-language requests. Keep this file out of Git.
+if you want natural-language requests; default models need no additional setting.
+Keep this file out of Git.
 Compose reads this file; plain `uvicorn` does not load it automatically.
 
 ```bash
@@ -120,12 +145,10 @@ per-user histories; anyone holding the token may access a job whose ID they have
 
 ## Update an existing installation
 
-From the existing repository root, pull the checked-out branch and rebuild:
+From the existing repository root, pull the checked-out branch:
 
 ```bash
 git pull --ff-only
-cd femm_assistant
-docker compose --env-file .env -f deploy/compose.yaml up --build -d assistant
 ```
 
 Keep the existing `.env`, AI key, and local Compose settings. Do not copy
@@ -133,6 +156,51 @@ Keep the existing `.env`, AI key, and local Compose settings. Do not copy
 Compose file would be overwritten, preserve those edits before updating instead
 of forcing the checkout. The named jobs volume remains in place. On installations
 where Docker requires root, prefix Docker commands with `sudo`.
+
+### Use a tested image on an older laptop
+
+The workflow is configured to export a Linux `amd64` image after its live tests
+pass. Prefer this option on an older x86-64 laptop to avoid native compilation.
+The artifact exists only after a successful run, and expires after three days.
+
+In GitHub Actions, open a successful **FEMM 5 assistant** run for the same commit
+as your updated checkout. Download **femm-linux-amd64-image** and extract its ZIP.
+From the extracted folder, check the downloaded image:
+
+```bash
+sha256sum -c femm-assistant-linux-amd64.tar.gz.sha256
+```
+
+Proceed if the check reports `OK`, then load it:
+
+```bash
+sudo docker image load -i femm-assistant-linux-amd64.tar.gz
+```
+
+Return to your existing `research_extender/femm_assistant` folder and start it
+with the existing settings:
+
+```bash
+sudo docker compose --env-file .env -f deploy/compose.yaml up --no-build -d assistant
+```
+
+The image contains the application version from that workflow's commit. It does
+not contain your API key or local settings. Reload the browser after updating.
+
+### Build the image yourself
+
+From the updated repository root:
+
+```bash
+cd femm_assistant
+docker compose --env-file .env -f deploy/compose.yaml up --build -d assistant
+```
+
+This version adds a native mesh-export patch, so an existing image needs one
+FEMM recompilation. The initial rebuild can take substantial time on an old
+laptop. Alternatively, build a Linux `amd64` image on a powerful machine and
+transfer it with `docker image save` / `docker image load`, then start with
+`--no-build` as above.
 
 Changing only the key or model in `.env` needs no image rebuild; use the same
 Compose command with `--no-build` in place of `--build`. Compose recreates the
@@ -142,8 +210,12 @@ service with the new environment, then reload the browser.
 
 The Dockerfile downloads the official `06oct2026_bd03d0b` source archive, checks
 its published SHA-256, builds natively on Ubuntu 24.04, and installs the headless
-engine, field solvers, and Lua launcher. It retains the upstream source archive
-alongside the installed program. It then installs only this app's four Python
+engine, field solvers, and Lua launcher. Before compilation,
+[`deploy/patch_femm_mesh.py`](deploy/patch_femm_mesh.py) adds an opt-in
+`FEMM_MESH_EXPORT=1` callback export of FEMM's actual in-memory mesh. It writes
+diagnostic files without changing the numerical meshing or solving algorithms.
+The image retains the original upstream archive and patcher alongside the
+installed program. It then installs only this app's four Python
 dependencies and runs as a non-root user.
 
 The image build supports an optional `proxy_ca` BuildKit secret for environments
@@ -156,10 +228,10 @@ disable TLS verification. Source/version changes belong in
 - One server, one application process, one simulation worker, SQLite, and local
   result storage. No separate database, queue, GPU, or local language model.
 - Up to five queued/running jobs and 20 solve submissions per hour for the pilot.
-- Up to 20 AI requests per hour. A general geometry request may make two provider
-  calls, capped at 6000 generated tokens each and 60 seconds total, including one
-  validation-guided repair. These in-memory limits reset on restart; use the
-  provider's spending controls for an account-level budget.
+- Up to 20 AI requests per hour. A general geometry request may make two Jev calls
+  and two draft-model calls, capped at 6000 generated tokens per draft and
+  90 seconds total, including one validation-guided repair. These in-memory limits
+  reset on restart; use the provider's spending controls for an account-level budget.
 - Each simulation has a 180 second timeout. The Compose container is limited to
   2 GB RAM, 1.5 CPU cores, and 128 processes; the whole process group is stopped
   on timeout.
@@ -182,30 +254,36 @@ python -m unittest discover -s tests -v
 node --check app/static/app.js
 ```
 
-Run both real numerical test suites with native FEMM 5 installed:
+Run the live mesh, Python-export and numerical suites with the patched native
+FEMM 5 installed:
 
 ```bash
-FEMM_LIVE_TEST=1 python -m unittest discover -s tests -p 'test_*live.py' -v
+FEMM_LIVE_TEST=1 FEMM_MESH_EXPORT=1 python -m unittest discover -s tests -p 'test_*live.py' -v
 ```
 
 Or, after building the container:
 
 ```bash
-docker run --rm --memory=2g --cpus=2 -e FEMM_LIVE_TEST=1 \
+docker run --rm --memory=2g --cpus=2 -e FEMM_LIVE_TEST=1 -e FEMM_MESH_EXPORT=1 \
   research-extender-femm:local python -m unittest discover -s tests -p 'test_*live.py' -v
 ```
 
 The C-core suite checks force direction, zero current, linear flux scaling,
 quadratic force scaling, increasing-gap sensitivity, mesh refinement, and the
 linear energy/flux-linkage identity. The general-geometry suite builds a circular
-wire in air and compares a field probe against Ampere's law, repeats with a finer
-mesh, doubles the current, and checks field and energy scaling. These tests run
-actual FEMM solves and print their measurements. Without `FEMM_LIVE_TEST=1` they
+wire in air, verifies that mesh-only mode creates no field solution, then compares
+a solved field probe against Ampere's law, repeats with a finer mesh, doubles the
+current, and checks field and energy scaling. The Python-export suite runs the
+downloaded CAD script through mesh-only and solve stages. These tests use actual
+FEMM. Without `FEMM_LIVE_TEST=1` they
 are skipped, so a passing unit test run alone does not verify the native solver.
 
-The `FEMM 5 assistant` GitHub Actions workflow runs unit checks and separately
-builds the Linux image and enables the live test on relevant pull requests.
-Review both jobs before deployment. These are initial numerical checks; a formal
+The `FEMM 5 assistant` GitHub Actions workflow includes application checks,
+browser workflow checks, an image build and live suites on relevant pull requests.
+Browser checks use fixture AI and job completion; they verify the UI and stage
+gates rather than provider decisions or numerical physics. Review the current
+workflow results before deployment; this document does not certify a CI run.
+These are initial numerical checks; a formal
 benchmark against an independently established reference remains future work.
 
 ## Model details
@@ -222,8 +300,8 @@ Outputs include energy, defined circuit currents and flux linkages, specified
 field probes, and optional force on an eligible region surrounded by air. Field
 output is a 41 × 31 grid in tesla. Samples outside or on a nonrectangular outer
 boundary are zero-filled for plotting; they are not field measurements there.
-The download records the validated plan in `spec.json` and its complete compiled
-geometry/material/boundary/mesh/solve/export sequence in `model.lua`.
+The download records the validated plan in `spec.json`, editable Python CAD
+stages in `model.py`, and the compiled native sequence in `model.lua`.
 
 The separate C-core example keeps its original parameterized geometry and
 pole-edge refinement. Its paired winding cross-sections have opposite turn signs,

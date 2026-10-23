@@ -75,7 +75,7 @@ CAPABILITIES = (
     "closed rectangles, circles and simple polygons with disjoint or nested contours; "
     "an outer zero-vector-potential boundary and surrounding air. No full 3D, "
     "axisymmetry, AC, eddy currents, nonlinear saturation, permanent magnets, "
-    "moving geometry, overlapping/touching contours or Boolean operations. Numerical "
+    "time-dependent motion, overlapping/touching contours or Boolean operations. Numerical "
     "air-domain and mesh choices may be proposed with limitations explained. "
     "Unspecified physical values require clarification unless the user explicitly "
     "authorizes reasonable assumptions; existing model values supply modification context."

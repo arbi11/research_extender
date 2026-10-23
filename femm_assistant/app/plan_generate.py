@@ -324,12 +324,14 @@ def main(argv=None):
     if args.write_only:
         print("Regenerated model.lua, spec.json and geometry.svg from Python MODEL data.")
         return
+    # Remove prior outputs so a failed run cannot look like a successful one.
+    # A downloaded solved bundle also contains derived previews, JSON and ZIP
+    # outputs. Those become stale when MODEL changes, including on mesh-only runs.
+    for name in ("model.fem", "model.ans", "mesh.csv", "mesh.svg", "mesh-report.json", "model.node", "model.ele", "model.edge", "model.1.node", "model.1.ele", "model.1.edge", "results.csv", "results.json", "field.csv", "field.svg", "download.zip"):
+        (root / name).unlink(missing_ok=True)
     command = os.environ.get("FEMM_LUA", "femm-lua")
     if not shutil.which(command):
         raise SystemExit("Install native FEMM 5 and put femm-lua on PATH, or set FEMM_LUA. See README.txt.")
-    # Remove prior outputs so a failed run cannot look like a successful one.
-    for name in ("model.fem", "model.ans", "mesh.csv", "model.node", "model.ele", "model.edge", "results.csv", "field.csv"):
-        (root / name).unlink(missing_ok=True)
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
