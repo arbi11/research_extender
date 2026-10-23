@@ -87,7 +87,7 @@ async function init() {
     config = await (await api("/api/config")).json(); $("access").hidden = !config.auth_required; $("token").value = token;
     $("availability").textContent = config.solver_detected ? "FEMM 5 launcher detected" : "Source export available · Solver not installed";
     $("ai-note").textContent = config.ai_available ? "AI proposes parameters. You review the model and choose when to solve." : "Natural-language configuration is not enabled on this server. Edit the parameters below.";
-    fields.forEach(([key, label, min, max, step]) => { const element = document.createElement("label"); element.htmlFor = key; element.textContent = label; const input = document.createElement("input"); Object.assign(input, {id: key, type: "number", min, max, step, required: true}); input.value = config.defaults[key]; element.append(input); $("parameters").append(element); });
+    fields.forEach(([key, label, min, max, step]) => { const element = document.createElement("label"); element.htmlFor = key; element.textContent = label; const input = document.createElement("input"); Object.assign(input, {id: key, type: "number", min, max, step: key === "turns" ? 1 : "any", required: true}); input.value = config.defaults[key]; element.append(input); $("parameters").append(element); });
     $("parameters").addEventListener("submit", event => event.preventDefault());
     $("parameters").addEventListener("input", () => { clearTimeout(previewTimer); previewTimer = setTimeout(preview, 350); });
     $("assumptions").replaceChildren(...config.assumptions.map(text => { const li = document.createElement("li"); li.textContent = text; return li; })); controls();

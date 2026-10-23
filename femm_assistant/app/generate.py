@@ -79,7 +79,7 @@ def lua_script(spec: CCoreSpec) -> str:
         'out = openfile("field.csv","w")', 'write(out,"x_mm,y_mm,bx_t,by_t\\n")',
         'for row=0,30 do', f'  y = -{t!r} + row * {(h+2*t)/30!r}',
         '  for col=0,40 do', f'    x = -{t!r} + col * {(w+g+3*t)/40!r}',
-        '    bx, by = mo_getb(x,y)', '    write(out,x,",",y,",",bx,",",by,"\\n")',
+        '    a, bx, by = mo_getpointvalues(x,y)', '    write(out,x,",",y,",",bx,",",by,"\\n")',
         '  end', 'end', 'closefile(out)', 'mo_close()', 'mi_close()',
     ]
     return "\n".join(lines) + "\n"
