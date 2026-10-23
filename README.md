@@ -187,3 +187,9 @@ architectural choices like BatchNorm and Dropout..."
 - Verify both lightrag_code_index and lightrag_latex_index exist
 - Check that KGs were integrated successfully
 - Try different query modes (hybrid recommended)
+
+## Quantum-computing appendix
+
+[Appendix B: Quantum Computing for Electromagnetic Design](jupyter_book/AppendixB/README.md)
+contains preliminary material separate from the main chapters: quantum foundations,
+a reproducible C-core reliability simulation, and a topology-optimization research plan.
