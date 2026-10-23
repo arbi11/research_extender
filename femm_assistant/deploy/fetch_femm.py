@@ -10,7 +10,11 @@ SHA256 = "0ae785ab5f12b32f9529f479e9f1cbafea18aa23b32976d8ea559a08e016450d"
 certificate = Path("/run/secrets/proxy_ca")
 context = ssl.create_default_context(cafile=str(certificate) if certificate.exists() else None)
 archive = Path("/tmp/femm5-source.zip")
-with urllib.request.urlopen(URL, context=context, timeout=120) as response, archive.open("wb") as output:
+request = urllib.request.Request(URL, headers={
+    "User-Agent": "Mozilla/5.0 (compatible; research-extender FEMM build)",
+    "Accept": "application/zip,application/octet-stream;q=0.9,*/*;q=0.8",
+})
+with urllib.request.urlopen(request, context=context, timeout=120) as response, archive.open("wb") as output:
     while chunk := response.read(1024 * 1024):
         output.write(chunk)
 with archive.open("rb") as stream:
