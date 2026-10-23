@@ -17,6 +17,8 @@ from . import ai
 from .generate import preview_svg, source_zip
 from .jobs import BusyError, JobStore, SolverWorker
 from .model import ASSUMPTIONS, CCoreSpec
+from .plan import GeometryPlan, wire_example
+from . import plan_generate, planner
 
 
 @dataclass
@@ -44,6 +46,12 @@ class InterpretRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     prompt: str = Field(min_length=5, max_length=3000)
     current: CCoreSpec = Field(default_factory=CCoreSpec)
+
+
+class PlanInterpretRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    prompt: str = Field(min_length=5, max_length=3000)
+    current: GeometryPlan | None = None
 
 
 class Budget:
@@ -81,7 +89,7 @@ def create_app(settings: Settings | None = None):
     app.state.store, app.state.worker = store, worker
 
     async def authenticate(authorization: str = Header(default="")):
-        # Empty token is explicitly for localhost development; Compose requires one.
+        # An empty token supports the owner's explicitly configured local trial.
         if settings.token and not hmac.compare_digest(authorization, "Bearer " + settings.token):
             raise HTTPException(401, "Enter the assistant access token.", headers={"WWW-Authenticate": "Bearer"})
 
@@ -94,7 +102,8 @@ def create_app(settings: Settings | None = None):
             body = bytearray()
             async for chunk in request.stream():
                 body.extend(chunk)
-                if len(body) > 16000:
+                limit = 128000 if request.url.path.startswith("/api/plan/") else 16000
+                if len(body) > limit:
                     return Response("Request is too large.", status_code=413)
             request._body = bytes(body)
         response = await call_next(request)
@@ -114,7 +123,11 @@ def create_app(settings: Settings | None = None):
     async def config():
         return {"auth_required": bool(settings.token), "ai_available": bool(settings.ai_key and settings.ai_model),
                 "solver_detected": bool(shutil.which(settings.femm_lua)), "defaults": CCoreSpec().model_dump(),
-                "assumptions": ASSUMPTIONS, "retention_hours": settings.retention_hours}
+                "assumptions": ASSUMPTIONS, "retention_hours": settings.retention_hours,
+                "plan_example": wire_example().model_dump(), "plan_schema": GeometryPlan.model_json_schema(),
+                "plan_capabilities": ["2D planar DC magnetostatics", "Circles, rectangles and simple polygons",
+                                      "Nested or separate closed regions with linear materials",
+                                      "DC circuits, an outer zero-potential boundary, field probes and optional force"]}
 
     @app.post("/api/preview", dependencies=secured)
     async def preview(spec: CCoreSpec):
@@ -134,8 +147,45 @@ def create_app(settings: Settings | None = None):
             return await ai.interpret(request.prompt, request.current, settings.ai_key, settings.ai_base_url, settings.ai_model)
         except httpx.TimeoutException:
             raise HTTPException(504, "The AI request timed out. Your model parameters have not changed.")
+        except httpx.HTTPStatusError as exc:
+            messages = {401: "The AI provider rejected the API key. Check the server's OpenRouter settings.",
+                        402: "The AI account has insufficient credits. Check its balance and key spending limit.",
+                        429: "The AI provider is rate limiting requests. Try again shortly."}
+            code = exc.response.status_code
+            raise HTTPException(429 if code == 429 else 502,
+                                messages.get(code, "The AI provider could not complete this request. Try again shortly.")) from None
         except (httpx.HTTPError, ValidationError, KeyError, ValueError, IndexError):
             raise HTTPException(502, "The AI provider did not return a valid C-core specification. Refine the request or edit parameters directly.")
+
+    @app.post("/api/plan/preview", dependencies=secured)
+    async def plan_preview(spec: GeometryPlan):
+        return Response(plan_generate.preview_svg(spec), media_type="image/svg+xml")
+
+    @app.post("/api/plan/export", dependencies=secured)
+    async def plan_export(spec: GeometryPlan):
+        return Response(plan_generate.source_zip(spec), media_type="application/zip",
+                        headers={"Content-Disposition": 'attachment; filename="femm-geometry-source.zip"'})
+
+    @app.post("/api/plan/interpret", dependencies=secured)
+    async def plan_interpret(request: PlanInterpretRequest):
+        if not settings.ai_key or not settings.ai_model:
+            raise HTTPException(503, "Set OPENROUTER_API_KEY and AI_MODEL on the server to enable AI geometry requests. You can load or edit a model plan directly.")
+        budget.use("ai", 20)
+        try:
+            return await planner.interpret_plan(request.prompt, request.current, settings.ai_key,
+                                                settings.ai_base_url, settings.ai_model)
+        except planner.PlannerError as exc:
+            raise HTTPException(exc.status_code, exc.message) from None
+
+    @app.post("/api/plan/jobs", dependencies=secured, status_code=202)
+    async def plan_submit(spec: GeometryPlan):
+        if not shutil.which(settings.femm_lua):
+            raise HTTPException(503, "FEMM 5 is not installed on this server. You can still preview and download the source bundle.")
+        budget.use("solve", 20)
+        try:
+            return store.create(spec)
+        except BusyError as exc:
+            raise HTTPException(429, str(exc))
 
     @app.post("/api/jobs", dependencies=secured, status_code=202)
     async def submit(spec: CCoreSpec):

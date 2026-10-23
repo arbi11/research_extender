@@ -16,6 +16,8 @@ import uuid
 import zipfile
 from .model import CCoreSpec
 from .generate import source_files
+from .plan import GeometryPlan
+from . import plan_generate
 
 
 class BusyError(Exception):
@@ -35,7 +37,7 @@ class JobStore:
         db.row_factory = sqlite3.Row
         return db
 
-    def create(self, spec: CCoreSpec, max_pending=5):
+    def create(self, spec: CCoreSpec | GeometryPlan, max_pending=5):
         now = time.time()
         job_id = uuid.uuid4().hex
         with closing(self.connect()) as db, db:
@@ -81,8 +83,9 @@ class JobStore:
                 db.execute("DELETE FROM jobs WHERE id=?", (row[0],))
 
 
-def read_results(folder: Path):
-    required = {"force_x": "N", "force_y": "N", "energy": "J", "flux_linkage": "Wb-turn", "current": "A"}
+def read_results(folder: Path, required=None):
+    if required is None:
+        required = {"force_x": "N", "force_y": "N", "energy": "J", "flux_linkage": "Wb-turn", "current": "A"}
     result = {}
     if not (folder / "model.ans").is_file() or (folder / "model.ans").stat().st_size == 0:
         raise RuntimeError("FEMM did not produce a solution file.")
@@ -90,7 +93,7 @@ def read_results(folder: Path):
         for row in csv.DictReader(stream):
             name = row["quantity"]
             value = float(row["value"])
-            if name not in required or row["unit"] != required[name] or not math.isfinite(value):
+            if name not in required or name in result or row["unit"] != required[name] or not math.isfinite(value):
                 raise RuntimeError("FEMM returned invalid quantities or units.")
             result[name] = {"value": value, "unit": row["unit"]}
     if set(result) != set(required):
@@ -161,8 +164,11 @@ class SolverWorker:
         folder = self.store.root / job_id
         folder.mkdir(exist_ok=True)
         try:
-            spec = CCoreSpec.model_validate(job["spec"])
-            for name, content in source_files(spec).items():
+            is_plan = job["spec"].get("kind") == "magnetostatic_plan"
+            spec = GeometryPlan.model_validate(job["spec"]) if is_plan else CCoreSpec.model_validate(job["spec"])
+            files = plan_generate.source_files(spec) if is_plan else source_files(spec)
+            expected = plan_generate.required_results(spec) if is_plan else None
+            for name, content in files.items():
                 (folder / name).write_text(content)
             if not shutil.which(self.command):
                 raise RuntimeError("FEMM 5 launcher not found. Install FEMM 5 and configure FEMM_LUA.")
@@ -185,7 +191,7 @@ class SolverWorker:
                     if self.process:
                         self.process.wait(timeout=5)
                     self.process = None
-            result = read_results(folder)
+            result = read_results(folder, expected)
             field_plot(folder)
             result["runtime"] = {"value": round(time.monotonic()-started, 3), "unit": "s"}
             (folder / "results.json").write_text(json.dumps(result, indent=2, allow_nan=False))
