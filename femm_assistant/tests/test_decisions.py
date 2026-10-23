@@ -260,6 +260,9 @@ class DecisionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(requests[0].content, requests[1].content)
         self.assertEqual(requests[0].headers, requests[1].headers)
         self.assertEqual(requests[0].extensions["timeout"]["connect"], decisions.CONNECT_TIMEOUT_SECONDS)
+        self.assertEqual(requests[0].extensions["timeout"]["read"], decisions.CALL_TIMEOUT_SECONDS)
+        self.assertLess(2 * decisions.CONNECT_TIMEOUT_SECONDS + decisions.CONNECT_RETRY_DELAY_SECONDS,
+                        decisions.CALL_TIMEOUT_SECONDS)
         self.assertIsNone(result.trace[0].threshold)
 
     async def test_connection_error_retry_applies_to_failed_call_diagnostic_only(self):
@@ -292,6 +295,9 @@ class DecisionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(caught.exception.status_code, status)
                 self.assertEqual(len(requests), 2)
                 self.assertNotIn("fixture-private-key", caught.exception.message)
+                if exception is httpx.ConnectTimeout:
+                    self.assertIn("establish a connection", caught.exception.message)
+                    self.assertIn("after two attempts", caught.exception.message)
 
     async def test_ambiguous_delivery_and_provider_responses_are_never_retried(self):
         for exception in [httpx.ReadTimeout, httpx.WriteTimeout, httpx.ReadError,

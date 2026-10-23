@@ -23,8 +23,10 @@ DEFAULT_BASE_URL = "https://openrouter.ai/api/alpha"
 DEFAULT_THRESHOLD = 0.90
 MAX_RESPONSE_BYTES = 32 * 1024
 MAX_STATE_BYTES = 160 * 1024
-CALL_TIMEOUT_SECONDS = 15
-CONNECT_TIMEOUT_SECONDS = 5
+# Match the drafting transport's connect allowance. Two connection attempts and
+# a response share this deadline; the planner still caps the whole flow at 90s.
+CALL_TIMEOUT_SECONDS = 25
+CONNECT_TIMEOUT_SECONDS = 10
 MAX_CONNECT_ATTEMPTS = 2
 CONNECT_RETRY_DELAY_SECONDS = 0.2
 
@@ -216,6 +218,8 @@ async def _request(client: httpx.AsyncClient, key: str, base_url: str, model: st
             return answers
     except DecisionError:
         raise
+    except httpx.ConnectTimeout:
+        raise DecisionError(504, "Could not establish a connection to the decision provider after two attempts. Try again; no AI geometry has been applied.") from None
     except (TimeoutError, httpx.TimeoutException):
         raise DecisionError(504, "Function routing or diagnostics timed out. Try again; no AI geometry has been applied.") from None
     except httpx.HTTPError:

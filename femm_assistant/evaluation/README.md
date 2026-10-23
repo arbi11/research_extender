@@ -41,7 +41,7 @@ stage outcomes, model IDs, dataset hash, latency and round summaries. Failed
 attempts are never replaced by whole-case retries. The production limit of two
 drafts, one logical route and one logical actual-error diagnostic per planning
 request still applies. Each Jev logical call can make at most two transport
-attempts after connection or timeout failures within the same overall deadline;
+attempts after connection-establishment failures within the same overall deadline;
 this is not a whole-case retry or a score gate. Passing execution is not proof of numerical convergence or engineering
 accuracy. The public seed set is not an independently labeled holdout.
 

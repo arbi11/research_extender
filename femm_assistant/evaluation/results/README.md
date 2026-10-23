@@ -3,6 +3,13 @@
 All prompts in these reports are public evaluation fixtures. The reports contain
 no API keys, authorization headers, user model history or environment dumps.
 
+Current function-routing measurements are in
+[`2026-10-24-routing/`](2026-10-24-routing/README.md). Five full live loops retained
+280 attempts: 48/56 initially, 52/56 with refined GPT instructions, 54/56 with
+Gemini, 54/56 after one short connection retry, and 56/56 with the final connection
+allowance. The final run includes 46 native mesh/solve/exports and ten expected
+clarifications. Earlier failures are retained rather than replaced by later passes.
+
 The semantic-gate measurements below describe a retired approval policy. Current
 Jev calls only route functions and diagnose actual failed calls; their scores do
 not approve geometry. Keep these reports as historical evidence, not current

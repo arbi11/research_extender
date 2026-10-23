@@ -54,7 +54,7 @@ prevent the repair from being validated normally.
 
 Each request has at most one logical route call, one logical failed-call
 diagnostic and two drafts within 90 seconds overall. A Jev logical call can make
-at most two transport attempts after connection or timeout failures, inside the
+at most two transport attempts after connection-establishment failures, inside the
 same deadline. This bounded transport retry does not rerun a completed draft,
 introduce a score gate or create a whole-case retry. Each draft is capped at
 6000 generated tokens. Arithmetic, units, topology, labels, material/circuit references, resource limits

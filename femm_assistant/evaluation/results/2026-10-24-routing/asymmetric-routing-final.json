@@ -1,0 +1,485 @@
+{
+  "source": "live_openrouter_and_native_femm",
+  "decision_role": "function_routing_and_error_diagnostics",
+  "drafting_model": "google/gemini-3.1-flash-lite",
+  "decision_model": "typesafe/jev-1.14",
+  "prompt": "Create a 2D planar DC magnetic model. All coordinates are in millimeters; out-of-plane depth is 10 mm.\n\nCreate an asymmetric C-shaped core using these polygon vertices in order:\n(-15,-12), (10,-12), (10,-6), (-7,-6),\n(-7,6), (6,6), (6,12), (-15,12).\nUse linear relative permeability 1000 and place its label at (-12,0).\n\nAdd two rectangular winding cross-sections, both with relative permeability 1:\n1. From (-5,-4) to (0,4), label (-2.5,0), +50 turns.\n2. From (-22,-4) to (-17,4), label (-19.5,0), -50 turns.\nAssign both to the same circuit carrying 1 A DC.\n\nUse an enclosing air rectangle from (-40,-30) to (30,30), with A=0 on its boundary and air label at (20,20).\nUse a global mesh size of 1 mm. Measure magnetic flux density at (3,0).",
+  "rows": [
+    {
+      "stage": "create",
+      "proposal": {
+        "spec": {
+          "kind": "magnetostatic_plan",
+          "title": "Asymmetric C-Core with Windings",
+          "units": "millimeters",
+          "physics": "planar_dc_magnetics",
+          "depth_mm": 10.0,
+          "mesh_mm": 1.0,
+          "domain": {
+            "type": "rectangle",
+            "x_min": -40.0,
+            "y_min": -30.0,
+            "x_max": 30.0,
+            "y_max": 30.0
+          },
+          "air_label": {
+            "x": 20.0,
+            "y": 20.0
+          },
+          "materials": [
+            {
+              "id": "core_steel",
+              "relative_permeability": 1000.0
+            },
+            {
+              "id": "winding_mat",
+              "relative_permeability": 1.0
+            }
+          ],
+          "circuits": [
+            {
+              "id": "coil_circuit",
+              "current_a": 1.0
+            }
+          ],
+          "regions": [
+            {
+              "id": "core",
+              "shape": {
+                "type": "polygon",
+                "points": [
+                  {
+                    "x": -15.0,
+                    "y": -12.0
+                  },
+                  {
+                    "x": 10.0,
+                    "y": -12.0
+                  },
+                  {
+                    "x": 10.0,
+                    "y": -6.0
+                  },
+                  {
+                    "x": -7.0,
+                    "y": -6.0
+                  },
+                  {
+                    "x": -7.0,
+                    "y": 6.0
+                  },
+                  {
+                    "x": 6.0,
+                    "y": 6.0
+                  },
+                  {
+                    "x": 6.0,
+                    "y": 12.0
+                  },
+                  {
+                    "x": -15.0,
+                    "y": 12.0
+                  }
+                ]
+              },
+              "material": "core_steel",
+              "label": {
+                "x": -12.0,
+                "y": 0.0
+              },
+              "circuit": null,
+              "turns": 0,
+              "mesh_mm": null
+            },
+            {
+              "id": "winding_1",
+              "shape": {
+                "type": "rectangle",
+                "x_min": -5.0,
+                "y_min": -4.0,
+                "x_max": 0.0,
+                "y_max": 4.0
+              },
+              "material": "winding_mat",
+              "label": {
+                "x": -2.5,
+                "y": 0.0
+              },
+              "circuit": "coil_circuit",
+              "turns": 50,
+              "mesh_mm": null
+            },
+            {
+              "id": "winding_2",
+              "shape": {
+                "type": "rectangle",
+                "x_min": -22.0,
+                "y_min": -4.0,
+                "x_max": -17.0,
+                "y_max": 4.0
+              },
+              "material": "winding_mat",
+              "label": {
+                "x": -19.5,
+                "y": 0.0
+              },
+              "circuit": "coil_circuit",
+              "turns": -50,
+              "mesh_mm": null
+            }
+          ],
+          "force_region": null,
+          "probes": [
+            {
+              "x": 3.0,
+              "y": 0.0
+            }
+          ]
+        },
+        "explanation": "The model defines an asymmetric C-core using a polygon and two rectangular windings. All dimensions are in millimeters. The core material is assigned a relative permeability of 1000. The windings share a circuit with 1A current, with turns set to +50 and -50 respectively to create a circulating flux. The outer domain is a rectangle from -40,-30 to 30,30 with A=0 boundary conditions. A probe is placed at (3,0) for flux density measurement.",
+        "questions": [],
+        "attempts": 1,
+        "function_name": "create_plan",
+        "decision_trace": [
+          {
+            "stage": "routing",
+            "question": "route",
+            "answer": "create_plan",
+            "probability": 1.0,
+            "confidence": 1.0,
+            "probabilities": {
+              "create_plan": 1.0,
+              "modify_plan": 0.0,
+              "clarify": 0.0
+            },
+            "threshold": null,
+            "passed": true,
+            "model": "typesafe/jev-1.14"
+          }
+        ],
+        "diagnostic_error": null
+      },
+      "physical_values_verified": true,
+      "status": "passed",
+      "mesh": {
+        "status": "passed",
+        "node_count": 5752,
+        "element_count": 11213,
+        "edge_count": 16964,
+        "quality": {
+          "min_angle_deg": 30.003258827705316,
+          "max_aspect_ratio": 3.437983377205922,
+          "min_area_mm2": 0.003375760282312276,
+          "max_area_mm2": 0.7853274944072376,
+          "total_area_mm2": 4200.0000000000155,
+          "aspect_definition": "longest edge divided by its altitude (equilateral: 2/sqrt(3))"
+        },
+        "checks": [
+          {
+            "name": "native_artifacts",
+            "status": "passed",
+            "detail": "Finite 2D nodes, indexed three-node elements, unique triangles and consistent edges."
+          },
+          {
+            "name": "element_geometry",
+            "status": "passed",
+            "detail": "Every element has positive area; each internal edge has two incident triangles on opposite sides."
+          },
+          {
+            "name": "domain_coverage",
+            "status": "passed",
+            "detail": "Nodes lie inside the domain; one closed outer boundary and the expected filled area are present."
+          },
+          {
+            "name": "block_labels",
+            "status": "passed",
+            "detail": "Every compiler block-label index is present and covers its intended label seed."
+          }
+        ],
+        "warnings": [
+          "Mesh structure and element shape were inspected. Mesh-refinement and outer-boundary convergence have not been verified."
+        ],
+        "convergence_verified": false,
+        "files": [
+          "model.node",
+          "model.ele"
+        ],
+        "region_element_counts": {
+          "1": 9740,
+          "2": 1141,
+          "3": 165,
+          "4": 167
+        },
+        "runtime": {
+          "value": 0.541,
+          "unit": "s"
+        }
+      },
+      "quantities": {
+        "energy": {
+          "value": 3.0505183890016e-05,
+          "unit": "J"
+        },
+        "current_coil_circuit": {
+          "value": 1.0,
+          "unit": "A"
+        },
+        "flux_linkage_coil_circuit": {
+          "value": 6.1010367780034e-05,
+          "unit": "Wb-turn"
+        },
+        "bx_0": {
+          "value": -0.00033720693789984,
+          "unit": "T"
+        },
+        "by_0": {
+          "value": 0.0051738277258315,
+          "unit": "T"
+        },
+        "runtime": {
+          "value": 0.796,
+          "unit": "s"
+        }
+      },
+      "archive": "asymmetric-routing-final-create.zip"
+    },
+    {
+      "stage": "extend_upper_arm",
+      "proposal": {
+        "spec": {
+          "kind": "magnetostatic_plan",
+          "title": "Asymmetric C-Core with Windings",
+          "units": "millimeters",
+          "physics": "planar_dc_magnetics",
+          "depth_mm": 10.0,
+          "mesh_mm": 1.0,
+          "domain": {
+            "type": "rectangle",
+            "x_min": -40.0,
+            "y_min": -30.0,
+            "x_max": 30.0,
+            "y_max": 30.0
+          },
+          "air_label": {
+            "x": 20.0,
+            "y": 20.0
+          },
+          "materials": [
+            {
+              "id": "core_steel",
+              "relative_permeability": 1000.0
+            },
+            {
+              "id": "winding_mat",
+              "relative_permeability": 1.0
+            }
+          ],
+          "circuits": [
+            {
+              "id": "coil_circuit",
+              "current_a": 1.0
+            }
+          ],
+          "regions": [
+            {
+              "id": "core",
+              "shape": {
+                "type": "polygon",
+                "points": [
+                  {
+                    "x": -15.0,
+                    "y": -12.0
+                  },
+                  {
+                    "x": 10.0,
+                    "y": -12.0
+                  },
+                  {
+                    "x": 10.0,
+                    "y": -6.0
+                  },
+                  {
+                    "x": -7.0,
+                    "y": -6.0
+                  },
+                  {
+                    "x": -7.0,
+                    "y": 6.0
+                  },
+                  {
+                    "x": 14.0,
+                    "y": 6.0
+                  },
+                  {
+                    "x": 14.0,
+                    "y": 12.0
+                  },
+                  {
+                    "x": -15.0,
+                    "y": 12.0
+                  }
+                ]
+              },
+              "material": "core_steel",
+              "label": {
+                "x": -12.0,
+                "y": 0.0
+              },
+              "circuit": null,
+              "turns": 0,
+              "mesh_mm": null
+            },
+            {
+              "id": "winding_1",
+              "shape": {
+                "type": "rectangle",
+                "x_min": -5.0,
+                "y_min": -4.0,
+                "x_max": 0.0,
+                "y_max": 4.0
+              },
+              "material": "winding_mat",
+              "label": {
+                "x": -2.5,
+                "y": 0.0
+              },
+              "circuit": "coil_circuit",
+              "turns": 50,
+              "mesh_mm": null
+            },
+            {
+              "id": "winding_2",
+              "shape": {
+                "type": "rectangle",
+                "x_min": -22.0,
+                "y_min": -4.0,
+                "x_max": -17.0,
+                "y_max": 4.0
+              },
+              "material": "winding_mat",
+              "label": {
+                "x": -19.5,
+                "y": 0.0
+              },
+              "circuit": "coil_circuit",
+              "turns": -50,
+              "mesh_mm": null
+            }
+          ],
+          "force_region": null,
+          "probes": [
+            {
+              "x": 3.0,
+              "y": 0.0
+            }
+          ]
+        },
+        "explanation": "The core polygon vertices were updated to extend the upper arm to x=14 mm as requested. All other parameters, including materials, circuits, winding positions, and probes, remain unchanged.",
+        "questions": [],
+        "attempts": 1,
+        "function_name": "modify_plan",
+        "decision_trace": [
+          {
+            "stage": "routing",
+            "question": "route",
+            "answer": "modify_plan",
+            "probability": 1.0,
+            "confidence": 1.0,
+            "probabilities": {
+              "create_plan": 0.0,
+              "modify_plan": 1.0,
+              "clarify": 0.0
+            },
+            "threshold": null,
+            "passed": true,
+            "model": "typesafe/jev-1.14"
+          }
+        ],
+        "diagnostic_error": null
+      },
+      "physical_values_verified": true,
+      "status": "passed",
+      "mesh": {
+        "status": "passed",
+        "node_count": 5704,
+        "element_count": 11123,
+        "edge_count": 16826,
+        "quality": {
+          "min_angle_deg": 30.016598224884497,
+          "max_aspect_ratio": 3.415447789184919,
+          "min_area_mm2": 0.0068523112023282096,
+          "max_area_mm2": 0.846129489524167,
+          "total_area_mm2": 4199.9999999999945,
+          "aspect_definition": "longest edge divided by its altitude (equilateral: 2/sqrt(3))"
+        },
+        "checks": [
+          {
+            "name": "native_artifacts",
+            "status": "passed",
+            "detail": "Finite 2D nodes, indexed three-node elements, unique triangles and consistent edges."
+          },
+          {
+            "name": "element_geometry",
+            "status": "passed",
+            "detail": "Every element has positive area; each internal edge has two incident triangles on opposite sides."
+          },
+          {
+            "name": "domain_coverage",
+            "status": "passed",
+            "detail": "Nodes lie inside the domain; one closed outer boundary and the expected filled area are present."
+          },
+          {
+            "name": "block_labels",
+            "status": "passed",
+            "detail": "Every compiler block-label index is present and covers its intended label seed."
+          }
+        ],
+        "warnings": [
+          "Mesh structure and element shape were inspected. Mesh-refinement and outer-boundary convergence have not been verified."
+        ],
+        "convergence_verified": false,
+        "files": [
+          "model.node",
+          "model.ele"
+        ],
+        "region_element_counts": {
+          "1": 9529,
+          "2": 1209,
+          "3": 219,
+          "4": 166
+        },
+        "runtime": {
+          "value": 0.529,
+          "unit": "s"
+        }
+      },
+      "quantities": {
+        "energy": {
+          "value": 3.5089826053303e-05,
+          "unit": "J"
+        },
+        "current_coil_circuit": {
+          "value": 1.0,
+          "unit": "A"
+        },
+        "flux_linkage_coil_circuit": {
+          "value": 7.0179652106605e-05,
+          "unit": "Wb-turn"
+        },
+        "bx_0": {
+          "value": 0.00013440830673194,
+          "unit": "T"
+        },
+        "by_0": {
+          "value": 0.0053097882189801,
+          "unit": "T"
+        },
+        "runtime": {
+          "value": 0.78,
+          "unit": "s"
+        }
+      },
+      "archive": "asymmetric-routing-final-extend_upper_arm.zip"
+    }
+  ]
+}

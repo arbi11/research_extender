@@ -101,8 +101,10 @@ Jev diagnostic compares that function's arguments with its contract and the
 reported errors. The draft model then gets one repair attempt. A request allows
 one logical route call, one logical failed-call diagnostic and two draft-model
 calls, capped at 6000 generated tokens per draft, within a 90 second total
-deadline. Each Jev logical call permits at most two transport attempts for a
-connection or timeout failure within that deadline. A transport retry does not
+deadline. Each Jev logical call has a 25-second wall deadline and permits at most
+two connection attempts, with 10 seconds allowed to connect. Only connection
+establishment failures are retried; read/write failures and provider responses
+are not replayed. A transport retry does not
 repeat the entire planning request or relax validation. Route probabilities and
 diagnostic answers are recorded as information; neither can override a
 validation failure.
@@ -270,7 +272,7 @@ disable TLS verification. Source/version changes belong in
   logical Jev route call, one logical failed-call diagnostic and two draft-model
   calls, capped at 6000 generated tokens per draft and 90 seconds total, including
   one repair. Each Jev logical call has at most two transport attempts for
-  connection or timeout failures; neither probability nor confidence gates
+  connection-establishment failures; neither probability nor confidence gates
   geometry. Optional manual visual reviews and native failure diagnostics have separate
   hourly limits. These in-memory limits reset on restart; use the provider's
   spending controls for an account-level budget.
