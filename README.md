@@ -1,3 +1,12 @@
+# FEMM 5 interactive companion
+
+The new [FEMM Assistant](femm_assistant/README.md) provides a Linux-native C-core
+geometry preview, queued FEMM solves, optional natural-language configuration,
+and portable Lua/Python exports. See its README for local setup, single-VPS
+Docker deployment, scope, and numerical verification.
+
+---
+
 # Enhanced LightRAG Integration System
 
 A complete system for building and querying knowledge graphs from LaTeX papers and source code using LightRAG with OpenRouter LLMs and Ollama embeddings.
@@ -187,3 +196,4 @@ architectural choices like BatchNorm and Dropout..."
 - Verify both lightrag_code_index and lightrag_latex_index exist
 - Check that KGs were integrated successfully
 - Try different query modes (hybrid recommended)
+
