@@ -1,30 +1,39 @@
-"""Evaluate the production semantic gates; never change runtime thresholds.
+"""Replay historical semantic-gate evidence offline.
 
-Live runs send only the public cases to the configured Decisions provider.
-No provider request is made without --live. Reports contain evidence, never keys.
+This module preserves old cases/reports for comparison only. Production uses
+function routing and actual-call diagnostics; it has no semantic approval gate.
+No provider client, settings, paid calls or live-run option are available here.
 """
 from __future__ import annotations
 
 import argparse
-import asyncio
 from collections import Counter
-from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
 import sys
-import time
 from typing import Literal
 
-import httpx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app import decisions
-from app.main import Settings
 from app.plan import GeometryPlan
 
 
 CASES = Path(__file__).with_name("semantic_cases.json")
+
+
+class LegacyDecisionTrace(BaseModel):
+    """Historical evidence schema, intentionally isolated from production traces."""
+    model_config = ConfigDict(extra="forbid", strict=True, allow_inf_nan=False)
+    stage: Literal["preflight", "fidelity"]
+    question: Literal["route", "support", "sufficiency", "faithfulness"]
+    answer: str
+    probability: float = Field(ge=0, le=1)
+    confidence: float | None = Field(default=None, ge=0, le=1)
+    probabilities: dict[str, float]
+    threshold: float = Field(gt=0.5, le=1)
+    passed: bool
+    model: str
 
 
 class Case(BaseModel):
@@ -76,7 +85,8 @@ def save_report(path: Path, report: dict):
     temporary.replace(path)
 
 
-def gate(case: Case, traces: list[decisions.DecisionTrace], threshold: float):
+def gate(case: Case, traces: list[LegacyDecisionTrace], threshold: float):
+    """Replay the retired gate for historical metrics, never runtime approval."""
     passed = []
     for trace in traces:
         if trace.question == "route":
@@ -103,7 +113,7 @@ def summarize(cases: list[Case], rows: list[dict], threshold: float):
         if row.get("error"):
             counts["provider_errors"] += 1
             continue
-        traces = [decisions.DecisionTrace.model_validate(item) for item in row["trace"]]
+        traces = [LegacyDecisionTrace.model_validate(item) for item in row["trace"]]
         required = {"route", "support", "sufficiency"} if case.stage == "preflight" else {"faithfulness"}
         if len(traces) != len(required) or {item.question for item in traces} != required or any(item.stage != case.stage for item in traces):
             raise ValueError("Incomplete or mismatched decision traces.")
@@ -143,35 +153,13 @@ def summarize(cases: list[Case], rows: list[dict], threshold: float):
             "threshold_sweep": {value: dict(tally) for value, tally in sweep.items()}}
 
 
-async def collect(cases, settings, checkpoint):
-    rows = []
-    async with httpx.AsyncClient() as client:
-        for case in cases:
-            started = time.monotonic()
-            try:
-                arguments = (client, settings.ai_key, settings.decision_base_url, settings.decision_model,
-                             settings.decision_threshold, case.prompt, case.current)
-                outcome = (await decisions.preflight(*arguments) if case.stage == "preflight"
-                           else await decisions.fidelity(*arguments, case.candidate, case.explanation))
-                row = {"id": case.id, "allowed": outcome.allowed,
-                       "trace": [trace.model_dump() for trace in outcome.trace]}
-            except decisions.DecisionError as exc:
-                row = {"id": case.id, "error": {"status_code": exc.status_code, "message": exc.message}}
-            row["seconds"] = round(time.monotonic() - started, 3)
-            rows.append(row)
-            checkpoint(rows)
-            print(case.id + ": " + ("provider error" if row.get("error") else "measured"), flush=True)
-    return rows
-
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--validate", action="store_true", help="Validate labels/plans without contacting a provider")
-    mode.add_argument("--live", action="store_true", help="Make paid Decisions requests using existing environment settings")
     mode.add_argument("--replay", type=Path, help="Rescore a saved report without provider calls")
     parser.add_argument("--cases", type=Path, default=CASES)
-    parser.add_argument("--max-cases", type=int, default=6, help="Live call cap (1-50), sequential; default 6")
     parser.add_argument("--case", action="append", default=[], help="Select case IDs; repeat as needed")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
@@ -186,40 +174,22 @@ def main():
                           "dataset_sha256": dataset_hash}, indent=2))
         return 0
     if args.output is None:
-        parser.error("--output is required for live runs and replay")
+        parser.error("--output is required for historical replay")
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    # Check output permissions before spending any provider credits. Preserve
-    # prior evidence rather than silently overwriting another run.
+    # Preserve the original evidence; replay must write a new report.
     with args.output.open("x") as stream:
         stream.write("{}\n")
-    if args.live:
-        if not 1 <= args.max_cases <= 50:
-            parser.error("--max-cases must be between 1 and 50")
-        settings = Settings.from_env()
-        if not settings.ai_key:
-            parser.error("Set OPENROUTER_API_KEY in the environment; never pass it on the command line")
-        decisions.validate_configuration(settings.decision_model, settings.decision_base_url, settings.decision_threshold)
-        selected = cases[:args.max_cases]
-        report = {"schema_version": 1, "source": "live_provider", "created_utc": datetime.now(timezone.utc).isoformat(),
-                  "dataset_sha256": dataset_hash, "criteria_sha256": hashlib.sha256(Path(decisions.__file__).read_bytes()).hexdigest(),
-                  "requested_model": settings.decision_model, "provider_base_url": settings.decision_base_url,
-                  "threshold": settings.decision_threshold, "selected_ids": [case.id for case in selected], "rows": []}
-        def checkpoint(rows):
-            report["rows"] = rows
-            report["summary"] = summarize(cases, rows, report["threshold"])
-            save_report(args.output, report)
-        asyncio.run(collect(selected, settings, checkpoint))
-    else:
-        report = json.loads(args.replay.read_text())
-        if report["dataset_sha256"] != dataset_hash:
-            parser.error("Report and dataset hashes differ; use the original dataset")
-        if args.case:
-            report["rows"] = [row for row in report["rows"] if row["id"] in args.case]
+    report = json.loads(args.replay.read_text())
+    if report["dataset_sha256"] != dataset_hash:
+        parser.error("Report and dataset hashes differ; use the original dataset")
+    if args.case:
+        report["rows"] = [row for row in report["rows"] if row["id"] in args.case]
+    report["historical_offline_only"] = True
     report["summary"] = summarize(cases, report["rows"], report["threshold"])
     report["limitations"] = ["Public development seed cases; not an independently labeled holdout or CAD-domain certification.",
                              "Missing/error cases are unmeasured, never counted as correct rejections.",
                              "Binary Brier scores use P(yes); route uses unnormalized multiclass Brier and winner-probability reliability.",
-                             "Threshold sweeps reuse the same evidence; they do not change application settings.",
+                             "Threshold sweeps replay retired historical gates; production has no semantic score threshold.",
                              "Semantic confidence does not measure field accuracy or numerical convergence."]
     args.output.parent.mkdir(parents=True, exist_ok=True)
     save_report(args.output, report)

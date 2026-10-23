@@ -47,16 +47,23 @@ MESH_REPORT = {"status": "passed", "node_count": 6, "element_count": 4, "edge_co
                            "detail": "Browser worker fixture: connectivity passed."}],
                "warnings": ["Browser fixture; numerical convergence has not been verified."],
                "convergence_verified": False}
+# Routing evidence is informational. Even modest probability/confidence must
+# never suppress a valid generated plan or impose a geometry approval gate.
 DECISION_TRACE = [
-    {"stage": "preflight", "question": "route", "answer": "create", "probability": .98,
-     "confidence": .97, "probabilities": {"create": .98, "modify": .01, "clarify": .01},
-     "threshold": .9, "passed": True, "model": "typesafe/jev-1.14"},
-    *[{"stage": stage, "question": question, "answer": "yes", "probability": .99,
-       "confidence": None, "probabilities": {"yes": .99, "no": .01},
-       "threshold": .9, "passed": True, "model": "typesafe/jev-1.14"}
-      for stage, question in [("preflight", "support"), ("preflight", "sufficiency"),
-                              ("fidelity", "faithfulness")]],
+    {"stage": "routing", "question": "route", "answer": "create_plan", "probability": .55,
+     "confidence": .54, "probabilities": {"create_plan": .55, "modify_plan": .25, "clarify": .20},
+     "threshold": None, "passed": True, "model": "typesafe/jev-1.14"},
 ]
+DIAGNOSIS = {"function_name": "mesh_plan", "arguments_match": False, "trace": [
+    {"stage": "function_error", "question": "arguments_match", "answer": "no", "probability": .64,
+     "confidence": None, "probabilities": {"yes": .36, "no": .64}, "threshold": None,
+     "passed": True, "model": "typesafe/jev-1.14"},
+]}
+VISUAL_REVIEW = {"advisory": True, "status": "issues", "summary": "Inspect the conductor placement.",
+                 "findings": [{"location": "Conductor", "issue": "The requested placement may differ.",
+                               "suggestion": "Compare the position with your requested coordinates."}],
+                 "requested_model": "browser-vision", "usage": {"total_tokens": 12}}
+
 
 
 def wait_for_server(process, url, log):
@@ -97,6 +104,11 @@ def exercise_browser(url, folder):
     store = JobStore(folder / "data")
     proposals = deque()
     mesh_fixtures = deque()
+    solve_fixtures = deque()
+    visual_fixtures = deque()
+    visual_requests = []
+    diagnosis_requests = []
+    stale_diagnosis = False
     ai_requests = []
     mesh_specs = []
     completed_specs = []
@@ -127,6 +139,60 @@ def exercise_browser(url, folder):
                     editor.dispatchEvent(new Event('input', {bubbles: true}));
                 }""", edited_draft)
             route.fulfill(json=proposal)
+
+        def config_fixture(route):
+            response = route.fetch()
+            value = response.json()
+            value.update(visual_review_available=True, argument_diagnosis_available=True)
+            route.fulfill(json=value)
+
+        def visual_fixture(route):
+            assert route.request.headers.get("authorization") == "Bearer " + TOKEN
+            assert visual_fixtures, "Unexpected paid visual call escaped fixture sequence"
+            visual_requests.append(route.request.post_data_json)
+            behavior = visual_fixtures.popleft()
+            # An advisory request must not disable normal model actions.
+            expect(page.locator("#source")).to_be_enabled()
+            expect(page.locator("#mesh-check")).to_be_enabled()
+            if "mesh_job_id" in visual_requests[-1]:
+                expect(page.locator("#solve")).to_be_enabled()
+            if behavior == "stale":
+                page.evaluate("""() => {
+                    const prompt = document.getElementById('prompt');
+                    prompt.value += ' Updated request.';
+                    prompt.dispatchEvent(new Event('input', {bubbles: true}));
+                }""")
+            if behavior == "toggle_mesh":
+                page.evaluate("""() => {
+                    const checkbox = document.getElementById('visual-include-mesh');
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change', {bubbles: true}));
+                }""")
+            if behavior == "oversized_mesh":
+                assert "mesh_job_id" in visual_requests[-1]
+                route.fulfill(status=422, json={"detail": "The preview has too many elements for visual review. Review geometry only or use a smaller mesh."})
+            elif behavior == "failed":
+                route.fulfill(status=502, json={"detail": "Browser visual provider fixture unavailable."})
+            else:
+                route.fulfill(json=VISUAL_REVIEW)
+
+        def diagnosis_fixture(route):
+            nonlocal stale_diagnosis
+            assert route.request.headers.get("authorization") == "Bearer " + TOKEN
+            job_id = route.request.url.split("/")[-2]
+            job = store.get(job_id)
+            assert job["status"] == "failed", "Diagnosis must only follow an actual persisted function failure"
+            diagnosis_requests.append(job_id)
+            if stale_diagnosis:
+                page.evaluate("""() => {
+                    const prompt = document.getElementById('prompt');
+                    prompt.value = 'Current request changed while diagnosing an earlier failure.';
+                    prompt.dispatchEvent(new Event('input', {bubbles: true}));
+                }""")
+                stale_diagnosis = False
+            value = json.loads(json.dumps(DIAGNOSIS))
+            value["function_name"] = "mesh_plan" if job["kind"] == "mesh" else "solve_plan"
+            route.fulfill(json=value)
 
         def complete_job_fixture(route):
             assert route.request.headers.get("authorization") == "Bearer " + TOKEN
@@ -160,9 +226,14 @@ def exercise_browser(url, folder):
                     store.update(job["id"], "completed", result=MESH_REPORT)
             else:
                 assert job["kind"] == "solve"
-                completed_specs.append(job["spec"])
-                store.update(job["id"], "completed", result={"energy": {"value": .001, "unit": "J"},
-                             "by_0": {"value": .0001, "unit": "T"}, "runtime": {"value": .02, "unit": "s"}})
+                assert solve_fixtures, "Unexpected solve escaped the fixture sequence"
+                behavior = solve_fixtures.popleft()
+                if behavior == "failed":
+                    store.update(job["id"], "failed", error="Browser worker fixture failed the solve function.")
+                else:
+                    completed_specs.append(job["spec"])
+                    store.update(job["id"], "completed", result={"energy": {"value": .001, "unit": "J"},
+                                 "by_0": {"value": .0001, "unit": "T"}, "runtime": {"value": .02, "unit": "s"}})
             # This fixture replaces only the worker boundary. Completed status is
             # persisted so real solve POSTs still enforce exact-plan mesh gating.
             finished = route.fetch()
@@ -183,7 +254,10 @@ def exercise_browser(url, folder):
             expect(page.locator("#mesh-quantities dd")).to_have_text(["6", "4", "9", "26.57°", "2.50"])
             expect(page.locator("#solve")).to_be_enabled()
 
+        page.route("**/api/config", config_fixture)
         page.route("**/api/plan/interpret", ai_fixture)
+        page.route("**/api/plan/review", visual_fixture)
+        page.route(re.compile(r".*/api/jobs/[a-f0-9]{32}/diagnose$"), diagnosis_fixture)
         page.route(re.compile(r".*/api/jobs/[a-f0-9]{32}(?:/(?:field|mesh)\.svg)?$"), complete_job_fixture)
         page.goto(url, wait_until="networkidle")
         expect(page.locator("#access")).to_be_visible()
@@ -240,6 +314,17 @@ def exercise_browser(url, folder):
         expect(page.locator("#mesh-status")).to_have_text("FAILED")
         expect(page.locator("#mesh-message")).to_contain_text("fixture rejected")
         expect_model_ready()
+        expect(page.locator("#mesh-diagnose")).to_be_visible()
+        page.locator("#mesh-diagnose").click()
+        expect(page.locator("#mesh-diagnosis")).to_contain_text("arguments may not match")
+        expect(page.locator("#mesh-diagnosis")).to_contain_text("Reported probability 64.0%")
+        expect(page.locator("#mesh-status")).to_have_text("FAILED")
+        expect_model_ready()
+        stale_diagnosis = True
+        with page.expect_response(re.compile(r".*/api/jobs/[a-f0-9]{32}/diagnose$")):
+            page.locator("#mesh-diagnose").click()
+        expect(page.locator("#mesh-diagnosis")).to_be_hidden()
+        expect_model_ready()
 
         # Deterministically withhold an old preview response until a real editor
         # input event has invalidated its snapshot. The stale response must not
@@ -270,7 +355,7 @@ def exercise_browser(url, folder):
         rectangle["regions"][0]["shape"] = {"type": "rectangle", "x_min": -1, "x_max": 1,
                                              "y_min": -1, "y_max": 1}
         proposals.append({"spec": rectangle, "explanation": "Created the requested rectangle.",
-                          "questions": [], "attempts": 1, "decision_trace": DECISION_TRACE})
+                          "questions": [], "attempts": 1, "function_name": "create_plan", "decision_trace": DECISION_TRACE})
         page.locator("#request-action").select_option("new")
         page.locator("#prompt").fill("Create the fully specified rectangular conductor model.")
         page.locator("#interpret").click()
@@ -278,12 +363,36 @@ def exercise_browser(url, folder):
         expect(page.locator("#plan-summary")).to_contain_text(rectangle["title"])
         expect(page.locator("#decision-trace")).to_be_visible()
         page.locator("#decision-trace > summary").click()
-        expect(page.locator("#decision-list li")).to_have_count(4)
+        expect(page.locator("#decision-list li")).to_have_count(1)
         expect(page.locator("#decision-list li").nth(0)).to_be_visible()
-        expect(page.locator("#decision-list li").nth(0)).to_contain_text("Confidence 97.0%")
-        expect(page.locator("#decision-list li").nth(1)).to_contain_text("Supported physics: yes")
-        assert "Confidence" not in page.locator("#decision-list li").nth(1).inner_text(), "Noul has no separate confidence"
+        expect(page.locator("#decision-list li").nth(0)).to_contain_text("Chosen function: create_plan")
+        expect(page.locator("#decision-list li").nth(0)).to_contain_text("Reported probability 55.0%")
+        expect(page.locator("#decision-list li").nth(0)).to_contain_text("Provider confidence 54.0%")
+        assert "Needs attention" not in page.locator("#decision-list").inner_text()
+        assert "Model matches" not in page.locator("#decision-list").inner_text()
+        expect(page.locator("#geometry")).to_be_visible()
+        expect_model_ready()
         assert ai_requests[-1]["current"] is None
+
+        # Optional visual observations never approve or reject this valid plan.
+        # Neither concerns nor provider failure can change preview/export/mesh.
+        expect(page.locator("#visual-review")).to_be_enabled()
+        expect(page.locator("#visual-include-mesh")).to_be_checked()
+        expect(page.locator("#visual-include-mesh")).to_be_disabled()
+        expect(page.locator("#visual-mesh-help")).to_contain_text("Geometry only")
+        for behavior, expected in [("issues", "Possible discrepancies"), ("failed", "Visual review unavailable")]:
+            visual_fixtures.append(behavior)
+            page.locator("#visual-review").click()
+            expect(page.locator("#visual-review-summary")).to_contain_text(expected)
+            expect(page.locator("#geometry")).to_be_visible()
+            expect_model_ready()
+            assert json.loads(page.locator("#plan-json").input_value()) == rectangle
+        assert "mesh_job_id" not in visual_requests[-1]
+        visual_fixtures.append("stale")
+        with page.expect_response("**/api/plan/review"):
+            page.locator("#visual-review").click()
+        expect(page.locator("#visual-review-panel")).to_be_hidden()
+        expect_model_ready()
 
         modified = json.loads(json.dumps(rectangle))
         modified["circuits"][0]["current_a"] = 2
@@ -340,8 +449,50 @@ def exercise_browser(url, folder):
         expect(page.locator("#questions")).to_be_hidden()
         expect_model_ready()
         check_mesh()
+        expect(page.locator("#visual-include-mesh")).to_be_checked()
+        expect(page.locator("#visual-include-mesh")).to_be_enabled()
+        expect(page.locator("#visual-mesh-help")).to_contain_text("will be included")
+        visual_fixtures.append("oversized_mesh")
+        page.locator("#visual-review").click()
+        expect(page.locator("#visual-review-summary")).to_contain_text("Review geometry only")
+        expect(page.locator("#solve")).to_be_enabled()
+        expect(page.locator("#visual-include-mesh")).to_be_enabled()
+        # Changing the input choice while a review is loading invalidates its
+        # response. A checked mesh can then be excluded for geometry-only review.
+        visual_fixtures.append("toggle_mesh")
+        with page.expect_response("**/api/plan/review"):
+            page.locator("#visual-review").click()
+        expect(page.locator("#visual-review-panel")).to_be_hidden()
+        expect(page.locator("#visual-include-mesh")).not_to_be_checked()
+        assert "mesh_job_id" in visual_requests[-1]
+        visual_fixtures.append("issues")
+        page.locator("#visual-review").click()
+        expect(page.locator("#visual-review-summary")).to_contain_text("Possible discrepancies")
+        expect(page.locator("#visual-review-source")).to_have_text("Inputs: geometry only.")
+        assert "mesh_job_id" not in visual_requests[-1]
+        expect(page.locator("#solve")).to_be_enabled()
+        assert json.loads(page.locator("#plan-json").input_value()) == modified
+        page.locator("#visual-include-mesh").check()
+        expect(page.locator("#visual-review-panel")).to_be_hidden()
+        visual_fixtures.append("issues")
+        page.locator("#visual-review").click()
+        expect(page.locator("#visual-review-summary")).to_contain_text("Possible discrepancies")
+        expect(page.locator("#visual-review-source")).to_have_text("Inputs: geometry and the checked FEMM mesh.")
+        expect(page.locator("#solve")).to_be_enabled()
+        assert store.get(visual_requests[-1]["mesh_job_id"])["status"] == "completed"
+        assert visual_requests[-1]["spec"] == modified
+        solve_fixtures.append("failed")
+        page.locator("#solve").click()
+        expect(page.locator("#job-status")).to_have_text("FAILED")
+        expect(page.locator("#solve-diagnose")).to_be_visible()
+        page.locator("#solve-diagnose").click()
+        expect(page.locator("#solve-diagnosis")).to_contain_text("solve_plan")
+        expect(page.locator("#job-status")).to_have_text("FAILED")
+        expect(page.locator("#solve")).to_be_enabled()
+        solve_fixtures.append("passed")
         page.locator("#solve").click()
         expect(page.locator("#job-status")).to_have_text("COMPLETED")
+        expect(page.locator("#solve-diagnose")).to_be_hidden()
         expect(page.locator("#result-body")).to_be_visible()
         expect(page.locator("#quantities")).to_contain_text("Probe 1")
         expect(page.locator("#job-model")).to_contain_text(modified["title"])
@@ -389,6 +540,10 @@ def exercise_browser(url, folder):
             page.screenshot(path=str(Path(artifacts) / "ccore-example.png"), full_page=True)
         assert not proposals, "Not every AI fixture was consumed"
         assert not mesh_fixtures, "Not every mesh fixture was consumed"
+        assert not solve_fixtures, "Not every solve fixture was consumed"
+        assert not visual_fixtures, "Not every visual fixture was consumed"
+        assert len(visual_requests) == 7, "Expected advisory/failure/stale reviews, oversized-mesh recovery and explicit input choices"
+        assert len(diagnosis_requests) == 3, "Expected manual failed-call diagnosis including a discarded stale response"
         assert len(mesh_specs) == 4, "Expected passed, stale, failed and current-model mesh jobs"
         assert not page_errors, "Uncaught browser errors: " + repr(page_errors)
         browser.close()
@@ -407,7 +562,7 @@ def main():
             try:
                 wait_for_server(process, url, log)
                 exercise_browser(url, folder)
-                print("Browser smoke passed: real auth/preview/export/queue/mesh gate; fixture AI and worker completion.")
+                print("Browser smoke passed: real auth/preview/export/queue/mesh gate; informational routing, advisory visual review, failed-call diagnosis; fixture AI and worker completion.")
             finally:
                 process.terminate()
                 try:

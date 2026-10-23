@@ -1,80 +1,134 @@
-# Live semantic and CAD evaluation
+# Language-to-CAD, visual and numerical evaluation
 
-These commands run in an isolated development FEMM container. They do not connect
-to the deployed assistant or its jobs volume. Keep the existing `.env`, Compose
-settings, installed FEMM and deployed image tag. Use a separate development tag:
+Run live evaluations in a separate development FEMM container. They use real
+OpenRouter responses and native FEMM where specified, without connecting to the
+deployed assistant or its jobs volume. Preserve the existing `.env`, local
+Compose settings and image tag; keep the old laptop unchanged until production
+deployment. Use a separate development tag:
 
 ```bash
 cd femm_assistant
 docker build -t femm-assistant:dev .
 mkdir -p evaluation-results
-docker run --rm --user "$(id -u):$(id -g)" \
-  femm-assistant:dev python -m evaluation.semantic --validate
 ```
 
-The 28 public development cases cover complete and incomplete requests,
-unsupported physics, action mismatches, prompt injection and faithful/unfaithful
-edits. Each case has explicit labels and a rationale. All candidate plans also
-pass the deterministic geometry schema. Labels are initial developer judgments;
-independent review and an unseen holdout are still needed before choosing a
-production threshold from these measurements.
+Keep the API key in the existing untracked `.env`; do not put it in CLI arguments,
+reports or Git. Paid evaluations require an explicit `--live` flag. Use a fresh
+output filename for every run. These commands describe tests to run; they do not
+claim a passing result for the current commit.
 
-## Measure real Jev decisions
-
-Live evaluation uses the existing `OPENROUTER_API_KEY`, `DECISION_MODEL`,
-`DECISION_BASE_URL` and `DECISION_THRESHOLD`. Blank model/threshold settings keep
-the application defaults. The default cap is six sequential paid calls; use
-`--max-cases 28` for the full seed set, or repeat `--case ID` to select cases.
-Every case makes one production Decisions request, with no drafting or solve.
-
-```bash
-docker run --rm --user "$(id -u):$(id -g)" --memory=1g --cpus=1 \
-  --env-file .env -v "$PWD/evaluation-results:/reports" \
-  femm-assistant:dev python -m evaluation.semantic \
-  --live --max-cases 28 --output /reports/semantic.json
-```
-
-Output permissions are checked before provider calls. Each completed case is
-saved immediately. Choose a fresh output filename for each run; existing reports
-are never overwritten. Reports contain case IDs, requested model, criteria and
-dataset hashes, timestamps, probabilities, gate outcomes, errors, Brier scores,
-reliability bins and threshold sweeps. Provider errors and unmeasured cases count
-separately. Headers, API keys and environment contents are never recorded.
-The requested model ID is recorded; a resolved provider revision is not known.
-
-Recompute metrics from saved evidence without any provider request:
-
-```bash
-python -m evaluation.semantic --replay evaluation-results/semantic.json \
-  --output evaluation-results/semantic-replayed.json
-```
-
-Replay requires the original dataset hash. Binary Brier scores use P(yes); the
-route score is the sum of squared errors across its three classes, without
-normalization. Route reliability uses the winning probability and whether its
-label is correct; the separate provider confidence still participates in gating.
-Threshold sweeps reuse these observations and never modify runtime settings.
-Live/replay exits nonzero for gate-label mismatches or provider errors; a failed
-calibration case remains useful evidence and is not silently reclassified.
-
-## Test language through actual native execution
+## Repeated language-to-CAD execution
 
 ```bash
 docker run --rm --user "$(id -u):$(id -g)" --memory=2g --cpus=2 \
-  --env-file .env -e HOME=/tmp -v "$PWD/evaluation-results:/reports" \
+  --env-file .env -e HOME=/tmp -e FEMM_MESH_EXPORT=1 \
+  -v "$PWD/evaluation-results:/reports" \
+  femm-assistant:dev python -m evaluation.batch \
+  --live --rounds 2 --max-cases 28 --workers 2 --output /reports/batch.json
+```
+
+With all 28 public cases selected, two rounds plan 56 case attempts. Every case
+uses an isolated application/job directory with the normal production function
+route, deterministic validation and bounded repair. The evaluator compares typed
+physical assignments independently, renders previews, and runs native
+mesh/solve/export for executable cases. Clarification cases must return questions
+without a model. The worker count bounds concurrent case attempts; it does not
+change the application's single-worker queue design.
+
+Reports checkpoint each attempt, including failures and provider errors, and
+retain evidence under the adjacent `batch-artifacts` directory. They include
+stage outcomes, model IDs, dataset hash, latency and round summaries. Failed
+attempts are never replaced by whole-case retries. The production limit of two
+drafts, one logical route and one logical actual-error diagnostic per planning
+request still applies. Each Jev logical call can make at most two transport
+attempts after connection or timeout failures within the same overall deadline;
+this is not a whole-case retry or a score gate. Passing execution is not proof of numerical convergence or engineering
+accuracy. The public seed set is not an independently labeled holdout.
+
+The script defaults to two rounds, twelve cases and two workers. Use the explicit
+command above for 28 cases. `--rounds`, `--max-cases` and `--workers` are bounded;
+`python -m evaluation.batch --help` lists the current options.
+
+## Optional visual-model comparison
+
+```bash
+docker run --rm --user "$(id -u):$(id -g)" --memory=2g --cpus=2 \
+  --env-file .env -e HOME=/tmp -e FEMM_MESH_EXPORT=1 \
+  -v "$PWD/evaluation-results:/reports" \
+  femm-assistant:dev python -m evaluation.vision_benchmark \
+  --live --output /reports/vision-benchmark.json
+```
+
+The default run selects six visual fixtures and two image-input models:
+`qwen/qwen3-vl-30b-a3b-instruct` and `google/gemini-3.1-flash-lite`, planning 12
+provider calls. Repeat `--model MODEL_ID` up to twice to select models, and use
+`--max-cases` to change the bounded fixture count. Fixture setup failures and
+provider errors remain in the report; planned calls are not passing results.
+
+All six benchmark fixtures are geometry-only: the reviewer receives the source
+request, typed plan and rendered geometry PNG. No native mesh is supplied by this
+benchmark. Its cases cover a correct wire, wrong wire radius, a correct asymmetric
+core, a missing return winding, reversed return turns and a fully mirrored model.
+Because the typed plan accompanies the image, this does not measure image-only
+reasoning; reversed turns may be indistinguishable in the image alone. Reports
+retain exact fixtures and rendered PNGs, advisory findings, latency and actual
+provider-reported usage. Missing usage remains unknown. A match does not certify
+geometry, mesh quality, physical fidelity or numerical accuracy. Native-mesh
+image review is tested separately through the manual application action, using
+an actual completed, passed mesh for the exact current specification.
+
+This comparison does not change the application's configured `VISION_MODEL`.
+The manual application action and new-installation drafting default to
+`google/gemini-3.1-flash-lite`; existing explicit `AI_MODEL` and `VISION_MODEL`
+values remain overrides. Setting `VISION_MODEL=` disables that optional action.
+Visual findings and provider failures never disable mesh or solve.
+
+## Focused native CAD acceptance
+
+```bash
+docker run --rm --user "$(id -u):$(id -g)" --memory=2g --cpus=2 \
+  --env-file .env -e HOME=/tmp -e FEMM_MESH_EXPORT=1 \
+  -v "$PWD/evaluation-results:/reports" \
   femm-assistant:dev python -m evaluation.cad \
   --live --output /reports/cad.json
 ```
 
-This uses the production HTTP API and real OpenRouter responses. It creates a
-round conductor, checks its physical values independently of Jev, meshes, solves,
-checks field direction/magnitude and validates the exported ZIP. It then doubles
-the current, repeats execution and checks quadratic energy scaling. Incomplete
-depth and unsupported AC requests must stop at preflight without a draft.
-`--create-only` runs just the creation diagnostic. At most six Decisions calls and
-four draft calls occur in a full run, subject to the production deadlines and
-6000-token draft limit. Public-prompt drafts are recorded for diagnosing fidelity
-failures. No paid test runs automatically in CI.
+This smaller production-API test creates a round conductor, checks its physical
+values, meshes, solves, compares the field and validates the exported ZIP. It
+then doubles current, repeats execution and checks energy scaling. Incomplete
+depth and unsupported AC requests must ask for clarification without producing a
+model; the draft model can supply those questions. `--create-only` limits this
+to the initial creation case. Jev only selects a function or diagnoses an actual
+failed call; it does not approve any of these results.
+
+## Historical semantic reports: offline only
+
+`evaluation.semantic` preserves the retired preflight/fidelity dataset and old
+reports for historical replay. It has no provider client, live collection or
+`--live` option. The original 28-case Jev evidence and later asymmetric-core
+cases describe the earlier approval policy, not current behavior.
+
+Validate the historical labels and typed candidate plans without any API call:
+
+```bash
+python -m evaluation.semantic --validate
+```
+
+Replay a saved historical report with its original dataset:
+
+```bash
+python -m evaluation.semantic --replay evaluation-results/semantic.json \
+  --cases path/to/the-original-semantic_cases.json \
+  --output evaluation-results/semantic-historical-replay.json
+```
+
+The original dataset hash must match. Omit `--cases` only if the saved report used
+the current historical dataset. Replay retains legacy Brier scores, reliability
+bins, false accepts/rejections and threshold sweeps; output is explicitly marked
+historical. Missing/error cases remain unmeasured. The legacy trace schema is
+separate from production function-route traces. No replay threshold controls
+current geometry preview, meshing or solving. Existing `DECISION_THRESHOLD`
+settings are accepted and ignored by production routing.
 
 ## Independent numerical references
 
@@ -84,7 +138,7 @@ docker run --rm --memory=2g --cpus=2 \
   python -m unittest discover -s tests -p 'test_*live.py' -v
 ```
 
-The additional reference suite uses the thick-wire solution from
+The reference suite uses the thick-wire solution from
 [OpenStax, Ampère's law, Example 12.7](https://openstax.org/books/university-physics-volume-2/pages/12-5-amperes-law):
 inside a uniform wire, `B = mu0 I r / (2 pi a²)`; outside,
 `B = mu0 I / (2 pi r)`. Probes test both vector components, several radii and
@@ -95,5 +149,11 @@ adds a nested air cavity and equal opposite return current: in the return shell,
 These are planar infinite-length, linear-material symmetry references. A centered
 circular outer boundary preserves that symmetry; agreement across its radii is
 not evidence of general open-boundary convergence. Assertions use explicit
-tolerances and print actual measurements in CI. They do not establish accuracy
-for arbitrary geometry, nonlinear materials or finite-length conductors.
+tolerances and record measurements. They do not establish accuracy for arbitrary
+geometry, nonlinear materials or finite-length conductors. Native tests require
+the live flag above; a passing unit/API run with skipped live tests does not
+verify FEMM execution.
+
+For application and browser verification, use the commands in the main
+[README](../README.md#verification). Browser fixtures check UI behavior and stage
+prerequisites; actual provider and numerical results come from separate reports.

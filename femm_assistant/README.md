@@ -13,16 +13,18 @@ full 3D CAD remain outside this version.
 The [implementation pipeline](PIPELINE.md) records the implemented stages and
 remaining validation and physics extensions.
 
-The [evaluation guide](evaluation/README.md) runs labeled live OpenRouter checks,
-and language-to-CAD execution in a separate
-development Docker image while preserving deployment settings and jobs.
+The [evaluation guide](evaluation/README.md) describes repeated OpenRouter-to-CAD
+execution and optional visual-model comparisons in a separate development Docker
+image, preserving deployment settings and jobs.
 
 ## What a reader can do
 
 1. Describe a new geometry or a modification in natural language, load a round-wire
    example, or use the C-core numeric form.
-2. Inspect the geometry and assumptions, then select **Check mesh**. Inspect the
-   actual triangular mesh, counts, minimum angle, domain coverage and region labels.
+2. Inspect the geometry and assumptions. Optional visual review reports advisory
+   findings about the rendered geometry and, when available, its actual mesh.
+   Select **Check mesh** and inspect the actual triangles, counts, minimum angle,
+   domain coverage and region labels.
 3. Select **Solve** after the mesh check passes. Inspect energy, circuit quantities, field
    probes, optional force and a sampled magnetic-field plot.
 4. Download a ZIP containing an editable Python CAD script `model.py`, native Lua
@@ -77,29 +79,60 @@ OPENROUTER_API_KEY=your-key-kept-on-the-server
 ```
 
 Only the API key is required for the default AI configuration. The draft model
-defaults to `openai/gpt-4.1-mini` and the semantic decision model to
-`typesafe/jev-1.14`; blank model settings use these defaults. Optional overrides
-are `AI_MODEL`, `DECISION_MODEL` and `DECISION_THRESHOLD` (default `0.90`). For
-ordinary Docker use, add only the key to the existing `.env`; the supplied Compose
-file forwards the key and `AI_MODEL` and uses the decision defaults. Custom
-decision settings also need explicit forwarding in the Compose `environment`
-section; adding them to `.env` alone does not forward them. Plain `uvicorn` uses
-exported environment variables for all these settings.
-`AI_BASE_URL` defaults to OpenRouter's API. Keep the key on the server, out of Git
-and chat. Requests send the prompt, current plan when present, and proposed plan
-for the fidelity check to the provider.
+is `google/gemini-3.1-flash-lite`; Jev function routing uses `typesafe/jev-1.14` through
+`DECISION_BASE_URL=https://openrouter.ai/api/alpha`. Optional overrides are
+`AI_MODEL`, `AI_BASE_URL`, `DECISION_MODEL`, `DECISION_BASE_URL` and `VISION_MODEL`.
+Compose forwards these settings and preserves explicit existing model overrides;
+the defaults apply to new setups or unset values. Plain `uvicorn` uses exported environment
+variables and does not load `.env` automatically. Existing `DECISION_THRESHOLD`
+settings are retained for compatibility and ignored; no score threshold accepts
+or rejects geometry. Keep the key on the server, out of Git and chat.
 
-The AI returns a structured model plan rather than executable Lua or Python.
-The application validates contours, region labels, material/circuit references,
-physics, and mesh budgets, then compiles the accepted plan. General AI planning
-requires Jev semantic preflight and a fidelity check of the resulting plan through
-OpenRouter's Decisions API. Jev probabilities concern intent, not numerical
-accuracy; the `0.90` threshold is provisional until calibrated on labeled cases.
-Arithmetic, topology, validation and stage gates remain deterministic. Missing
-physical inputs or unsupported requests produce clarification questions. A
-request allows at most two Jev calls and two draft-model calls, including one
-validation-guided repair capped at 6000 generated tokens per draft, within a
-90 second total deadline. Review the proposed model before checking its mesh.
+Jev chooses one function from `create_plan`, `modify_plan` and `clarify`. It does
+not judge support, physical-input sufficiency or fidelity as approval gates.
+The draft model returns constrained data, never executable Lua or Python, and
+can ask questions about missing inputs or unsupported requests. Deterministic
+code checks contours, labels, references, physics and mesh budgets. A valid typed
+plan is available for preview without any confidence requirement. Review its
+geometry, dimensions, excitation and assumptions before checking its mesh.
+
+If a create/modify call actually fails deterministic validation, one optional
+Jev diagnostic compares that function's arguments with its contract and the
+reported errors. The draft model then gets one repair attempt. A request allows
+one logical route call, one logical failed-call diagnostic and two draft-model
+calls, capped at 6000 generated tokens per draft, within a 90 second total
+deadline. Each Jev logical call permits at most two transport attempts for a
+connection or timeout failure within that deadline. A transport retry does not
+repeat the entire planning request or relax validation. Route probabilities and
+diagnostic answers are recorded as information; neither can override a
+validation failure.
+
+The optional **visual review** action sends the original request, typed plan
+and a rendered PNG of the visible geometry to `VISION_MODEL`, defaulting to
+`google/gemini-3.1-flash-lite`. If selected, an actual mesh image is included only
+from a completed, passed mesh job for the unchanged plan. Set `VISION_MODEL=` to
+disable the action. Review runs only when requested; its findings and provider
+failures never disable mesh or solve or modify the plan.
+
+A failed native mesh/solve job can also be diagnosed manually. Jev receives the
+actual function, spec, error and bounded solver log to consider whether its
+arguments match the function. The advisory is cached on that job. The job stays
+failed, its original error remains, and another successful mesh is still needed
+before solving. These diagnostics cannot certify physical accuracy.
+
+Natural-language planning sends the request and any current plan to the provider;
+a failed-call diagnostic additionally sends the failed arguments and errors.
+Visual review sends images and typed model data only when invoked.
+
+### This laptop's development instance
+
+Use the separate development Docker instance at <http://127.0.0.1:8001> for new
+work. Preserve the existing token, key, `.env`, local Compose edits and jobs.
+The older installation on port 8000 and the old laptop remain unchanged until
+production deployment. The deployment commands below describe the standard
+port-8000 configuration; do not use them to replace the old installation during
+development. Push tested milestones to the existing PR #3 and review actual
+validation reports before deployment.
 
 ## Deploy on a single Linux VPS
 
@@ -219,8 +252,9 @@ engine, field solvers, and Lua launcher. Before compilation,
 `FEMM_MESH_EXPORT=1` callback export of FEMM's actual in-memory mesh. It writes
 diagnostic files without changing the numerical meshing or solving algorithms.
 The image retains the original upstream archive and patcher alongside the
-installed program. It then installs only this app's four Python
-dependencies and runs as a non-root user.
+installed program. It then installs this app's five Python runtime
+dependencies, including CairoSVG for optional visual-review PNG rendering, and
+runs as a non-root user.
 
 The image build supports an optional `proxy_ca` BuildKit secret for environments
 with an HTTPS inspection proxy. For an ordinary VPS this is unnecessary. Never
@@ -232,10 +266,14 @@ disable TLS verification. Source/version changes belong in
 - One server, one application process, one simulation worker, SQLite, and local
   result storage. No separate database, queue, GPU, or local language model.
 - Up to five queued/running jobs and 20 solve submissions per hour for the pilot.
-- Up to 20 AI requests per hour. A general geometry request may make two Jev calls
-  and two draft-model calls, capped at 6000 generated tokens per draft and
-  90 seconds total, including one validation-guided repair. These in-memory limits
-  reset on restart; use the provider's spending controls for an account-level budget.
+- Up to 20 AI planning requests per hour. A general geometry request may make one
+  logical Jev route call, one logical failed-call diagnostic and two draft-model
+  calls, capped at 6000 generated tokens per draft and 90 seconds total, including
+  one repair. Each Jev logical call has at most two transport attempts for
+  connection or timeout failures; neither probability nor confidence gates
+  geometry. Optional manual visual reviews and native failure diagnostics have separate
+  hourly limits. These in-memory limits reset on restart; use the provider's
+  spending controls for an account-level budget.
 - Each simulation has a 180 second timeout. The Compose container is limited to
   2 GB RAM, 1.5 CPU cores, and 128 processes; the whole process group is stopped
   on timeout.

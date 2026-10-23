@@ -6,7 +6,8 @@ from unittest.mock import patch
 import httpx
 
 from app.plan import wire_example
-from app.planner import MAX_PROVIDER_BYTES, PlannerError, interpret_plan
+from app.planner import MAX_PROVIDER_BYTES, PlannerError, interpret_plan, create_plan
+from pydantic import ValidationError
 
 
 def completion(content):
@@ -14,15 +15,30 @@ def completion(content):
 
 
 class PlannerTests(unittest.IsolatedAsyncioTestCase):
+    async def test_omitted_measurement_arguments_are_real_function_errors(self):
+        complete = {"spec": wire_example().model_dump(), "explanation": "Requested wire.", "questions": []}
+        omitted = json.loads(json.dumps(complete))
+        del omitted["spec"]["probes"]
+        with self.assertRaisesRegex(ValidationError, "explicitly include probes"):
+            create_plan(json.dumps(omitted))
+        calls = []
+        def handler(request):
+            calls.append(request)
+            return httpx.Response(200, json=completion(json.dumps(omitted if len(calls) == 1 else complete)))
+        result = await self.call_with(handler)
+        self.assertEqual(result.attempts, 2)
+        self.assertEqual(result.spec.probes, wire_example().probes)
+        self.assertEqual(result.decision_trace[-1].stage, "function_error")
+
     async def call_with(self, handler, prompt="Create the described round conductor model.", current=None):
         def routed_handler(request):
             if request.url.path.endswith("/decisions"):
                 payload = json.loads(request.content)
                 answers = {name: {"type": "noul", "noul": 1.0} for name in payload["questions"]}
                 if "route" in answers:
-                    operation = payload["state"]["operation"]
+                    operation = "modify_plan" if payload["state"]["current_plan"] is not None else "create_plan"
                     answers["route"] = {"type": "choice", "choice": operation, "confidence": 1.0,
-                        "probabilities": {name: 1.0 if name == operation else 0.0 for name in ("create", "modify", "clarify")}}
+                        "probabilities": {name: 1.0 if name == operation else 0.0 for name in ("create_plan", "modify_plan", "clarify")}}
                 return httpx.Response(200, json={"answers": answers})
             return handler(request)
 
@@ -44,6 +60,7 @@ class PlannerTests(unittest.IsolatedAsyncioTestCase):
         payload = json.loads(requests[0].content)
         user = json.loads(payload["messages"][1]["content"])
         self.assertEqual(user["operation"], "create")
+        self.assertEqual(user["function"], "create_plan")
         self.assertIsNone(user["current_plan"])
         self.assertEqual(payload["response_format"], {"type": "json_object"})
         self.assertNotIn("attempts", json.loads(payload["messages"][0]["content"].split("Response JSON schema:\n")[1])["properties"])
@@ -63,6 +80,7 @@ class PlannerTests(unittest.IsolatedAsyncioTestCase):
 
         result = await self.call_with(handler, "Set the current to 2 A and preserve the geometry.", original)
         self.assertEqual(received[0]["operation"], "modify")
+        self.assertEqual(received[0]["function"], "modify_plan")
         self.assertEqual(received[0]["current_plan"], original.model_dump())
         self.assertEqual(result.spec.circuits[0].current_a, 2)
         self.assertEqual(before, original.model_dump_json())

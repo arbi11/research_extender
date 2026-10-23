@@ -1273,5 +1273,277 @@
     },
     "expected_allowed": false,
     "rationale": "Untrusted explanation cannot authorize changing depth."
+  },
+  {
+    "id": "asymmetric_core_faithful",
+    "stage": "fidelity",
+    "category": "faithful",
+    "prompt": "Create a 2D planar DC magnetic model. All coordinates are in millimeters; out-of-plane depth is 10 mm.\n\nCreate an asymmetric C-shaped core using these polygon vertices in order:\n(-15,-12), (10,-12), (10,-6), (-7,-6),\n(-7,6), (6,6), (6,12), (-15,12).\nUse linear relative permeability 1000 and place its label at (-12,0).\n\nAdd two rectangular winding cross-sections, both with relative permeability 1:\n1. From (-5,-4) to (0,4), label (-2.5,0), +50 turns.\n2. From (-22,-4) to (-17,4), label (-19.5,0), -50 turns.\nAssign both to the same circuit carrying 1 A DC.\n\nUse an enclosing air rectangle from (-40,-30) to (30,30), with A=0 on its boundary and air label at (20,20).\nUse a global mesh size of 1 mm. Measure magnetic flux density at (3,0).",
+    "candidate": {
+      "kind": "magnetostatic_plan",
+      "title": "Asymmetric C-core with two windings and air domain",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 10.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -40.0,
+        "y_min": -30.0,
+        "x_max": 30.0,
+        "y_max": 30.0
+      },
+      "air_label": {
+        "x": 20.0,
+        "y": 20.0
+      },
+      "materials": [
+        {
+          "id": "core_material",
+          "relative_permeability": 1000.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "coil_circuit",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "core",
+          "shape": {
+            "type": "polygon",
+            "points": [
+              {
+                "x": -15.0,
+                "y": -12.0
+              },
+              {
+                "x": 10.0,
+                "y": -12.0
+              },
+              {
+                "x": 10.0,
+                "y": -6.0
+              },
+              {
+                "x": -7.0,
+                "y": -6.0
+              },
+              {
+                "x": -7.0,
+                "y": 6.0
+              },
+              {
+                "x": 6.0,
+                "y": 6.0
+              },
+              {
+                "x": 6.0,
+                "y": 12.0
+              },
+              {
+                "x": -15.0,
+                "y": 12.0
+              }
+            ]
+          },
+          "material": "core_material",
+          "label": {
+            "x": -12.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "coil1",
+          "shape": {
+            "type": "rectangle",
+            "x_min": -5.0,
+            "y_min": -4.0,
+            "x_max": 0.0,
+            "y_max": 4.0
+          },
+          "material": "air",
+          "label": {
+            "x": -2.5,
+            "y": 0.0
+          },
+          "circuit": "coil_circuit",
+          "turns": 50,
+          "mesh_mm": null
+        },
+        {
+          "id": "coil2",
+          "shape": {
+            "type": "rectangle",
+            "x_min": -22.0,
+            "y_min": -4.0,
+            "x_max": -17.0,
+            "y_max": 4.0
+          },
+          "material": "air",
+          "label": {
+            "x": -19.5,
+            "y": 0.0
+          },
+          "circuit": "coil_circuit",
+          "turns": -50,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 3.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "explanation": "Core and two prescribed-current winding cross-sections in background air.",
+    "expected": {
+      "faithfulness": true
+    },
+    "expected_allowed": true,
+    "rationale": "Resolved permeability and signed excitation match all specified values, including the built-in mu=1 winding material."
+  },
+  {
+    "id": "asymmetric_core_reversed_return",
+    "stage": "fidelity",
+    "category": "unfaithful",
+    "prompt": "Create a 2D planar DC magnetic model. All coordinates are in millimeters; out-of-plane depth is 10 mm.\n\nCreate an asymmetric C-shaped core using these polygon vertices in order:\n(-15,-12), (10,-12), (10,-6), (-7,-6),\n(-7,6), (6,6), (6,12), (-15,12).\nUse linear relative permeability 1000 and place its label at (-12,0).\n\nAdd two rectangular winding cross-sections, both with relative permeability 1:\n1. From (-5,-4) to (0,4), label (-2.5,0), +50 turns.\n2. From (-22,-4) to (-17,4), label (-19.5,0), -50 turns.\nAssign both to the same circuit carrying 1 A DC.\n\nUse an enclosing air rectangle from (-40,-30) to (30,30), with A=0 on its boundary and air label at (20,20).\nUse a global mesh size of 1 mm. Measure magnetic flux density at (3,0).",
+    "candidate": {
+      "kind": "magnetostatic_plan",
+      "title": "Asymmetric C-core with two windings and air domain",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 10.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -40.0,
+        "y_min": -30.0,
+        "x_max": 30.0,
+        "y_max": 30.0
+      },
+      "air_label": {
+        "x": 20.0,
+        "y": 20.0
+      },
+      "materials": [
+        {
+          "id": "core_material",
+          "relative_permeability": 1000.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "coil_circuit",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "core",
+          "shape": {
+            "type": "polygon",
+            "points": [
+              {
+                "x": -15.0,
+                "y": -12.0
+              },
+              {
+                "x": 10.0,
+                "y": -12.0
+              },
+              {
+                "x": 10.0,
+                "y": -6.0
+              },
+              {
+                "x": -7.0,
+                "y": -6.0
+              },
+              {
+                "x": -7.0,
+                "y": 6.0
+              },
+              {
+                "x": 6.0,
+                "y": 6.0
+              },
+              {
+                "x": 6.0,
+                "y": 12.0
+              },
+              {
+                "x": -15.0,
+                "y": 12.0
+              }
+            ]
+          },
+          "material": "core_material",
+          "label": {
+            "x": -12.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "coil1",
+          "shape": {
+            "type": "rectangle",
+            "x_min": -5.0,
+            "y_min": -4.0,
+            "x_max": 0.0,
+            "y_max": 4.0
+          },
+          "material": "air",
+          "label": {
+            "x": -2.5,
+            "y": 0.0
+          },
+          "circuit": "coil_circuit",
+          "turns": 50,
+          "mesh_mm": null
+        },
+        {
+          "id": "coil2",
+          "shape": {
+            "type": "rectangle",
+            "x_min": -22.0,
+            "y_min": -4.0,
+            "x_max": -17.0,
+            "y_max": 4.0
+          },
+          "material": "air",
+          "label": {
+            "x": -19.5,
+            "y": 0.0
+          },
+          "circuit": "coil_circuit",
+          "turns": 50,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 3.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "explanation": "Core and two prescribed-current winding cross-sections in background air.",
+    "expected": {
+      "faithfulness": false
+    },
+    "expected_allowed": false,
+    "rationale": "The return cross-section has +50 turns instead of the requested -50."
   }
 ]

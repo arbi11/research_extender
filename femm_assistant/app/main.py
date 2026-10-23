@@ -18,7 +18,7 @@ from .generate import preview_svg, source_zip
 from .jobs import BusyError, JobStore, SolverWorker
 from .model import ASSUMPTIONS, CCoreSpec
 from .plan import GeometryPlan, wire_example
-from . import plan_generate, planner
+from . import plan_generate, planner, decisions, vision
 
 
 @dataclass
@@ -26,11 +26,12 @@ class Settings:
     data_dir: Path
     token: str = ""
     ai_key: str = ""
-    ai_model: str = "openai/gpt-4.1-mini"
+    ai_model: str = "google/gemini-3.1-flash-lite"
     ai_base_url: str = "https://openrouter.ai/api/v1"
     decision_model: str = "typesafe/jev-1.14"
     decision_base_url: str = "https://openrouter.ai/api/alpha"
     decision_threshold: float = 0.90
+    vision_model: str = "google/gemini-3.1-flash-lite"
     femm_lua: str = "femm-lua"
     timeout: int = 180
     retention_hours: int = 24
@@ -39,11 +40,12 @@ class Settings:
     @classmethod
     def from_env(cls):
         return cls(data_dir=Path(os.getenv("DATA_DIR", "./data")), token=os.getenv("ASSISTANT_TOKEN", ""),
-                   ai_key=os.getenv("OPENROUTER_API_KEY", ""), ai_model=os.getenv("AI_MODEL") or "openai/gpt-4.1-mini",
+                   ai_key=os.getenv("OPENROUTER_API_KEY", ""), ai_model=os.getenv("AI_MODEL") or "google/gemini-3.1-flash-lite",
                    ai_base_url=os.getenv("AI_BASE_URL", "https://openrouter.ai/api/v1"),
                    decision_model=os.getenv("DECISION_MODEL") or "typesafe/jev-1.14",
                    decision_base_url=os.getenv("DECISION_BASE_URL") or "https://openrouter.ai/api/alpha",
                    decision_threshold=float(os.getenv("DECISION_THRESHOLD") or "0.90"),
+                   vision_model=os.getenv("VISION_MODEL", "google/gemini-3.1-flash-lite"),
                    femm_lua=os.getenv("FEMM_LUA", "femm-lua"), timeout=int(os.getenv("SOLVE_TIMEOUT_SECONDS", "180")),
                    retention_hours=int(os.getenv("RETENTION_HOURS", "24")))
 
@@ -64,6 +66,13 @@ class PlanSolveRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     spec: GeometryPlan
     mesh_job_id: str = Field(pattern=r"^[a-f0-9]{32}$")
+
+
+class VisualReviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    prompt: str = Field(min_length=1, max_length=3000)
+    spec: GeometryPlan
+    mesh_job_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{32}$")
 
 
 class Budget:
@@ -138,7 +147,10 @@ def create_app(settings: Settings | None = None):
                 "assumptions": ASSUMPTIONS, "retention_hours": settings.retention_hours,
                 "plan_example": wire_example().model_dump(), "plan_schema": GeometryPlan.model_json_schema(),
                 "drafting_model": settings.ai_model, "decision_model": settings.decision_model,
-                "decision_threshold": settings.decision_threshold, "mesh_required": True,
+                "decision_threshold": None, "decision_role": "function_routing_and_error_diagnostics", "mesh_required": True,
+                "argument_diagnosis_available": bool(settings.ai_key and settings.decision_model),
+                "visual_review_available": bool(settings.ai_key and settings.vision_model),
+                "visual_review_model": settings.vision_model,
                 "plan_capabilities": ["2D planar DC magnetostatics", "Circles, rectangles and simple polygons",
                                       "Nested or separate closed regions with linear materials",
                                       "DC circuits, an outer zero-potential boundary, field probes and optional force"]}
@@ -174,6 +186,31 @@ def create_app(settings: Settings | None = None):
     @app.post("/api/plan/preview", dependencies=secured)
     async def plan_preview(spec: GeometryPlan):
         return Response(plan_generate.preview_svg(spec), media_type="image/svg+xml")
+
+    @app.post("/api/plan/review", dependencies=secured)
+    async def visual_review(request: VisualReviewRequest):
+        if not settings.ai_key or not settings.vision_model:
+            raise HTTPException(503, "Configure an API key and VISION_MODEL to enable optional visual review.")
+        mesh_svg = None
+        if request.mesh_job_id is not None:
+            mesh_job = store.get(request.mesh_job_id)
+            if (not mesh_job or mesh_job["kind"] != "mesh" or mesh_job["status"] != "completed"
+                    or not mesh_job["result"] or mesh_job["result"].get("status") != "passed"
+                    or mesh_job["spec"] != request.spec.model_dump(mode="json")):
+                raise HTTPException(409, "Visual mesh review requires a passed mesh check for this exact unchanged model.")
+            path = store.root / request.mesh_job_id / "mesh.svg"
+            if not path.is_file():
+                raise HTTPException(404, "The mesh image is unavailable. Review geometry only or check the mesh again.")
+            if path.stat().st_size > vision.MAX_SVG_BYTES:
+                raise HTTPException(422, "The mesh image is too detailed for visual review. Review geometry only.")
+            mesh_svg = path.read_text(encoding="utf-8")
+        budget.use("visual_review", 20)
+        try:
+            async with httpx.AsyncClient() as client:
+                return await vision.review(client, settings.ai_key, settings.ai_base_url, settings.vision_model,
+                                           request.prompt, request.spec, mesh_svg=mesh_svg)
+        except vision.VisionError as exc:
+            raise HTTPException(exc.status_code, exc.message) from None
 
     @app.post("/api/plan/export", dependencies=secured)
     async def plan_export(spec: GeometryPlan):
@@ -238,6 +275,41 @@ def create_app(settings: Settings | None = None):
     @app.get("/api/jobs/{job_id}", dependencies=secured)
     async def job(job_id: str):
         return find_job(job_id)
+
+    @app.post("/api/jobs/{job_id}/diagnose", dependencies=secured)
+    async def diagnose_job(job_id: str):
+        failed = find_job(job_id)
+        if failed["status"] != "failed":
+            raise HTTPException(409, "Argument diagnostics are available only after a native function fails.")
+        cached = (failed["result"] or {}).get("function_diagnosis")
+        if cached:
+            return cached
+        if not settings.ai_key or not settings.decision_model:
+            raise HTTPException(503, "Configure the API key and decision model to diagnose failed function calls.")
+        function_name = ("mesh_plan" if failed["kind"] == "mesh" else
+                         "solve_plan" if failed["spec"].get("kind") == "magnetostatic_plan" else "solve_ccore")
+        error = failed["error"] or "The native function failed."
+        log = store.root / job_id / "solver.log"
+        log_tail = ""
+        if log.is_file():
+            with log.open("rb") as stream:
+                stream.seek(max(0, log.stat().st_size - 6000))
+                log_tail = stream.read(6000).decode("utf-8", errors="replace")
+        budget.use("function_diagnostic", 20)
+        try:
+            async with httpx.AsyncClient() as client:
+                diagnostic = await decisions.diagnose_call(client, settings.ai_key, settings.decision_base_url,
+                    settings.decision_model, function_name, {"spec": failed["spec"]},
+                    [{"message": error, "native_log_tail": log_tail}],
+                    "Diagnose this failed native call against its supplied model arguments.")
+        except decisions.DecisionError as exc:
+            raise HTTPException(exc.status_code, exc.message) from None
+        result = {"function_name": function_name, "arguments_match": diagnostic.arguments_match,
+                  "trace": [trace.model_dump(mode="json") for trace in diagnostic.trace],
+                  "advisory": True, "function_status": "failed", "original_error": error}
+        # A diagnostic annotates the failure. It cannot approve a mesh or solve.
+        store.update(job_id, "failed", result={**(failed["result"] or {}), "function_diagnosis": result}, error=failed["error"])
+        return result
 
     @app.get("/api/jobs/{job_id}/{artifact}", dependencies=secured)
     async def download(job_id: str, artifact: str):

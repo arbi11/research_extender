@@ -19,6 +19,9 @@ const questions = {
   ccore: {items: [], explanation: "", resolved: false, hasSpec: true, decisions: []},
 };
 const urls = new Map();
+let visualRequest, visualBusy = false;
+const failedJobs = {mesh: null, solve: null};
+const diagnosisRequests = {mesh: null, solve: null};
 
 function message(text, error = false) {
   $("message").textContent = text;
@@ -94,6 +97,8 @@ function renderPipeline() {
   });
 }
 function invalidateMesh() {
+  clearVisualReview();
+  clearDiagnosis("mesh");
   planRevision += 1;
   meshValidation = null;
   planSolve = null;
@@ -129,6 +134,7 @@ function emptyPreview(text) {
   $("dimensions").textContent = "";
 }
 function invalidateModel(text) {
+  clearVisualReview();
   previewRequest = Symbol();
   if (mode === "plan") {
     validatedPlan = null;
@@ -155,17 +161,106 @@ function renderQuestions() {
   $("question-help").textContent = state.hasSpec
     ? "Add these details to your request and apply it again, or address them in the model below."
     : "Add the missing details to your description, then apply the request again to create a model.";
-  const labels = {route: "Request route", support: "Supported physics", sufficiency: "Required model details", faithfulness: "Model matches the request"};
-  $("decision-list").replaceChildren(...(state.decisions || []).map(decision => {
-    const item = document.createElement("li");
-    const label = labels[decision.question] || decision.description || decision.question || "Decision";
-    const confidence = typeof decision.confidence === "number" && Number.isFinite(decision.confidence)
-      ? " · Confidence " + (decision.confidence * 100).toFixed(1) + "%" : "";
-    item.textContent = label + ": " + decision.answer + confidence + (decision.passed === false ? " · Needs attention" : "");
-    return item;
+  const decisions = state.decisions || [];
+  const rows = decisions.map(decisionText);
+  if (state.functionName && !decisions.some(decision => decision.question === "route")) rows.unshift("Chosen function: " + state.functionName);
+  $("decision-list").replaceChildren(...rows.map(text => {
+    const item = document.createElement("li"); item.textContent = text; return item;
   }));
-  $("decision-trace").hidden = !state.decisions?.length;
+  $("decision-trace").hidden = !rows.length;
 }
+function decisionText(decision) {
+  const label = decision.question === "route" ? "Chosen function" : decision.question === "arguments_match"
+    ? "Reported argument match" : decision.description || decision.question || "Function evidence";
+  const metrics = [];
+  if (Number.isFinite(decision.probability)) metrics.push("Reported probability " + (decision.probability * 100).toFixed(1) + "%");
+  if (Number.isFinite(decision.confidence)) metrics.push("Provider confidence " + (decision.confidence * 100).toFixed(1) + "%");
+  return label + ": " + decision.answer + (metrics.length ? " · " + metrics.join(" · ") : "");
+}
+function clearVisualReview() {
+  visualRequest = Symbol();
+  visualBusy = false;
+  $("visual-review-panel").hidden = true;
+  $("visual-review-summary").textContent = "";
+  $("visual-review-findings").replaceChildren();
+}
+function includesReviewMesh() {
+  return $("visual-include-mesh").checked && hasCurrentMesh();
+}
+function visualFingerprint() {
+  return JSON.stringify({request: requestFingerprint(), revision: planRevision,
+    includeMesh: $("visual-include-mesh").checked, mesh: includesReviewMesh() ? meshValidation.id : null});
+}
+function clearDiagnosis(kind) {
+  failedJobs[kind] = null;
+  diagnosisRequests[kind] = Symbol();
+  $(kind + "-diagnose").hidden = true;
+  $(kind + "-diagnose").disabled = false;
+  $(kind + "-diagnosis").hidden = true;
+  $(kind + "-diagnosis").textContent = "";
+}
+function offerDiagnosis(kind, job) {
+  clearDiagnosis(kind);
+  failedJobs[kind] = job;
+  $(kind + "-diagnose").hidden = !(config?.argument_diagnosis_available ?? config?.ai_available);
+}
+async function diagnoseJob(kind) {
+  const job = failedJobs[kind];
+  if (!job) return;
+  const serial = Symbol(), fingerprint = requestFingerprint();
+  diagnosisRequests[kind] = serial;
+  const button = $(kind + "-diagnose"), output = $(kind + "-diagnosis");
+  button.disabled = true; output.hidden = false; output.textContent = "Diagnosing the failed function's arguments…";
+  try {
+    const result = await (await api("/api/jobs/" + job.id + "/diagnose", {})).json();
+    if (diagnosisRequests[kind] !== serial || failedJobs[kind] !== job) return;
+    if (fingerprint !== requestFingerprint()) { output.hidden = true; return; }
+    const trace = Array.isArray(result.trace) ? result.trace : result.trace ? [result.trace] : [];
+    output.textContent = "Advisory argument diagnosis for " + result.function_name + ": "
+      + (result.arguments_match ? "arguments appear to match the function." : "arguments may not match the function.")
+      + (trace.length ? " " + trace.map(decisionText).join("; ") + "." : "")
+      + " Review the failure log; this diagnosis does not change the job or model.";
+  } catch (error) {
+    if (diagnosisRequests[kind] === serial && fingerprint === requestFingerprint()) output.textContent = "Argument diagnosis unavailable: " + error.message;
+  } finally {
+    if (diagnosisRequests[kind] === serial) {
+      if (fingerprint !== requestFingerprint()) output.hidden = true;
+      button.disabled = false;
+    }
+  }
+}
+$("mesh-diagnose").addEventListener("click", () => diagnoseJob("mesh"));
+$("solve-diagnose").addEventListener("click", () => diagnoseJob("solve"));
+$("visual-include-mesh").addEventListener("change", () => { clearVisualReview(); controls(); });
+$("visual-review").addEventListener("click", async () => {
+  const serial = Symbol();
+  visualRequest = serial;
+  try {
+    const values = readySpec();
+    if (mode !== "plan") return;
+    const fingerprint = visualFingerprint(), includeMesh = includesReviewMesh();
+    visualBusy = true; controls();
+    $("visual-review-panel").hidden = false;
+    $("visual-review-summary").textContent = "Reviewing the current geometry" + (includeMesh ? " and actual FEMM mesh" : " only") + "…";
+    $("visual-review-source").textContent = includeMesh ? "Inputs: geometry and the checked FEMM mesh." : "Inputs: geometry only.";
+    $("visual-review-findings").replaceChildren();
+    try {
+      const result = await (await api("/api/plan/review", {prompt: $("prompt").value, spec: values,
+        ...(includeMesh ? {mesh_job_id: meshValidation.id} : {})})).json();
+      if (visualRequest !== serial || fingerprint !== visualFingerprint()) return;
+      const labels = {matches: "Appears consistent", issues: "Possible discrepancies", uncertain: "Uncertain"};
+      $("visual-review-summary").textContent = (labels[result.status] || "Visual observations") + ": " + result.summary;
+      $("visual-review-findings").replaceChildren(...(result.findings || []).map(finding => {
+        const item = document.createElement("li");
+        item.textContent = finding.location + ": " + finding.issue + " Suggestion: " + finding.suggestion;
+        return item;
+      }));
+    } catch (error) {
+      if (visualRequest === serial && fingerprint === visualFingerprint()) $("visual-review-summary").textContent = "Visual review unavailable: " + error.message;
+    }
+  } catch (error) { message(error.message, true); }
+  finally { if (visualRequest === serial) { visualBusy = false; controls(); } }
+});
 function resetQuestions() {
   questions[mode] = {items: [], explanation: "", resolved: false, hasSpec: true, decisions: []};
   renderQuestions();
@@ -200,6 +295,12 @@ function controls() {
   $("interpret").disabled = working || !config?.ai_available || $("prompt").value.trim().length < 5 || (needsCurrent && !isReady());
   $("validate-plan").disabled = working || !$("plan-json").value.trim();
   $("load-example").disabled = working || !config?.plan_example;
+  $("visual-review-controls").hidden = mode !== "plan" || !config?.visual_review_available;
+  $("visual-review").disabled = working || visualBusy || !ready || !$("prompt").value.trim();
+  $("visual-review").textContent = visualBusy ? "Reviewing geometry…" : "Review geometry visually";
+  $("visual-include-mesh").disabled = !hasCurrentMesh();
+  $("visual-mesh-help").textContent = !hasCurrentMesh() ? "Geometry only. Check the current mesh to include it."
+    : includesReviewMesh() ? "The current checked mesh will be included." : "Geometry only. The checked mesh will be left out.";
   $("mode").disabled = working;
   $("request-action").disabled = working;
   $("interpret").textContent = mode === "ccore" ? "Apply request ↗" : needsCurrent ? "Update model ↗" : "Create model ↗";
@@ -247,6 +348,7 @@ async function preview() {
   }
 }
 async function showMode() {
+  clearVisualReview();
   clearTimeout(previewTimer);
   previewRequest = Symbol();
   $("mode").value = mode;
@@ -302,8 +404,8 @@ $("access-form").addEventListener("submit", async event => {
   } else await preview();
 });
 $("mode").addEventListener("change", async () => { mode = $("mode").value; await showMode(); });
-$("request-action").addEventListener("change", controls);
-$("prompt").addEventListener("input", controls);
+$("request-action").addEventListener("change", () => { clearVisualReview(); controls(); });
+$("prompt").addEventListener("input", () => { clearVisualReview(); controls(); });
 $("resolved").addEventListener("change", () => { questions[mode].resolved = $("resolved").checked; controls(); });
 $("plan-json").addEventListener("input", () => {
   if (mode !== "plan") return;
@@ -346,6 +448,7 @@ $("interpret").addEventListener("click", async () => {
       resolved: false,
       hasSpec: Boolean(proposal.spec),
       decisions: Array.isArray(proposal.decision_trace) ? proposal.decision_trace : [],
+      functionName: proposal.function_name,
     };
     renderQuestions();
     if (proposal.spec) await preview();
@@ -419,6 +522,7 @@ async function pollMesh() {
       $("mesh-message").textContent = "This check belongs to an earlier model. Validate and check the current mesh before solving.";
       meshBusy = false; controls(); return;
     }
+    if (job.status === "failed") offerDiagnosis("mesh", {id: submitted.id});
     if (job.status !== "completed") throw new Error(job.error || "Mesh generation failed. Review the model or use a coarser mesh and try again.");
     if (job.result?.status !== "passed") throw new Error("The mesh did not pass its checks. Review the mesh log, adjust the model and check it again.");
     const blob = await (await api("/api/jobs/" + submitted.id + "/mesh.svg")).blob();
@@ -427,6 +531,7 @@ async function pollMesh() {
       $("mesh-message").textContent = "The model changed while the mesh was loading. Check the updated model again.";
       meshBusy = false; controls(); return;
     }
+    clearVisualReview();
     imageBlob("mesh-image", blob); renderMeshReport(job.result);
     meshValidation = {id: submitted.id, key: submitted.key, revision: submitted.revision};
     $("mesh-status").textContent = "PASSED";
@@ -454,6 +559,7 @@ $("solve").addEventListener("click", async () => {
   try {
     const values = readySpec();
     const general = mode === "plan";
+    clearDiagnosis("solve");
     if (general && !hasCurrentMesh()) throw new Error("Run a successful mesh check for this exact model before solving.");
     const job = await (await api(general ? "/api/plan/jobs" : "/api/jobs", general ? {spec: values, mesh_job_id: meshValidation.id} : values)).json();
     planSolve = general ? {key: JSON.stringify(values), status: job.status, id: job.id} : null;
@@ -490,6 +596,7 @@ async function poll() {
       busy = true; controls(); polling = setTimeout(poll, 2000); return;
     }
     busy = false; controls(); $("log").hidden = false;
+    if (job.status === "failed") offerDiagnosis("solve", {id: jobId});
     if (job.status === "completed") {
       $("quantities").replaceChildren(...Object.entries(job.result).map(([key, quantity]) => {
         const row = document.createElement("tr"), label = document.createElement("td"), value = document.createElement("td");

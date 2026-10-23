@@ -3,6 +3,12 @@
 All prompts in these reports are public evaluation fixtures. The reports contain
 no API keys, authorization headers, user model history or environment dumps.
 
+The semantic-gate measurements below describe a retired approval policy. Current
+Jev calls only route functions and diagnose actual failed calls; their scores do
+not approve geometry. Keep these reports as historical evidence, not current
+acceptance criteria. Model defaults and later live measurements must be checked
+against their own saved reports and commit, rather than inferred from this file.
+
 * `2026-10-24/semantic-seed.json`: initial six-case live-provider baseline;
   5/6 matching gate labels, zero false accepts, one false reject.
 * `2026-10-24/semantic-full.json`: all 28 cases after clarifying the separation

@@ -22,7 +22,7 @@ ENV DEBIAN_FRONTEND=noninteractive PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 
     PATH=/opt/venv/bin:/opt/femm/bin:$PATH FEMM_DIR=/opt/femm/bin \
     QT_QPA_PLATFORM=offscreen DATA_DIR=/data HOME=/data/home
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-venv ca-certificates libqt6widgets6 libqt6network6 libqt6svg6 libgc1 && \
+    python3 python3-venv ca-certificates libqt6widgets6 libqt6network6 libqt6svg6 libgc1 libcairo2 && \
     rm -rf /var/lib/apt/lists/* && python3 -m venv /opt/venv
 COPY --from=femm-build /opt/femm /opt/femm
 # Retain the pinned upstream source archive with the distributed binaries.

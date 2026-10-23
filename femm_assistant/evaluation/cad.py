@@ -129,8 +129,8 @@ def run(settings, checkpoint, names):
                 proposal = response.json()
                 row["proposal"] = proposal
                 if name in {"wire_missing_depth", "wire_ac"}:
-                    require(proposal["spec"] is None and proposal["questions"] and proposal["attempts"] == 0,
-                            "Unsupported or incomplete request was not stopped at preflight")
+                    require(proposal["spec"] is None and proposal["questions"],
+                            "Unsupported or incomplete request did not request clarification")
                 else:
                     require(proposal["spec"] is not None and not proposal["questions"], "Complete wire request was not accepted")
                     current_a = 1 if name == "wire_complete" else 2
@@ -173,8 +173,8 @@ def main():
     report = {"schema_version": 1, "source": "live_openrouter_and_native_femm",
               "created_utc": datetime.now(timezone.utc).isoformat(),
               "drafting_model": settings.ai_model, "decision_model": settings.decision_model,
-              "threshold": settings.decision_threshold,
-              "limits": "4 requests; at most 6 Jev calls and 4 drafts, production time/token bounds apply",
+              "decision_role": "function_routing_and_error_diagnostics",
+              "limits": "4 requests; at most 8 routing/error checks and 8 drafts, production time/token bounds apply",
               "reference": "https://openstax.org/books/university-physics-volume-2/pages/12-5-amperes-law"}
     def checkpoint(rows):
         report["rows"] = rows
