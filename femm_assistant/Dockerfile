@@ -36,6 +36,7 @@ RUN --mount=type=secret,id=proxy_ca \
     pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY tests ./tests
+COPY evaluation ./evaluation
 RUN useradd --uid 10001 --create-home --home-dir /data/home assistant && \
     mkdir -p /data/home && chown -R assistant:assistant /data && chmod -R a+rX /app /opt/femm
 USER assistant

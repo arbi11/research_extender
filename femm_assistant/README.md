@@ -13,6 +13,10 @@ full 3D CAD remain outside this version.
 The [implementation pipeline](PIPELINE.md) records the implemented stages and
 remaining validation and physics extensions.
 
+The [evaluation guide](evaluation/README.md) runs labeled live OpenRouter checks,
+and language-to-CAD execution in a separate
+development Docker image while preserving deployment settings and jobs.
+
 ## What a reader can do
 
 1. Describe a new geometry or a modification in natural language, load a round-wire

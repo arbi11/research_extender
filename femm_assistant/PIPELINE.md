@@ -88,6 +88,15 @@ local Compose edits when updating.
 2. **Calibration and independent references.** Evaluate semantic thresholds on
    labeled supported, ambiguous and unsupported requests; expand reference cases
    and boundary-distance/convergence studies before claiming quantitative accuracy.
+   The [evaluation guide](evaluation/README.md) now provides 28 labeled public
+   development cases, live/replay scoring and a real OpenRouter-to-native-CAD
+   acceptance test. A 2026-10-24 live run matched 27/28 gate labels at the unchanged
+   0.90 threshold: zero false accepts, one conservative rejection for an explicit
+   assumptions request, and zero provider errors. The four CAD acceptance checks
+   passed, including create/modify, actual mesh/solve/export, incomplete inputs and
+   unsupported AC. The wire probe error was 0.74% and double-current energy scaled
+   by 4.0. This seed set is not an independent holdout or a calibrated confidence
+   guarantee; runtime settings remain unchanged.
 3. **Broader physics and CAD.** Axisymmetry, AC, nonlinear B-H curves, permanent
    magnets, shared-edge Boolean geometry and 3D remain future work. Add each with
    explicit schemas, deterministic validation and native reference tests.
