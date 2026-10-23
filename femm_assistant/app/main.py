@@ -26,8 +26,11 @@ class Settings:
     data_dir: Path
     token: str = ""
     ai_key: str = ""
-    ai_model: str = ""
+    ai_model: str = "openai/gpt-4.1-mini"
     ai_base_url: str = "https://openrouter.ai/api/v1"
+    decision_model: str = "typesafe/jev-1.14"
+    decision_base_url: str = "https://openrouter.ai/api/alpha"
+    decision_threshold: float = 0.90
     femm_lua: str = "femm-lua"
     timeout: int = 180
     retention_hours: int = 24
@@ -36,8 +39,11 @@ class Settings:
     @classmethod
     def from_env(cls):
         return cls(data_dir=Path(os.getenv("DATA_DIR", "./data")), token=os.getenv("ASSISTANT_TOKEN", ""),
-                   ai_key=os.getenv("OPENROUTER_API_KEY", ""), ai_model=os.getenv("AI_MODEL", ""),
+                   ai_key=os.getenv("OPENROUTER_API_KEY", ""), ai_model=os.getenv("AI_MODEL") or "openai/gpt-4.1-mini",
                    ai_base_url=os.getenv("AI_BASE_URL", "https://openrouter.ai/api/v1"),
+                   decision_model=os.getenv("DECISION_MODEL") or "typesafe/jev-1.14",
+                   decision_base_url=os.getenv("DECISION_BASE_URL") or "https://openrouter.ai/api/alpha",
+                   decision_threshold=float(os.getenv("DECISION_THRESHOLD") or "0.90"),
                    femm_lua=os.getenv("FEMM_LUA", "femm-lua"), timeout=int(os.getenv("SOLVE_TIMEOUT_SECONDS", "180")),
                    retention_hours=int(os.getenv("RETENTION_HOURS", "24")))
 
@@ -52,6 +58,12 @@ class PlanInterpretRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     prompt: str = Field(min_length=5, max_length=3000)
     current: GeometryPlan | None = None
+
+
+class PlanSolveRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    spec: GeometryPlan
+    mesh_job_id: str = Field(pattern=r"^[a-f0-9]{32}$")
 
 
 class Budget:
@@ -125,6 +137,8 @@ def create_app(settings: Settings | None = None):
                 "solver_detected": bool(shutil.which(settings.femm_lua)), "defaults": CCoreSpec().model_dump(),
                 "assumptions": ASSUMPTIONS, "retention_hours": settings.retention_hours,
                 "plan_example": wire_example().model_dump(), "plan_schema": GeometryPlan.model_json_schema(),
+                "drafting_model": settings.ai_model, "decision_model": settings.decision_model,
+                "decision_threshold": settings.decision_threshold, "mesh_required": True,
                 "plan_capabilities": ["2D planar DC magnetostatics", "Circles, rectangles and simple polygons",
                                       "Nested or separate closed regions with linear materials",
                                       "DC circuits, an outer zero-potential boundary, field probes and optional force"]}
@@ -173,17 +187,35 @@ def create_app(settings: Settings | None = None):
         budget.use("ai", 20)
         try:
             return await planner.interpret_plan(request.prompt, request.current, settings.ai_key,
-                                                settings.ai_base_url, settings.ai_model)
+                                                settings.ai_base_url, settings.ai_model,
+                                                decision_model=settings.decision_model,
+                                                decision_base_url=settings.decision_base_url,
+                                                decision_threshold=settings.decision_threshold)
         except planner.PlannerError as exc:
             raise HTTPException(exc.status_code, exc.message) from None
 
-    @app.post("/api/plan/jobs", dependencies=secured, status_code=202)
-    async def plan_submit(spec: GeometryPlan):
+    @app.post("/api/plan/mesh", dependencies=secured, status_code=202)
+    async def plan_mesh(spec: GeometryPlan):
         if not shutil.which(settings.femm_lua):
             raise HTTPException(503, "FEMM 5 is not installed on this server. You can still preview and download the source bundle.")
+        budget.use("mesh", 20)
+        try:
+            return store.create(spec, kind="mesh")
+        except BusyError as exc:
+            raise HTTPException(429, str(exc))
+
+    @app.post("/api/plan/jobs", dependencies=secured, status_code=202)
+    async def plan_submit(request: PlanSolveRequest):
+        if not shutil.which(settings.femm_lua):
+            raise HTTPException(503, "FEMM 5 is not installed on this server. You can still preview and download the source bundle.")
+        mesh_job = store.get(request.mesh_job_id)
+        if not mesh_job or mesh_job["kind"] != "mesh" or mesh_job["status"] != "completed" or not mesh_job["result"] or mesh_job["result"].get("status") != "passed":
+            raise HTTPException(409, "Run a successful mesh check before solving this model.")
+        if mesh_job["spec"] != request.spec.model_dump(mode="json"):
+            raise HTTPException(409, "The model changed after its mesh check. Check the mesh again before solving.")
         budget.use("solve", 20)
         try:
-            return store.create(spec)
+            return store.create(request.spec)
         except BusyError as exc:
             raise HTTPException(429, str(exc))
 
@@ -210,15 +242,15 @@ def create_app(settings: Settings | None = None):
     @app.get("/api/jobs/{job_id}/{artifact}", dependencies=secured)
     async def download(job_id: str, artifact: str):
         job = find_job(job_id)
-        if artifact not in {"download.zip", "field.svg", "solver.log"}:
+        if artifact not in {"download.zip", "field.svg", "mesh.svg", "solver.log"}:
             raise HTTPException(404, "Artifact not found.")
         if artifact != "solver.log" and job["status"] != "completed":
             raise HTTPException(409, "Simulation has not completed successfully.")
         path = store.root / job_id / artifact
         if not path.is_file():
             raise HTTPException(404, "Artifact not available.")
-        media = {"download.zip": "application/zip", "field.svg": "image/svg+xml", "solver.log": "text/plain"}[artifact]
-        return FileResponse(path, media_type=media, filename=artifact if artifact != "field.svg" else None)
+        media = {"download.zip": "application/zip", "field.svg": "image/svg+xml", "mesh.svg": "image/svg+xml", "solver.log": "text/plain"}[artifact]
+        return FileResponse(path, media_type=media, filename=artifact if artifact not in {"field.svg", "mesh.svg"} else None)
 
     app.mount("/", StaticFiles(directory=Path(__file__).parent / "static", html=True), name="web")
     return app

@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY deploy/fetch_femm.py /tmp/fetch_femm.py
 RUN --mount=type=secret,id=proxy_ca python3 /tmp/fetch_femm.py
 WORKDIR /opt/femm-source
+COPY deploy/patch_femm_mesh.py /tmp/patch_femm_mesh.py
+RUN python3 /tmp/patch_femm_mesh.py /opt/femm-source
 RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export GIT_SSL_CAINFO=/run/secrets/proxy_ca SSL_CERT_FILE=/run/secrets/proxy_ca; fi; \
     chmod +x linux_build.sh && CMAKE_BUILD_PARALLEL_LEVEL=2 bash ./linux_build.sh && \
@@ -25,6 +27,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=femm-build /opt/femm /opt/femm
 # Retain the pinned upstream source archive with the distributed binaries.
 COPY --from=femm-build /tmp/femm5-source.zip /opt/femm/upstream-source.zip
+# Reproduce the sole upstream change: opt-in export of the actual pre-solve mesh.
+COPY --from=femm-build /tmp/patch_femm_mesh.py /opt/femm/patch_femm_mesh.py
 WORKDIR /app
 COPY requirements.txt ./
 RUN --mount=type=secret,id=proxy_ca \

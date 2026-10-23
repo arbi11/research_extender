@@ -18,6 +18,7 @@ from .model import CCoreSpec
 from .generate import source_files
 from .plan import GeometryPlan
 from . import plan_generate
+from .mesh import validate_mesh
 
 
 class BusyError(Exception):
@@ -31,13 +32,17 @@ class JobStore:
         self.db = self.root / "jobs.sqlite3"
         with closing(self.connect()) as db, db:
             db.execute("CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, spec TEXT NOT NULL, status TEXT NOT NULL, created REAL NOT NULL, updated REAL NOT NULL, result TEXT, error TEXT)")
+            if "kind" not in {row[1] for row in db.execute("PRAGMA table_info(jobs)")}:
+                db.execute("ALTER TABLE jobs ADD COLUMN kind TEXT NOT NULL DEFAULT 'solve'")
 
     def connect(self):
         db = sqlite3.connect(self.db, timeout=10)
         db.row_factory = sqlite3.Row
         return db
 
-    def create(self, spec: CCoreSpec | GeometryPlan, max_pending=5):
+    def create(self, spec: CCoreSpec | GeometryPlan, max_pending=5, *, kind="solve"):
+        if kind not in {"solve", "mesh"} or (kind == "mesh" and not isinstance(spec, GeometryPlan)):
+            raise ValueError("Mesh checks require a general geometry plan.")
         now = time.time()
         job_id = uuid.uuid4().hex
         with closing(self.connect()) as db, db:
@@ -45,7 +50,7 @@ class JobStore:
             count = db.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]
             if count >= max_pending:
                 raise BusyError("The simulation queue is full. Please try again after a job finishes.")
-            db.execute("INSERT INTO jobs VALUES (?,?,?,?,?,?,?)", (job_id, spec.model_dump_json(), "queued", now, now, None, None))
+            db.execute("INSERT INTO jobs (id,spec,status,created,updated,result,error,kind) VALUES (?,?,?,?,?,?,?,?)", (job_id, spec.model_dump_json(), "queued", now, now, None, None, kind))
         return self.get(job_id)
 
     def get(self, job_id):
@@ -165,8 +170,9 @@ class SolverWorker:
         folder.mkdir(exist_ok=True)
         try:
             is_plan = job["spec"].get("kind") == "magnetostatic_plan"
+            mesh_only = job.get("kind", "solve") == "mesh"
             spec = GeometryPlan.model_validate(job["spec"]) if is_plan else CCoreSpec.model_validate(job["spec"])
-            files = plan_generate.source_files(spec) if is_plan else source_files(spec)
+            files = plan_generate.source_files(spec, mesh_only=mesh_only) if is_plan else source_files(spec)
             expected = plan_generate.required_results(spec) if is_plan else None
             for name, content in files.items():
                 (folder / name).write_text(content)
@@ -178,6 +184,8 @@ class SolverWorker:
                 port = sock.getsockname()[1]
             env = {key: os.environ[key] for key in ("PATH", "HOME", "LANG", "LD_LIBRARY_PATH", "FEMM_DIR") if key in os.environ}
             env["QT_QPA_PLATFORM"] = "offscreen"
+            if is_plan:
+                env["FEMM_MESH_EXPORT"] = "1"
             started = time.monotonic()
             with (folder / "solver.log").open("w") as log:
                 try:
@@ -191,14 +199,20 @@ class SolverWorker:
                     if self.process:
                         self.process.wait(timeout=5)
                     self.process = None
-            result = read_results(folder, expected)
-            field_plot(folder)
+            if mesh_only:
+                if (folder / "model.ans").exists() or (folder / "results.csv").exists():
+                    raise RuntimeError("A mesh-only job unexpectedly produced a field solution.")
+                result = validate_mesh(folder, spec)
+            else:
+                result = read_results(folder, expected)
+                field_plot(folder)
             result["runtime"] = {"value": round(time.monotonic()-started, 3), "unit": "s"}
             (folder / "results.json").write_text(json.dumps(result, indent=2, allow_nan=False))
-            allowed = ["model.lua", "run.py", "spec.json", "geometry.svg", "README.txt", "model.fem", "model.ans", "results.csv", "field.csv", "field.svg", "results.json", "solver.log"]
+            allowed = ["model.lua", "model.py", "run.py", "spec.json", "geometry.svg", "README.txt", "model.fem", "model.ans", "results.csv", "field.csv", "field.svg", "results.json", "solver.log", "mesh.svg", "model.node", "model.ele", "model.edge", "model.1.node", "model.1.ele", "model.1.edge"]
             with zipfile.ZipFile(folder / "download.zip", "w", zipfile.ZIP_DEFLATED) as archive:
                 for name in allowed:
-                    archive.write(folder / name, name)
+                    if (folder / name).is_file():
+                        archive.write(folder / name, name)
             self.store.update(job_id, "completed", result=result)
         except subprocess.TimeoutExpired:
             self.store.update(job_id, "failed", error=f"Simulation exceeded the {self.timeout} second limit. Try a coarser mesh.")

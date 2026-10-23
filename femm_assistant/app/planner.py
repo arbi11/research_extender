@@ -9,13 +9,15 @@ import json
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
+from . import decisions
+from .decisions import DecisionTrace
 from .plan import GeometryPlan
 
 
 MAX_PROVIDER_BYTES = 128 * 1024
 MAX_MODEL_CHARACTERS = 64 * 1024
 MAX_ATTEMPTS = 2
-TOTAL_TIMEOUT_SECONDS = 60
+TOTAL_TIMEOUT_SECONDS = 90
 
 
 class PlannerError(Exception):
@@ -43,7 +45,8 @@ class PlanDraft(BaseModel):
 
 
 class PlanProposal(PlanDraft):
-    attempts: int = Field(ge=1, le=MAX_ATTEMPTS)
+    attempts: int = Field(ge=0, le=MAX_ATTEMPTS)
+    decision_trace: list[DecisionTrace] = Field(default_factory=list, max_length=4)
 
 
 SYSTEM = """You plan finite-element magnetic models for a FEMM 5 teaching tool.
@@ -145,8 +148,16 @@ def _repair_feedback(error: ValidationError) -> str:
 
 
 async def interpret_plan(prompt: str, current: GeometryPlan | None, key: str,
-                         base_url: str, model: str) -> PlanProposal:
-    """Create or edit a plan, with at most one validation-guided repair call."""
+                         base_url: str, model: str, *,
+                         decision_model: str = decisions.DEFAULT_MODEL,
+                         decision_base_url: str = decisions.DEFAULT_BASE_URL,
+                         decision_threshold: float = decisions.DEFAULT_THRESHOLD) -> PlanProposal:
+    """At most two generations plus two semantic checks, within 90 seconds.
+
+    Jev gates bounded semantic judgments only. Every actual candidate must still
+    pass the full deterministic schema, topology, references and resource limits.
+    The threshold is provisional until evaluated on labeled CAD requests.
+    """
     if not key or not model:
         raise PlannerError(503, "AI planning needs OPENROUTER_API_KEY and AI_MODEL configured on the server.")
     if not isinstance(prompt, str) or not 5 <= len(prompt) <= 3000:
@@ -157,8 +168,16 @@ async def interpret_plan(prompt: str, current: GeometryPlan | None, key: str,
                 {"role": "user", "content": json.dumps({"operation": "modify" if current else "create",
                  "current_plan": current.model_dump(mode="json") if current else None, "request": prompt}, ensure_ascii=True)}]
     try:
+        decisions.validate_configuration(decision_model, decision_base_url, decision_threshold)
         async with asyncio.timeout(TOTAL_TIMEOUT_SECONDS):
             async with httpx.AsyncClient(timeout=httpx.Timeout(35, connect=10), follow_redirects=False) as client:
+                preflight = await decisions.preflight(client, key, decision_base_url, decision_model,
+                                                      decision_threshold, prompt, current)
+                trace = list(preflight.trace)
+                if not preflight.allowed:
+                    return PlanProposal(spec=None,
+                        explanation="The semantic decision checks need clarification before a geometry can be proposed.",
+                        questions=preflight.questions, attempts=0, decision_trace=trace)
                 for attempt in range(1, MAX_ATTEMPTS + 1):
                     candidate = await _candidate(client, endpoint, key, model, messages)
                     try:
@@ -169,9 +188,19 @@ async def interpret_plan(prompt: str, current: GeometryPlan | None, key: str,
                         messages.extend([{"role": "assistant", "content": candidate},
                                          {"role": "user", "content": _repair_feedback(error)}])
                         continue
-                    return PlanProposal(**draft.model_dump(), attempts=attempt)
+                    if draft.spec is not None:
+                        verification = await decisions.fidelity(client, key, decision_base_url, decision_model,
+                            decision_threshold, prompt, current, draft.spec, draft.explanation)
+                        trace.extend(verification.trace)
+                        if not verification.allowed:
+                            return PlanProposal(spec=None,
+                                explanation="The candidate passed geometry validation, but the semantic fidelity check needs clarification. No candidate has been applied.",
+                                questions=verification.questions, attempts=attempt, decision_trace=trace)
+                    return PlanProposal(**draft.model_dump(), attempts=attempt, decision_trace=trace)
     except PlannerError:
         raise
+    except decisions.DecisionError as error:
+        raise PlannerError(error.status_code, error.message) from None
     except (TimeoutError, httpx.TimeoutException):
         raise PlannerError(504, "The AI request timed out. Try a smaller geometry; the current model has not changed.") from None
     except httpx.HTTPError:

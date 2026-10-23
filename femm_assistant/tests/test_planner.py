@@ -15,7 +15,18 @@ def completion(content):
 
 class PlannerTests(unittest.IsolatedAsyncioTestCase):
     async def call_with(self, handler, prompt="Create the described round conductor model.", current=None):
-        client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        def routed_handler(request):
+            if request.url.path.endswith("/decisions"):
+                payload = json.loads(request.content)
+                answers = {name: {"type": "noul", "noul": 1.0} for name in payload["questions"]}
+                if "route" in answers:
+                    operation = payload["state"]["operation"]
+                    answers["route"] = {"type": "choice", "choice": operation, "confidence": 1.0,
+                        "probabilities": {name: 1.0 if name == operation else 0.0 for name in ("create", "modify", "clarify")}}
+                return httpx.Response(200, json={"answers": answers})
+            return handler(request)
+
+        client = httpx.AsyncClient(transport=httpx.MockTransport(routed_handler))
         with patch("app.planner.httpx.AsyncClient", return_value=client):
             return await interpret_plan(prompt, current, "private-test-key", "https://provider.test/api/v1", "test/json-model")
 

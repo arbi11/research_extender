@@ -24,6 +24,17 @@ class PlanLiveTests(unittest.TestCase):
                 data = wire_example().model_dump()
                 data["mesh_mm"] = mesh
                 data["circuits"][0]["current_a"] = current
+                mesh_job = store.create(GeometryPlan.model_validate(data), kind="mesh")
+                worker.run(mesh_job)
+                meshed = store.get(mesh_job["id"])
+                mesh_folder = store.root / mesh_job["id"]
+                mesh_log = (mesh_folder / "solver.log").read_text() if (mesh_folder / "solver.log").exists() else "no mesh log"
+                self.assertEqual(meshed["status"], "completed", f'{meshed["error"]}\n{mesh_log}')
+                self.assertEqual(meshed["result"]["status"], "passed")
+                self.assertGreater(meshed["result"]["element_count"], 10)
+                self.assertFalse((mesh_folder / "model.ans").exists(), "Mesh validation must not solve fields")
+                self.assertFalse((mesh_folder / "results.csv").exists())
+                self.assertTrue((mesh_folder / "mesh.svg").is_file())
                 job = store.create(GeometryPlan.model_validate(data))
                 worker.run(job)
                 completed = store.get(job["id"])

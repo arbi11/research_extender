@@ -13,9 +13,10 @@ let config, currentJob, polling, previewTimer, previewRequest, busy = false;
 let mode = sessionStorage.getItem("femm_mode") === "ccore" ? "ccore" : "plan";
 let token = sessionStorage.getItem("femm_token") || "";
 let validatedPlan = null, validatedEditor = null, validatedCore = null;
+let meshJob = null, meshPolling, meshBusy = false, meshValidation = null, planSolve = null, planRevision = 0;
 const questions = {
-  plan: {items: [], explanation: "", resolved: false, hasSpec: true},
-  ccore: {items: [], explanation: "", resolved: false, hasSpec: true},
+  plan: {items: [], explanation: "", resolved: false, hasSpec: true, decisions: []},
+  ccore: {items: [], explanation: "", resolved: false, hasSpec: true, decisions: []},
 };
 const urls = new Map();
 
@@ -68,6 +69,44 @@ function readySpec() {
   if (!isReady()) throw new Error("Validate and preview the current model before exporting or solving.");
   return mode === "plan" ? structuredClone(validatedPlan) : coreSpec();
 }
+function planKey() {
+  return mode === "plan" && isReady() ? JSON.stringify(validatedPlan) : null;
+}
+function hasCurrentMesh() {
+  return meshValidation !== null && meshValidation.key === planKey() && meshValidation.revision === planRevision;
+}
+function isCurrentMeshSubmission(submitted) {
+  return submitted.key === planKey() && submitted.revision === planRevision;
+}
+function renderPipeline() {
+  const key = planKey(), ready = key !== null && !hasUnresolvedQuestions();
+  const solved = planSolve?.key === key ? planSolve.status : null;
+  const stages = [
+    ["stage-model", ready ? "complete" : "current"],
+    ["stage-mesh", hasCurrentMesh() ? "complete" : ready ? "current" : "pending"],
+    ["stage-solve", solved === "completed" ? "complete" : hasCurrentMesh() ? "current" : "pending"],
+    ["stage-results", solved === "completed" ? "complete" : "pending"],
+  ];
+  stages.forEach(([id, state]) => {
+    $(id).dataset.state = state;
+    if (state === "current") $(id).setAttribute("aria-current", "step");
+    else $(id).removeAttribute("aria-current");
+  });
+}
+function invalidateMesh() {
+  planRevision += 1;
+  meshValidation = null;
+  planSolve = null;
+  $("mesh-image").hidden = true;
+  $("mesh-quantities").replaceChildren();
+  $("mesh-checks").replaceChildren();
+  $("mesh-warnings").replaceChildren();
+  $("mesh-scope").hidden = true;
+  $("mesh-download").hidden = true;
+  $("mesh-log").hidden = true;
+  $("mesh-panel").hidden = !meshBusy;
+  if (meshBusy) $("mesh-message").textContent = "The model changed while this mesh check was running. Check the updated model again when it finishes.";
+}
 function requestFingerprint() {
   return JSON.stringify({
     mode,
@@ -94,6 +133,7 @@ function invalidateModel(text) {
   if (mode === "plan") {
     validatedPlan = null;
     validatedEditor = null;
+    invalidateMesh();
   } else validatedCore = null;
   if (questions[mode].items.length) {
     questions[mode].resolved = false;
@@ -115,9 +155,19 @@ function renderQuestions() {
   $("question-help").textContent = state.hasSpec
     ? "Add these details to your request and apply it again, or address them in the model below."
     : "Add the missing details to your description, then apply the request again to create a model.";
+  const labels = {route: "Request route", support: "Supported physics", sufficiency: "Required model details", faithfulness: "Model matches the request"};
+  $("decision-list").replaceChildren(...(state.decisions || []).map(decision => {
+    const item = document.createElement("li");
+    const label = labels[decision.question] || decision.description || decision.question || "Decision";
+    const confidence = typeof decision.confidence === "number" && Number.isFinite(decision.confidence)
+      ? " · Confidence " + (decision.confidence * 100).toFixed(1) + "%" : "";
+    item.textContent = label + ": " + decision.answer + confidence + (decision.passed === false ? " · Needs attention" : "");
+    return item;
+  }));
+  $("decision-trace").hidden = !state.decisions?.length;
 }
 function resetQuestions() {
-  questions[mode] = {items: [], explanation: "", resolved: false, hasSpec: true};
+  questions[mode] = {items: [], explanation: "", resolved: false, hasSpec: true, decisions: []};
   renderQuestions();
 }
 function summarizePlan(plan) {
@@ -141,15 +191,19 @@ function setPlan(value) {
 }
 function controls() {
   const ready = Boolean(config) && isReady() && !hasUnresolvedQuestions();
+  const working = busy || meshBusy;
   const needsCurrent = mode === "plan" && $("request-action").value === "modify";
-  $("solve").disabled = busy || !ready || !config?.solver_detected;
-  $("source").disabled = busy || !ready;
-  $("interpret").disabled = busy || !config?.ai_available || $("prompt").value.trim().length < 5 || (needsCurrent && !isReady());
-  $("validate-plan").disabled = busy || !$("plan-json").value.trim();
-  $("load-example").disabled = busy || !config?.plan_example;
-  $("mode").disabled = busy;
-  $("request-action").disabled = busy;
+  $("solve").disabled = working || !ready || !config?.solver_detected || (mode === "plan" && !hasCurrentMesh());
+  $("source").disabled = working || !ready;
+  $("mesh-check").disabled = working || mode !== "plan" || !ready || !config?.solver_detected;
+  $("mesh-check").textContent = meshBusy ? "Checking mesh…" : hasCurrentMesh() ? "Check mesh again →" : "Check mesh with FEMM →";
+  $("interpret").disabled = working || !config?.ai_available || $("prompt").value.trim().length < 5 || (needsCurrent && !isReady());
+  $("validate-plan").disabled = working || !$("plan-json").value.trim();
+  $("load-example").disabled = working || !config?.plan_example;
+  $("mode").disabled = working;
+  $("request-action").disabled = working;
   $("interpret").textContent = mode === "ccore" ? "Apply request ↗" : needsCurrent ? "Update model ↗" : "Create model ↗";
+  renderPipeline();
 }
 async function preview() {
   const serial = Symbol();
@@ -178,12 +232,12 @@ async function preview() {
     }
     imageBlob("geometry", blob);
     $("preview-empty").hidden = true;
-    message("Geometry and assignments validated. Review the model, then solve.");
+    message(mode === "plan" ? "Geometry, materials and boundary assignments validated. Check the mesh next." : "Geometry and assignments validated. Review the model, then solve.");
     controls();
     return true;
   } catch (error) {
     if (previewRequest === serial && requestedMode === mode) {
-      if (mode === "plan") { validatedPlan = null; validatedEditor = null; $("plan-summary").textContent = "The model needs attention before it can be solved."; }
+      if (mode === "plan") { validatedPlan = null; validatedEditor = null; invalidateMesh(); $("plan-summary").textContent = "The model needs attention before it can be solved."; }
       else validatedCore = null;
       emptyPreview("The current model could not be validated.");
       message(error.message, true);
@@ -201,12 +255,16 @@ async function showMode() {
   $("plan-controls").hidden = !general;
   $("plan-request-controls").hidden = !general;
   $("ccore-controls").hidden = general;
+  $("pipeline").hidden = !general;
+  $("mesh-controls").hidden = !general;
+  $("mesh-panel").hidden = !general || (!meshBusy && !hasCurrentMesh());
+  $("inspect-title").textContent = general ? "Inspect, mesh & solve" : "Inspect & solve";
   $("prompt").placeholder = general ? generalPlaceholder : corePlaceholder;
   $("mode-note").textContent = general
     ? "Create new geometry from closed circles, rectangles and polygons. Assign linear materials, circuits and a surrounding air region."
     : "Use the original parameterized actuator to explore force, energy and flux linkage.";
   $("canvas-note").textContent = general
-    ? "Closed contours and region assignments are checked before solving."
+    ? "Geometry, materials and boundary assignments are checked before meshing."
     : "Steel core & armature · Copper-colored winding";
   $("preview-scope").textContent = general
     ? "Linear materials · Zero magnetic vector potential at the outer boundary"
@@ -276,6 +334,7 @@ $("interpret").addEventListener("click", async () => {
       return;
     }
     if (mode === "plan") {
+      invalidateMesh();
       if (proposal.spec || !modifyingPlan) setPlan(proposal.spec);
     } else {
       fields.forEach(([key]) => { $(key).value = proposal.spec[key]; });
@@ -286,6 +345,7 @@ $("interpret").addEventListener("click", async () => {
       explanation: proposal.explanation || "",
       resolved: false,
       hasSpec: Boolean(proposal.spec),
+      decisions: Array.isArray(proposal.decision_trace) ? proposal.decision_trace : [],
     };
     renderQuestions();
     if (proposal.spec) await preview();
@@ -301,11 +361,102 @@ $("source").addEventListener("click", async () => {
     message("Source downloaded. FEMM 5 is required to run the portable script.");
   } catch (error) { message(error.message, true); }
 });
+function renderMeshReport(report) {
+  const metrics = [
+    ["Nodes", report.node_count], ["Elements", report.element_count], ["Edges", report.edge_count],
+    ["Smallest angle", Number.isFinite(report.quality?.min_angle_deg) ? report.quality.min_angle_deg.toFixed(2) + "°" : "Not reported"],
+    ["Largest aspect ratio", Number.isFinite(report.quality?.max_aspect_ratio) ? report.quality.max_aspect_ratio.toFixed(2) : "Not reported"],
+  ];
+  $("mesh-quantities").replaceChildren(...metrics.flatMap(([name, value]) => {
+    const label = document.createElement("dt"), quantity = document.createElement("dd");
+    label.textContent = name; quantity.textContent = value ?? "Not reported";
+    return [label, quantity];
+  }));
+  $("mesh-checks").replaceChildren(...(report.checks || []).map(check => {
+    const item = document.createElement("li");
+    item.textContent = (check.name || "Mesh check").replaceAll("_", " ") + ": " + (check.detail || check.status);
+    return item;
+  }));
+  $("mesh-warnings").replaceChildren(...(report.warnings || []).map(warning => {
+    const item = document.createElement("li"); item.textContent = warning; return item;
+  }));
+}
+$("mesh-check").addEventListener("click", async () => {
+  try {
+    if (mode !== "plan") return;
+    const values = readySpec(), key = JSON.stringify(values);
+    invalidateMesh(); const revision = planRevision; meshBusy = true; controls();
+    $("mesh-panel").hidden = false; $("mesh-status").textContent = "SUBMITTING";
+    $("mesh-message").textContent = "Submitting the validated model for a mesh check…";
+    const job = await (await api("/api/plan/mesh", values)).json();
+    meshJob = {id: job.id, key, revision};
+    message("Mesh check submitted. No field solution is being calculated at this stage.");
+    await pollMesh();
+  } catch (error) {
+    meshBusy = false; controls();
+    $("mesh-status").textContent = "FAILED"; $("mesh-message").textContent = error.message;
+    message(error.message, true);
+  }
+});
+async function pollMesh() {
+  clearTimeout(meshPolling);
+  const submitted = meshJob;
+  if (!submitted) return;
+  try {
+    const job = await (await api("/api/jobs/" + submitted.id)).json();
+    if (meshJob !== submitted) return;
+    if (job.kind !== "mesh") throw new Error("The server returned a different job type. Run the mesh check again.");
+    $("mesh-status").textContent = job.status.toUpperCase();
+    const current = isCurrentMeshSubmission(submitted);
+    if (["queued", "running"].includes(job.status)) {
+      $("mesh-message").textContent = !current ? "The model changed. This check belongs to the earlier model and cannot enable Solve."
+        : job.status === "queued" ? "Queued — mesh checks and solves share one worker."
+        : "FEMM is generating the mesh and checking its triangles. No field solve is running.";
+      meshPolling = setTimeout(pollMesh, 2000); return;
+    }
+    $("mesh-log").hidden = false;
+    if (!current) {
+      $("mesh-message").textContent = "This check belongs to an earlier model. Validate and check the current mesh before solving.";
+      meshBusy = false; controls(); return;
+    }
+    if (job.status !== "completed") throw new Error(job.error || "Mesh generation failed. Review the model or use a coarser mesh and try again.");
+    if (job.result?.status !== "passed") throw new Error("The mesh did not pass its checks. Review the mesh log, adjust the model and check it again.");
+    const blob = await (await api("/api/jobs/" + submitted.id + "/mesh.svg")).blob();
+    if (meshJob !== submitted) return;
+    if (!isCurrentMeshSubmission(submitted)) {
+      $("mesh-message").textContent = "The model changed while the mesh was loading. Check the updated model again.";
+      meshBusy = false; controls(); return;
+    }
+    imageBlob("mesh-image", blob); renderMeshReport(job.result);
+    meshValidation = {id: submitted.id, key: submitted.key, revision: submitted.revision};
+    $("mesh-status").textContent = "PASSED";
+    $("mesh-message").textContent = "Mesh checks passed for the current model. Inspect the mesh, then solve.";
+    $("mesh-scope").hidden = false; $("mesh-download").hidden = false;
+    message("Mesh checks passed. The current model is ready to solve.");
+    meshBusy = false; controls();
+  } catch (error) {
+    if (meshJob !== submitted) return;
+    meshValidation = null; meshBusy = false; controls();
+    $("mesh-status").textContent = "FAILED"; $("mesh-message").textContent = error.message;
+    message(error.message, true);
+  }
+}
+$("mesh-download").addEventListener("click", async () => {
+  try { if (meshJob) await saveResponse(await api("/api/jobs/" + meshJob.id + "/download.zip"), "femm-mesh-" + meshJob.id + ".zip"); }
+  catch (error) { message(error.message, true); }
+});
+$("mesh-log").addEventListener("click", async () => {
+  try { if (meshJob) await saveResponse(await api("/api/jobs/" + meshJob.id + "/solver.log"), "mesh-solver.log"); }
+  catch (error) { message(error.message, true); }
+});
 $("solve").addEventListener("click", async () => {
   busy = true; controls();
   try {
     const values = readySpec();
-    const job = await (await api(mode === "plan" ? "/api/plan/jobs" : "/api/jobs", values)).json();
+    const general = mode === "plan";
+    if (general && !hasCurrentMesh()) throw new Error("Run a successful mesh check for this exact model before solving.");
+    const job = await (await api(general ? "/api/plan/jobs" : "/api/jobs", general ? {spec: values, mesh_job_id: meshValidation.id} : values)).json();
+    planSolve = general ? {key: JSON.stringify(values), status: job.status, id: job.id} : null;
     currentJob = job.id; sessionStorage.setItem("femm_job", currentJob);
     $("results").hidden = false; $("result-body").hidden = true; $("log").hidden = true;
     $("results").scrollIntoView({behavior: "smooth", block: "start"});
@@ -329,10 +480,11 @@ async function poll() {
     const job = await (await api("/api/jobs/" + jobId)).json();
     if (jobId !== currentJob) return;
     const general = job.spec?.kind === "magnetostatic_plan";
+    if (planSolve?.id === jobId) planSolve.status = job.status;
     $("job-model").textContent = "Submitted model: " + (general ? job.spec.title : "C-core actuator");
     $("job-status").textContent = job.status.toUpperCase();
     $("job-message").textContent = job.status === "queued" ? "Queued — one model is solved at a time to keep hosting costs low."
-      : job.status === "running" ? "FEMM is meshing, solving and extracting the field."
+      : job.status === "running" ? general ? "FEMM is solving the checked model and extracting the field." : "FEMM is meshing, solving and extracting the field."
       : job.status === "failed" ? job.error : "Finite-element solution completed.";
     if (["queued", "running"].includes(job.status)) {
       busy = true; controls(); polling = setTimeout(poll, 2000); return;
