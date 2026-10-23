@@ -10,7 +10,10 @@ WORKDIR /opt/femm-source
 RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export GIT_SSL_CAINFO=/run/secrets/proxy_ca SSL_CERT_FILE=/run/secrets/proxy_ca; fi; \
     chmod +x linux_build.sh && CMAKE_BUILD_PARALLEL_LEVEL=2 bash ./linux_build.sh && \
-    cmake --install build --prefix /opt/femm
+    cmake --install build --prefix /opt/femm && \
+    install -m 0755 build/bin/femm-lua.sh /opt/femm/bin/femm-lua && \
+    install -m 0644 build/bin/femm.lua /opt/femm/bin/femm.lua && \
+    test -x /opt/femm/bin/femm_headless
 
 FROM ubuntu:24.04 AS runtime
 ENV DEBIAN_FRONTEND=noninteractive PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
