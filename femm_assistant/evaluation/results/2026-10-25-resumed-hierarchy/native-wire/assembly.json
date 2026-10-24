@@ -1,0 +1,348 @@
+{
+  "air_label": {
+    "x": 5.0,
+    "y": 0.0
+  },
+  "circuits": [
+    {
+      "current_ref": "f_dc_current_A",
+      "id": "dc_circuit",
+      "source_refs": [
+        "nl_request"
+      ]
+    }
+  ],
+  "components": [
+    {
+      "depends_on": [],
+      "description": "Top-level planar DC magnetostatic model grouping the conductor, the exterior air background, and the B-field probe. Identity transform; no owned material face.",
+      "family": "planar_dc_magnetostatics",
+      "features": [],
+      "id": "machine_root",
+      "mode": "custom",
+      "name": "DC magnetostatic model root",
+      "overrides": [],
+      "parent_id": null,
+      "required_physics": [
+        "planar_dc_magnetics"
+      ],
+      "role": "machine_root",
+      "source_refs": [
+        "nl_request"
+      ],
+      "template": null,
+      "transform": {
+        "dx_mm": 0.0,
+        "dy_mm": 0.0,
+        "fact_ids": [],
+        "mirror": "none",
+        "origin": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "rotate_deg": 0.0
+      }
+    },
+    {
+      "depends_on": [],
+      "description": "Solid circular current-carrying conductor centered at (0,0) with radius f_conductor_radius_mm (1 mm), linear isotropic material conductor_material with relative permeability f_conductor_mu_r (1), excited by dc_circuit with current f_dc_current_A (+1 A) and f_conductor_turns (+1 turn). Label point at (0,0) is a region label within the conductor face. Planar depth is f_depth_mm (20 mm). Exterior air background and B probe are frozen in other components and settings.",
+      "family": "planar_dc_magnetostatics",
+      "features": [
+        {
+          "bindings": [
+            {
+              "fact_id": "f_conductor_radius_mm",
+              "path": "/shape/radius",
+              "unit": "mm"
+            }
+          ],
+          "circuit_id": "dc_circuit",
+          "depends_on": [],
+          "description": "Solid circular current-carrying conductor centered at (0,0) with radius from f_conductor_radius_mm (1 mm), linear_isotropic material conductor_material with relative permeability f_conductor_mu_r (1), excited by dc_circuit with current f_dc_current_A (+1 A) and f_conductor_turns (+1 turn). Region label at (0,0) lies inside the conductor face. Planar out-of-plane depth is f_depth_mm (20 mm).",
+          "fact_ids": [
+            "f_conductor_radius_mm",
+            "f_conductor_mu_r",
+            "f_dc_current_A",
+            "f_conductor_turns",
+            "f_depth_mm"
+          ],
+          "id": "conductor_disk",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "material_id": "conductor_material",
+          "mesh_mm": null,
+          "name": "Circular conductor solid disk",
+          "pattern": null,
+          "required_physics": [
+            "planar_dc_magnetics",
+            "linear_isotropic"
+          ],
+          "role": "conductor_region",
+          "shape": {
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0,
+            "type": "circle"
+          },
+          "source_refs": [
+            "nl_request"
+          ],
+          "transform": {
+            "dx_mm": 0.0,
+            "dy_mm": 0.0,
+            "fact_ids": [],
+            "mirror": "none",
+            "origin": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "rotate_deg": 0.0
+          },
+          "turns_ref": "f_conductor_turns"
+        }
+      ],
+      "id": "conductor_circle",
+      "mode": "custom",
+      "name": "Circular conductor",
+      "overrides": [],
+      "parent_id": "machine_root",
+      "required_physics": [
+        "planar_dc_magnetics",
+        "linear_isotropic"
+      ],
+      "role": "conductor",
+      "source_refs": [
+        "nl_request"
+      ],
+      "template": null,
+      "transform": {
+        "dx_mm": 0.0,
+        "dy_mm": 0.0,
+        "fact_ids": [],
+        "mirror": "none",
+        "origin": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "rotate_deg": 0.0
+      }
+    },
+    {
+      "depends_on": [],
+      "description": "Single exterior air domain surrounding the conductor, bounded by a circular outer boundary with A equal to zero, stored as the global background rather than as a duplicate material face.",
+      "family": "planar_dc_magnetostatics",
+      "features": [],
+      "id": "background_air",
+      "mode": "custom",
+      "name": "Circular air background domain",
+      "overrides": [],
+      "parent_id": "machine_root",
+      "required_physics": [
+        "planar_dc_magnetics",
+        "linear_isotropic"
+      ],
+      "role": "background",
+      "source_refs": [
+        "nl_request"
+      ],
+      "template": null,
+      "transform": {
+        "dx_mm": 0.0,
+        "dy_mm": 0.0,
+        "fact_ids": [],
+        "mirror": "none",
+        "origin": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "rotate_deg": 0.0
+      }
+    },
+    {
+      "depends_on": [],
+      "description": "Point probe of magnetic flux density placed at a point on the x-axis outside the conductor, stored in model measurement settings. No force extraction is requested.",
+      "family": "planar_dc_magnetostatics",
+      "features": [],
+      "id": "b_probe",
+      "mode": "custom",
+      "name": "B-field probe",
+      "overrides": [],
+      "parent_id": "machine_root",
+      "required_physics": [
+        "planar_dc_magnetics"
+      ],
+      "role": "measurement",
+      "source_refs": [
+        "nl_request"
+      ],
+      "template": null,
+      "transform": {
+        "dx_mm": 0.0,
+        "dy_mm": 0.0,
+        "fact_ids": [],
+        "mirror": "none",
+        "origin": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "rotate_deg": 0.0
+      }
+    }
+  ],
+  "depth_ref": "f_depth_mm",
+  "domain": {
+    "center": {
+      "x": 0.0,
+      "y": 0.0
+    },
+    "radius": 10.0,
+    "type": "circle"
+  },
+  "facts": [
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified out-of-plane depth of 20 mm for the planar model.",
+      "id": "f_depth_mm",
+      "label": "Planar out-of-plane depth",
+      "role": "length",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "mm",
+      "value": 20.0
+    },
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified conductor radius of 1 mm centered at (0,0).",
+      "id": "f_conductor_radius_mm",
+      "label": "Circular conductor radius",
+      "role": "length",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "mm",
+      "value": 1.0
+    },
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified circular air domain radius of 10 mm centered at (0,0).",
+      "id": "f_air_radius_mm",
+      "label": "Circular air domain radius",
+      "role": "length",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "mm",
+      "value": 10.0
+    },
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified relative permeability of 1 for the conductor, using linear isotropic material.",
+      "id": "f_conductor_mu_r",
+      "label": "Conductor relative permeability",
+      "role": "permeability",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "1",
+      "value": 1.0
+    },
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified DC circuit current of +1 A.",
+      "id": "f_dc_current_A",
+      "label": "DC circuit current",
+      "role": "current",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "A",
+      "value": 1.0
+    },
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified winding count of +1 turn for the conductor circuit.",
+      "id": "f_conductor_turns",
+      "label": "Conductor turns",
+      "role": "turns",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "turn",
+      "value": 1.0
+    },
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified global mesh size of 0.5 mm.",
+      "id": "f_global_mesh_mm",
+      "label": "Global mesh size",
+      "role": "mesh",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "mm",
+      "value": 0.5
+    }
+  ],
+  "family": "planar_dc_magnetostatics",
+  "force_feature_id": null,
+  "id": "m_c86325b294ce5ba66c0780c3fc9129",
+  "input_mode": "natural_language",
+  "materials": [
+    {
+      "id": "conductor_material",
+      "model": "linear_isotropic",
+      "name": "Conductor linear isotropic material",
+      "property_refs": [
+        "f_conductor_mu_r"
+      ],
+      "relative_permeability_ref": "f_conductor_mu_r",
+      "source_refs": [
+        "nl_request"
+      ]
+    }
+  ],
+  "mesh_mm": 0.5,
+  "numerical_notes": [
+    "Global mesh size 0.5 mm and label/probe positions are taken directly from the user request; no numerical domain, mesh, or label choices were added."
+  ],
+  "physics": "planar_dc_magnetics",
+  "probes": [
+    {
+      "x": 2.0,
+      "y": 0.0
+    }
+  ],
+  "questions": [],
+  "required_physics": [
+    "planar_dc_magnetics",
+    "linear_isotropic"
+  ],
+  "title": "Planar DC magnetostatic circular conductor model",
+  "version": 1
+}
