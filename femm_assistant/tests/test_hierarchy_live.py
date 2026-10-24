@@ -48,15 +48,32 @@ class HierarchyHelpersTests(unittest.TestCase):
         numerical = target(case_id="selected").model_dump(mode="json")
         analytical = copy.deepcopy(numerical)
         analytical.update(id="analytical", reference_kind="analytical", value=10000)
+        experimental = copy.deepcopy(numerical)
+        experimental.update(id="experimental", reference_kind="experimental", value=4321)
         other = copy.deepcopy(numerical)
         other.update(id="other_case", case_id="other")
-        extracted = {"evidence": {"targets": [other, analytical, numerical]},
+        extracted = {"evidence": {"targets": [other, analytical, experimental, numerical]},
                      "assembly_inventory": {"selected_case_id": "selected"}}
+        original = copy.deepcopy(extracted)
         case, targets = hierarchy_live.select_targets(extracted, hierarchy_live.TargetSelection())
         self.assertEqual(case, "selected")
-        self.assertEqual([value["id"] for value in targets], ["reference"])
-        with self.assertRaises(ValueError):
-            hierarchy_live.select_targets(extracted, hierarchy_live.TargetSelection(target_ids=["analytical"]))
+        self.assertEqual([value["id"] for value in targets], ["analytical", "experimental", "reference"])
+        self.assertEqual(targets, [analytical, experimental, numerical])
+        self.assertEqual(extracted, original)
+        _, selected = hierarchy_live.select_targets(extracted, hierarchy_live.TargetSelection(target_ids=["analytical"]))
+        self.assertEqual(selected, [analytical])
+        with self.assertRaisesRegex(ValueError, "selected case"):
+            hierarchy_live.select_targets(extracted, hierarchy_live.TargetSelection(target_ids=["other_case"]))
+
+    def test_target_selection_rejects_unknown_method_derived_and_zero_values(self):
+        from tests.test_targets import target
+        source = target(case_id="selected").model_dump(mode="json")
+        for updates in ({"reference_kind": "unknown"},
+                        {"evidence_kind": "derived", "derivation": "Compute a formula at the requested excitation."},
+                        {"value": 0, "tolerance": {"absolute": .01, "relative": 0}}):
+            with self.subTest(updates=updates), self.assertRaises(ValueError):
+                hierarchy_live.select_targets({"evidence": {"targets": [{**source, **updates}]},
+                    "assembly_inventory": {"selected_case_id": "selected"}}, hierarchy_live.TargetSelection())
 
     def test_administrative_circuit_binding_does_not_change_source_target(self):
         from tests.test_targets import target
@@ -211,7 +228,8 @@ class HierarchyFlowTests(unittest.IsolatedAsyncioTestCase):
                 await hierarchy_live.run_matrix([], Path("unused"))
             settings.assert_not_called()
 
-    async def run_mocked(self, *, paper=False, unsupported=False, target_fail=False):
+    async def run_mocked(self, *, paper=False, unsupported=False, target_fail=False,
+                         reference_kind="reported_numerical"):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         root = Path(temporary.name)
@@ -249,7 +267,7 @@ class HierarchyFlowTests(unittest.IsolatedAsyncioTestCase):
                 "title": "Synthetic flow source", "summary": "Mocked extraction; no scientific claim.",
                 "parameters": [], "targets": [{"id": "reference", "description": "Fixed synthetic target",
                     "observable": {"quantity": "energy"}, "value": .000865042, "unit": "J",
-                    "tolerance": {"relative": .02}, "reference_kind": "reported_numerical",
+                    "tolerance": {"relative": .02}, "reference_kind": reference_kind,
                     "conditions": "Source case", "citations": [citation]}]})
             return replication.ExtractionOutcome(evidence, {"cost": .001})
         with patch("app.planner.interpret_plan", new=AsyncMock(return_value=proposal)) as planner, \
@@ -265,6 +283,10 @@ class HierarchyFlowTests(unittest.IsolatedAsyncioTestCase):
         manifest = json.loads((root / "trial" / "manifest.json").read_bytes())
         self.assertEqual(manifest["report.json"], hashlib.sha256((root / "trial" / "report.json").read_bytes()).hexdigest())
         self.assertEqual(report["status"], "locked")
+        self.assertEqual(report["version"], 2)
+        self.assertEqual(report["target_selection_policy"]["reference_kinds"],
+                         ["reported_numerical", "analytical", "experimental"])
+        self.assertFalse(report["target_selection_policy"]["formula_substitution"])
         self.assertEqual(report["source_fidelity"]["status"], "pending_independent_audit")
         return report, native
 
@@ -289,6 +311,18 @@ class HierarchyFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(native, ["mesh", "solve"])
         self.assertEqual(report["target_report"]["status"], "failed")
         self.assertEqual(report["external_retries"], 0)
+
+    async def test_analytical_published_value_remains_analytical_through_frozen_comparison(self):
+        report, native = await self.run_mocked(paper=True, reference_kind="analytical")
+        self.assertTrue(report["execution_pipeline_passed"], report)
+        self.assertEqual(native, ["mesh", "solve"])
+        self.assertEqual(report["selected_source_targets"][0]["reference_kind"], "analytical")
+        frozen = next(call for call in report["api_calls"] if call["name"] == "freeze_targets")
+        self.assertEqual(frozen["request"]["targets"][0]["reference_kind"], "analytical")
+        check = report["target_report"]["checks"][0]
+        self.assertEqual(check["reference_kind"], "analytical")
+        self.assertEqual(check["target"], .000865042)
+        self.assertEqual(check["status"], "passed")
 
     async def test_unsupported_hierarchy_and_preview_survive_without_native_execution(self):
         report, native = await self.run_mocked(unsupported=True)

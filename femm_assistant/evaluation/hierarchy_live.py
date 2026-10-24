@@ -28,6 +28,13 @@ from app.targets import NumericalTarget
 
 
 DEFAULT_MODELS = ("~z-ai/glm-latest", "anthropic/claude-haiku-5.5", "deepseek/deepseek-v4-pro-0813")
+PROTOCOL_VERSION = 2
+TARGET_SELECTION_POLICY = {
+    "reference_kinds": ["reported_numerical", "analytical", "experimental"],
+    "evidence_kind": "explicit", "nonzero_source_value_required": True,
+    "single_selected_case": True, "formula_substitution": False,
+    "verdict_scope": "Agreement with each original reference method; analytical agreement is not FE-result replication.",
+}
 EXTRACTION_PROMPT = (
     "Identify the earliest fully specified operating case supported by the supplied execution capabilities. "
     "Extract its complete physical geometry, materials, excitation, coordinate conventions and numerical "
@@ -240,7 +247,7 @@ def load_cases(path: Path) -> list[LiveCase]:
 def select_targets(extracted, selection: TargetSelection):
     evidence = extracted["evidence"]
     available = [NumericalTarget.model_validate(target) for target in evidence.get("targets", [])]
-    eligible = [target for target in available if target.reference_kind == "reported_numerical"
+    eligible = [target for target in available if target.reference_kind in TARGET_SELECTION_POLICY["reference_kinds"]
                 and target.evidence_kind == "explicit" and target.value != 0]
     case_id = selection.case_id or (extracted.get("assembly_inventory") or {}).get("selected_case_id")
     if case_id is None and eligible:
@@ -251,9 +258,9 @@ def select_targets(extracted, selection: TargetSelection):
     if selection.target_ids:
         eligible = [target for target in eligible if target.id in selection.target_ids]
         if {target.id for target in eligible} != set(selection.target_ids):
-            raise ValueError("The requested source target ids are not all eligible numerical references.")
+            raise ValueError("The requested source target ids are not all eligible explicit published references in the selected case.")
     if not eligible:
-        raise ValueError("No explicit nonzero reported numerical target belongs to the selected source case.")
+        raise ValueError("No explicit nonzero published analytical, numerical or experimental target belongs to the selected source case.")
     return case_id, [target.model_dump(mode="json") for target in eligible]
 
 
@@ -302,7 +309,8 @@ async def run_case(case: LiveCase, model: str, output: Path, *, live=False, sett
     hosts = {urlparse(active.ai_base_url).hostname, urlparse(active.decision_base_url).hostname}
     auditor = DecodedAudit(output / "provider", secrets=secrets, allowed_hosts=hosts)
     original_client = httpx.AsyncClient
-    report = {"version": 1, "status": "running", "started_utc": _now(), "case": case.model_dump(mode="json"),
+    report = {"version": PROTOCOL_VERSION, "status": "running", "started_utc": _now(), "case": case.model_dump(mode="json"),
+        "target_selection_policy": TARGET_SELECTION_POLICY,
         "requested_model": model, "decision_model": active.decision_model,
         "vision_model": vision_model, "focused_checks_model": active.decision_model if case.focused_checks else None,
         "focused_checks_experimental": case.focused_checks,
@@ -489,7 +497,8 @@ async def run_matrix(cases, output: Path, *, live=False, models=DEFAULT_MODELS, 
     if output.exists() and any(output.iterdir()):
         raise ValueError("The model matrix requires a fresh output directory.")
     output.mkdir(parents=True, exist_ok=True)
-    _write(output / "protocol.json", {"created_utc": _now(), "models": list(models),
+    _write(output / "protocol.json", {"version": PROTOCOL_VERSION, "created_utc": _now(), "models": list(models),
+        "target_selection_policy": TARGET_SELECTION_POLICY,
         "cases": [case.model_dump(mode="json") for case in parsed], "vision_model": vision_model,
         "external_retries": 0, "human_corrections": 0, "gold_inputs": False,
         "model_token_budget": "Provider native default; no artificial max_tokens.",

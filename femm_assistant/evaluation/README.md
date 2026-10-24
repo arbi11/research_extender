@@ -26,9 +26,15 @@ and optional `target_selection` (`case_id`/`target_ids`, never target values).
 Do not put source gold or expected answers in the case requests.
 
 Paper cases use upload, hierarchical extraction, typed feature planning,
-immutable revisions and published numerical targets frozen before both mesh and
-solve. Only explicit nonzero reported numerical targets are eligible; analytical
-substitution is forbidden. Missing circuit identifiers are rebound only when
+immutable revisions and published targets frozen before both mesh and solve.
+Protocol v2 accepts explicit nonzero published analytical, numerical and
+experimental reference values from the selected case, preserving the original
+method, value, units, conditions and citations. A formula computed by the runner,
+an invented target or a target from another case is ineligible. Target checks
+retain their reference method; agreement with an analytical reference does not
+establish reproduction of a published FE result. The policy is recorded in each
+protocol and trial before execution. Earlier v1 cohorts and their numerical-only
+selection remain unchanged. Missing circuit identifiers are rebound only when
 exactly one native circuit exists. Ambiguities, incomplete evidence, actual
 function failures and unsupported physics retain their original outcomes.
 Assemblies and previews remain available when execution is unsupported.
