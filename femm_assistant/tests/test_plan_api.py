@@ -302,7 +302,7 @@ class PlanApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 402)
         self.assertIn("credits", response.json()["detail"])
         self.assertNotIn(self.settings.ai_key, response.text)
-        oversized = await self.client.post("/api/plan/preview", headers=self.headers, content=b"x" * 128001)
+        oversized = await self.client.post("/api/plan/preview", headers=self.headers, content=b"x" * (8 * 1024 * 1024 + 1))
         self.assertEqual(oversized.status_code, 413)
         existing_limit = await self.client.post("/api/preview", headers=self.headers, content=b"x" * 17000)
         self.assertEqual(existing_limit.status_code, 413)

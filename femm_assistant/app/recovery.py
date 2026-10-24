@@ -21,7 +21,7 @@ from .history import FeatureEdit, PATH_PATTERN, apply_feature_edits, plan_diff
 from .plan import GeometryPlan
 
 
-TOTAL_TIMEOUT_SECONDS = 60
+TOTAL_TIMEOUT_SECONDS = None
 MAX_CONTEXT_BYTES = 96 * 1024
 STAGE_FUNCTIONS = {"mesh": "mesh_plan", "solver": "solve_plan", "target": "check_targets"}
 
@@ -44,6 +44,14 @@ class RecoveryDraft(BaseModel):
         if self.checkpoint_id is None and (self.edits or not self.questions):
             raise ValueError("A repair requires a checkpoint; an unresolved case requires questions.")
         return self
+
+
+class WireRecoveryDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    checkpoint_id: str | None
+    edits: list[planner.WireFeatureEdit]
+    explanation: str
+    questions: list[str]
 
 
 class RecoveryProposal(RecoveryDraft):
@@ -71,7 +79,8 @@ modifier is a candidate cause, not automatically the causal root. Jev's supplied
 argument diagnostic is advisory; no score establishes geometry correctness.
 
 Choose only a checkpoint supplied in checkpoint_models, normally the failed model,
-then provide only necessary typed edits. Each edit addresses stable feature ids,
+then provide only necessary typed edits. Each wire edit has op, path and value_json
+(a JSON-encoded value string; null for remove). Each edit addresses stable feature ids,
 such as /regions/core/shape/points/2/x or /regions/coil/label/x; never index a region,
 material or circuit by its list position. Respect allowed_paths exactly. Existing
 ids are immutable. Preserve every field outside the permitted paths, including
@@ -168,7 +177,7 @@ async def propose_recovery(context: dict, key: str, base_url: str, model: str, *
                            decision_model: str = decisions.DEFAULT_MODEL,
                            decision_base_url: str = decisions.DEFAULT_BASE_URL,
                            instruction: str = "", allowed_paths: list[str] | None = None) -> RecoveryProposal:
-    """Run at most one real-failure diagnosis and one scoped repair draft in 60 s."""
+    """Run at most one real-failure diagnosis and one scoped repair draft without an artificial AI deadline."""
     failure, models, scopes = _prepare(context, instruction, allowed_paths)
     function = STAGE_FUNCTIONS[failure["stage"]]
     common = {"failure_id": failure["id"], "function_name": function, "allowed_paths": scopes}
@@ -182,7 +191,7 @@ async def propose_recovery(context: dict, key: str, base_url: str, model: str, *
     try:
         decisions.validate_configuration(decision_model, decision_base_url)
         async with asyncio.timeout(TOTAL_TIMEOUT_SECONDS):
-            async with httpx.AsyncClient(timeout=httpx.Timeout(35, connect=10), follow_redirects=False) as client:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(None, connect=20), follow_redirects=False) as client:
                 diagnosis = await decisions.diagnose_call(client, key, decision_base_url, decision_model, function,
                     {"revision_id": failure["revision_id"], "spec": failed_plan.model_dump(mode="json")},
                     [{"stage": failure["stage"], "job_id": failure["job_id"],
@@ -194,13 +203,17 @@ async def propose_recovery(context: dict, key: str, base_url: str, model: str, *
                         explanation="The recorded failure concerns the execution environment or process. It does not justify changing the physical model.",
                         questions=["Can the recorded environment or process failure be resolved before retrying the unchanged model?"])
                 messages = [{"role": "system", "content": SYSTEM + "\nResponse JSON schema:\n" +
-                             json.dumps(RecoveryDraft.model_json_schema(), ensure_ascii=True)},
+                             json.dumps(WireRecoveryDraft.model_json_schema(), ensure_ascii=True)},
                             {"role": "user", "content": json.dumps({"recovery_context": context,
                              "instruction": instruction, "allowed_paths": scopes,
                              "argument_diagnostic": {"arguments_match": diagnosis.arguments_match,
                                 "trace": [item.model_dump(mode="json") for item in diagnosis.trace]}}, ensure_ascii=True)}]
-                candidate = await planner._candidate(client, base_url.rstrip("/") + "/chat/completions", key, model, messages)
-                draft = RecoveryDraft.model_validate_json(candidate)
+                candidate = await planner._candidate(client, base_url.rstrip("/") + "/chat/completions", key, model, messages,
+                                                     response_model=WireRecoveryDraft)
+                wire = WireRecoveryDraft.model_validate_json(candidate)
+                draft = RecoveryDraft.model_validate({**wire.model_dump(), "edits": [
+                    {"op": edit.op, "path": edit.path, "value": json.loads(edit.value_json) if edit.value_json is not None else None}
+                    for edit in wire.edits]})
                 if draft.checkpoint_id is None:
                     return RecoveryProposal(**common, **diagnostic, **draft.model_dump())
                 if draft.checkpoint_id not in models:

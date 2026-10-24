@@ -172,7 +172,7 @@ class PaperTests(unittest.TestCase):
         self.assertIn("untrusted", messages[0]["content"])
         self.assertIn("never instructions", messages[0]["content"])
         data = json.loads(messages[1]["content"])
-        self.assertEqual(data["pdf_pages"][0]["text"], text)
+        self.assertEqual(data["source_inventory"]["pages"][0]["spans"][0]["text"], text)
         self.assertNotIn("os.system", messages[0]["content"])
 
     def test_unknowns_are_questions_not_fake_parameters(self):
@@ -183,6 +183,124 @@ class PaperTests(unittest.TestCase):
         packet["parameters"][0].update(value=None)
         with self.assertRaises(ValidationError):
             papers.PaperEvidence.model_validate(packet)
+
+    def test_source_span_ids_are_reproducible_exact_and_document_bound(self):
+        doc = document("  Lengths in centimeters.\nRotor 15 20\n\n" + "word " * 300)
+        spans = papers.source_spans(doc)
+        self.assertEqual(spans, papers.source_spans(doc))
+        self.assertTrue(all(0 < len(span.text) <= 600 for span in spans))
+        for span in spans:
+            self.assertEqual(doc.pages[span.page - 1].text[span.start:span.end], span.text)
+        changed = document("  Lengths in centimeters.\nRotor 15 21\n\n" + "word " * 300)
+        self.assertTrue(set(span.span_id for span in spans).isdisjoint(
+            span.span_id for span in papers.source_spans(changed)))
+        inventory = papers.source_inventory(doc)
+        self.assertEqual(inventory["document_sha256"], doc.sha256)
+        self.assertEqual(inventory["source_id"], doc.source_id)
+
+    def test_scientific_notation_and_word_units_are_parsed_without_accepting_wrong_values(self):
+        positive = [(2.05e-5, "N", "Force (N)\n2.05 × 10⁻⁵"),
+                    (.049, "N", "4.90 x 10^-2 newtons"),
+                    (.00205, "N", "Force (millinewtons)\n2.05"),
+                    (.15, "m", "All dimensions in centimeters.\n15"),
+                    (2, "A/mm2", "2 amperes per square millimeter"),
+                    (5, "mm2", "Area (square millimeters)\n5"),
+                    (2000, "Hz", "2 × 10³ hertz"),
+                    (1000, "A", "10³ A")]
+        for value, unit, quote in positive:
+            with self.subTest(value=value, quote=quote):
+                self.assertTrue(papers._explicit_numeric_matches(value, unit, quote))
+        negative = [(2.05, "N", "Force (N)\n2.05 × 10⁻⁵"),
+                    (10, "N", "Force (N)\n2.05 × 10⁻⁵"),
+                    (-5, "N", "Force (N)\n2.05 × 10⁻⁵"),
+                    (1.73, "H", "Inductance 1.73 mH"),
+                    (5, "m", "Area 5 m2"), (5, "mm2", "Current density 5 A/mm2"),
+                    (0, "N", "Force 1e-15 N"),
+                    (0, "N", "Force 1e-999 N"),
+                    (1, "N", "Force 1e999 N"),
+                    (2.05e-5, "N", "2.05 × 10⁻⁵")]
+        for value, unit, quote in negative:
+            with self.subTest(value=value, quote=quote):
+                self.assertFalse(papers._explicit_numeric_matches(value, unit, quote))
+
+    def test_all_rejected_claims_retain_each_failure_diagnostic(self):
+        doc = document()
+        packet = evidence(doc)
+        packet["parameters"][0]["citations"] = copy.deepcopy(packet["parameters"][0]["citations"])
+        packet["parameters"][0]["citations"][0]["quote"] = "A fabricated quote"
+        packet["targets"][0]["value"] = 9.73
+        with self.assertRaises(papers.PaperError) as caught:
+            papers.validate_partial_evidence(doc, packet)
+        self.assertEqual(len(caught.exception.issues), 2)
+        self.assertEqual({issue["claim_id"] for issue in caught.exception.issues}, {"current", "inductance"})
+        self.assertEqual({issue["code"] for issue in caught.exception.issues},
+                         {"citation_quote_not_found", "numeric_value_or_unit_unverified"})
+
+    def test_source_references_resolve_separate_value_and_unit_context(self):
+        doc = document("Dimension values\n15\nAll dimensions in centimeters.")
+        spans = papers.source_spans(doc)
+        packet = {"source_id": doc.source_id, "title": "Synthetic span case", "summary": "No real publication",
+            "parameters": [{"id": "length", "description": "Declared length", "value": 15,
+                "unit": "cm", "evidence_kind": "explicit", "value_refs": [spans[1].span_id],
+                "unit_refs": [spans[2].span_id], "header_refs": [spans[0].span_id]}], "targets": []}
+        resolved = papers.resolve_source_evidence(doc, packet)
+        checked, issues, count = papers.validate_partial_evidence(doc, resolved)
+        self.assertFalse(issues)
+        self.assertEqual(count, 0)
+        self.assertEqual(checked.parameters[0].value, 15)
+        self.assertEqual({citation.quote for citation in checked.parameters[0].citations},
+                         {span.text for span in spans})
+        self.assertNotIn("value_refs", checked.model_dump_json())
+
+    def test_bad_source_reference_and_null_claim_do_not_discard_good_independent_claims(self):
+        doc = document()
+        span = papers.source_spans(doc)[0]
+        good = {"id": "current", "description": "Current", "value": 1, "unit": "A",
+                "evidence_kind": "explicit", "value_refs": [span.span_id]}
+        null = {**good, "id": "null_current", "value": None}
+        wrong_span = {**good, "id": "wrong_span", "value_refs": ["span_not_in_uploaded_pdf"]}
+        packet = {"source_id": doc.source_id, "title": "Synthetic", "summary": "Test source",
+                  "parameters": [good, null, wrong_span], "targets": []}
+        resolved = papers.resolve_source_evidence(doc, packet)
+        checked, issues, rejected = papers.validate_partial_evidence(doc, resolved)
+        self.assertEqual([item.id for item in checked.parameters], ["current"])
+        self.assertEqual(rejected, 2)
+        self.assertTrue(any(issue["code"] == "source_span_not_found" for issue in issues))
+        self.assertIn("null_current", {issue["claim_id"] for issue in issues})
+        self.assertNotIn("_source_resolution_issues", checked.model_dump_json())
+
+    def test_unknowns_and_unverified_derivations_remain_explicit_questions(self):
+        doc = document()
+        span = papers.source_spans(doc)[0]
+        packet = {"source_id": doc.source_id, "title": "Synthetic", "summary": "Test source",
+            "parameters": [
+                {"id": "missing", "description": "Missing length", "value": None, "unit": None,
+                 "evidence_kind": "unknown", "unresolved_reason": "No dimension is stated."},
+                {"id": "current", "description": "Sum of two sources", "value": 2, "unit": "A",
+                 "evidence_kind": "derived", "derivation": "Two 1 A sources added.", "value_refs": [span.span_id]}],
+            "targets": []}
+        checked, _, _ = papers.validate_partial_evidence(doc, papers.resolve_source_evidence(doc, packet))
+        self.assertEqual([claim.id for claim in checked.parameters], ["current"])
+        self.assertTrue(any("No dimension" in question for question in checked.questions))
+        self.assertTrue(any("Independently verify" in question for question in checked.questions))
+        self.assertTrue(any("not independently verified" in message for message in checked.limitations))
+
+    def test_span_wire_schema_rejects_quotes_and_missing_fields_before_defaults(self):
+        from app import structured
+        doc = document()
+        wire = papers.SourcePaperEvidence(source_id=doc.source_id, title="Synthetic", summary="Test source",
+            parameters=(papers.SourceEvidenceParameter(id="current", description="Current", value=1,
+                unit="A", evidence_kind="explicit", value_refs=(papers.source_spans(doc)[0].span_id,)),))
+        candidate = wire.model_dump(mode="json")
+        validated = structured.validate_response(candidate, papers.SourcePaperEvidence)
+        self.assertEqual(papers.resolve_source_evidence(doc, validated)["parameters"][0]["value"], 1)
+        candidate["parameters"][0]["quote"] = "model-authored quote"
+        with self.assertRaises(structured.WireValidationError):
+            structured.validate_response(candidate, papers.SourcePaperEvidence)
+        candidate = wire.model_dump(mode="json")
+        candidate.pop("questions")
+        with self.assertRaises(structured.WireValidationError):
+            structured.validate_response(candidate, papers.SourcePaperEvidence)
 
 
 if __name__ == "__main__":

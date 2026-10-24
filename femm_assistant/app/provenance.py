@@ -69,6 +69,14 @@ def validate_reserved_references(store, spec, evidence):
     """Reject reserved references before recording any immutable model state."""
     for value in evidence:
         reference = EvidenceReference.model_validate(value)
+        if reference.source == "artifact" and reference.reference.startswith("assembly-planning:"):
+            from .assembly_api import AssemblyStore
+            if store is None:
+                raise ValueError("Assembly storage is unavailable.")
+            identity = reference.reference[len("assembly-planning:"):]
+            if reference.sha256 != identity:
+                raise ValueError("The supplied assembly reference has an invalid content hash.")
+            AssemblyStore(store).evidence(identity, spec)
         if reference.source == "artifact" and reference.reference.startswith(PREFIX):
             if store is None:
                 raise ValueError("Paper planning storage is unavailable.")

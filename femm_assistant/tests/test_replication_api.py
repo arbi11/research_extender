@@ -4,7 +4,6 @@ import importlib.util
 import json
 from pathlib import Path
 import tempfile
-from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -13,10 +12,23 @@ import httpx
 
 from app.history import ModelRevisionStore
 from app.jobs import JobStore
+from app.main import Settings
 from app.plan import wire_example
 from app import papers, replication, provenance
 from tests.test_papers import document, evidence, text_pdf
 from tests.test_targets import target
+
+
+def wire_evidence(doc, legacy=None):
+    """Fill the real strict wire contract with existing immutable source spans."""
+    packet = copy.deepcopy(legacy if legacy is not None else evidence(doc))
+    spans = papers.source_spans(doc)
+    for section in ("parameters", "targets"):
+        for claim in packet.get(section, []):
+            citations = claim.pop("citations", [])
+            pages = {citation["page"] for citation in citations}
+            claim["source_refs"] = [span.span_id for span in spans if span.page in pages]
+    return papers.SourcePaperEvidence.model_validate(packet).model_dump(mode="json")
 
 
 class _Budget:
@@ -135,7 +147,7 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
-        self.settings = SimpleNamespace(data_dir=self.root, token="assistant-secret-token",
+        self.settings = Settings(data_dir=self.root, token="assistant-secret-token",
             ai_key="openrouter-test-secret-key", ai_model="test-model", ai_base_url="https://provider.test/api/v1")
         self.history = ModelRevisionStore(self.root)
         self.jobs = JobStore(self.root)
@@ -159,6 +171,10 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
             headers={**self.headers, "Content-Type": "application/pdf", "X-Filename": "case.pdf"})
         self.assertEqual(response.status_code, 201, response.text)
         return response.json()
+
+    async def extract(self, uploaded, **body):
+        return await self.client.post(f'/api/papers/{uploaded["paper_id"]}/extract', headers=self.headers,
+                                      json={"hierarchical": False, **body})
 
     async def test_routes_are_authenticated_and_do_not_accept_reported_target_success(self):
         for path in ("/api/papers", "/api/papers/" + "a"*64 + "/extract", "/api/targets"):
@@ -249,7 +265,7 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rejected.status_code, 422)
         self.assertEqual(self.store.get_evidence(record["evidence_id"]), record)
 
-    async def test_single_bounded_provider_call_usage_and_credential_protection(self):
+    async def test_single_strict_provider_call_has_no_artificial_cap_and_retains_private_audit(self):
         uploaded = await self.upload()
         doc = papers.PaperDocument.model_validate(uploaded["document"])
         real_client = httpx.AsyncClient
@@ -257,27 +273,42 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
         def handler(request):
             calls.append(request)
             payload = json.loads(request.content)
-            self.assertEqual(payload["max_tokens"], 6000)
+            self.assertNotIn("max_tokens", payload)
+            self.assertNotIn("max_completion_tokens", payload)
+            self.assertNotIn("temperature", payload)
+            self.assertEqual(payload["response_format"]["type"], "json_schema")
+            self.assertTrue(payload["response_format"]["json_schema"]["strict"])
+            self.assertEqual(payload["provider"], {"require_parameters": True})
             self.assertEqual(payload["model"], "test-model")
-            packet = evidence(doc)
-            packet["targets"][0]["tolerance"] = {"relative": .99}
-            return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(packet)}}],
+            packet = wire_evidence(doc)
+            packet["targets"][0]["tolerance"]["relative"] = .99
+            return httpx.Response(200, json={"id": "generation-test", "model": "returned-test-model", "provider": "provider-test",
+                "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(packet)}}],
                 "usage": {"cost": .002, "prompt_tokens": 100, "completion_tokens": 20, "total_tokens": 120,
+                          "completion_tokens_details": {"reasoning_tokens": 12, "secret": self.settings.ai_key},
                           "secret": self.settings.ai_key}, "provider_secret": self.settings.ai_key})
         with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
-            response = await self.client.post(f'/api/papers/{uploaded["paper_id"]}/extract', headers=self.headers,
-                                              json={"instructions": "Reproduce the original case"})
+            response = await self.extract(uploaded, instructions="Reproduce the original case")
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(len(calls), 1)
         self.assertEqual(response.json()["usage"]["cost"], .002)
         self.assertEqual(response.json()["evidence"]["targets"][0]["tolerance"]["relative"], .02)
         self.assertNotIn(self.settings.ai_key, response.text)
+        private = self.store.get_extraction_audit(response.json()["audit_id"])
+        self.assertEqual(private["usage"]["completion_tokens_details"], {"reasoning_tokens": 12})
+        self.assertEqual(private["returned_model"], "returned-test-model")
+        self.assertEqual(private["provider"], "provider-test")
+        self.assertEqual(private["provider_request_id"], "generation-test")
+        self.assertEqual(private["provider_response"]["provider_secret"], "[REDACTED]")
+        self.assertEqual(private["request"]["model"], "test-model")
+        self.assertNotIn(self.settings.ai_key, json.dumps(private))
+        self.assertNotIn("provider_response", response.json())
         def leaked(request):
-            packet = evidence(doc)
+            packet = wire_evidence(doc)
             packet["summary"] = self.settings.ai_key
             return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(packet)}}]})
         with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(leaked), **kwargs)):
-            rejected = await self.client.post(f'/api/papers/{uploaded["paper_id"]}/extract', headers=self.headers, json={})
+            rejected = await self.extract(uploaded)
         self.assertEqual(rejected.status_code, 502)
         self.assertNotIn(self.settings.ai_key, rejected.text)
         audit_id = rejected.json()["detail"]["audit_id"]
@@ -292,12 +323,12 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
         real_client, calls = httpx.AsyncClient, []
         def handler(request):
             calls.append(request)
-            packet = evidence(doc)
+            packet = wire_evidence(doc)
             packet["targets"][0]["value"] = 1.9
             return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(packet)}}],
                 "usage": {"prompt_tokens": 33, "completion_tokens": 10, "total_tokens": 43, "cost": .001}})
         with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
-            rejected = await self.client.post(f'/api/papers/{uploaded["paper_id"]}/extract', headers=self.headers, json={})
+            rejected = await self.extract(uploaded)
         self.assertEqual(rejected.status_code, 200)
         self.assertEqual(len(calls), 1)
         self.assertIsNone(self.jobs.next())
@@ -319,12 +350,12 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
         doc = papers.PaperDocument.model_validate(uploaded["document"])
         real_client = httpx.AsyncClient
         def handler(request):
-            packet = evidence(doc)
+            packet = wire_evidence(doc)
             packet["parameters"][0]["value"] = None
             return httpx.Response(200, headers={"provider-private-header": self.settings.ai_key},
                 json={"choices": [{"message": {"content": json.dumps(packet)}}], "usage": {"cost": .002}})
         with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
-            response = await self.client.post(f'/api/papers/{uploaded["paper_id"]}/extract', headers=self.headers, json={})
+            response = await self.extract(uploaded)
         self.assertEqual(response.status_code, 200)
         detail = response.json()
         self.assertEqual(detail["extraction_status"], "partial")
@@ -340,12 +371,13 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
         doc = papers.PaperDocument.model_validate(uploaded["document"])
         real_client = httpx.AsyncClient
         def handler(request):
-            packet = evidence(doc)
-            packet["parameters"].append({"id": "bad_boundary", "description": "Invalid invented boundary unit",
-                "value": 0, "unit": "Wb", "evidence_kind": "explicit", "citations": packet["parameters"][0]["citations"]})
+            packet = wire_evidence(doc)
+            bad_boundary = copy.deepcopy(packet["parameters"][0])
+            bad_boundary.update(id="bad_boundary", description="Invalid invented boundary unit", value=0, unit="Wb")
+            packet["parameters"].append(bad_boundary)
             return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(packet)}}], "usage": {"cost": .002}})
         with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
-            response = await self.client.post(f'/api/papers/{uploaded["paper_id"]}/extract', headers=self.headers, json={})
+            response = await self.extract(uploaded)
         self.assertEqual(response.status_code, 200, response.text)
         result = response.json()
         self.assertEqual(result["extraction_status"], "partial")
@@ -364,7 +396,7 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
         real_client = httpx.AsyncClient
         for mode in ("all_invalid", "wrong_source"):
             def handler(request):
-                packet = evidence(doc)
+                packet = wire_evidence(doc)
                 if mode == "all_invalid":
                     packet["parameters"][0]["value"] = None
                     packet["targets"][0]["value"] = 999
@@ -372,10 +404,116 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
                     packet["source_id"] = "paper_" + "a" * 24
                 return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(packet)}}]})
             with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
-                response = await self.client.post(f'/api/papers/{uploaded["paper_id"]}/extract', headers=self.headers, json={})
+                response = await self.extract(uploaded)
             with self.subTest(mode=mode):
                 self.assertEqual(response.status_code, 502, response.text)
                 self.assertIn("audit_id", response.json()["detail"])
+                private = self.store.get_extraction_audit(response.json()["detail"]["audit_id"])
+                if mode == "all_invalid":
+                    self.assertEqual({issue["claim_id"] for issue in private["issues"]}, {"current", "inductance"})
+                    self.assertEqual(private["candidate"]["targets"][0]["value"], 999)
+
+    async def test_missing_wire_fields_are_not_filled_from_local_defaults(self):
+        uploaded = await self.upload()
+        doc = papers.PaperDocument.model_validate(uploaded["document"])
+        real_client, calls = httpx.AsyncClient, []
+        def handler(request):
+            calls.append(request)
+            packet = wire_evidence(doc)
+            packet.pop("questions")
+            return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(packet)}}]})
+        with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
+            response = await self.extract(uploaded)
+        self.assertEqual(response.status_code, 502, response.text)
+        self.assertEqual(len(calls), 1)
+        private = self.store.get_extraction_audit(response.json()["detail"]["audit_id"])
+        self.assertTrue(any(issue["code"] == "wire_required" and issue["path"] == "questions" for issue in private["issues"]))
+        self.assertNotIn("questions", private["candidate"])
+        self.assertIsNone(self.jobs.next())
+
+    async def test_source_span_values_support_scientific_notation_and_word_units(self):
+        source = "All lengths are in centimeters. Radius 15. Force 5.30 x 10^-2 newtons."
+        uploaded_response = await self.client.post("/api/papers", content=text_pdf(source),
+            headers={**self.headers, "Content-Type": "application/pdf", "X-Filename": "notation.pdf"})
+        self.assertEqual(uploaded_response.status_code, 201, uploaded_response.text)
+        uploaded = uploaded_response.json()
+        doc = papers.PaperDocument.model_validate(uploaded["document"])
+        span = papers.source_spans(doc)[0]
+        packet = papers.SourcePaperEvidence(source_id=doc.source_id, title="Synthetic notation", summary="Test source",
+            parameters=(papers.SourceEvidenceParameter(id="radius", description="Radius", value=15,
+                unit="cm", evidence_kind="explicit", value_refs=(span.span_id,), unit_refs=(span.span_id,)),),
+            targets=(papers.SourceNumericalTarget(id="force", description="Published numerical reference", value=.053,
+                unit="N", observable={"quantity": "force_magnitude"}, tolerance={"relative": .02},
+                reference_kind="reported_numerical", conditions="Original source operating condition",
+                value_refs=(span.span_id,), unit_refs=(span.span_id,)),)).model_dump(mode="json")
+        real_client, calls = httpx.AsyncClient, []
+        def handler(request):
+            calls.append(request)
+            return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(packet)}}]})
+        with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
+            response = await self.extract(uploaded)
+            packet["targets"][0]["value"] = .53
+            wrong = await self.extract(uploaded)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["extraction_status"], "complete")
+        self.assertEqual(response.json()["evidence"]["parameters"][0]["value"], 15)
+        self.assertEqual(response.json()["evidence"]["targets"][0]["value"], .053)
+        self.assertEqual(response.json()["evidence"]["targets"][0]["citations"][0]["quote"], span.text)
+        self.assertEqual(wrong.status_code, 200, wrong.text)
+        self.assertEqual(wrong.json()["extraction_status"], "partial")
+        self.assertFalse(wrong.json()["evidence"]["targets"])
+        self.assertEqual(len(calls), 2)  # Two explicit API requests, no implicit repair.
+
+    async def test_hierarchical_discovery_and_extraction_use_two_strict_provider_responses(self):
+        from app.assembly_provider import MachineInventory
+        uploaded = await self.upload()
+        doc = papers.PaperDocument.model_validate(uploaded["document"])
+        span = papers.source_spans(doc)[0]
+        inventory = MachineInventory(id="study", title="Synthetic two-stage study", input_mode="paper",
+            family="air_core_coils", physics="axisymmetric_dc_magnetics",
+            required_physics=["axisymmetric_dc_magnetics"], components=[{
+                "id": "coil", "name": "Coil", "role": "winding", "family": "air_core_coil",
+                "mode": "custom", "source_refs": [span.span_id], "intent": "Preserve the source winding"}],
+            cases=[{"id": "thin", "label": "Thin-wall case", "source_refs": [span.span_id],
+                    "required_physics": ["zero_thickness_winding"], "geometry_requirements": ["zero radial width"]},
+                   {"id": "finite", "label": "Finite-volume case", "source_refs": [span.span_id],
+                    "required_physics": ["axisymmetric_dc_magnetics"], "geometry_requirements": ["positive winding area"]}],
+            selected_case_id="finite", explanation="Select the eligible source case.").model_dump(mode="json")
+        extraction = wire_evidence(doc)
+        for section in ("parameters", "targets"):
+            for claim in extraction[section]:
+                claim["case_id"] = "finite"
+        real_client, requests = httpx.AsyncClient, []
+        def handler(request):
+            payload = json.loads(request.content)
+            requests.append(payload)
+            self.assertTrue(payload["response_format"]["json_schema"]["strict"])
+            self.assertTrue(payload["provider"]["require_parameters"])
+            self.assertNotIn("max_tokens", payload)
+            self.assertNotIn("temperature", payload)
+            name = payload["response_format"]["json_schema"]["name"]
+            if name == "MachineInventory":
+                supplied = json.loads(payload["messages"][-1]["content"])["evidence_context"]["paper_source_inventory"]
+                self.assertEqual(supplied["source_id"], doc.source_id)
+                self.assertEqual(supplied["pages"][0]["spans"][0]["span_id"], span.span_id)
+                candidate = inventory
+            else:
+                self.assertEqual(name, "paper_source_evidence")
+                self.assertTrue(any('"selected_case_id":"finite"' in message["content"] for message in payload["messages"]))
+                candidate = extraction
+            return httpx.Response(200, json={"id": name + "-generation", "model": "test-model",
+                "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(candidate)}}],
+                "usage": {"cost": .001, "prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}})
+        with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
+            response = await self.extract(uploaded, hierarchical=True)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(len(requests), 2)
+        result = response.json()
+        self.assertEqual(result["assembly_inventory"]["selected_case_id"], "finite")
+        self.assertEqual({claim["case_id"] for claim in result["evidence"]["parameters"]}, {"finite"})
+        private = self.store.get_extraction_audit(result["audit_id"])
+        self.assertEqual(private["assembly_discovery"]["inventory"]["selected_case_id"], "finite")
+        self.assertIsNone(self.jobs.next())
 
     async def test_unbound_existing_model_cannot_inherit_paper_target(self):
         uploaded = await self.upload()

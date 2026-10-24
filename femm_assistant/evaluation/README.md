@@ -1,5 +1,56 @@
 # Language-to-CAD, visual and numerical evaluation
 
+## Audited hierarchical model matrix
+
+Run in an isolated development FEMM Docker image with the existing environment
+file, a fresh report directory and `FEMM_MESH_EXPORT=1`:
+
+```bash
+python -m evaluation.hierarchy_live --live \
+  --cases evaluation/hierarchy_cases.json --output /reports/hierarchy-matrix
+```
+
+The defaults are `~z-ai/glm-latest`, `anthropic/claude-haiku-5.5` and
+`deepseek/deepseek-v4-pro-0813`. Override them with `--models MODEL_A MODEL_B
+MODEL_C`. Every case/model pair has an independent application, job database and
+native worker; the deployed services and their settings are not used. This runner
+adds no output-token cap, reasoning override, model read deadline, external retry,
+physical correction or target fitting. The configured native solver timeout
+remains an execution limit. `--live` is mandatory before environment access.
+
+The supplied six cases are public development regression inputs, not blind
+holdouts. Their independent audit criteria are in `hierarchy_case_audit.json`,
+which the runner never reads. A new cases JSON file contains only request objects:
+`id`, `prompt`, optional `pdf` (relative to that file), optional `source_assets`,
+and optional `target_selection` (`case_id`/`target_ids`, never target values).
+Do not put source gold or expected answers in the case requests.
+
+Paper cases use upload, hierarchical extraction, typed feature planning,
+immutable revisions and published numerical targets frozen before both mesh and
+solve. Only explicit nonzero reported numerical targets are eligible; analytical
+substitution is forbidden. Missing circuit identifiers are rebound only when
+exactly one native circuit exists. Ambiguities, incomplete evidence, actual
+function failures and unsupported physics retain their original outcomes.
+Assemblies and previews remain available when execution is unsupported.
+
+Source image comparison is opt-in through `source_assets` entries such as
+`{"page": 8, "purpose": "table", "label": "Comparison table"}`. Crops use
+`bbox` in the source API's displayed PDF-point coordinate system. Select an
+explicit shared image-capable `--vision-model MODEL`; the requested drafting
+model remains unchanged. Add `review_mesh: true` to attach the actual passed
+native mesh. `focused_checks: true` asks the configured Jev model for additional
+image questions and labels that multimodal role experimental. These observations
+report discrepancies; they do not approve physical fidelity or replace native
+checks.
+
+Each trial saves every API result, complete decoded/redacted provider request and
+response, provider/model identity where returned, reasoning/token usage, cost,
+latency, native artifacts and a SHA-256 manifest. HTTPX decodes compressed bodies
+once and caches the unchanged application bytes; the audit does not claim TLS or
+original compressed-byte capture. Unknown cost stays unknown. Reports distinguish
+`execution_pipeline_passed` from `source_fidelity: pending_independent_audit`:
+successful execution alone is not a paper-reproduction or intent-fidelity verdict.
+
 ## Paper replication and controlled recovery
 
 `python -m evaluation.replication --output /reports/lubin --protocol near_field_v3`

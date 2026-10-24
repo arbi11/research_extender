@@ -79,6 +79,7 @@ function updatePaperControls() {
   try { recovered = mode === "plan" && recoveredContractMatches(editorPlan()); } catch (_) { /* No valid draft. */ }
   $("compare-targets").disabled = recovered || working || !bound || !paperEvidence?.targets.some(target => target.case_id === $("paper-case").value);
   if (recovered) $("compare-targets").checked = true;
+  if (typeof updateHierarchyControls === "function") updateHierarchyControls();
 }
 function paperModelRecorded(revision, values) {
   if (paperBusy || paperRecoveryContract || !paperBindingMatches(values) ||
@@ -95,6 +96,13 @@ function paperState(text, error = false) {
 function paperContextChanged(text) {
   clearPaperModelBinding();
   invalidateModel(text || "Paper context changed. Create a model for the selected paper case before comparing its targets.");
+  emitPaperContext();
+}
+function emitPaperContext() {
+  document.dispatchEvent(new CustomEvent("femm:paper-context", {detail: {
+    paper_id: uploadedPaper?.paper_id || null,
+    case_id: selectedPaper ? $("paper-case").value : "baseline"
+  }}));
 }
 function renderPaperCase() {
   if (!paperEvidence) return;
@@ -171,6 +179,7 @@ $("paper-upload").addEventListener("click", async () => {
     const received = await response.json();
     if (epoch !== paperEpoch || $("paper-file").files[0] !== file) return;
     uploadedPaper = received;
+    emitPaperContext();
     paperState(uploadedPaper.document.page_count + " pages read locally. " + uploadedPaper.document.missing_information.join(" "));
   } catch (error) { if (epoch === paperEpoch) paperState(error.message, true); }
   finally { if (epoch === paperEpoch) { paperBusy = false; controls(); } }
@@ -181,7 +190,9 @@ $("paper-extract").addEventListener("click", async () => {
   paperExtractionNotice = "";
   paperContextChanged(); paperBusy = true; controls(); paperState("Extracting cited parameters and numerical references…");
   try {
-    const received = await (await api("/api/papers/" + source.paper_id + "/extract", {instructions: $("prompt").value})).json();
+    const chosenModel = typeof selectedAiModel === "function" ? selectedAiModel() : null;
+    const received = await (await api("/api/papers/" + source.paper_id + "/extract", {instructions: $("prompt").value,
+      ...(chosenModel ? {model: chosenModel} : {})})).json();
     if (epoch !== paperEpoch || uploadedPaper !== source) return;
     selectedPaper = received; paperEvidence = selectedPaper.evidence;
     if (received.extraction_status === "partial") {

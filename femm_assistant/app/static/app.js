@@ -41,7 +41,7 @@ async function api(path, body, extraHeaders = {}) {
       const data = await response.json();
       if (typeof data.detail === "string") detail = data.detail;
       else if (data.detail && typeof data.detail.message === "string") {
-        const summaries = Array.isArray(data.detail.validation_summary) ? data.detail.validation_summary : [];
+        const summaries = [...(Array.isArray(data.detail.validation_summary) ? data.detail.validation_summary : []), ...(Array.isArray(data.detail.validation_issues) ? data.detail.validation_issues : [])];
         detail = data.detail.message + (summaries.length ? " " + summaries.map(item => typeof item === "string" ? item : item.message || item.msg || "").filter(Boolean).join("; ") : "") +
           (data.detail.audit_id ? " Audit: " + data.detail.audit_id : "");
       }
@@ -126,6 +126,7 @@ function requestFingerprint() {
     draft: mode === "plan" ? $("plan-json").value : coreSpec(false),
     action: mode === "plan" ? $("request-action").value : "modify",
     paper: typeof paperFingerprint === "function" ? paperFingerprint() : null,
+    aiModel: typeof selectedAiModel === "function" ? selectedAiModel() : null,
   });
 }
 function imageBlob(id, blob) {
@@ -148,6 +149,7 @@ function clearRecoveryOffer() {
 }
 function invalidateModel(text) {
   clearRecoveryOffer();
+  if (typeof clearAssemblyBinding === "function") clearAssemblyBinding();
   if (typeof clearPaperModelBinding === "function") clearPaperModelBinding();
   clearVisualReview();
   previewRequest = Symbol();
@@ -307,6 +309,7 @@ async function recordCurrentRevision(values, serial, requestedMode, snapshot) {
   const patch = pendingEdits;
   const body = {spec: values, evidence: [{source: "user", reference: "Model editor", detail: $("prompt").value.slice(0, 3000)}]};
   if (typeof paperSourceEvidence === "function") body.evidence.push(...paperSourceEvidence(values));
+  if (typeof assemblySourceEvidence === "function") body.evidence.push(...assemblySourceEvidence(values));
   if (typeof paperRevisionInput === "function") Object.assign(body, paperRevisionInput(values));
   if (parent) Object.assign(body, {parent_id: parent.id, branch: parent.branch});
   if (patch?.edits?.length && parent) Object.assign(body, {edits: patch.edits,
@@ -358,6 +361,7 @@ function controls() {
   $("request-action").disabled = working;
   $("interpret").textContent = mode === "ccore" ? "Apply request ↗" : needsCurrent ? "Update model ↗" : "Create model ↗";
   if (typeof updatePaperControls === "function") updatePaperControls();
+  if (typeof updateHierarchyControls === "function") updateHierarchyControls();
   renderPipeline();
 }
 async function preview() {
@@ -492,6 +496,7 @@ $("interpret").addEventListener("click", async () => {
     if (modifyingPlan && !isReady()) throw new Error("Validate the current model before asking the AI to modify it.");
     const current = mode === "plan" ? modifyingPlan ? structuredClone(validatedPlan) : null : coreSpec();
     const response = await api(mode === "plan" ? "/api/plan/interpret" : "/api/interpret", {prompt, current,
+      ...(mode === "plan" ? {hierarchical: true, model: typeof selectedAiModel === "function" ? selectedAiModel() : null} : {}),
       ...(mode === "plan" && typeof paperPlanningInput === "function" ? paperPlanningInput() : {})});
     const proposal = await response.json();
     if (requestedMode !== mode || fingerprint !== requestFingerprint()) {
@@ -508,6 +513,7 @@ $("interpret").addEventListener("click", async () => {
       fields.forEach(([key]) => { $(key).value = proposal.spec[key]; });
       invalidateModel();
     }
+    if (mode === "plan" && typeof adoptAssemblyProposal === "function") await adoptAssemblyProposal(proposal);
     questions[mode] = {
       items: Array.isArray(proposal.questions) ? proposal.questions : [],
       explanation: proposal.explanation || "",

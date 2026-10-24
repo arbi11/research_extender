@@ -127,14 +127,14 @@ class GeometryPlanTests(unittest.TestCase):
         value['regions'][0]['turns'] = -1
         GeometryPlan.model_validate(value)
 
-    def test_duplicate_ids_and_resource_limits(self):
+    def test_duplicate_ids_and_larger_valid_domains(self):
         for collection in ('materials', 'circuits', 'regions'):
             value = copy.deepcopy(self.plan)
             value[collection].append(copy.deepcopy(value[collection][0]))
             self.invalid(value, 'unique')
         value = copy.deepcopy(self.plan)
         value['domain']['radius'] = 1000
-        self.invalid(value, 'mesh exceeds')
+        self.assertEqual(GeometryPlan.model_validate(value).domain.radius, 1000)
 
     def test_force_region_requires_an_air_surrounding_face(self):
         value = copy.deepcopy(self.plan)

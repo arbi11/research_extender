@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FEMM Assistant · Computational Electromagnetism</title>
-  <link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script><script src="/paper.js" defer></script>
+  <link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script><script src="/paper.js" defer></script><script src="/hierarchy.js" defer></script>
 </head>
 <body>
   <header><a class="brand" href="/">∿ <span>FEMM <strong>Assistant</strong></span></a><a href="https://github.com/arbi11/research_extender" target="_blank" rel="noreferrer">Book &amp; source ↗</a></header>
@@ -17,6 +17,10 @@
         <label for="mode">Model builder</label>
         <select id="mode"><option value="plan">General geometry</option><option value="ccore">C-core example</option></select>
         <p id="mode-note" class="muted"></p>
+        <label for="ai-model">AI model for this request</label>
+        <input id="ai-model" list="ai-model-options" maxlength="160" placeholder="Server default" autocomplete="off" spellcheck="false">
+        <datalist id="ai-model-options"><option value="~z-ai/glm-latest"></option><option value="anthropic/claude-haiku-5.5"></option><option value="deepseek/deepseek-v4-pro-0813"></option></datalist>
+        <p class="muted">Choose an OpenRouter model or enter its ID. Empty uses the server default. This applies to extraction, model generation and source-image review.</p>
         <div id="plan-request-controls">
           <label for="request-action">What should the AI do?</label>
           <select id="request-action"><option value="new">Create geometry from scratch</option><option value="modify">Modify the current model</option></select>
@@ -24,8 +28,20 @@
         <details id="paper-controls"><summary>Use a paper or technical report <span>PDF</span></summary>
           <label for="paper-file">Paper PDF (up to 8 MiB, 40 pages)</label><input id="paper-file" type="file" accept="application/pdf">
           <div class="draft-actions"><button id="paper-upload" type="button">Read PDF locally</button><button id="paper-extract" type="button" disabled>Extract parameters &amp; targets with AI</button></div>
-          <p class="muted">Reading extracts local text. The AI extraction action sends that text and your instructions to the configured OpenRouter model. Figure-only dimensions and scanned pages need additional information.</p>
+          <p class="muted">Reading extracts local text. AI extraction sends the text and your instructions to the selected model. Select original pages or figure/table crops below for visual comparison.</p>
           <p id="paper-status" role="status" aria-live="polite"></p>
+          <details id="source-assets" hidden><summary>Original figures &amp; tables</summary>
+            <p class="muted">Candidates are complete PDF pages. Caption hints do not locate figure boundaries. Select a page, then drag over the image or enter crop bounds in PDF points from its top-left.</p>
+            <label for="source-page">Source page</label><select id="source-page"></select>
+            <p id="source-page-info" class="muted"></p><button id="source-page-load" type="button">Show original page</button>
+            <div id="source-page-frame" class="source-image-frame" hidden><div class="source-image-surface"><img id="source-page-image" alt="Original uploaded PDF page"><div id="source-crop-overlay" hidden></div></div></div>
+            <label for="source-purpose">Selected content</label><select id="source-purpose"><option value="figure">Design figure</option><option value="table">Parameter table</option><option value="page">Complete page</option></select>
+            <label for="source-full-page" class="inline-option"><input id="source-full-page" type="checkbox" checked> Use complete page</label>
+            <div class="crop-coordinates"><label for="source-crop-x0">Left (pt)<input id="source-crop-x0" type="number" min="0" step="any"></label><label for="source-crop-y0">Top (pt)<input id="source-crop-y0" type="number" min="0" step="any"></label><label for="source-crop-x1">Right (pt)<input id="source-crop-x1" type="number" min="0" step="any"></label><label for="source-crop-y1">Bottom (pt)<input id="source-crop-y1" type="number" min="0" step="any"></label></div>
+            <label for="source-asset-label">Figure/table label</label><input id="source-asset-label" maxlength="180" placeholder="For example: Figure 2, winding cross-section">
+            <button id="source-asset-save" type="button">Save source selection</button>
+            <p id="source-asset-status" role="status" aria-live="polite"></p><div id="source-asset-list" class="source-asset-list"></div>
+          </details>
           <div id="paper-evidence" hidden><h3 id="paper-title"></h3><label for="paper-case">Operating case</label><select id="paper-case"></select>
             <label for="paper-preserve-excitation"><input id="paper-preserve-excitation" type="checkbox" checked> Use the paper’s excitation</label>
             <p class="muted">For one uniform winding, check current from the cited current density, section area and turns. Uncheck for an instructed excitation variation.</p>
@@ -47,6 +63,17 @@
           <div class="draft-actions"><button id="load-example">Load a wire example</button><button id="validate-plan">Validate &amp; preview</button></div>
           <button id="load-axisymmetric" hidden>Load an axisymmetric coil</button>
           <p id="plan-summary" class="muted">Start with a description or load the round-wire example.</p>
+          <details id="assembly-panel"><summary>Machine, components &amp; features</summary>
+            <p class="muted">Inspect each component's template or custom features and its source facts. A hierarchy can be previewed even when its physics cannot be solved here.</p>
+            <button id="assembly-discover" type="button">Discover components from request</button>
+            <p id="assembly-status" role="status" aria-live="polite">A component hierarchy will appear with a generated assembly.</p>
+            <div id="assembly-inventory"></div><ul id="assembly-tree" class="assembly-tree" aria-label="Component hierarchy"></ul><ul id="assembly-issues" class="mesh-warnings"></ul>
+            <img id="assembly-preview" class="assembly-preview" alt="Compiled assembly feature preview" hidden>
+            <details><summary>Edit the assembly and its source facts</summary><label class="sr-only" for="assembly-json">Machine assembly JSON</label><textarea id="assembly-json" rows="18" spellcheck="false" placeholder="A generated assembly will appear here. You can also paste an assembly JSON."></textarea>
+              <label for="assembly-change-note">Describe your manual changes</label><textarea id="assembly-change-note" rows="2" maxlength="3000" placeholder="Required when changing a cited physical fact. Such changes are saved as user variations."></textarea>
+              <button id="assembly-save" type="button">Save, compile &amp; preview assembly</button>
+            </details>
+          </details>
           <details id="plan-editor"><summary>View or edit the model plan <span>Advanced</span></summary><label class="sr-only" for="plan-json">Geometry, materials, circuits and boundary specification as JSON</label><textarea id="plan-json" rows="20" spellcheck="false" placeholder="A generated model plan will appear here."></textarea></details>
           <details id="model-history" hidden><summary>Model changes &amp; check history</summary><p id="revision-summary" class="muted"></p><ul id="revision-changes"></ul><ul id="revision-checks"></ul><p class="muted">Each mesh and solution belongs to an exact model revision. A recovery creates a separate branch and requires new checks.</p></details>
         </div>
@@ -58,6 +85,13 @@
         <div class="canvas"><img id="geometry" alt="Magnetic model geometry preview" hidden><p id="preview-empty" class="preview-empty">Describe a model or load an example to preview its geometry.</p><p id="canvas-note" class="canvas-note">Geometry and region assignments are checked before solving.</p></div>
         <div class="preview-caption"><span id="preview-scope">Linear materials · Zero magnetic vector potential at the outer boundary</span><span id="dimensions"></span></div>
         <div id="visual-review-controls" hidden><label class="visual-review-option" for="visual-include-mesh"><input id="visual-include-mesh" type="checkbox" checked aria-describedby="visual-mesh-help"> Include the checked FEMM mesh</label><p id="visual-mesh-help" class="muted"></p><button id="visual-review" disabled>Review geometry visually</button><p class="muted">Optional AI observations compare your request with the visible geometry and, when available, its actual mesh. Findings are advisory and do not block meshing or solving.</p><section id="visual-review-panel" class="mesh-panel" aria-label="Advisory visual review" hidden><h3>Visual observations · advisory</h3><p id="visual-review-source" class="muted"></p><p id="visual-review-summary" role="status" aria-live="polite"></p><ul id="visual-review-findings" class="mesh-checks"></ul></section></div>
+        <details id="source-review-controls"><summary>Compare with original source images</summary>
+          <p class="muted">Select saved figures/tables in the paper section. Compare object count, orientation and adjacency with this model. Observations remain advisory; mesh, solver and target checks run separately.</p>
+          <label for="source-review-focus" class="inline-option"><input id="source-review-focus" type="checkbox"> Ask Jev to inspect the specific visual findings (experimental image support)</label>
+          <label for="source-review-mesh" class="inline-option"><input id="source-review-mesh" type="checkbox"> Include the current checked FEMM mesh</label>
+          <button id="source-review" type="button" disabled>Compare model with source</button>
+          <p id="source-review-status" role="status" aria-live="polite"></p><div id="source-review-images" class="source-comparison-images"></div><ul id="source-review-findings" class="source-findings"></ul>
+        </details>
         <div id="mesh-controls"><button id="mesh-check" disabled>Check mesh with FEMM <span>→</span></button><p class="muted">Generate and inspect the mesh before solving. Changing the model requires a new mesh check.</p></div>
         <section id="mesh-panel" class="mesh-panel" aria-label="Mesh check" hidden><div class="mesh-heading"><h3>Mesh check</h3><span id="mesh-status" class="tag"></span></div><p id="mesh-message" role="status" aria-live="polite"></p><img id="mesh-image" alt="Actual finite-element mesh generated by FEMM" hidden><dl id="mesh-quantities" class="mesh-quantities"></dl><ul id="mesh-checks" class="mesh-checks"></ul><ul id="mesh-warnings" class="mesh-warnings"></ul><p id="mesh-scope" class="muted" hidden>Mesh checks passed. Mesh convergence and physical accuracy have not been verified.</p><div class="mesh-downloads"><button id="mesh-download" hidden>Download mesh &amp; scripts</button><button id="mesh-log" hidden>Download mesh log</button><button id="mesh-diagnose" hidden>Diagnose failed function arguments</button></div><p id="mesh-diagnosis" class="muted" role="status" aria-live="polite" hidden></p></section>
         <div class="actions"><button id="solve" class="primary" disabled>Solve with FEMM <span>→</span></button><button id="source" disabled>↓ Download script</button></div>

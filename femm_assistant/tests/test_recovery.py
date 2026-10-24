@@ -50,8 +50,10 @@ class RecoveryTests(unittest.IsolatedAsyncioTestCase):
             if request.url.path.endswith("/decisions"):
                 return httpx.Response(200, json={"answers": {
                     "arguments_match": {"type": "noul", "noul": match}}})
-            return httpx.Response(200, json={"choices": [{"message": {
-                "content": json.dumps(self.draft() if draft is None else draft)}}]})
+            wire = deepcopy(self.draft() if draft is None else draft)
+            for edit in wire.get("edits", []):
+                edit["value_json"] = json.dumps(edit.pop("value")) if "value" in edit else None
+            return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(wire)}}]})
 
         client = httpx.AsyncClient(transport=httpx.MockTransport(transport))
         with patch("app.recovery.httpx.AsyncClient", return_value=client):
@@ -187,7 +189,7 @@ class RecoveryTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_unavailable_checkpoint_noop_and_invalid_geometry_remain_failed(self):
         for draft in [self.draft(checkpoint_id="f" * 64), self.draft(edits=[]),
-                      self.draft(edits=[{"op": "replace", "path": "/mesh_mm", "value": .0001}])]:
+                      self.draft(edits=[{"op": "replace", "path": "/mesh_mm", "value": 0}])]:
             with self.subTest(draft=draft), self.assertRaises(RecoveryError) as caught:
                 await self.run_proposal(draft)
             self.assertEqual(caught.exception.status_code, 502)

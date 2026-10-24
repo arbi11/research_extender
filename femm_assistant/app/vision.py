@@ -106,7 +106,7 @@ def _checked_svg(svg: str) -> bytes:
     tags = {"svg", "g", "title", "desc", "circle", "polygon", "rect", "path", "line", "polyline", "text", "tspan"}
     attributes = {"viewBox", "role", "aria-label", "width", "height", "x", "y", "cx", "cy", "r", "points", "d",
                   "x1", "x2", "y1", "y2", "fill", "stroke", "stroke-width", "stroke-linejoin", "transform",
-                  "font-family", "font-size", "text-anchor"}
+                  "font-family", "font-size", "text-anchor", "fill-opacity", "data-feature-id"}
     try:
         nodes = 0
         for _, element in ET.iterparse(io.BytesIO(source), events=("start",)):

@@ -13,9 +13,9 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 EPS = 1e-7
-MIN_FEATURE_MM = 0.01
+MIN_FEATURE_MM = EPS
 Identifier = Annotated[str, Field(pattern=r"^[a-z][a-z0-9_]{0,31}$")]
-Coordinate = Annotated[float, Field(ge=-1000, le=1000)]
+Coordinate = float
 
 
 class PlanValue(BaseModel):
@@ -37,25 +37,19 @@ class Rectangle(PlanValue):
     @model_validator(mode="after")
     def positive_dimensions(self):
         if min(self.x_max - self.x_min, self.y_max - self.y_min) < MIN_FEATURE_MM:
-            raise ValueError("Rectangle width and height must each be at least 0.01 mm.")
+            raise ValueError("Rectangle width and height must be positive and exceed the geometric tolerance.")
         return self
 
 
 class Circle(PlanValue):
     type: Literal["circle"]
     center: Point
-    radius: float = Field(ge=MIN_FEATURE_MM, le=1000)
-
-    @model_validator(mode="after")
-    def bounded_extent(self):
-        if max(abs(self.center.x), abs(self.center.y)) + self.radius > 1000:
-            raise ValueError("The complete circle must fit within +/-1000 mm.")
-        return self
+    radius: float = Field(gt=MIN_FEATURE_MM)
 
 
 class Polygon(PlanValue):
     type: Literal["polygon"]
-    points: list[Point] = Field(min_length=3, max_length=128)
+    points: list[Point] = Field(min_length=3)
 
     @model_validator(mode="after")
     def simple_polygon(self):
@@ -64,7 +58,7 @@ class Polygon(PlanValue):
         for i, a in enumerate(points):
             b, c = points[(i + 1) % n], points[(i + 2) % n]
             if distance(a, b) < MIN_FEATURE_MM:
-                raise ValueError("Polygon edges must be at least 0.01 mm; omit a repeated closing point.")
+                raise ValueError("Polygon edges must exceed the geometric tolerance; omit a repeated closing point.")
             if abs(cross(a, b, c)) <= EPS * max(distance(a, b), distance(b, c), 1):
                 if (a.x - b.x) * (c.x - b.x) + (a.y - b.y) * (c.y - b.y) > 0:
                     raise ValueError("Adjacent polygon edges may not overlap or backtrack.")
@@ -76,7 +70,7 @@ class Polygon(PlanValue):
                 if segments_intersect(a, b, *edges[j]):
                     raise ValueError("Polygon must be simple: non-adjacent edges may not cross or touch.")
         if polygon_area(points) < MIN_FEATURE_MM ** 2:
-            raise ValueError("Polygon area must be at least 0.0001 square mm.")
+            raise ValueError("Polygon area must be positive and exceed the geometric tolerance.")
         return self
 
 
@@ -184,12 +178,12 @@ def witness(shape: Rectangle | Circle | Polygon) -> Point:
 
 class Material(PlanValue):
     id: Identifier
-    relative_permeability: float = Field(ge=0.01, le=100000)
+    relative_permeability: float = Field(gt=0)
 
 
 class Circuit(PlanValue):
     id: Identifier
-    current_a: float = Field(ge=-1000, le=1000)
+    current_a: float
 
 
 class Region(PlanValue):
@@ -198,8 +192,8 @@ class Region(PlanValue):
     material: Identifier
     label: Point
     circuit: Identifier | None = None
-    turns: int = Field(default=0, ge=-10000, le=10000, strict=True)
-    mesh_mm: float | None = Field(default=None, ge=0.05, le=25)
+    turns: int = Field(default=0, strict=True)
+    mesh_mm: float | None = Field(default=None, gt=0)
 
     @model_validator(mode="after")
     def excitation_matches_circuit(self):
@@ -254,15 +248,15 @@ class GeometryPlan(PlanValue):
     title: str = Field(min_length=1, max_length=160, pattern=r"^[^\x00-\x1f\x7f]+$")
     units: Literal["millimeters"] = "millimeters"
     physics: Literal["planar_dc_magnetics", "axisymmetric_dc_magnetics"] = "planar_dc_magnetics"
-    depth_mm: float | None = Field(default=None, ge=0.1, le=1000)
-    mesh_mm: float = Field(ge=0.05, le=25)
+    depth_mm: float | None = Field(default=None, gt=0)
+    mesh_mm: float = Field(gt=0)
     domain: Shape
     air_label: Point
-    materials: list[Material] = Field(max_length=16)
-    circuits: list[Circuit] = Field(max_length=8)
-    regions: list[Region] = Field(min_length=1, max_length=32)
+    materials: list[Material]
+    circuits: list[Circuit]
+    regions: list[Region] = Field(min_length=1)
     force_region: Identifier | None = None
-    probes: list[Point] = Field(default_factory=list, max_length=16)
+    probes: list[Point] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def well_defined_faces(self):
@@ -298,9 +292,6 @@ class GeometryPlan(PlanValue):
         circuit_ids = unique(self.circuits, "Circuit")
         region_ids = unique(self.regions, "Region")
         shapes = [self.domain] + [r.shape for r in self.regions]
-        vertex_count = sum(4 if isinstance(shape, Circle) else len(shape_points(shape)) for shape in shapes)
-        if vertex_count > 512:
-            raise ValueError("The plan exceeds the pilot limit of 512 contour control vertices.")
         for region in self.regions:
             if region.material not in material_ids:
                 raise ValueError(f"Region '{region.id}' refers to an undefined material.")
@@ -344,12 +335,6 @@ class GeometryPlan(PlanValue):
                                for region in self.regions)
             if not in_domain or on_interface:
                 raise ValueError("Field probes must be inside the domain and away from material interfaces; r=0 symmetry-axis probes are allowed.")
-        # Conservative area-over-size planning bound, not a promise of a final
-        # element count. Native solver timeout and memory caps remain necessary.
-        cells = area(self.domain) / self.mesh_mm ** 2
-        cells += sum(area(r.shape) / (r.mesh_mm or self.mesh_mm) ** 2 for r in self.regions)
-        if cells > 200000:
-            raise ValueError("Requested mesh exceeds the pilot budget of approximately 200000 cells. Increase mesh_mm or reduce the domain.")
         return self
 
 

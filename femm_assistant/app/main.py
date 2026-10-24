@@ -22,6 +22,7 @@ from .examples import axisymmetric_example
 from . import plan_generate, planner, decisions, vision, cases
 from .history import ModelRevisionStore
 from . import replication, recovery_api, provenance, paper_constraints
+from . import assembly_api, paper_assets, source_review
 from .targets import TargetContract, model_fingerprint
 
 
@@ -40,6 +41,8 @@ class Settings:
     timeout: int = 180
     retention_hours: int = 24
     start_worker: bool = True
+    ai_timeout: float | None = None
+    hierarchical_ai: bool = True
 
     @classmethod
     def from_env(cls):
@@ -51,7 +54,8 @@ class Settings:
                    decision_threshold=float(os.getenv("DECISION_THRESHOLD") or "0.90"),
                    vision_model=os.getenv("VISION_MODEL", "google/gemini-3.1-flash-lite"),
                    femm_lua=os.getenv("FEMM_LUA", "femm-lua"), timeout=int(os.getenv("SOLVE_TIMEOUT_SECONDS", "180")),
-                   retention_hours=int(os.getenv("RETENTION_HOURS", "24")))
+                   retention_hours=int(os.getenv("RETENTION_HOURS", "24")),
+                   ai_timeout=float(os.environ["AI_REQUEST_TIMEOUT_SECONDS"]) if os.getenv("AI_REQUEST_TIMEOUT_SECONDS") else None)
 
 
 class InterpretRequest(BaseModel):
@@ -68,6 +72,8 @@ class PlanInterpretRequest(BaseModel):
     evidence_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     case_id: str = Field(default="baseline", pattern=r"^[A-Za-z][A-Za-z0-9_-]{0,79}$")
     preserve_paper_excitation: bool = False
+    hierarchical: bool = True
+    model: str | None = Field(default=None, min_length=1, max_length=160)
 
 
 class PlanSolveRequest(BaseModel):
@@ -115,9 +121,11 @@ def create_app(settings: Settings | None = None):
     async def lifespan(app):
         if settings.start_worker:
             worker.start()
-        yield
-        if settings.start_worker:
-            worker.stop()
+        try:
+            yield
+        finally:
+            if settings.start_worker:
+                worker.stop()
 
     app = FastAPI(title="FEMM Assistant", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.worker, app.state.history = store, worker, history
@@ -129,6 +137,7 @@ def create_app(settings: Settings | None = None):
             raise HTTPException(401, "Enter the assistant access token.", headers={"WWW-Authenticate": "Bearer"})
 
     secured = [Depends(authenticate)]
+    assembly_store = assembly_api.register_routes(app, secured, settings, budget, paper_store)
 
     @app.middleware("http")
     async def headers(request, call_next):
@@ -138,7 +147,7 @@ def create_app(settings: Settings | None = None):
             async for chunk in request.stream():
                 body.extend(chunk)
                 limit = (8 * 1024 * 1024 if request.url.path == "/api/papers" else
-                         128000 if request.url.path.startswith(("/api/plan/", "/api/revisions", "/api/papers/", "/api/targets")) else 16000)
+                         8 * 1024 * 1024 if request.url.path.startswith(("/api/plan/", "/api/revisions", "/api/papers/", "/api/targets", "/api/assemblies", "/api/source-review")) else 16000)
                 if len(body) > limit:
                     return Response("Request is too large.", status_code=413)
             request._body = bytes(body)
@@ -169,6 +178,11 @@ def create_app(settings: Settings | None = None):
                 "visual_review_model": settings.vision_model,
                 "revision_history_available": True,
                 "paper_intake_available": True, "target_comparison_available": True,
+                "hierarchical_geometry_available": True, "strict_response_schema": True,
+                "source_assets_available": bool(shutil.which("pdftoppm")),
+                "source_comparison_available": bool(settings.ai_key and settings.vision_model),
+                "ai_output_token_limit": None,
+                "suggested_models": ["~z-ai/glm-latest", "anthropic/claude-haiku-5.5", "deepseek/deepseek-v4-pro-0813"],
                 "controlled_recovery_available": bool(settings.ai_key and settings.ai_model and settings.decision_model),
                 "plan_capabilities": ["Planar and axisymmetric DC magnetostatics", "Circles, rectangles and simple polygons",
                                       "Nested or separate closed regions with linear materials",
@@ -247,12 +261,20 @@ def create_app(settings: Settings | None = None):
             if context is not None:
                 context["preserve_paper_excitation"] = request.preserve_paper_excitation
             proposal = await planner.interpret_plan(request.prompt, request.current, settings.ai_key,
-                                                settings.ai_base_url, settings.ai_model,
+                                                settings.ai_base_url, request.model or settings.ai_model,
                                                 decision_model=settings.decision_model,
                                                 decision_base_url=settings.decision_base_url,
                                                 decision_threshold=settings.decision_threshold,
-                                                allowed_paths=request.allowed_paths, evidence_context=context)
+                                                allowed_paths=request.allowed_paths, evidence_context=context,
+                                                hierarchical=request.hierarchical)
             result = proposal.model_dump(mode="json")
+            if proposal.assembly is not None:
+                record = assembly_store.put(proposal.assembly, instructions=request.prompt,
+                    inventory=proposal.inventory, provider_usage=proposal.provider_usage,
+                    provider_metadata=proposal.provider_metadata,
+                    evidence_id=request.evidence_id, case_id=request.case_id)
+                result["assembly_record"] = record
+                result["assembly_id"] = record["assembly_id"]
             excitation_check = (paper_constraints.validate_excitation(proposal.spec, context)
                                 if request.evidence_id and proposal.spec is not None else None)
             if excitation_check is not None:
@@ -374,6 +396,9 @@ def create_app(settings: Settings | None = None):
 
     cases.register_routes(app, secured, history, paper_store)
     replication.register_routes(app, secured, settings, budget, history, store)
+    paper_assets.register_routes(app, secured, paper_store)
+    source_review.register_routes(app, secured, settings, budget, app.state.paper_assets, store,
+                                 assembly_resolver=assembly_store.get)
     recovery_api.register_routes(app, secured, settings, budget, history, store, paper_store)
     app.mount("/", StaticFiles(directory=Path(__file__).parent / "static", html=True), name="web")
     return app

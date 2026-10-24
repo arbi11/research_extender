@@ -12,7 +12,11 @@ from pydantic import ValidationError
 
 
 def completion(content):
-    return {"choices": [{"message": {"content": content}, "finish_reason": "stop"}]}
+    value = json.loads(content)
+    for edit in value.get("edits", []):
+        if "value_json" not in edit:
+            edit["value_json"] = json.dumps(edit.pop("value")) if "value" in edit else None
+    return {"choices": [{"message": {"content": json.dumps(value)}, "finish_reason": "stop"}]}
 
 
 class PlannerTests(unittest.IsolatedAsyncioTestCase):
@@ -83,7 +87,10 @@ class PlannerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(user["operation"], "create")
         self.assertEqual(user["function"], "create_plan")
         self.assertIsNone(user["current_plan"])
-        self.assertEqual(payload["response_format"], {"type": "json_object"})
+        self.assertEqual(payload["response_format"]["type"], "json_schema")
+        self.assertTrue(payload["response_format"]["json_schema"]["strict"])
+        self.assertTrue(payload["provider"]["require_parameters"])
+        self.assertNotIn("max_tokens", payload)
         self.assertNotIn("attempts", json.loads(payload["messages"][0]["content"].split("Response JSON schema:\n")[1])["properties"])
 
     async def test_modify_receives_current_plan_without_mutating_it(self):

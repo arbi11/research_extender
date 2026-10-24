@@ -10,17 +10,17 @@ from typing import Literal
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-from . import decisions, paper_constraints
+from . import decisions, paper_constraints, structured
 from .decisions import DecisionTrace
 from .history import FeatureEdit, apply_feature_edits
 from .plan import GeometryPlan
 
 
-MAX_PROVIDER_BYTES = 128 * 1024
-MAX_MODEL_CHARACTERS = 64 * 1024
-MAX_EVIDENCE_BYTES = 32 * 1024
+MAX_PROVIDER_BYTES = 8 * 1024 * 1024
+MAX_MODEL_CHARACTERS = 8 * 1024 * 1024
+MAX_EVIDENCE_BYTES = 8 * 1024 * 1024
 MAX_ATTEMPTS = 2
-TOTAL_TIMEOUT_SECONDS = 90
+TOTAL_TIMEOUT_SECONDS = None
 
 
 class PlannerError(Exception):
@@ -36,7 +36,7 @@ class PlanDraft(BaseModel):
     model_config = ConfigDict(extra="forbid")
     spec: GeometryPlan | None
     explanation: str = Field(min_length=1, max_length=2500)
-    questions: list[str] = Field(default_factory=list, max_length=8)
+    questions: list[str] = Field(default_factory=list)
 
     @model_validator(mode="before")
     @classmethod
@@ -49,8 +49,8 @@ class PlanDraft(BaseModel):
 
     @model_validator(mode="after")
     def clarification_or_model(self):
-        if any(not q.strip() or len(q) > 600 for q in self.questions):
-            raise ValueError("Questions must be nonempty and at most 600 characters each.")
+        if any(not q.strip() for q in self.questions):
+            raise ValueError("Questions must be nonempty.")
         if self.spec is None and not self.questions:
             raise ValueError("A missing model requires clarification questions.")
         return self
@@ -61,12 +61,12 @@ class ModificationDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     edits: list[FeatureEdit] = Field(max_length=64)
     explanation: str = Field(min_length=1, max_length=2500)
-    questions: list[str] = Field(default_factory=list, max_length=8)
+    questions: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def clarification_or_patch(self):
-        if any(not q.strip() or len(q) > 600 for q in self.questions):
-            raise ValueError("Questions must be nonempty and at most 600 characters each.")
+        if any(not q.strip() for q in self.questions):
+            raise ValueError("Questions must be nonempty.")
         if not self.edits and not self.questions:
             raise ValueError("An empty edit list requires clarification questions.")
         return self
@@ -83,6 +83,26 @@ class PlanProposal(PreparedModification):
     function_name: Literal["create_plan", "modify_plan", "clarify"] = "create_plan"
     decision_trace: list[DecisionTrace] = Field(default_factory=list, max_length=2)
     diagnostic_error: str | None = None
+    assembly: dict | None = None
+    inventory: dict | None = None
+    assembly_compilation: dict | None = None
+    provider_usage: list[dict] = Field(default_factory=list)
+    provider_metadata: list[dict] = Field(default_factory=list)
+
+
+class WireFeatureEdit(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    op: Literal["replace", "add", "remove"]
+    path: str
+    value_json: str | None
+
+
+class WireModificationDraft(BaseModel):
+    """Typed wire envelope; JSON values are parsed before existing patch checks."""
+    model_config = ConfigDict(extra="forbid")
+    edits: list[WireFeatureEdit]
+    explanation: str
+    questions: list[str]
 
 
 SYSTEM = """You plan finite-element magnetic models for a FEMM 5 teaching tool.
@@ -131,11 +151,13 @@ domain and outside all region contours. A probe is strictly inside the domain an
 away from material interfaces. Axisymmetric probes may lie on the interior of a
 straight symmetry-axis edge. The outer domain must strictly enclose all regions;
 axisymmetric contours may share r=0 but must not touch an outer non-axis edge.
-Keep contour/node counts and mesh density modest for a 4 GB computer.
+Choose mesh size from the requested resolution and geometric feature sizes.
 
 For a modification, return edits, explanation and questions matching the supplied
-ModificationDraft schema. Never return a replacement spec. Each edit has op
-(replace/add/remove), an absolute path and value (omit value for remove). Address
+ModificationDraft schema. Never return a replacement spec. Each wire edit has
+value_json: a JSON-encoded value string (null for removal); the application parses
+it and validates the resulting named feature edit. Each edit also has op
+(replace/add/remove) and an absolute path. Address
 named features by id, for example /regions/core/shape/points/2/x,
 /regions/coil/label/x or /circuits/coil/current_a; never address a region, material
 or circuit by list index. Existing ids are immutable. Add/remove operations act on
@@ -199,13 +221,22 @@ def _provider_error(status: int) -> PlannerError:
     if status == 429:
         return PlannerError(429, "OpenRouter is rate limiting requests. Wait briefly before trying again.")
     if status in (400, 404, 422):
-        return PlannerError(502, "OpenRouter rejected this model or request format. Choose a model supporting JSON-object responses and check its model id.")
+        return PlannerError(502, "OpenRouter rejected this model or strict response schema. Choose a provider supporting structured outputs; no ordinary-JSON fallback was used.")
     return PlannerError(502, "The AI provider is unavailable. Try again later; the current model has not been changed.")
 
 
-async def _candidate(client, endpoint: str, key: str, model: str, messages: list[dict]) -> str:
-    payload = {"model": model, "temperature": 0, "max_tokens": 6000,
-               "messages": messages, "response_format": {"type": "json_object"}}
+class CandidateValidationError(ValueError):
+    def __init__(self, candidate, issues):
+        self.candidate, self.issues = candidate, issues
+        super().__init__("The emitted arguments violate the strict response contract.")
+
+    def errors(self, **_):
+        return [{"loc": (item["path"],), "type": item["code"], "msg": item["message"]}
+                for item in self.issues]
+
+
+async def _candidate(client, endpoint: str, key: str, model: str, messages: list[dict], *, response_model=PlanDraft) -> str:
+    payload = structured.request_payload(model, messages, response_model=response_model, temperature=None)
     async with client.stream("POST", endpoint, headers={"Authorization": "Bearer " + key}, json=payload) as response:
         if response.status_code >= 400:
             raise _provider_error(response.status_code)
@@ -216,12 +247,23 @@ async def _candidate(client, endpoint: str, key: str, model: str, messages: list
                 raise PlannerError(502, "The AI provider returned too much data. Request a smaller geometry.")
     try:
         packet = json.loads(body)
-        content = packet["choices"][0]["message"]["content"]
+        choice = packet["choices"][0]
+        content = choice["message"]["content"]
+        if choice.get("finish_reason") == "length":
+            raise PlannerError(502, "The provider ended its native output budget before completing the model. No application token cap was imposed.")
         if not isinstance(content, str) or not content.strip():
             raise ValueError("Missing model content")
         if len(content) > MAX_MODEL_CHARACTERS:
             raise PlannerError(502, "The AI geometry plan is too large. Request fewer regions or polygon vertices.")
-        return content
+        value = structured.validate_response(json.loads(content), response_model)
+        if response_model is WireModificationDraft:
+            wire = WireModificationDraft.model_validate(value)
+            value = {"edits": [{"op": edit.op, "path": edit.path,
+                                "value": json.loads(edit.value_json) if edit.value_json is not None else None}
+                               for edit in wire.edits], "explanation": wire.explanation, "questions": wire.questions}
+        return json.dumps(value, ensure_ascii=True)
+    except structured.WireValidationError as error:
+        raise CandidateValidationError(content, error.issues) from None
     except PlannerError:
         raise
     except (ValueError, TypeError, KeyError, IndexError):
@@ -238,7 +280,7 @@ def _repair_feedback(error: ValidationError, function_name="create_plan") -> str
     return ("The candidate failed the harness validation. Correct these issues and return one complete JSON object: "
             + feedback + ". Preserve the user's requested physics and dimensions. If a physically valid supported model "
             "cannot be created from the supplied information, return " + clarification + " with clarification questions. "
-            "Reduce unnecessary polygon vertices if the previous answer was truncated.")
+            "Never change the requested geometry merely to shorten an answer.")
 
 
 async def interpret_plan(prompt: str, current: GeometryPlan | None, key: str,
@@ -247,12 +289,14 @@ async def interpret_plan(prompt: str, current: GeometryPlan | None, key: str,
                          decision_base_url: str = decisions.DEFAULT_BASE_URL,
                          decision_threshold: float | None = None,
                          allowed_paths: list[str] | None = None,
-                         evidence_context: dict | None = None) -> PlanProposal:
+                         evidence_context: dict | None = None,
+                         hierarchical: bool = False) -> PlanProposal:
     """Route a function, validate its arguments, and diagnose only actual errors.
 
     The legacy threshold argument is accepted for settings compatibility and has
-    no role in accepting geometry. At most two drafts, one route and one error
-    diagnostic are allowed within the overall 90 second deadline.
+    no role in accepting geometry. Hierarchical creation uses a component
+    inventory followed by a strict feature specification. Provider output is
+    uncapped; existing explicit error repair remains separate from approval.
     """
     if not key or not model:
         raise PlannerError(503, "AI planning needs OPENROUTER_API_KEY and AI_MODEL configured on the server.")
@@ -266,12 +310,12 @@ async def interpret_plan(prompt: str, current: GeometryPlan | None, key: str,
             if len(encoded) > MAX_EVIDENCE_BYTES:
                 raise ValueError("Evidence context is too large.")
         except (ValueError, TypeError, OverflowError):
-            raise PlannerError(422, "Paper evidence must be a serializable object of at most 32 KiB. Select the relevant parameters or passages.") from None
+            raise PlannerError(422, "Paper evidence must be a finite serializable source record.") from None
     endpoint = base_url.rstrip("/") + "/chat/completions"
     try:
         decisions.validate_configuration(decision_model, decision_base_url)
         async with asyncio.timeout(TOTAL_TIMEOUT_SECONDS):
-            async with httpx.AsyncClient(timeout=httpx.Timeout(35, connect=10), follow_redirects=False) as client:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(None, connect=20), follow_redirects=False) as client:
                 route = await decisions.route(client, key, decision_base_url, decision_model, prompt, current)
                 trace = list(route.trace)
                 function_name = route.function_name
@@ -284,6 +328,25 @@ async def interpret_plan(prompt: str, current: GeometryPlan | None, key: str,
                     return PlanProposal(spec=None, explanation="The modify function requires a current model.",
                         questions=["Load or create the model you want to modify, then describe the changes."],
                         attempts=0, function_name=function_name, decision_trace=trace)
+                if hierarchical and function_name == "create_plan":
+                    from .assembly_provider import plan_assembly, AssemblyProviderError
+                    try:
+                        result = await plan_assembly(prompt, key, base_url, model, evidence_context=evidence_context)
+                    except AssemblyProviderError as error:
+                        raise PlannerError(error.status_code, error.message) from None
+                    compilation = result.compilation
+                    spec = compilation.plan if compilation is not None else None
+                    if spec is not None:
+                        paper_constraints.validate_excitation(spec, evidence_context)
+                    questions = list(result.questions)
+                    if spec is None and compilation is not None:
+                        questions.extend(issue.message for issue in compilation.issues if issue.severity == "error")
+                    return PlanProposal(spec=spec, explanation=result.explanation,
+                        questions=list(dict.fromkeys(questions)), attempts=1, function_name=function_name, decision_trace=trace,
+                        assembly=result.assembly.model_dump(mode="json") if result.assembly is not None else None,
+                        inventory=result.inventory.model_dump(mode="json") if result.inventory is not None else None,
+                        assembly_compilation=compilation.model_dump(mode="json") if compilation is not None else None,
+                        provider_usage=result.usage, provider_metadata=result.provider_metadata)
                 context = current if function_name == "modify_plan" else None
                 schema = json.dumps(_draft_schema(function_name), ensure_ascii=True)
                 messages = [{"role": "system", "content": SYSTEM + "\nResponse JSON schema:\n" + schema},
@@ -295,13 +358,16 @@ async def interpret_plan(prompt: str, current: GeometryPlan | None, key: str,
                              "request": prompt}, ensure_ascii=True)}]
                 diagnostic_error = None
                 for attempt in range(1, MAX_ATTEMPTS + 1):
-                    candidate = await _candidate(client, endpoint, key, model, messages)
                     try:
+                        candidate = await _candidate(client, endpoint, key, model, messages,
+                            response_model=WireModificationDraft if function_name == "modify_plan" else PlanDraft)
                         draft = (modify_plan(candidate, context, allowed_paths=allowed_paths)
                                  if function_name == "modify_plan" else create_plan(candidate))
                         if draft.spec is not None:
                             paper_constraints.validate_excitation(draft.spec, evidence_context)
-                    except ValidationError as error:
+                    except (ValidationError, CandidateValidationError) as error:
+                        if isinstance(error, CandidateValidationError):
+                            candidate = error.candidate
                         if attempt == MAX_ATTEMPTS:
                             raise PlannerError(502, "The AI could not produce a valid geometry after one repair attempt. Simplify the request or edit the plan; the current model has not changed.") from None
                         issues = [{"path": ".".join(str(part) for part in item["loc"]),
@@ -347,7 +413,7 @@ def create_plan(arguments: str) -> PlanDraft:
 def _draft_schema(function_name="create_plan") -> dict:
     """Require explicit measurement arguments in AI calls; manual plans keep defaults."""
     if function_name == "modify_plan":
-        return ModificationDraft.model_json_schema()
+        return WireModificationDraft.model_json_schema()
     schema = PlanDraft.model_json_schema()
     required = schema["$defs"]["GeometryPlan"].setdefault("required", [])
     required.extend(name for name in ("probes", "force_region") if name not in required)

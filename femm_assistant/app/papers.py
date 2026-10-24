@@ -17,7 +17,7 @@ from typing import Literal
 
 from pydantic import Field, ValidationError, field_validator, model_validator
 
-from .targets import FrozenModel, NumericalTarget, SourceCitation, _UNITS, convert_units, unit_dimension
+from .targets import FrozenModel, NumericalTarget, Observable, SourceCitation, Tolerance, _UNITS, convert_units, unit_dimension
 
 
 MAX_PDF_BYTES = 8 * 1024 * 1024
@@ -34,6 +34,10 @@ CANONICAL_PARAMETER_UNITS = ["1", "turns", "mm", "cm", "m", "in", "um", "A", "mA
 
 class PaperError(ValueError):
     """A safe intake error suitable for a client-facing explanation."""
+
+    def __init__(self, message: str, *, issues=None):
+        super().__init__(message)
+        self.issues = tuple(issues or ())
 
 
 class PaperEvidenceError(PaperError):
@@ -70,6 +74,56 @@ class PaperDocument(FrozenModel):
         if sum(len(page.text) for page in self.pages) > MAX_DOCUMENT_CHARACTERS:
             raise ValueError("The extracted paper text exceeds the document limit.")
         return self
+
+
+class SourceSpan(FrozenModel):
+    """Exact source text; identifiers are bound to the PDF and text offsets."""
+
+    span_id: str
+    page: int
+    start: int
+    end: int
+    text: str
+
+
+def source_spans(document: PaperDocument) -> tuple[SourceSpan, ...]:
+    """Return reproducible source spans without asking an LLM to copy quotes.
+
+    Line boundaries preserve table rows and headers. Long extracted lines are
+    divided at whitespace only to fit the existing citation representation; no
+    source characters are rewritten and each offset remains page-relative.
+    """
+    result = []
+    for page in document.pages:
+        for line in re.finditer(r"[^\r\n]+", page.text):
+            start, stop = line.start(), line.end()
+            while start < stop:
+                while start < stop and page.text[start].isspace():
+                    start += 1
+                if start == stop:
+                    break
+                end = min(start + 600, stop)
+                if end < stop:
+                    boundary = page.text.rfind(" ", start, end)
+                    if boundary > start:
+                        end = boundary
+                while end > start and page.text[end - 1].isspace():
+                    end -= 1
+                text = page.text[start:end]
+                identity = json.dumps([document.sha256, page.number, start, end, text],
+                                      ensure_ascii=False, separators=(",", ":")).encode()
+                result.append(SourceSpan(span_id="span_" + hashlib.sha256(identity).hexdigest()[:24],
+                    page=page.number, start=start, end=end, text=text))
+                start = end
+    return tuple(result)
+
+
+def source_inventory(document: PaperDocument) -> dict:
+    spans = source_spans(document)
+    return {"version": 1, "source_id": document.source_id,
+            "document_sha256": document.sha256,
+            "pages": [{"page": page.number, "spans": [span.model_dump(mode="json")
+                for span in spans if span.page == page.number]} for page in document.pages]}
 
 
 def extract_pdf(data: bytes, filename: str = "paper.pdf") -> PaperDocument:
@@ -210,8 +264,184 @@ class PaperEvidence(FrozenModel):
         return self
 
 
+class SourceReferences(FrozenModel):
+    """Model-selected references, resolved against the uploaded PDF on the server."""
+
+    source_refs: tuple[str, ...] = Field(default=(), max_length=12)
+    value_refs: tuple[str, ...] = Field(default=(), max_length=12,
+        description="Span ids containing the actual source value or table row.")
+    unit_refs: tuple[str, ...] = Field(default=(), max_length=12,
+        description="Span ids declaring source units, including a separate units sentence.")
+    header_refs: tuple[str, ...] = Field(default=(), max_length=12,
+        description="Span ids identifying a table column or quantity heading.")
+
+
+class SourceEvidenceParameter(SourceReferences):
+    id: str = Field(pattern=r"^[A-Za-z][A-Za-z0-9_-]{0,63}$")
+    case_id: str = Field(default="baseline", pattern=r"^[A-Za-z][A-Za-z0-9_-]{0,79}$")
+    description: str = Field(min_length=1, max_length=600)
+    value: float | str | None
+    unit: str | None = Field(json_schema_extra={"description": "Canonical physical units; null only for unknown values."})
+    evidence_kind: Literal["explicit", "derived", "assumption", "unknown"]
+    derivation: str | None = Field(default=None, max_length=1200)
+    assumption_reason: str | None = Field(default=None, max_length=1000)
+    unresolved_reason: str | None = Field(default=None, max_length=1200)
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def actual_value_type(cls, value):
+        return None if value is None else EvidenceParameter.real_or_text(value)
+
+    @model_validator(mode="after")
+    def known_or_unknown(self):
+        if self.evidence_kind == "unknown":
+            if self.value is not None or not self.unresolved_reason:
+                raise ValueError("Unknown parameters require value=null and an unresolved reason.")
+        elif self.value is None or self.unit is None:
+            raise ValueError("Known parameter values and units cannot be null.")
+        return self
+
+
+class SourceNumericalTarget(SourceReferences):
+    id: str = Field(pattern=r"^[A-Za-z][A-Za-z0-9_-]{0,63}$")
+    case_id: str = Field(default="baseline", pattern=r"^[A-Za-z][A-Za-z0-9_-]{0,79}$")
+    description: str = Field(min_length=1, max_length=600)
+    observable: Observable
+    value: float = Field(strict=True)
+    unit: str = Field(min_length=1, max_length=24)
+    tolerance: Tolerance
+    reference_kind: Literal["reported_numerical", "analytical", "experimental"]
+    evidence_kind: Literal["explicit", "derived"] = "explicit"
+    derivation: str | None = Field(default=None, max_length=1000)
+    conditions: str = Field(min_length=1, max_length=1000)
+
+
+class SourcePaperEvidence(FrozenModel):
+    """Strict provider wire contract; legacy PaperEvidence remains the storage API."""
+
+    source_id: str = Field(pattern=r"^paper_[a-f0-9]{24}$")
+    title: str = Field(min_length=1, max_length=500)
+    summary: str = Field(min_length=1, max_length=2000)
+    parameters: tuple[SourceEvidenceParameter, ...] = Field(default=(), max_length=120)
+    targets: tuple[SourceNumericalTarget, ...] = Field(default=(), max_length=32)
+    questions: tuple[str, ...] = Field(default=(), max_length=24)
+    limitations: tuple[str, ...] = Field(default=(), max_length=24)
+
+
+def source_evidence_model():
+    return SourcePaperEvidence
+
+
+def resolve_source_evidence(document: PaperDocument, candidate: dict) -> dict:
+    """Resolve strict span references without accepting model-authored quotations.
+
+    This is not semantic approval: the resulting legacy claims still require
+    ``validate_partial_evidence``. Derived arithmetic is explicitly unresolved
+    until independently checked; a prose derivation is not reported as verified.
+    """
+    from .structured import restore_defaults
+
+    candidate = restore_defaults(candidate, SourcePaperEvidence)
+    packet = SourcePaperEvidence.model_validate({**candidate, "parameters": [], "targets": []})
+    if packet.source_id != document.source_id:
+        raise PaperEvidenceError("The extracted evidence belongs to a different uploaded paper.",
+            path="source_id", code="source_id_mismatch")
+    by_id = {span.span_id: span for span in source_spans(document)}
+    result = {"source_id": packet.source_id, "title": packet.title, "summary": packet.summary,
+              "parameters": [], "targets": [], "questions": list(packet.questions),
+              "limitations": list(packet.limitations)}
+    reference_fields = ("source_refs", "value_refs", "unit_refs", "header_refs")
+    resolution_issues = []
+    for section in ("parameters", "targets"):
+        claims = candidate.get(section, [])
+        if not isinstance(claims, (list, tuple)):
+            raise PaperError("Source claims must be arrays.")
+        for index, raw in enumerate(claims):
+            index = len(result[section])
+            if not isinstance(raw, dict):
+                result[section].append(raw)
+                continue
+            wire_model = SourceEvidenceParameter if section == "parameters" else SourceNumericalTarget
+            try:
+                entry = wire_model.model_validate(raw).model_dump(mode="json")
+            except ValidationError:
+                # The legacy per-claim validator retains good independent claims
+                # and records these semantic failures without losing the paper.
+                entry = dict(raw)
+            unresolved = entry.pop("unresolved_reason", None)
+            if entry.get("evidence_kind") == "unknown" and entry.get("value") is None and unresolved:
+                result["questions"].append(f"{entry.get('case_id', 'baseline')}:{entry.get('id')}: {unresolved}")
+                continue
+            ids = list(dict.fromkeys(span_id for field in reference_fields for span_id in (entry.pop(field, []) or [])))
+            citations = []
+            for span_id in ids:
+                if span_id not in by_id:
+                    resolution_issues.append({"path": f"{section}.{index}.source_refs",
+                        "code": "source_span_not_found", "claim_id": entry.get("id", f"{section}_{index}"),
+                        "message": "An extracted claim refers to an unknown source span. Use only supplied span ids."})
+                    continue
+                span = by_id[span_id]
+                citations.append({"source_id": document.source_id, "page": span.page, "quote": span.text})
+            entry["citations"] = citations
+            if entry.get("evidence_kind") == "derived":
+                result["questions"].append(f"Independently verify the arithmetic and source interpretation for derived claim '{entry.get('id')}' before geometry planning.")
+                result["limitations"].append(f"Derived claim '{entry.get('id')}' is not independently verified by source-span resolution.")
+            result[section].append(entry)
+    if resolution_issues:
+        result["_source_resolution_issues"] = resolution_issues
+    return result
+
+
 def _normalized(text: str) -> str:
     return re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text)).strip().casefold()
+
+
+_UNIT_WORDS = {
+    "meter": "m", "metre": "m", "centimeter": "cm", "centimetre": "cm",
+    "millimeter": "mm", "millimetre": "mm", "micrometer": "um", "micrometre": "um",
+    "ampere": "A", "amp": "A", "milliampere": "mA", "milliamp": "mA",
+    "tesla": "T", "millitesla": "mT", "microtesla": "uT",
+    "joule": "J", "millijoule": "mJ", "microjoule": "uJ",
+    "newton": "N", "millinewton": "mN", "henry": "H", "henries": "H",
+    "millihenry": "mH", "millihenries": "mH", "microhenry": "uH", "microhenries": "uH",
+    "weber": "Wb", "hertz": "Hz", "kilohertz": "kHz", "degree": "deg", "radian": "rad",
+}
+_NUMBER = r"(?<![A-Za-z0-9_.])([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)(?![0-9_.])"
+
+
+def _numeric_text(quotes: str) -> str:
+    # Preserve superscript exponent boundaries before NFKC turns them into plain
+    # digits. This is notation parsing, not evaluation of arbitrary expressions.
+    text = re.sub(r"10([⁺⁻⁰¹²³⁴⁵⁶⁷⁸⁹]+)",
+                  lambda match: "10^" + unicodedata.normalize("NFKC", match.group(1)), quotes)
+    text = unicodedata.normalize("NFKC", text).replace("−", "-")
+    mantissa = r"([+-]?(?:\d+(?:\.\d*)?|\.\d+))"
+    power = r"10\s*(?:\^\s*)?(?:[{(]\s*)?([+-]?\s*\d+)(?:\s*[})])?"
+    text = re.sub(r"(?<![A-Za-z0-9_.])" + mantissa + r"\s*[×x·⋅*]\s*" + power,
+                  lambda match: match.group(1) + "e" + re.sub(r"\s+", "", match.group(2)), text)
+    text = re.sub(r"(?<![A-Za-z0-9_.])10\s*\^\s*(?:[{(]\s*)?([+-]?\s*\d+)(?:\s*[})])?",
+                  lambda match: "1e" + re.sub(r"\s+", "", match.group(1)), text)
+    for word, canonical in sorted(_UNIT_WORDS.items(), key=lambda item: len(item[0]), reverse=True):
+        text = re.sub(r"\b" + re.escape(word) + r"(?:s)?\b", canonical, text, flags=re.I)
+    text = re.sub(r"\bsquare\s+(mm|cm|m|um)\b", r"\g<1>2", text, flags=re.I)
+    text = re.sub(r"\b(mm|cm|m|um)\s+squared\b", r"\g<1>2", text, flags=re.I)
+    text = re.sub(r"\b(mm|cm|m|um)\s*(?:\^\s*)?([23])\b", r"\1\2", text)
+    text = re.sub(r"\b(A|mA)\s+per\s+(mm2|cm2|m2)\b", r"\1/\2", text, flags=re.I)
+    return text
+
+
+def _source_number_matches(raw: str, source_unit: str, target_unit: str, value: float) -> bool:
+    parsed = float(raw)
+    # A corrupt exponent must not crash all independent claims, nor may floating
+    # point underflow turn a stated nonzero value into verified source zero.
+    mantissa = re.split(r"[eE]", raw)[0]
+    if not math.isfinite(parsed) or (parsed == 0 and any(digit in "123456789" for digit in mantissa)):
+        return False
+    try:
+        converted = convert_units(parsed, source_unit, target_unit)
+    except ValueError:
+        return False
+    return math.isclose(converted, value, rel_tol=1e-9, abs_tol=0)
 
 
 def _explicit_numeric_matches(value: float, unit: str, quotes: str) -> bool:
@@ -221,27 +451,30 @@ def _explicit_numeric_matches(value: float, unit: str, quotes: str) -> bool:
     cannot disambiguate which table column a number belongs to; that remains an
     explicit interpretation limitation, not an assertion of semantic fidelity.
     """
-    text = unicodedata.normalize("NFKC", quotes).replace("−", "-")
-    text = re.sub(r"\b(mm|cm|m)\s+([23])\b", r"\1\2", text)
-    number = r"(?<![A-Za-z0-9_.])([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)"
+    text = _numeric_text(quotes)
+    number = _NUMBER
     if unit == "1":
-        return any(math.isclose(float(match.group(1)), value, rel_tol=1e-9, abs_tol=1e-14)
+        return any(_source_number_matches(match.group(1), "1", unit, value)
                    for match in re.finditer(number, text))
     for source_unit in sorted(_UNITS, key=len, reverse=True):
         if unit_dimension(source_unit) != unit_dimension(unit):
             continue
-        pattern = number + r"\s*" + re.escape(unicodedata.normalize("NFKC", source_unit)) + r"(?![A-Za-z/])"
+        source_spelling = re.escape(unicodedata.normalize("NFKC", source_unit))
+        pattern = number + r"\s*" + source_spelling + r"(?![\w/])"
         for match in re.finditer(pattern, text):
-            candidate = convert_units(float(match.group(1)), source_unit, unit)
-            if math.isclose(candidate, value, rel_tol=1e-9, abs_tol=1e-14):
+            if _source_number_matches(match.group(1), source_unit, unit, value):
                 return True
     # PDF tables often place a unit in a column heading rather than after every
     # value. Require both the exact declared unit and numeric value in the cited
     # quotes; a prefix boundary prevents H from matching the end of mH.
-    unit_present = re.search(r"(?<![A-Za-z])" + re.escape(unicodedata.normalize("NFKC", unit)) + r"(?![A-Za-z/])", text)
-    return bool(unit_present) and any(
-        math.isclose(float(match.group(1)), value, rel_tol=1e-9, abs_tol=1e-14)
-        for match in re.finditer(number, text))
+    for source_unit in sorted(_UNITS, key=len, reverse=True):
+        if unit_dimension(source_unit) != unit_dimension(unit):
+            continue
+        unit_present = re.search(r"(?<![\w/])" + re.escape(unicodedata.normalize("NFKC", source_unit)) + r"(?![\w/])", text)
+        if unit_present and any(_source_number_matches(match.group(1), source_unit, unit, value)
+                                for match in re.finditer(number, text)):
+            return True
+    return False
 
 
 def validate_evidence(document: PaperDocument, evidence: PaperEvidence | dict | str) -> PaperEvidence:
@@ -266,6 +499,10 @@ def validate_evidence(document: PaperDocument, evidence: PaperEvidence | dict | 
     claims = [(f"parameters.{index}", claim) for index, claim in enumerate(evidence.parameters)] + [
               (f"targets.{index}", claim) for index, claim in enumerate(evidence.targets)]
     for path, claim in claims:
+        # A numeric cell can be just "1" or "15". Its separate table header and
+        # unit citations provide the context; every individual span is still
+        # checked for exact presence and the complete number/unit check follows.
+        citation_context = _normalized(" ".join(citation.quote or "" for citation in claim.citations))
         for citation_index, citation in enumerate(claim.citations):
             citation_path = f"{path}.citations.{citation_index}"
             if citation.source_id != document.source_id:
@@ -274,7 +511,7 @@ def validate_evidence(document: PaperDocument, evidence: PaperEvidence | dict | 
             if citation.page is None or citation.page > document.page_count:
                 raise PaperEvidenceError("Every paper claim must cite a physical PDF page within the document. Use 1-based PDF page numbers, not printed journal page numbers.",
                     path=citation_path + ".page", code="citation_page_out_of_range", claim_id=claim.id, citation=citation)
-            if not citation.quote or len(_normalized(citation.quote)) < 3:
+            if not citation.quote or not _normalized(citation.quote) or len(citation_context) < 3:
                 raise PaperEvidenceError("Every cited paper claim requires a short verbatim source quote copied from its stated PDF page.",
                     path=citation_path + ".quote", code="citation_quote_missing", claim_id=claim.id, citation=citation)
             if _normalized(citation.quote) not in _normalized(document.pages[citation.page - 1].text):
@@ -314,6 +551,8 @@ def validate_partial_evidence(document: PaperDocument, candidate: dict) -> tuple
         raise PaperError("Paper evidence must be an object.")
     if len(json.dumps(candidate, ensure_ascii=True, allow_nan=True).encode()) > MAX_EVIDENCE_BYTES:
         raise PaperError("The extracted evidence exceeds the size limit.")
+    candidate = dict(candidate)
+    resolution_issues = candidate.pop("_source_resolution_issues", [])
     metadata = {**candidate, "parameters": [], "targets": []}
     base = validate_evidence(document, metadata)
     retained, issues, questions, rejected = {"parameters": [], "targets": []}, [], list(base.questions), 0
@@ -324,12 +563,18 @@ def validate_partial_evidence(document: PaperDocument, candidate: dict) -> tuple
         for index, claim in enumerate(claims):
             claim_id = str(claim.get("id", f"{section}_{index}"))[:64] if isinstance(claim, dict) else f"{section}_{index}"
             try:
+                preexisting = [issue for issue in resolution_issues
+                               if issue.get("path", "").startswith(f"{section}.{index}.")]
+                if preexisting:
+                    raise PaperError("The claim contains unresolved source references.", issues=preexisting)
                 checked = validate_evidence(document, {**metadata, section: [claim]})
                 retained[section].append(getattr(checked, section)[0].model_dump(mode="json"))
             except (ValidationError, PaperError) as error:
                 rejected += 1
                 if isinstance(error, PaperEvidenceError):
                     claim_issues = [dict(error.issue)]
+                elif getattr(error, "issues", ()):
+                    claim_issues = [dict(issue) for issue in error.issues]
                 elif isinstance(error, ValidationError):
                     claim_issues = [{"path": ".".join(str(item) for item in issue["loc"]),
                         "code": issue["type"], "message": issue["msg"][:1000]} for issue in error.errors(include_input=False, include_url=False)[:8]]
@@ -343,9 +588,9 @@ def validate_partial_evidence(document: PaperDocument, candidate: dict) -> tuple
                 issues.extend(claim_issues)
                 questions.append(f"Resolve excluded claim '{claim_id}': {claim_issues[0]['message']} The rejected value is not available to geometry planning.")
     if not retained["parameters"] and not retained["targets"]:
-        raise PaperError("No useful independently verified paper claims remain. Provide a clearer source or manually transcribe cited parameters.")
+        raise PaperError("No useful independently verified paper claims remain. Provide a clearer source or manually transcribe cited parameters.", issues=issues)
     if len(questions) > 24 or any(len(question) > 1200 for question in questions):
-        raise PaperError("Too many unresolved paper claims remain; select one operating case or provide a smaller cited extract.")
+        raise PaperError("Too many unresolved paper claims remain; select one operating case or provide a smaller cited extract.", issues=issues)
     evidence = validate_evidence(document, {**metadata, **retained, "questions": questions})
     return evidence, issues, rejected
 
@@ -448,9 +693,12 @@ parameters with unit 'text'. Do not turn them into a numeric zero with an invent
 unit such as Wb: magnetic vector potential is not magnetic flux. Only extract a
 numeric boundary quantity when its physical quantity and units are explicit.
 Record each value as explicit, derived or assumption. Explicit and derived
-claims require citations with source_id, a physical PDF page number (1-based), and
-a short verbatim quote present on that page. Include table/figure locators where
-applicable. Keep quoted units and source values; do not guess a diameter is a radius.
+claims require references to the supplied immutable source span ids. Put the value
+or table row in value_refs, units sentences in unit_refs, and table/quantity headings
+in header_refs. Reuse a shared heading's span id when appropriate. These fields
+contain span ids, never model-authored quotes. Keep source values and units; do
+not guess a diameter is a radius. Table column association must match the named
+physical quantity, not simply another number on the same page.
 Derived values require a plain-language derivation. Assumptions need their reason
 and must never be presented as paper facts. Do not infer figure dimensions that
 are absent from extracted text; ask a question instead.
@@ -464,10 +712,12 @@ divided by the named circuit's current, not an arbitrary expression. Distinguish
 experimental values from finite-element or analytical predictions. In particular,
 a paper's FEMM/FE simulation result is reported_numerical, never experimental;
 its semi-analytical expression is analytical, even when evaluated numerically.
-Copy quotes exactly from the supplied pdf_pages text, retaining mathematical
-minus signs and source spacing. Copy '−' as '−'; do not replace it with '-'.
-Do not retype a formula or turn a quotation into a polished paraphrase. Put incomplete
-geometry, material laws, excitation, boundaries or target definitions in questions.
+Use only supplied span ids; their exact source text is resolved on the server.
+Do not fabricate span ids, retype quotations, or turn source formulas into polished
+paraphrases. Unknown parameters use evidence_kind='unknown', value=null and an
+unresolved_reason. Put incomplete geometry, material laws, excitation, boundaries
+or target definitions in questions. Derived arithmetic remains unresolved until
+independently verified; a prose derivation alone is not proof of its result.
 
 User instructions can request a variation but do not change published evidence.
 Preserve baseline source values; geometry planning will apply explicit user
@@ -478,13 +728,10 @@ instructions separately. Never change a target to make a simulated result pass.
 def extraction_messages(document: PaperDocument, instructions: str = "") -> list[dict]:
     if len(instructions) > 3000:
         raise PaperError("User instructions must contain at most 3000 characters.")
-    schema = PaperEvidence.model_json_schema()
-    schema["$defs"]["NumericalTarget"]["properties"]["reference_kind"]["description"] = (
-        "FEMM/FE simulation output is reported_numerical. A semi-analytical calculation is analytical. "
-        "Only a physical experimental measurement is experimental; never classify FE as experimental.")
-    return [{"role": "system", "content": EXTRACTION_SYSTEM + "\nResponse JSON schema:\n"
-             + json.dumps(schema, ensure_ascii=True)},
+    # The provider receives SourcePaperEvidence as an enforced response schema;
+    # repeating the entire schema in the prompt would only duplicate input tokens.
+    return [{"role": "system", "content": EXTRACTION_SYSTEM},
             {"role": "user", "content": json.dumps({"source_id": document.source_id,
                 "user_instructions": instructions,
-                "pdf_pages": [page.model_dump() for page in document.pages],
+                "source_inventory": source_inventory(document),
                 "missing_information": list(document.missing_information)}, ensure_ascii=False)}]
