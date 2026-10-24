@@ -1,0 +1,349 @@
+{
+  "air_label": {
+    "x": 5.0,
+    "y": 0.0
+  },
+  "circuits": [
+    {
+      "current_ref": "fact_dc_current_A",
+      "id": "circuit_dc_conductor",
+      "source_refs": [
+        "nl_request"
+      ]
+    }
+  ],
+  "components": [
+    {
+      "depends_on": [],
+      "description": "Planar DC magnetostatic test machine root frame in millimeters with explicit out-of-plane depth fact_depth_mm (20 mm). It is a custom container with identity transform; the conductor, air domain and B probe are child components, and the frame carries no geometry of its own.",
+      "family": "dc_magnetostatic_2d",
+      "features": [],
+      "id": "comp_machine_root",
+      "mode": "custom",
+      "name": "planar DC magnetostatic test machine",
+      "overrides": [],
+      "parent_id": null,
+      "required_physics": [
+        "planar_dc_magnetics"
+      ],
+      "role": "machine",
+      "source_refs": [
+        "nl_request"
+      ],
+      "template": null,
+      "transform": {
+        "dx_mm": 0.0,
+        "dy_mm": 0.0,
+        "fact_ids": [],
+        "mirror": "none",
+        "origin": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "rotate_deg": 0.0
+      }
+    },
+    {
+      "depends_on": [],
+      "description": "Custom circular conductor centered at the origin, nested inside the circular air domain. Its radius is fact_conductor_radius_mm (1 mm), its material is mat_conductor with relative permeability fact_conductor_mu_r (1), and it is driven by circuit_dc_conductor with current fact_dc_current_A (+1 A) and turn count fact_turn_count (+1). The conductor label is placed at (0,0), which lies inside the conductor face.",
+      "family": "dc_magnetostatic_2d",
+      "features": [
+        {
+          "bindings": [
+            {
+              "fact_id": "fact_conductor_radius_mm",
+              "path": "/shape/radius",
+              "unit": "mm"
+            }
+          ],
+          "circuit_id": "circuit_dc_conductor",
+          "depends_on": [],
+          "description": "Circular conductor region feature feat_conductor_circle of comp_conductor: circle centered at (0,0) with radius fact_conductor_radius_mm (1 mm), material mat_conductor with linear isotropic relative permeability fact_conductor_mu_r (1), driven by circuit_dc_conductor at +1 A (fact_dc_current_A) with signed turn count +1 (fact_turn_count). Label at (0,0) lies inside the conductor face. Identity transform, no pattern. Mesh size 0.5 mm is a global setting, not a feature property.",
+          "fact_ids": [
+            "fact_conductor_radius_mm",
+            "fact_conductor_mu_r",
+            "fact_dc_current_A",
+            "fact_turn_count"
+          ],
+          "id": "feat_conductor_circle",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "material_id": "mat_conductor",
+          "mesh_mm": null,
+          "name": "circular conductor region",
+          "pattern": null,
+          "required_physics": [
+            "planar_dc_magnetics",
+            "linear_isotropic"
+          ],
+          "role": "conductor_region",
+          "shape": {
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0,
+            "type": "circle"
+          },
+          "source_refs": [
+            "nl_request"
+          ],
+          "transform": {
+            "dx_mm": 0.0,
+            "dy_mm": 0.0,
+            "fact_ids": [],
+            "mirror": "none",
+            "origin": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "rotate_deg": 0.0
+          },
+          "turns_ref": "fact_turn_count"
+        }
+      ],
+      "id": "comp_conductor",
+      "mode": "custom",
+      "name": "circular conductor",
+      "overrides": [],
+      "parent_id": "comp_machine_root",
+      "required_physics": [
+        "planar_dc_magnetics",
+        "linear_isotropic"
+      ],
+      "role": "current_carrying_conductor",
+      "source_refs": [
+        "nl_request"
+      ],
+      "template": null,
+      "transform": {
+        "dx_mm": 0.0,
+        "dy_mm": 0.0,
+        "fact_ids": [],
+        "mirror": "none",
+        "origin": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "rotate_deg": 0.0
+      }
+    },
+    {
+      "depends_on": [],
+      "description": "Circular air domain component comp_air_domain, a custom child of comp_machine_root centered at the origin with radius fact_air_domain_radius_mm (10 mm), A=0 on its boundary, and the background air label at (5,0) described as frozen assembly settings. The exterior air contour is carried by the frozen settings domain (domain_kind circle), so no duplicate solid feature is created here and the feature list is empty. Built-in air is reserved with relative permeability 1 and is not a sourced fact.",
+      "family": "dc_magnetostatic_2d",
+      "features": [],
+      "id": "comp_air_domain",
+      "mode": "custom",
+      "name": "circular air domain",
+      "overrides": [],
+      "parent_id": "comp_machine_root",
+      "required_physics": [
+        "planar_dc_magnetics",
+        "linear_isotropic"
+      ],
+      "role": "air_domain",
+      "source_refs": [
+        "nl_request"
+      ],
+      "template": null,
+      "transform": {
+        "dx_mm": 0.0,
+        "dy_mm": 0.0,
+        "fact_ids": [],
+        "mirror": "none",
+        "origin": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "rotate_deg": 0.0
+      }
+    },
+    {
+      "depends_on": [],
+      "description": "Magnetic flux density probe comp_b_probe, a custom child of comp_air_domain. It is a point measurement at the user-specified location (2,0) mm inside the air domain and outside the conductor, as recorded in the frozen assembly probes. The probe carries no solid geometry, so its feature list is empty and it adds no contour.",
+      "family": "dc_magnetostatic_2d",
+      "features": [],
+      "id": "comp_b_probe",
+      "mode": "custom",
+      "name": "magnetic flux density probe",
+      "overrides": [],
+      "parent_id": "comp_air_domain",
+      "required_physics": [
+        "planar_dc_magnetics"
+      ],
+      "role": "field_probe",
+      "source_refs": [
+        "nl_request"
+      ],
+      "template": null,
+      "transform": {
+        "dx_mm": 0.0,
+        "dy_mm": 0.0,
+        "fact_ids": [],
+        "mirror": "none",
+        "origin": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "rotate_deg": 0.0
+      }
+    }
+  ],
+  "depth_ref": "fact_depth_mm",
+  "domain": {
+    "center": {
+      "x": 0.0,
+      "y": 0.0
+    },
+    "radius": 10.0,
+    "type": "circle"
+  },
+  "facts": [
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified planar out-of-plane depth of 20 mm.",
+      "id": "fact_depth_mm",
+      "label": "Planar out-of-plane depth",
+      "role": "length",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "mm",
+      "value": 20.0
+    },
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified conductor radius of 1 mm, centered at the origin.",
+      "id": "fact_conductor_radius_mm",
+      "label": "Circular conductor radius",
+      "role": "length",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "mm",
+      "value": 1.0
+    },
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified linear isotropic relative permeability of the conductor, 1 (dimensionless).",
+      "id": "fact_conductor_mu_r",
+      "label": "Conductor relative permeability",
+      "role": "permeability",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "1",
+      "value": 1.0
+    },
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified DC circuit current of +1 A.",
+      "id": "fact_dc_current_A",
+      "label": "DC circuit current",
+      "role": "current",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "A",
+      "value": 1.0
+    },
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified signed integer turn count of +1.",
+      "id": "fact_turn_count",
+      "label": "Conductor turn count",
+      "role": "turns",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "turn",
+      "value": 1.0
+    },
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified circular air domain radius of 10 mm, centered at the origin, with A=0 on its boundary.",
+      "id": "fact_air_domain_radius_mm",
+      "label": "Circular air domain radius",
+      "role": "length",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "mm",
+      "value": 10.0
+    },
+    {
+      "calculation": null,
+      "depends_on": [],
+      "explanation": "User-specified global mesh size of 0.5 mm.",
+      "id": "fact_mesh_size_mm",
+      "label": "Global mesh size",
+      "role": "mesh",
+      "source_parameter_id": null,
+      "source_refs": [
+        "nl_request"
+      ],
+      "status": "user",
+      "unit": "mm",
+      "value": 0.5
+    }
+  ],
+  "family": "dc_magnetostatic_2d",
+  "force_feature_id": null,
+  "id": "planar_dc_conductor_air_probe",
+  "input_mode": "natural_language",
+  "materials": [
+    {
+      "id": "mat_conductor",
+      "model": "linear_isotropic",
+      "name": "circular conductor material",
+      "property_refs": [
+        "fact_conductor_mu_r"
+      ],
+      "relative_permeability_ref": "fact_conductor_mu_r",
+      "source_refs": [
+        "nl_request"
+      ]
+    }
+  ],
+  "mesh_mm": 0.5,
+  "numerical_notes": [
+    "No numerical domain, mesh or label positions were chosen; the air domain radius, mesh size, background air label (5,0) and B probe (2,0) are user-supplied.",
+    "Built-in air is used for the background region with relative permeability 1 and is not a sourced fact.",
+    "Force extraction is out of scope for this request."
+  ],
+  "physics": "planar_dc_magnetics",
+  "probes": [
+    {
+      "x": 2.0,
+      "y": 0.0
+    }
+  ],
+  "questions": [],
+  "required_physics": [
+    "planar_dc_magnetics",
+    "linear_isotropic"
+  ],
+  "title": "Planar DC magnetostatic circular conductor in circular air domain with B probe",
+  "version": 1
+}
