@@ -6,7 +6,8 @@ import unittest
 from pydantic import ValidationError
 
 from app.assembly import (MachineAssembly, compile_assembly, preview_assembly,
-                          apply_assembly_edits, capability_manifest)
+                          apply_assembly_edits, capability_manifest, FeatureBindingError,
+                          validate_feature_bindings, _resolved_facts)
 
 
 def fact(identity, value, unit, role, **extra):
@@ -46,6 +47,26 @@ def custom_assembly():
 
 
 class AssemblyTests(unittest.TestCase):
+    def test_binding_validator_is_shared_with_saved_assembly_compilation(self):
+        raw=custom_assembly().model_dump(mode='json')
+        raw['facts'].append(fact('left',.8,'cm','length'))
+        raw['components'][0]['features'][0]['bindings']=[{'path':'/shape/x_min','fact_id':'left','unit':'mm'}]
+        assembly=MachineAssembly.model_validate(raw);before=assembly.model_dump(mode='json')
+        facts,resolved=_resolved_facts(assembly,[])
+        validate_feature_bindings(assembly.components[0].features[0],facts,resolved)
+        self.assertTrue(compile_assembly(assembly).execution_supported)
+        self.assertEqual(assembly.model_dump(mode='json'),before)
+        raw['components'][0]['features'][0]['bindings'][0]['path']='/shape/radius'
+        invalid=MachineAssembly.model_validate(raw)
+        with self.assertRaises(FeatureBindingError) as caught:
+            validate_feature_bindings(invalid.components[0].features[0],facts,resolved)
+        self.assertEqual(caught.exception.index,0)
+        self.assertEqual(caught.exception.path,'/shape/radius')
+        compilation=compile_assembly(invalid)
+        self.assertIsNone(compilation.plan)
+        self.assertTrue(any(issue.code=='invalid_feature' and issue.message==str(caught.exception)
+                            for issue in compilation.issues))
+
     def test_advertised_linear_material_requirement_is_executable(self):
         assembly = coil_assembly()
         assembly.required_physics.append("linear_isotropic")

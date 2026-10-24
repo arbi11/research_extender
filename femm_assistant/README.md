@@ -18,6 +18,13 @@ The [evaluation guide](evaluation/README.md) describes repeated OpenRouter-to-CA
 execution and optional visual-model comparisons in a separate development Docker
 image, preserving deployment settings and jobs.
 
+The hierarchical branch is experimental. The 24 October three-model live cohorts
+stopped before accepted native execution; provider grammar and application
+handoff failures prevented a paper-reproduction result. After the shared key's
+weekly quota was exhausted, general corrections continued with offline tests
+only. Their live provider behavior remains unverified. The working development
+service on port 8001 has not been replaced by this hierarchy branch.
+
 ## What a reader can do
 
 1. Describe a new geometry or a modification in natural language, load a round-wire
@@ -38,7 +45,8 @@ image, preserving deployment settings and jobs.
 
 PDF upload retains the original bytes and page text locally. **Extract paper**
 first discovers the machine and operating cases, then requests source-linked
-structured evidence from OpenRouter; upload alone makes no provider call. Supported inputs are
+case metadata, parameters and published references in separate strict OpenRouter
+contracts; upload alone makes no provider call. Supported inputs are
 text PDFs up to 8 MiB and 40 pages. Extracted claims require matching page quotes,
 numbers and units. Derived values, numerical assumptions, missing dimensions and
 published analytical versus numerical results stay distinct. Scans, graph
@@ -150,6 +158,16 @@ kept fixed; an actual wire/local validation error allows one advisory Jev diagno
 and one repair of that stage. Provider access, budget or schema-compilation errors
 stop without changing physics. The existing named-feature modification path also
 allows one deterministic-error repair. No ordinary-JSON fallback is used.
+
+Inventory scope distinguishes material regions from exterior background,
+measurements, transform groups and unsupported intent. Background and probe
+components stay visible in the hierarchy but use domain/measurement settings
+instead of duplicate material faces. Opaque internal inventory identifiers are
+normalized by the server with an audited mapping; physical values and immutable
+paper span identifiers are unchanged. Shape bindings are checked at feature
+acceptance and final compilation. Literal word matching against a natural-language
+prompt supplies advisory provenance notes; it does not certify intent or gate
+execution. Paper source-value, unit and case checks remain strict.
 
 These paths impose no output-token or reasoning cap and no default AI read/wall
 deadline. Connection establishment stays bounded; Jev retries connection failures

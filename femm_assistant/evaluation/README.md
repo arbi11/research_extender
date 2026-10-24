@@ -18,6 +18,23 @@ adds no output-token cap, reasoning override, model read deadline, external retr
 physical correction or target fitting. The configured native solver timeout
 remains an execution limit. `--live` is mandatory before environment access.
 
+Protocol v3 records task cancellation explicitly as scientifically unassessed,
+locks the partial audit/report/manifest, and re-raises cancellation so no next case
+runs. Interrupted responses retain the decoded prefix, labelled incomplete;
+unreported costs remain unknown. An actual provider quota/payment 402 or exhausted
+usage/budget 403 creates a stop marker and blocks subsequent provider requests and
+cases. Other access/schema errors do not masquerade as quota exhaustion. This
+reacts to the provider response and adds no model token or reasoning cap.
+
+For separately launched model processes, mount one shared writable directory and
+pass the same `--cohort-stop /reports/shared/quota-stop.json` to each. The first
+confirmed limit publishes an immutable marker; every later provider request checks
+it before transport. Requests already in flight can still incur charges. Use a
+fresh marker path for a separately authorized cohort; a pre-existing marker stops
+the cohort before any provider request. Without this option a matrix uses its own
+output directory's `cohort-stop.json`. The summary records unstarted cases and the
+structured stop reason rather than assigning them scientific failures.
+
 The supplied six cases are public development regression inputs, not blind
 holdouts. Their independent audit criteria are in `hierarchy_case_audit.json`,
 which the runner never reads. A new cases JSON file contains only request objects:
@@ -155,11 +172,14 @@ change the application's single-worker queue design.
 Reports checkpoint each attempt, including failures and provider errors, and
 retain evidence under the adjacent `batch-artifacts` directory. They include
 stage outcomes, model IDs, dataset hash, latency and round summaries. Failed
-attempts are never replaced by whole-case retries. The production limit of two
-drafts, one logical route and one logical actual-error diagnostic per planning
-request still applies. Each Jev logical call can make at most two transport
-attempts after connection-establishment failures within the same overall deadline;
-this is not a whole-case retry or a score gate. Passing execution is not proof of numerical convergence or engineering
+attempts are never replaced by whole-case retries. This legacy flat-planner batch
+uses at most two drafts, one logical route and one logical actual-error diagnostic
+per planning request. The hierarchical matrix above instead applies its bounded
+repair to the individual failing stage while retaining successful checkpoints.
+Each Jev logical call can make at most two transport attempts after connection
+establishment failures; there is no default overall AI read deadline. These
+connection attempts do not restart a case or approve geometry. Passing execution
+is not proof of numerical convergence or engineering
 accuracy. The public seed set is not an independently labeled holdout.
 
 The script defaults to two rounds, twelve cases and two workers. Use the explicit

@@ -1,6 +1,7 @@
 """No paid calls: staged strict contracts, typed graph recovery and source checks."""
 import copy
 import json
+import re
 import unittest
 from unittest.mock import patch
 
@@ -17,22 +18,51 @@ PROMPT = ('Create the finite annular coil. Inner radius 10 mm, outer radius 20 m
           'axial bounds -20 mm and 20 mm, relative permeability 1, 100 turns, current 1 A.')
 
 
-def inventory(assembly=None):
+def inventory(assembly=None, *, scopes=None):
     assembly = assembly or coil_assembly()
+    scopes = scopes or {}
     return MachineInventory.model_validate({
         'id':assembly.id, 'title':assembly.title, 'input_mode':assembly.input_mode,
         'family':assembly.family, 'physics':assembly.physics, 'required_physics':assembly.required_physics,
         'explanation':'Discover intent before filling facts and geometry.',
         'components':[{'id':c.id, 'name':c.name, 'role':c.role, 'family':c.family,
             'mode':c.mode, 'parent_id':c.parent_id, 'template_kind':c.template.kind if c.template else None,
+            'scope':scopes.get(c.id,'region'),
             'source_refs':c.source_refs, 'required_physics':c.required_physics, 'intent':c.description or c.name}
             for c in assembly.components]})
 
 
-def staged_replies(assembly=None, *, include_discovery=False):
+def inventory_wire(assembly=None):
+    return inventory(assembly).model_dump(mode='json',exclude={'identity_map'})
+
+
+def selector_binding(binding, shape):
+    path=binding['path'];index=None
+    targets={'/label/x':'label_x','/label/y':'label_y','/mesh_mm':'mesh_mm',
+        '/shape/center/x':'center_x','/shape/center/y':'center_y',
+        '/shape/radius':'radius','/shape/start/x':'start_x','/shape/start/y':'start_y',
+        '/shape/tolerance_mm':'tolerance_mm',**{'/shape/'+key:key for key in ('x_min','x_max','y_min','y_max')}}
+    if path in targets:
+        target=targets[path]
+    elif match:=re.fullmatch(r'/shape/points/(\d+)/([xy])',path):
+        index=int(match[1]);target='point_'+match[2]
+    elif match:=re.fullmatch(r'/shape/edges/(\d+)/end/([xy])',path):
+        index=int(match[1]);target='edge_end_'+match[2]
+    elif match:=re.fullmatch(r'/shape/edges/(\d+)/sweep_deg',path):
+        index=int(match[1]);target='edge_sweep_deg'
+    else:
+        raise ValueError('Test fixture binding has no typed selector: '+path)
+    result={'fact_id':binding['fact_id'],'target':target}
+    if shape and shape['type'] in {'polygon','closed_path'}: result['index']=index
+    return result
+
+
+def staged_replies(assembly=None, *, include_discovery=False, inventory_model=None):
     """Mock wire transcript in public stage order; also used by runner contract tests."""
     assembly = assembly or coil_assembly()
-    replies = [inventory(assembly).model_dump(mode='json')] if include_discovery else []
+    inv=inventory_model or inventory(assembly)
+    scopes={c.id:c.scope for c in inv.components}
+    replies = [inv.model_dump(mode='json',exclude={'identity_map'})] if include_discovery else []
     facts = []
     for f in assembly.facts:
         raw=f.model_dump(mode='json');value=raw.pop('value');calculation=raw.pop('calculation')
@@ -53,6 +83,7 @@ def staged_replies(assembly=None, *, include_discovery=False):
     if assembly.domain:
         replies.append(assembly.domain.model_dump(mode='json'))
     for c in assembly.components:
+        if scopes[c.id] in {'background','measurement'}: continue
         intents=[];details=[]
         for op,identity,f in [('feature',f.id,f) for f in c.features]+[(o.op,o.feature_id,o.feature) for o in c.overrides]:
             intents.append({'id':identity,'name':f.name if f else identity,'role':f.role if f else 'removed_feature',
@@ -60,6 +91,7 @@ def staged_replies(assembly=None, *, include_discovery=False):
             if f is not None:
                 raw=f.model_dump(mode='json')
                 for key in ('id','name','role'): raw.pop(key)
+                raw['bindings']=[selector_binding(binding,raw['shape']) for binding in raw['bindings']]
                 if raw['shape'] and raw['shape']['type']=='closed_path':
                     for edge in raw['shape']['edges']:
                         edge.setdefault('sweep_deg',None)
@@ -153,7 +185,7 @@ class AssemblyProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(self.requests),3)
 
     async def test_discovery_has_open_families_and_retains_unknown_components(self):
-        raw=inventory().model_dump(mode='json');raw['family']='previously undescribed machine'
+        raw=inventory_wire();raw['family']='previously undescribed machine'
         raw['components'][0].update(mode='custom',template_kind=None,family='unknown bespoke winding')
         with self.fake([raw]):
             result=await discover_assembly(PROMPT,'key','https://provider.test','model')
@@ -161,7 +193,7 @@ class AssemblyProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.inventory.components[0].mode,'custom')
 
     async def test_actual_wire_error_gets_one_strict_same_stage_repair(self):
-        correct=inventory().model_dump(mode='json');bad=copy.deepcopy(correct);del bad['questions']
+        correct=inventory_wire();bad=copy.deepcopy(correct);del bad['questions']
         with self.fake([bad,correct]):
             result=await discover_assembly(PROMPT,'key','https://provider.test','model')
         self.assertEqual(len(self.requests),2)
@@ -174,7 +206,7 @@ class AssemblyProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.provider_metadata['attempts'][0]['outcome'],'validation_failed')
 
     async def test_second_invalid_response_stops_without_ordinary_json_fallback(self):
-        raw=inventory().model_dump(mode='json');raw['unrecognized']='value'
+        raw=inventory_wire();raw['unrecognized']='value'
         with self.fake([raw,raw]):
             with self.assertRaises(AssemblyProviderError) as caught:
                 await discover_assembly(PROMPT,'key','https://provider.test','model')
@@ -199,16 +231,14 @@ class AssemblyProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.provider_metadata[1]['outcome'],'validation_failed')
         self.assertIn('changed its verified paper',self.payload(2)['validation_recovery']['issues'][0]['message'])
 
-    async def test_unknown_paper_parameter_and_unstated_user_fact_are_not_invented(self):
-        for source_mode in ('paper','user'):
-            replies=staged_replies();bad=copy.deepcopy(replies[0])
-            if source_mode=='paper':
-                bad['facts'][0].update(status='paper',source_parameter_id='fabricated')
-            with self.fake([bad,bad]):
-                with self.assertRaises(AssemblyProviderError) as caught:
-                    await detail_assembly('Create an unspecified coil.','key','https://provider.test','model',inventory=inventory())
-            self.assertEqual(caught.exception.provider_calls,3)
-            self.assertIn('existing verified source' if source_mode=='paper' else 'not present',caught.exception.message)
+    async def test_unknown_paper_parameter_remains_strict(self):
+        bad=staged_replies()[0]
+        bad['facts'][0].update(status='paper',source_parameter_id='fabricated')
+        with self.fake([bad,bad]):
+            with self.assertRaises(AssemblyProviderError) as caught:
+                await detail_assembly('Create an unspecified coil.','key','https://provider.test','model',inventory=inventory())
+        self.assertEqual(caught.exception.provider_calls,3)
+        self.assertIn('existing verified source',caught.exception.message)
 
     async def test_nl_fact_cannot_claim_a_source_parameter_id(self):
         bad=staged_replies()[0];bad['facts'][0]['source_parameter_id']='pretend_paper'
@@ -276,11 +306,159 @@ class AssemblyProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('validation_recovery',self.payload(4))
 
     async def test_inconsistent_selected_case_stops_before_provider(self):
-        raw=inventory().model_dump();raw.update(cases=[{'id':'first','label':'first'}],selected_case_id='first')
+        raw=inventory_wire();raw.update(cases=[{'id':'first','label':'first'}],selected_case_id='first')
         with self.fake([]):
             with self.assertRaisesRegex(AssemblyProviderError,'operating case'):
                 await detail_assembly(PROMPT,'key','https://provider.test','model',inventory=raw,evidence_context={'case_id':'another'})
         self.assertEqual(self.requests,[])
+
+    async def test_nl_paraphrase_and_number_words_are_advisory_only(self):
+        raw=custom_assembly().model_dump(mode='json')
+        raw['facts'] += [
+            {'id':'count','label':'Repetition count','role':'count','value':4.,'unit':'1',
+             'status':'user','source_refs':['nl_request']},
+            {'id':'outer_bc','label':'Outer boundary annotation','role':'other',
+             'value':'homogeneous Dirichlet vector potential','unit':'text',
+             'status':'user','source_refs':['nl_request']}]
+        raw['components'][0]['features'][0]['pattern']['fact_ids']=['count']
+        assembly=MachineAssembly.model_validate(raw)
+        prompt='Create four repeated air regions, depth five millimeters. Ground the outer boundary with A=0.'
+        with self.fake(staged_replies(assembly)):
+            result=await plan_assembly(prompt,'key','https://provider.test','model',inventory=inventory(assembly))
+        self.assertTrue(result.compilation.execution_supported,result.compilation.issues)
+        self.assertEqual(len(result.compilation.expanded_features),4)
+        presence=result.provider_metadata[0]['validation_advisories']['nl_source_presence']
+        self.assertEqual(presence['policy'],'advisory_only')
+        self.assertEqual(presence['raw_prompt'],prompt)
+        self.assertEqual({n['fact_id'] for n in presence['notes']},{'depth','count','outer_bc'})
+        self.assertEqual(self.decision_requests,[])
+
+    async def test_text_annotation_cannot_supply_numeric_current(self):
+        raw=coil_assembly().model_dump(mode='json')
+        raw['facts'][5].update(value='one ampere',unit='text')
+        assembly=MachineAssembly.model_validate(raw)
+        with self.fake(staged_replies(assembly)):
+            result=await plan_assembly('Use one ampere.','key','https://provider.test','model',inventory=inventory(assembly))
+        self.assertIsNone(result.compilation.plan)
+        self.assertTrue(any(i.code=='circuit_unavailable' for i in result.compilation.issues))
+        self.assertEqual(result.assembly.facts[5].value,'one ampere')
+
+    async def test_missing_permeability_cannot_become_air_after_advisory_change(self):
+        raw=coil_assembly().model_dump(mode='json')
+        raw['facts'][4].update(value=None,unit=None,status='missing',source_refs=[])
+        assembly=MachineAssembly.model_validate(raw)
+        with self.fake(staged_replies(assembly)):
+            result=await plan_assembly('The core permeability is unknown; do not assume it.',
+                'key','https://provider.test','model',inventory=inventory(assembly))
+        self.assertIsNone(result.assembly.facts[4].value)
+        self.assertEqual(result.assembly.facts[4].status,'missing')
+        self.assertIsNone(result.compilation.plan)
+        self.assertTrue(any(i.code=='material_unavailable' for i in result.compilation.issues))
+
+    async def test_background_and_measurement_route_to_settings_without_geometry_calls(self):
+        raw=coil_assembly().model_dump(mode='json')
+        for identity in ('exterior','sampling'):
+            raw['components'].append({'id':identity,'name':identity,'role':'auxiliary','family':'unknown',
+                'mode':'custom','source_refs':['nl_request'],'description':'Intent retained in settings.'})
+        assembly=MachineAssembly.model_validate(raw)
+        inv=inventory(assembly,scopes={'exterior':'background','sampling':'measurement'})
+        with self.fake(staged_replies(assembly,inventory_model=inv)):
+            result=await plan_assembly(PROMPT,'key','https://provider.test','model',inventory=inv)
+        self.assertEqual(len(self.requests),3)
+        self.assertEqual(len(result.assembly.components),3)
+        self.assertEqual(len(result.compilation.plan.regions),1)
+        self.assertEqual(result.assembly.domain,assembly.domain)
+        self.assertEqual(result.assembly.probes,assembly.probes)
+        route={c['component_id']:c for c in result.provider_metadata[0]['component_routing']}
+        self.assertEqual(route['exterior']['settings_refs'],['/domain','/air_label'])
+        self.assertEqual(route['sampling']['settings_refs'],['/probes','/force_feature_id'])
+        self.assertFalse(route['exterior']['component_provider_call'])
+        self.assertEqual(result.assembly.components[1].features,[])
+
+    async def test_interior_air_cavity_remains_a_region_regardless_of_name(self):
+        raw=custom_assembly().model_dump(mode='json');raw['components'][0]['name']='Air background cavity'
+        assembly=MachineAssembly.model_validate(raw);inv=inventory(assembly)
+        with self.fake(staged_replies(assembly,inventory_model=inv)):
+            result=await plan_assembly('Use four interior air cavities and depth five millimeters.',
+                'key','https://provider.test','model',inventory=inv)
+        self.assertEqual(len(result.compilation.plan.regions),4)
+        self.assertEqual(self.requests[-1]['response_format']['json_schema']['name'],'RectangleFeatureDraft')
+
+    async def test_group_header_retains_transforms_and_has_no_owned_regions(self):
+        raw=custom_assembly().model_dump(mode='json')
+        raw['components'][0]['parent_id']='frame'
+        raw['components'].insert(0,{'id':'frame','name':'Frame','role':'group','family':'novel',
+            'mode':'custom','transform':{'dx_mm':2.,'rotate_deg':15.},'source_refs':['nl_request']})
+        assembly=MachineAssembly.model_validate(raw);inv=inventory(assembly,scopes={'frame':'group'})
+        with self.fake(staged_replies(assembly,inventory_model=inv)):
+            result=await plan_assembly('Create a grouped machine with depth 5 mm.','key','https://provider.test','model',inventory=inv)
+        self.assertEqual(result.assembly.components[0].transform,assembly.components[0].transform)
+        self.assertEqual(result.assembly.components[0].features,[])
+        self.assertEqual(len(result.compilation.expanded_features),4)
+        self.assertTrue(all(f.parent_component_ids==['frame'] for f in result.compilation.expanded_features))
+
+    async def test_non_region_header_cannot_silently_emit_or_drop_material_features(self):
+        raw=custom_assembly().model_dump(mode='json');raw['components'][0]['features']=[]
+        assembly=MachineAssembly.model_validate(raw);inv=inventory(assembly,scopes={'rotor':'group'})
+        replies=staged_replies(assembly,inventory_model=inv)
+        bad=copy.deepcopy(replies[-1]);bad['feature_intents']=[{
+            'id':'unexpected','name':'Unexpected material face','role':'solid','operation':'feature','shape_kind':'circle'}]
+        replies[-1:]=[bad,replies[-1]]
+        with self.fake(replies):
+            result=await plan_assembly('Depth 5 mm.','key','https://provider.test','model',inventory=inv)
+        self.assertEqual(result.assembly.components[0].features,[])
+        self.assertEqual(self.payload(3)['validation_recovery']['issues'][0]['code'],'non_region_scope')
+        self.assertEqual(len(self.decision_requests),1)
+
+    async def test_binding_value_failure_repairs_feature_before_compilation(self):
+        raw=custom_assembly().model_dump(mode='json')
+        raw['facts'].append({'id':'left','label':'Left bound','role':'length','value':8.,'unit':'mm',
+                            'status':'user','source_refs':['nl_request']})
+        raw['components'][0]['features'][0]['bindings']=[{'path':'/shape/x_min','fact_id':'left','unit':'mm'}]
+        assembly=MachineAssembly.model_validate(raw);replies=staged_replies(assembly)
+        bad=copy.deepcopy(replies[-1]);bad['bindings'][0]['target']='x_max'
+        replies[-1:]=[bad,replies[-1]]
+        with self.fake(replies):
+            result=await plan_assembly('Depth 5 mm; left bound 8 mm.','key','https://provider.test','model',inventory=inventory(assembly))
+        self.assertTrue(result.compilation.execution_supported,result.compilation.issues)
+        error=self.payload(4)['validation_recovery']['issues'][0]
+        self.assertEqual(error['code'],'invalid_binding')
+        self.assertEqual(error['path'],'/bindings/0')
+        self.assertEqual(error['coordinate_path'],'/shape/x_max')
+        self.assertEqual(result.assembly.components[0].features[0].bindings[0].path,'/shape/x_min')
+
+    async def test_free_binding_path_is_rejected_by_shape_specific_wire_contract(self):
+        raw=custom_assembly().model_dump(mode='json')
+        raw['components'][0]['features'][0]['bindings']=[{'path':'/shape/y_max','fact_id':'depth','unit':'mm'}]
+        # Use an explicit coordinate fact for an exact fixture binding.
+        raw['facts'].append({'id':'top','label':'Top bound','role':'length','value':.5,'unit':'mm',
+                            'status':'user','source_refs':['nl_request']})
+        raw['components'][0]['features'][0]['bindings'][0]['fact_id']='top'
+        assembly=MachineAssembly.model_validate(raw);replies=staged_replies(assembly)
+        bad=copy.deepcopy(replies[-1]);bad['bindings']=[{'path':'/shape/y_max','fact_id':'top','unit':'mm'}]
+        replies[-1:]=[bad,replies[-1]]
+        with self.fake(replies):
+            result=await plan_assembly('Depth five millimeters, top bound half a millimeter.',
+                'key','https://provider.test','model',inventory=inventory(assembly))
+        self.assertTrue(result.compilation.execution_supported,result.compilation.issues)
+        self.assertTrue(any(e['code']=='wire_additional_property' for e in self.payload(4)['validation_recovery']['issues']))
+        schema=self.requests[-1]['response_format']['json_schema']['schema']
+        self.assertNotIn('path',schema['$defs']['RectangleBinding']['properties'])
+
+    async def test_polygon_binding_index_is_checked_before_feature_acceptance(self):
+        raw=custom_assembly().model_dump(mode='json');feature=raw['components'][0]['features'][0]
+        feature.update(shape={'type':'polygon','points':[{'x':8.,'y':0.},{'x':10.,'y':0.},{'x':9.,'y':1.}]},
+            label={'x':9.,'y':.25},pattern=None,
+            bindings=[{'path':'/shape/points/0/x','fact_id':'left','unit':'mm'}])
+        raw['facts'].append({'id':'left','label':'Left point','role':'length','value':8.,'unit':'mm',
+                            'status':'user','source_refs':['nl_request']})
+        assembly=MachineAssembly.model_validate(raw);replies=staged_replies(assembly)
+        bad=copy.deepcopy(replies[-1]);bad['bindings'][0]['index']=99
+        replies[-1:]=[bad,replies[-1]]
+        with self.fake(replies):
+            result=await plan_assembly('Depth 5 mm and left point 8 mm.','key','https://provider.test','model',inventory=inventory(assembly))
+        self.assertTrue(result.compilation.execution_supported,result.compilation.issues)
+        self.assertEqual(self.payload(4)['validation_recovery']['issues'][0]['code'],'invalid_binding')
 
     async def test_template_modified_preserves_explicit_removal_and_addition(self):
         raw=coil_assembly().model_dump(mode='json');component=raw['components'][0]
@@ -324,7 +502,7 @@ class AssemblyProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(result.assembly.components),3)
 
     async def test_diagnostic_failure_does_not_block_validation_repair(self):
-        correct=inventory().model_dump(mode='json');bad=copy.deepcopy(correct);del bad['questions']
+        correct=inventory_wire();bad=copy.deepcopy(correct);del bad['questions']
         with self.fake([bad,correct],diagnostic_reply=httpx.Response(503,json={'error':'private-provider-details'})):
             result=await discover_assembly(PROMPT,'key','https://provider.test','model',
                 decision_model='custom/decision',decision_base_url='https://decision.test/v1')
@@ -337,7 +515,7 @@ class AssemblyProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.decision_requests[0]['state']['arguments']['candidate'],bad)
 
     async def test_jev_match_cannot_approve_a_second_invalid_response(self):
-        bad=inventory().model_dump(mode='json');del bad['questions']
+        bad=inventory_wire();del bad['questions']
         match=httpx.Response(200,json={'answers':{'arguments_match':{'type':'noul','noul':.99}},
             'usage':{'cost':.0002}})
         with self.fake([bad,bad],diagnostic_reply=match):
@@ -367,11 +545,13 @@ class AssemblyProviderTests(unittest.IsolatedAsyncioTestCase):
         raw=custom_assembly().model_dump(mode='json')
         raw['components']=[{**raw['components'][0],'id':'first','features':[],'depends_on':['second']},
             {**raw['components'][0],'id':'second','features':[]}]
-        assembly=MachineAssembly.model_validate(raw);replies=staged_replies(assembly)
+        assembly=MachineAssembly.model_validate(raw)
+        inv=inventory(assembly,scopes={'first':'group','second':'group'})
+        replies=staged_replies(assembly,inventory_model=inv)
         bad=copy.deepcopy(replies[-1]);bad['depends_on']=['first']
         replies[-1:]=[bad,replies[-1]]
         with self.fake(replies):
-            result=await plan_assembly('Create a machine of depth 5 mm.','key','https://provider.test','model',inventory=inventory(assembly))
+            result=await plan_assembly('Create a machine of depth 5 mm.','key','https://provider.test','model',inventory=inv)
         self.assertEqual(result.assembly.model_dump(),assembly.model_dump())
         self.assertEqual([r['response_format']['json_schema']['name'] for r in self.requests],
             ['AssemblySettingsDraft','Circle','ComponentDraft','ComponentDraft','ComponentDraft'])
@@ -385,6 +565,153 @@ class AssemblyProviderTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn(word,message)
             self.assertNotIn('private-body',message)
         self.assertIn('grammar',assembly_provider._provider_failure(400,{'error':{'message':'compiled grammar too large'}}))
+
+    async def test_opaque_inventory_ids_and_references_are_normalized_without_source_changes(self):
+        raw=inventory_wire()
+        machine='An experimental machine identity longer than thirty two characters'
+        parent='Assembly parent / frame'
+        child='Winding component (left side) / novel'
+        operating='Case 1: fully specified steady operating point'
+        raw['id']=machine
+        raw['components'][0].update(id=child,parent_id=parent,source_refs=[child,'immutable_span:page_1'])
+        group=assembly_provider.InventoryComponent(id=parent,name='Parent frame',role='group',family='novel',
+            scope='group',mode='custom',intent='Retain the parent hierarchy.').model_dump(mode='json')
+        raw['components'].insert(0,group)
+        raw['cases']=[assembly_provider.InventoryCase(id=operating,label='Operating case',
+            source_refs=['immutable_span:page_1']).model_dump(mode='json')]
+        raw['selected_case_id']=operating
+        original=copy.deepcopy(raw)
+        with self.fake([raw]):
+            result=await discover_assembly(PROMPT,'key','https://provider.test','model',
+                evidence_context={'case_id':operating})
+        mapping={(x['kind'],x['raw']):x['canonical'] for x in result.inventory.id_map}
+        self.assertEqual(result.inventory.id,mapping['machine',machine])
+        self.assertEqual(result.inventory.components[1].parent_id,mapping['component',parent])
+        self.assertEqual(result.inventory.selected_case_id,mapping['case',operating])
+        self.assertEqual(result.inventory.components[1].source_refs,[child,'immutable_span:page_1'])
+        self.assertEqual(result.inventory.cases[0].source_refs,['immutable_span:page_1'])
+        self.assertEqual(raw,original)
+        self.assertTrue(all(re.fullmatch(r'[a-z][a-z0-9_]{0,31}',value) for value in mapping.values()))
+        self.assertEqual(result.provider_metadata['inventory_id_map'],result.inventory.id_map)
+        repeated=MachineInventory.model_validate(original)
+        self.assertEqual(repeated.id_map,result.inventory.id_map)
+        restored=assembly_provider._inventory(json.loads(result.inventory.model_dump_json()))
+        self.assertEqual(restored.id_map,result.inventory.id_map)
+        assembly_provider._validate_case(restored,{'case_id':operating})
+        schema=self.requests[0]['response_format']['json_schema']['schema']
+        self.assertEqual(schema['properties']['id'],{'type':'string'})
+
+    async def test_later_component_and_feature_refs_use_server_canonical_ids(self):
+        raw_child='Custom region / alpha';raw_parent='Frame / main'
+        raw=inventory_wire(custom_assembly())
+        raw['id']='Machine / arbitrary internal label'
+        raw['components'][0].update(id=raw_child,parent_id=raw_parent,source_refs=[raw_child])
+        raw['components'].insert(0,assembly_provider.InventoryComponent(id=raw_parent,name='Frame',role='group',
+            family='unknown',scope='group',mode='custom',intent='Grouping.').model_dump(mode='json'))
+        inv=MachineInventory.model_validate(raw)
+        inv=assembly_provider._inventory(json.loads(inv.model_dump_json()))
+        parent,child=[c.id for c in inv.components]
+        assembly_raw=custom_assembly().model_dump(mode='json');assembly_raw['id']=inv.id
+        component=assembly_raw['components'][0];component.update(id=child,parent_id=parent,depends_on=[parent],source_refs=[raw_child])
+        feature=component['features'][0];feature['depends_on']=[child+'.body']
+        body=copy.deepcopy(feature);body.update(id='body',name='Body',pattern=None,depends_on=[],
+            shape={'type':'circle','center':{'x':0.,'y':0.},'radius':1.},label={'x':0.,'y':0.})
+        component['features'].append(body)
+        assembly_raw['components'].insert(0,{'id':parent,'name':'Frame','role':'group','family':'unknown','mode':'custom'})
+        assembly_raw['force_feature_id']=child+'.slots@000'
+        assembly=MachineAssembly.model_validate(assembly_raw)
+        replies=staged_replies(assembly,inventory_model=inv)
+        replies[0]['force_feature_id']=raw_child+'.slots@000'
+        replies[3]['depends_on']=[raw_parent]
+        replies[4]['depends_on']=[raw_child+'.body']
+        with self.fake(replies):
+            result=await plan_assembly('Create an assembly with depth 5 mm.','key','https://provider.test','model',inventory=inv)
+        self.assertEqual(result.assembly.id,inv.id)
+        self.assertEqual(result.assembly.components[1].parent_id,parent)
+        self.assertEqual(result.assembly.components[1].depends_on,[parent])
+        self.assertEqual(result.assembly.components[1].features[0].depends_on,[child+'.body'])
+        self.assertEqual(result.assembly.force_feature_id,child+'.slots@000')
+        self.assertEqual(result.assembly.components[1].source_refs,[raw_child])
+        self.assertTrue(result.compilation.execution_supported,result.compilation.issues)
+        self.assertTrue(any(x['raw']==raw_child for x in result.provider_metadata[0]['inventory_id_map']))
+
+    async def test_server_identity_map_is_not_a_provider_response_field(self):
+        correct=inventory_wire();bad=copy.deepcopy(correct)
+        bad['identity_map']=inventory().id_map
+        with self.fake([bad,correct]):
+            result=await discover_assembly(PROMPT,'key','https://provider.test','model')
+        schema=self.requests[0]['response_format']['json_schema']['schema']
+        self.assertNotIn('identity_map',schema['properties'])
+        self.assertNotIn('InventoryIdentity',schema.get('$defs',{}))
+        self.assertTrue(any(issue['path']=='/identity_map' and issue['code']=='wire_additional_property'
+            for issue in self.payload(1)['validation_recovery']['issues']))
+        self.assertEqual(result.inventory.id_map,inventory().id_map)
+
+    def test_persisted_identity_map_cannot_forge_aliases_or_merge_identities(self):
+        raw=inventory_wire();raw['id']='A machine / opaque'
+        raw['components'][0]['id']='A winding / opaque'
+        inv=MachineInventory.model_validate(raw);persisted=inv.model_dump(mode='json')
+        forged=copy.deepcopy(persisted);forged['identity_map'][0]['raw']='Different raw identity'
+        with self.assertRaisesRegex(ValueError,'deterministic'):
+            assembly_provider._inventory(forged)
+        incomplete=copy.deepcopy(persisted);incomplete['identity_map'].pop()
+        with self.assertRaisesRegex(ValueError,'exact canonical'):
+            assembly_provider._inventory(incomplete)
+        duplicated=copy.deepcopy(persisted);duplicated['identity_map'].append(copy.deepcopy(duplicated['identity_map'][0]))
+        with self.assertRaisesRegex(ValueError,'unique'):
+            assembly_provider._inventory(duplicated)
+
+    async def test_hyphenated_paper_parameter_identity_is_exact_and_never_normalized(self):
+        source_id='Coil-radius-Inner'
+        raw=coil_assembly().model_dump(mode='json')
+        raw['facts'][0].update(status='paper',source_parameter_id=source_id,source_refs=['paper_span_1'])
+        assembly=MachineAssembly.model_validate(raw)
+        source={'parameters':[{'id':source_id,'value':10.,'unit':'mm'}]}
+        with self.fake(staged_replies(assembly)):
+            result=await plan_assembly(PROMPT,'key','https://provider.test','model',inventory=inventory(assembly),evidence_context=source)
+        self.assertTrue(result.compilation.execution_supported,result.compilation.issues)
+        self.assertEqual(result.assembly.facts[0].source_parameter_id,source_id)
+        self.assertEqual(self.decision_requests,[])
+        bad_settings=staged_replies(assembly)[0]
+        with self.fake([bad_settings,bad_settings]):
+            with self.assertRaisesRegex(AssemblyProviderError,'existing verified source'):
+                await plan_assembly(PROMPT,'key','https://provider.test','model',inventory=inventory(assembly),
+                    evidence_context={'parameters':[{'id':'Coil_radius_Inner','value':10.,'unit':'mm'}]})
+
+    def test_normalization_preserves_distinct_ids_and_handles_reserved_hash_collision(self):
+        mapping=assembly_provider._canonical_ids(['coil-a','coil a','coil_a'],'component')
+        self.assertEqual(mapping['coil_a'],'coil_a')
+        self.assertEqual(len(set(mapping.values())),3)
+        reserved=mapping['coil-a']
+        collision=assembly_provider._canonical_ids(['coil-a',reserved],'component')
+        self.assertEqual(collision[reserved],reserved)
+        self.assertNotEqual(collision['coil-a'],reserved)
+        reversed_map=assembly_provider._canonical_ids([reserved,'coil-a'],'component')
+        self.assertEqual(collision,reversed_map)
+        raw=inventory_wire()
+        raw['components']*=2
+        with self.assertRaisesRegex(ValueError,'unique'):
+            MachineInventory.model_validate(raw)
+
+    async def test_legacy_inventory_scope_and_persistent_assembly_remain_compatible(self):
+        assembly=coil_assembly();before=assembly.model_dump(mode='json')
+        raw=inventory_wire(assembly);del raw['components'][0]['scope']
+        with self.fake(staged_replies(assembly)):
+            result=await plan_assembly(PROMPT,'key','https://provider.test','model',inventory=raw)
+        self.assertEqual(result.assembly.model_dump(mode='json'),before)
+        self.assertNotIn('scope',result.assembly.components[0].model_dump())
+        self.assertEqual(result.provider_metadata[0]['legacy_scope_defaults'],['coil'])
+
+    async def test_intent_scope_is_retained_without_fabricated_native_substitute(self):
+        raw=coil_assembly().model_dump(mode='json')
+        raw['components'].append({'id':'unknown','name':'Unknown custom component','role':'novel',
+            'family':'previously undescribed','mode':'custom','description':'Contour not supplied.'})
+        assembly=MachineAssembly.model_validate(raw);inv=inventory(assembly,scopes={'unknown':'intent'})
+        with self.fake(staged_replies(assembly,inventory_model=inv)):
+            result=await plan_assembly(PROMPT,'key','https://provider.test','model',inventory=inv)
+        self.assertEqual(result.assembly.components[-1].features,[])
+        self.assertTrue(any('intent only' in question for question in result.questions))
+        self.assertIsNone(result.compilation.plan)
 
     def test_small_contracts_have_closed_required_fields_and_no_topology_caps(self):
         contracts=[assembly_provider.AssemblySettingsDraft,assembly_provider.ComponentDraft,

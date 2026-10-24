@@ -1,5 +1,6 @@
 """The live matrix's audit and flow are tested without credits or native binaries."""
 import copy
+import asyncio
 import gzip
 import hashlib
 import json
@@ -110,11 +111,75 @@ class DecodedAuditTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(record["response_observation_error"], "ReadError")
             self.assertIn("elapsed_seconds", record)
             self.assertNotIn("response", record)
+            partial = record["partial_response"]
+            self.assertFalse(partial["complete"])
+            self.assertEqual((Path(temp) / partial["body_file"]).read_bytes(), b'{"choices":')
             summary = audit.summary()
             self.assertFalse(summary["transcript_complete"])
             self.assertEqual(summary["calls_without_reported_cost"], 1)
             self.assertFalse(summary["reported_cost_complete"])
             self.assertEqual(summary["observer_errors"], [{"stage": "response_observation", "type": "ReadError"}])
+
+    async def test_confirmed_quota_stops_next_http_and_is_shared_without_replacing_first_reason(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            gate = hierarchy_live.CohortQuotaGate(root / "cohort-stop.json")
+            sent = []
+            def provider(request):
+                sent.append(request)
+                return httpx.Response(403, json={"error": {"code": 403, "message": "Key weekly limit exceeded",
+                    "metadata": {"limit_source": "openrouter_key_limit", "limit_usd": 2.5, "spend_usd": 2.76}}})
+            audit = hierarchy_live.DecodedAudit(root / "first", allowed_hosts={"provider.test"}, quota_gate=gate)
+            async with audit.client_class(httpx.AsyncClient)(transport=httpx.MockTransport(provider)) as client:
+                response = await client.post("https://provider.test/complete", json={"model": "model"})
+                self.assertEqual(response.status_code, 403)
+                first_marker = gate.path.read_bytes()
+                with self.assertRaises(hierarchy_live.CohortStopped):
+                    await client.post("https://provider.test/complete", json={"model": "fallback"})
+            # A separately created observer uses the same on-disk marker, as
+            # independently launched model processes do.
+            other = hierarchy_live.CohortQuotaGate(gate.path)
+            other.trip({"kind": "later_limit_must_not_replace_first"})
+            self.assertEqual(gate.path.read_bytes(), first_marker)
+            second = hierarchy_live.DecodedAudit(root / "second", allowed_hosts={"provider.test"}, quota_gate=other)
+            async with second.client_class(httpx.AsyncClient)(transport=httpx.MockTransport(provider)) as client:
+                with self.assertRaises(hierarchy_live.CohortStopped):
+                    await client.post("https://provider.test/complete", json={"model": "other-process"})
+            self.assertEqual(len(sent), 1)
+            self.assertEqual(audit.summary()["provider_call_count"], 1)
+            self.assertEqual(audit.summary()["calls_without_reported_cost"], 1)
+            self.assertFalse(audit.summary()["blocked_provider_requests"][0]["http_request_sent"])
+            self.assertEqual(second.summary()["provider_call_count"], 0)
+
+    async def test_payment_required_stops_but_unrelated_forbidden_is_not_a_quota(self):
+        self.assertIsNotNone(hierarchy_live._provider_quota_reason(402, {"error": {"message": "Insufficient credits"}}))
+        self.assertIsNone(hierarchy_live._provider_quota_reason(403, {"error": {"message": "Model access forbidden"}}))
+        self.assertIsNone(hierarchy_live._provider_quota_reason(400, {"error": {"message": "Output schema budget exceeded"}}))
+
+    async def test_payment_required_with_interrupted_body_still_stops_and_preserves_read_error(self):
+        failure = httpx.ReadError("Interrupted payment error body")
+        class PartialStream(httpx.AsyncByteStream):
+            async def __aiter__(self):
+                yield b'{"error":'
+                raise failure
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            gate = hierarchy_live.CohortQuotaGate(root / "stop.json")
+            sent = []
+            def provider(request):
+                sent.append(request)
+                return httpx.Response(402, stream=PartialStream())
+            audit = hierarchy_live.DecodedAudit(root / "audit", allowed_hosts={"provider.test"}, quota_gate=gate)
+            async with audit.client_class(httpx.AsyncClient)(transport=httpx.MockTransport(provider)) as client:
+                with self.assertRaises(httpx.ReadError) as caught:
+                    await client.post("https://provider.test/complete", json={"model": "mock"})
+                self.assertIs(caught.exception, failure)
+                with self.assertRaises(hierarchy_live.CohortStopped):
+                    await client.post("https://provider.test/complete", json={"model": "mock"})
+            self.assertEqual(len(sent), 1)
+            self.assertEqual(gate.reason()["http_status"], 402)
+            self.assertTrue(gate.reason()["response_body_incomplete"])
+            self.assertFalse(audit.summary()["reported_cost_complete"])
 
     async def test_gzip_body_is_saved_losslessly_after_decoding_and_application_can_still_read(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -165,6 +230,108 @@ class DecodedAuditTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(audit.exchanges[0]["response"]["json"]["encoded"], "[REDACTED]")
             self.assertEqual(audit.summary()["calls_without_reported_cost"], 1)
             self.assertFalse(audit.summary()["reported_cost_complete"])
+
+
+class HierarchyStopTests(unittest.IsolatedAsyncioTestCase):
+    async def test_actual_provider_quota_stops_same_case_fallback_and_remaining_matrix(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            sent = []
+            real_client = httpx.AsyncClient
+            def provider(request):
+                sent.append(request)
+                return httpx.Response(403, json={"error": {"code": 403, "message": "Key weekly limit exceeded",
+                    "metadata": {"limit_source": "openrouter_key_limit"}}})
+            class RoutedClient(real_client):
+                def __init__(self, *args, **kwargs):
+                    kwargs.setdefault("transport", httpx.MockTransport(provider))
+                    super().__init__(*args, **kwargs)
+            async def planner(*args, **kwargs):
+                async with httpx.AsyncClient() as client:
+                    await client.post("https://provider.test/complete", json={"model": "draft"})
+                    # Even an application fallback is blocked before transport.
+                    await client.post("https://provider.test/complete", json={"model": "fallback"})
+                raise AssertionError("A provider call escaped the quota gate")
+            settings = Settings(data_dir=root / "unchanged", ai_key="mock-provider-credential",
+                                ai_base_url="https://provider.test/v1")
+            with patch.object(httpx, "AsyncClient", RoutedClient), \
+                 patch("app.planner.interpret_plan", new=AsyncMock(side_effect=planner)) as interpret, \
+                 patch("app.main.shutil.which", return_value="/mocked/femm-lua"):
+                summary = await hierarchy_live.run_matrix([
+                    {"id": "first", "prompt": "First request"}, {"id": "second", "prompt": "Second request"}],
+                    root / "matrix", live=True, models=["model-a", "model-b"], settings=settings,
+                    quota_stop_path=root / "shared-stop.json")
+            self.assertEqual(len(sent), 1)
+            self.assertEqual(interpret.await_count, 1)
+            self.assertEqual(summary["trial_count"], 1)
+            self.assertEqual(len(summary["not_started"]), 3)
+            self.assertEqual(summary["termination"]["kind"], "provider_quota_stop")
+            trial = summary["trials"][0]
+            self.assertEqual(trial["termination"]["scientific_outcome"], "unassessed")
+            self.assertEqual(trial["source_fidelity"]["status"], "unassessed")
+            self.assertEqual(trial["provider_audit"]["provider_call_count"], 1)
+            self.assertEqual(trial["provider_audit"]["calls_without_reported_cost"], 1)
+            self.assertFalse((root / "unchanged").exists())
+
+    async def test_cancellation_locks_partial_audit_and_reraises_without_scheduling_next_case(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            partial_seen, wait_forever = asyncio.Event(), asyncio.Event()
+            sent = []
+            class PartialStream(httpx.AsyncByteStream):
+                async def __aiter__(self):
+                    yield b'{"choices":'
+                    partial_seen.set()
+                    await wait_forever.wait()
+            def provider(request):
+                sent.append(request)
+                if len(sent) == 1:
+                    return httpx.Response(200, json={"model": "mock", "usage": {"cost": .01,
+                        "prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}})
+                return httpx.Response(200, stream=PartialStream())
+            real_client = httpx.AsyncClient
+            class RoutedClient(real_client):
+                def __init__(self, *args, **kwargs):
+                    kwargs.setdefault("transport", httpx.MockTransport(provider))
+                    super().__init__(*args, **kwargs)
+            async def planner(*args, **kwargs):
+                async with httpx.AsyncClient() as client:
+                    for _ in range(2):
+                        await client.post("https://provider.test/complete", json={"model": "mock"})
+                raise AssertionError("Interrupted provider call unexpectedly completed")
+            settings = Settings(data_dir=root / "unchanged", ai_key="mock-provider-credential",
+                                ai_base_url="https://provider.test/v1")
+            with patch.object(httpx, "AsyncClient", RoutedClient), \
+                 patch("app.planner.interpret_plan", new=AsyncMock(side_effect=planner)) as interpret, \
+                 patch("app.main.shutil.which", return_value="/mocked/femm-lua"):
+                task = asyncio.create_task(hierarchy_live.run_matrix([
+                    {"id": "first", "prompt": "First request"}, {"id": "second", "prompt": "Second request"}],
+                    root / "matrix", live=True, models=["mock"], settings=settings))
+                await asyncio.wait_for(partial_seen.wait(), timeout=3)
+                task.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await task
+            self.assertEqual(len(sent), 2)
+            self.assertEqual(interpret.await_count, 1)
+            summary = json.loads((root / "matrix" / "summary.json").read_bytes())
+            self.assertEqual(summary["termination"]["kind"], "task_cancelled")
+            self.assertEqual(len(summary["not_started"]), 1)
+            report_path = next((root / "matrix").glob('*/*/report.json'))
+            report = json.loads(report_path.read_bytes())
+            self.assertEqual(report["status"], "locked")
+            self.assertEqual(report["termination"]["kind"], "task_cancelled")
+            self.assertEqual(report["termination"]["scientific_outcome"], "unassessed")
+            self.assertFalse(report["execution_pipeline_passed"])
+            self.assertEqual(report["provider_audit"]["reported_known_cost"], .01)
+            self.assertEqual(report["provider_audit"]["calls_without_reported_cost"], 1)
+            self.assertFalse(report["provider_audit"]["transcript_complete"])
+            exchange = json.loads((report_path.parent / "provider" / "0002.json").read_bytes())
+            self.assertEqual(exchange["response_observation_error"], "CancelledError")
+            self.assertFalse(exchange["partial_response"]["complete"])
+            self.assertEqual((report_path.parent / "provider" / exchange["partial_response"]["body_file"]).read_bytes(), b'{"choices":')
+            manifest = json.loads((report_path.parent / "manifest.json").read_bytes())
+            self.assertTrue(all(hashlib.sha256((report_path.parent / name).read_bytes()).hexdigest() == digest
+                                for name, digest in manifest.items()))
 
 
 class HierarchyFlowTests(unittest.IsolatedAsyncioTestCase):
@@ -283,7 +450,7 @@ class HierarchyFlowTests(unittest.IsolatedAsyncioTestCase):
         manifest = json.loads((root / "trial" / "manifest.json").read_bytes())
         self.assertEqual(manifest["report.json"], hashlib.sha256((root / "trial" / "report.json").read_bytes()).hexdigest())
         self.assertEqual(report["status"], "locked")
-        self.assertEqual(report["version"], 2)
+        self.assertEqual(report["version"], hierarchy_live.PROTOCOL_VERSION)
         self.assertEqual(report["target_selection_policy"]["reference_kinds"],
                          ["reported_numerical", "analytical", "experimental"])
         self.assertFalse(report["target_selection_policy"]["formula_substitution"])

@@ -14,8 +14,10 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import re
+import tempfile
 import time
 from urllib.parse import quote, urlparse
 
@@ -28,7 +30,7 @@ from app.targets import NumericalTarget
 
 
 DEFAULT_MODELS = ("~z-ai/glm-latest", "anthropic/claude-haiku-5.5", "deepseek/deepseek-v4-pro-0813")
-PROTOCOL_VERSION = 2
+PROTOCOL_VERSION = 3
 TARGET_SELECTION_POLICY = {
     "reference_kinds": ["reported_numerical", "analytical", "experimental"],
     "evidence_kind": "explicit", "nonzero_source_value_required": True,
@@ -88,6 +90,83 @@ def _write(path, value):
     path.chmod(0o600)
 
 
+class CohortStopped(RuntimeError):
+    def __init__(self, reason):
+        self.reason = reason
+        super().__init__("The cohort stopped after a provider quota/budget response; no further provider request was sent.")
+
+
+class CohortQuotaGate:
+    """First confirmed provider limit wins, including across runner processes."""
+
+    def __init__(self, path: Path):
+        self.path = Path(path).resolve()
+        self._local_reason = None
+
+    def reason(self):
+        if not self.path.exists():
+            return self._local_reason
+        try:
+            value = json.loads(self.path.read_bytes())
+            if not isinstance(value, dict):
+                raise ValueError("Expected an object")
+            return value
+        except (OSError, ValueError):
+            return {"kind": "unreadable_cohort_stop_marker", "scientific_outcome": "unassessed",
+                    "marker": str(self.path)}
+
+    def check(self):
+        reason = self.reason()
+        if reason is not None:
+            raise CohortStopped(reason)
+
+    def trip(self, reason):
+        if self._local_reason is None:
+            self._local_reason = reason
+        temporary = None
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(dir=self.path.parent, prefix=".quota-stop-", delete=False) as stream:
+                temporary = Path(stream.name)
+                stream.write(_json(reason))
+                stream.flush()
+                os.fsync(stream.fileno())
+            # link publishes a fully written file atomically and never replaces
+            # another process's first observed provider limit.
+            try:
+                os.link(temporary, self.path)
+            except FileExistsError:
+                pass
+        except OSError as error:
+            # A bad shared mount must not permit this process to continue
+            # spending, or replace the original provider/read failure.
+            self._local_reason = {**self._local_reason, "shared_marker_publish_error": type(error).__name__}
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
+        return self.reason()
+
+
+def _provider_quota_reason(status, packet):
+    if status not in (402, 403):
+        return None
+    error = packet.get("error", {}) if isinstance(packet, dict) else {}
+    error = error if isinstance(error, dict) else {"message": str(error)}
+    metadata = error.get("metadata") if isinstance(error.get("metadata"), dict) else {}
+    message = str(error.get("message", ""))
+    text = (message + " " + str(metadata.get("raw", ""))).lower()
+    limit_source = metadata.get("limit_source")
+    exhausted = any(word in text for word in ("exceeded", "exhausted", "insufficient", "reached"))
+    quota = any(word in text for word in ("quota", "budget", "credit", "usage limit", "key limit", "spend limit"))
+    if status != 402 and limit_source not in {"openrouter_key_limit", "account_credit_limit", "account_budget_limit"} and not (exhausted and quota):
+        return None
+    return {"kind": "provider_quota_or_budget_exhausted", "observed_utc": _now(),
+            "http_status": status, "provider_error_code": error.get("code"),
+            "message": message, "limit_source": limit_source,
+            "limit_usd": metadata.get("limit_usd"), "spend_usd": metadata.get("spend_usd"),
+            "resets_at": metadata.get("resets_at"), "scientific_outcome": "unassessed"}
+
+
 class DecodedAudit:
     """Observe complete decoded bodies; aread() caches bytes for application use.
 
@@ -96,12 +175,14 @@ class DecodedAudit:
     chunks as UTF-8. The existing client/transport/routing remain in control.
     """
 
-    def __init__(self, directory: Path, *, secrets=(), allowed_hosts=()):
+    def __init__(self, directory: Path, *, secrets=(), allowed_hosts=(), quota_gate=None):
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
         self.secrets = tuple(secrets)
         self.allowed_hosts = set(allowed_hosts)
+        self.quota_gate = quota_gate
         self.exchanges, self.pending, self.errors = [], {}, []
+        self.blocked_requests = []
 
     def body(self, prefix, content):
         result = {"decoded_sha256": _sha(content), "decoded_bytes": len(content)}
@@ -132,6 +213,13 @@ class DecodedAudit:
     async def on_request(self, request):
         if request.url.host not in self.allowed_hosts:
             return
+        if self.quota_gate is not None:
+            try:
+                self.quota_gate.check()
+            except CohortStopped:
+                self.blocked_requests.append({"blocked_utc": _now(), "method": request.method,
+                    "url": f"{request.url.scheme}://{request.url.host}{request.url.path}", "http_request_sent": False})
+                raise
         record = {"id": len(self.exchanges) + 1, "started_utc": _now(),
             "started_monotonic": time.monotonic(), "method": request.method,
             "url": f"{request.url.scheme}://{request.url.host}{request.url.path}",
@@ -149,21 +237,44 @@ class DecodedAudit:
         if record is None:
             return
         record["status_code"] = response.status_code
+        chunks = []
+        original_iterator = response.aiter_bytes
+        async def observe_decoded(*args, **kwargs):
+            async for chunk in original_iterator(*args, **kwargs):
+                chunks.append(chunk)
+                yield chunk
+        response.aiter_bytes = observe_decoded
         try:
             # The cached decoded body is yielded unchanged to the application.
             content = await response.aread()
             record["response"] = self.body(f'{record["id"]:04d}.response', content)
-        except Exception as error:
+        except (Exception, asyncio.CancelledError) as error:
             self.errors.append({"stage": "response_observation", "type": type(error).__name__})
             record["response_observation_error"] = type(error).__name__
+            if response.status_code == 402 and self.quota_gate is not None:
+                reason = _provider_quota_reason(402, None)
+                reason.update(exchange_id=record["id"], response_body_incomplete=True,
+                    audit_exchange=str((self.directory / f'{record["id"]:04d}.json').resolve()))
+                self.quota_gate.trip(_safe(reason, self.secrets))
+            if chunks:
+                record["partial_response"] = self.body(f'{record["id"]:04d}.response-partial', b"".join(chunks))
+                record["partial_response"].update(complete=False, hash_scope="Decoded prefix only; response was interrupted.")
             record["elapsed_seconds"] = round(time.monotonic() - record["started_monotonic"], 6)
             _write(self.directory / f'{record["id"]:04d}.json', record)
             # A partial read has consumed the underlying stream. Swallowing its
             # exception would make the caller attempt another read and replace
             # the real network failure with a misleading StreamConsumed error.
             raise
+        finally:
+            response.aiter_bytes = original_iterator
         record["elapsed_seconds"] = round(time.monotonic() - record["started_monotonic"], 6)
         _write(self.directory / f'{record["id"]:04d}.json', record)
+        reason = _provider_quota_reason(response.status_code, record["response"].get("json"))
+        if reason is not None and self.quota_gate is not None:
+            reason.update(exchange_id=record["id"], response_decoded_sha256=record["response"]["decoded_sha256"],
+                          audit_exchange=str((self.directory / f'{record["id"]:04d}.json').resolve()),
+                          requested_model=(record.get("request", {}).get("json") or {}).get("model"))
+            self.quota_gate.trip(_safe(reason, self.secrets))
 
     def client_class(self, original):
         owner = self
@@ -202,6 +313,8 @@ class DecodedAudit:
                 "calls_without_reported_cost": unknown_costs,
                 "reported_cost_complete": unknown_costs == 0, "reported_token_totals": totals,
                 "observer_errors": self.errors, "pending_without_response": len(self.pending),
+                "blocked_provider_requests": self.blocked_requests,
+                "cohort_stop": self.quota_gate.reason() if self.quota_gate is not None else None,
                 "transcript_complete": not self.errors and not self.pending
                     and all(exchange.get("response", {}).get("complete") for exchange in self.exchanges),
                 "hash_scope": "Complete decoded HTTP bodies; original compressed/TLS bytes are not claimed."}
@@ -291,7 +404,7 @@ class TrialStop(ValueError):
 
 
 async def run_case(case: LiveCase, model: str, output: Path, *, live=False, settings=None,
-                   vision_model=None) -> dict:
+                   vision_model=None, quota_stop_path=None) -> dict:
     if not live:
         raise ValueError("--live is required before reading credentials or making paid requests.")
     if case.source_assets and (not case.pdf or not vision_model):
@@ -307,13 +420,15 @@ async def run_case(case: LiveCase, model: str, output: Path, *, live=False, sett
         vision_model=vision_model or original.vision_model, start_worker=True, ai_timeout=None, hierarchical_ai=True)
     secrets = [active.ai_key, active.token]
     hosts = {urlparse(active.ai_base_url).hostname, urlparse(active.decision_base_url).hostname}
-    auditor = DecodedAudit(output / "provider", secrets=secrets, allowed_hosts=hosts)
+    quota_gate = CohortQuotaGate(quota_stop_path or output / "cohort-stop.json")
+    auditor = DecodedAudit(output / "provider", secrets=secrets, allowed_hosts=hosts, quota_gate=quota_gate)
     original_client = httpx.AsyncClient
     report = {"version": PROTOCOL_VERSION, "status": "running", "started_utc": _now(), "case": case.model_dump(mode="json"),
         "target_selection_policy": TARGET_SELECTION_POLICY,
         "requested_model": model, "decision_model": active.decision_model,
         "vision_model": vision_model, "focused_checks_model": active.decision_model if case.focused_checks else None,
         "focused_checks_experimental": case.focused_checks,
+        "cohort_stop_marker": str(quota_gate.path),
         "execution_pipeline_passed": False, "source_fidelity": {"status": "pending_independent_audit"},
         "external_retries": 0, "human_corrections": 0, "target_tuning": 0,
         "stages": {}, "api_calls": [], "attempt_policy": "One independent application attempt; no external correction or retry."}
@@ -321,6 +436,15 @@ async def run_case(case: LiveCase, model: str, output: Path, *, live=False, sett
 
     def persist():
         _write(output / "report.json", _safe(report, secrets))
+
+    def record_cancellation():
+        report["stages"][stage] = "cancelled_unassessed"
+        report["execution_pipeline_passed"] = False
+        report["termination"] = {"kind": "task_cancelled", "stage": stage,
+            "scientific_outcome": "unassessed", "subsequent_cases_allowed": False,
+            "unreported_provider_charges": "unknown"}
+        report["source_fidelity"] = {"status": "unassessed", "reason": "task_cancelled"}
+        report["error"] = {"type": "CancelledError", "message": "Trial was cancelled before completion; no scientific verdict."}
 
     async def request(client, name, method, path, *, body=None, content=None, extra=None):
         kwargs = {"headers": {"Authorization": "Bearer " + active.token, **(extra or {})}}
@@ -358,6 +482,7 @@ async def run_case(case: LiveCase, model: str, output: Path, *, live=False, sett
 
     persist()
     try:
+        quota_gate.check()
         httpx.AsyncClient = auditor.client_class(original_client)
         app = create_app(active)
         async with app.router.lifespan_context(app):
@@ -468,6 +593,9 @@ async def run_case(case: LiveCase, model: str, output: Path, *, live=False, sett
                         raise TrialStop("The original frozen numerical target did not pass.")
                     report["stages"][stage] = "passed"
                 report["execution_pipeline_passed"] = True
+    except asyncio.CancelledError:
+        record_cancellation()
+        raise
     except Exception as error:
         report["stages"][stage] = "failed_or_incomplete"
         report["error"] = {"type": type(error).__name__, "message": str(error)}
@@ -475,19 +603,32 @@ async def run_case(case: LiveCase, model: str, output: Path, *, live=False, sett
         httpx.AsyncClient = original_client
         # A failed API gate can leave an application lifespan through an
         # exception. Explicit cleanup also protects older app lifespan versions.
-        if app is not None and getattr(app.state, "worker", None) is not None:
-            await asyncio.to_thread(app.state.worker.stop)
-        report.update(status="locked", ended_utc=_now(), elapsed_seconds=round(time.monotonic() - started, 6),
-                      provider_audit=auditor.summary())
-        persist()
-        manifest = {str(path.relative_to(output)): _sha(path.read_bytes()) for path in output.rglob("*")
-                    if path.is_file() and path.name != "manifest.json"}
-        _write(output / "manifest.json", manifest)
+        try:
+            if app is not None and getattr(app.state, "worker", None) is not None:
+                await asyncio.to_thread(app.state.worker.stop)
+        except asyncio.CancelledError:
+            record_cancellation()
+            raise
+        finally:
+            quota_reason = quota_gate.reason()
+            if quota_reason is not None and not report["execution_pipeline_passed"]:
+                previous = report.get("termination")
+                report["termination"] = {"kind": "provider_quota_stop", "reason": quota_reason,
+                    "scientific_outcome": "unassessed", "subsequent_cases_allowed": False}
+                if previous is not None:
+                    report["termination"]["interruption"] = previous
+                report["source_fidelity"] = {"status": "unassessed", "reason": "provider_quota_stop"}
+            report.update(status="locked", ended_utc=_now(), elapsed_seconds=round(time.monotonic() - started, 6),
+                          provider_audit=auditor.summary())
+            persist()
+            manifest = {str(path.relative_to(output)): _sha(path.read_bytes()) for path in output.rglob("*")
+                        if path.is_file() and path.name != "manifest.json"}
+            _write(output / "manifest.json", manifest)
     return _safe(report, secrets)
 
 
 async def run_matrix(cases, output: Path, *, live=False, models=DEFAULT_MODELS, settings=None,
-                     vision_model=None):
+                     vision_model=None, quota_stop_path=None):
     if not live:
         raise ValueError("--live is required before environment access or paid calls.")
     parsed = [case if isinstance(case, LiveCase) else LiveCase.model_validate(case) for case in cases]
@@ -497,23 +638,51 @@ async def run_matrix(cases, output: Path, *, live=False, models=DEFAULT_MODELS, 
     if output.exists() and any(output.iterdir()):
         raise ValueError("The model matrix requires a fresh output directory.")
     output.mkdir(parents=True, exist_ok=True)
+    quota_gate = CohortQuotaGate(quota_stop_path or output / "cohort-stop.json")
     _write(output / "protocol.json", {"version": PROTOCOL_VERSION, "created_utc": _now(), "models": list(models),
         "target_selection_policy": TARGET_SELECTION_POLICY,
+        "cohort_stop_marker": str(quota_gate.path),
+        "quota_policy": "Stop after an actual provider quota/budget 402/403; no new request after observing the shared marker. Existing in-flight charges remain unknown unless reported.",
         "cases": [case.model_dump(mode="json") for case in parsed], "vision_model": vision_model,
         "external_retries": 0, "human_corrections": 0, "gold_inputs": False,
         "model_token_budget": "Provider native default; no artificial max_tokens.",
         "model_read_deadline": None, "source_fidelity": "Independent audit remains separate."})
-    reports = []
-    for model in models:
-        slug = re.sub(r"[^A-Za-z0-9_-]", "_", model) + "-" + _sha(model.encode())[:8]
-        for case in parsed:
-            reports.append(await run_case(case, model, output / slug / case.id,
-                live=True, settings=settings, vision_model=vision_model))
-            _write(output / "summary.json", {"status": "running", "trials": reports})
-    summary = {"status": "locked", "trial_count": len(reports), "trials": reports,
-               "source_fidelity": "Pending independent source/intent audit; native success is not a reproduction verdict."}
-    _write(output / "summary.json", summary)
-    return summary
+    reports, scheduled, termination = [], [], None
+    planned = [(model, case) for model in models for case in parsed]
+    def summary(status):
+        unstarted = [{"requested_model": model, "case_id": case.id,
+                      "disposition": "not_started_after_cohort_stop" if termination or quota_gate.reason() else "not_started",
+                      "scientific_outcome": "unassessed"}
+                     for model, case in planned if (model, case.id) not in scheduled]
+        return {"status": status, "version": PROTOCOL_VERSION, "trial_count": len(reports),
+            "planned_trial_count": len(planned), "trials": reports, "not_started": unstarted,
+            "termination": termination, "cohort_stop": quota_gate.reason(),
+            "source_fidelity": "Pending independent source/intent audit; native success is not a reproduction verdict."}
+    try:
+        for model, case in planned:
+            if quota_gate.reason() is not None:
+                termination = {"kind": "provider_quota_stop", "scientific_outcome": "unassessed"}
+                break
+            slug = re.sub(r"[^A-Za-z0-9_-]", "_", model) + "-" + _sha(model.encode())[:8]
+            trial_path = output / slug / case.id
+            scheduled.append((model, case.id))
+            try:
+                reports.append(await run_case(case, model, trial_path,
+                    live=True, settings=settings, vision_model=vision_model, quota_stop_path=quota_gate.path))
+            except asyncio.CancelledError:
+                if (trial_path / "report.json").exists():
+                    reports.append(json.loads((trial_path / "report.json").read_bytes()))
+                raise
+            _write(output / "summary.json", summary("running"))
+            if quota_gate.reason() is not None:
+                termination = {"kind": "provider_quota_stop", "scientific_outcome": "unassessed"}
+                break
+    except asyncio.CancelledError:
+        termination = {"kind": "task_cancelled", "scientific_outcome": "unassessed"}
+        raise
+    finally:
+        _write(output / "summary.json", summary("locked"))
+    return summary("locked")
 
 
 def main():
@@ -523,17 +692,19 @@ def main():
     parser.add_argument("--cases", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--vision-model", help="Explicit shared visual model when cases select source assets")
+    parser.add_argument("--cohort-stop", type=Path, help="Shared writable quota-stop marker for independently launched model processes")
     args = parser.parse_args()
     if not args.live:
         parser.error("--live is required before reading credentials or making paid requests")
     summary = asyncio.run(run_matrix(load_cases(args.cases), args.output, live=True,
-        models=args.models, vision_model=args.vision_model))
+        models=args.models, vision_model=args.vision_model, quota_stop_path=args.cohort_stop))
     print(json.dumps({"status": summary["status"], "trial_count": summary["trial_count"],
         "trials": [{"case": report["case"]["id"], "model": report["requested_model"],
                     "execution_pipeline_passed": report["execution_pipeline_passed"],
                     "reported_known_cost": report["provider_audit"]["reported_known_cost"],
                     "error": report.get("error")} for report in summary["trials"]]}))
-    raise SystemExit(0 if all(report["execution_pipeline_passed"] for report in summary["trials"]) else 1)
+    raise SystemExit(0 if not summary["termination"] and not summary["not_started"]
+                     and all(report["execution_pipeline_passed"] for report in summary["trials"]) else 1)
 
 
 if __name__ == "__main__":

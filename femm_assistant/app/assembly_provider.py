@@ -8,20 +8,23 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from types import SimpleNamespace
-from typing import Literal
+from typing import Annotated, Literal
 
 import httpx
-from pydantic import Field, ValidationError, model_validator
+from pydantic import Field, PrivateAttr, ValidationError, model_validator
+from pydantic.json_schema import SkipJsonSchema
 
 from .assembly import (AssemblyCircuit, AssemblyCompilation, AssemblyComponent, AssemblyMaterial,
     AssemblyValue, Calculation, FactId, FeatureOverride, FieldBinding, GeometryFeature, Identifier,
-    MachineAssembly, ParameterReference, Pattern, PhysicalFact, SourceId, TemplateSpec, Transform,
-    _resolved_facts, capability_manifest, compile_assembly)
+    MachineAssembly, ParameterReference, Pattern, PhysicalFact, SourceId, SourceParameterId, TemplateSpec, Transform,
+    FeatureBindingError, _resolved_facts, capability_manifest, compile_assembly, validate_feature_bindings)
 from .plan import Circle, Point, Polygon, Rectangle
 from .targets import _UNITS
 
 FactUnit = Literal[tuple(_UNITS) + ("text",)]
+OpaqueId = Annotated[str, Field(min_length=1)]
 from . import decisions, structured
 
 
@@ -42,12 +45,34 @@ class StageValidationError(ValueError):
         super().__init__("This stage failed deterministic graph validation.")
 
 
+def _canonical_ids(values, kind):
+    """Normalize only opaque internal identities; preserve distinct raw IDs."""
+    if len(values) != len(set(values)):
+        raise ValueError("Inventory " + kind + " ids must be unique; duplicates cannot be merged.")
+    valid = lambda value: re.fullmatch(r"[a-z][a-z0-9_]{0,31}", value) is not None
+    used = {value for value in values if valid(value)}
+    result = {value: value for value in values if valid(value)}
+    prefix = {"machine": "m_", "component": "c_", "case": "case_"}[kind]
+    for raw in sorted(value for value in values if not valid(value)):
+        salt = 0
+        while True:
+            digest = hashlib.sha256((kind + "\0" + raw + "\0" + str(salt)).encode()).hexdigest()
+            canonical = prefix + digest[:32-len(prefix)]
+            if canonical not in used:
+                break
+            salt += 1
+        used.add(canonical)
+        result[raw] = canonical
+    return {value: result[value] for value in values}
+
+
 class InventoryComponent(AssemblyValue):
-    id: Identifier
+    id: OpaqueId
     name: str = Field(min_length=1)
     role: str = Field(min_length=1)
     family: str = Field(min_length=1)
-    parent_id: Identifier | None = None
+    parent_id: OpaqueId | None = None
+    scope: Literal["region", "background", "measurement", "group", "intent"]
     mode: Literal["template", "custom", "template_modified"]
     template_kind: Literal["block", "annular_coil"] | None = None
     required_features: list[str] = Field(default_factory=list)
@@ -58,6 +83,8 @@ class InventoryComponent(AssemblyValue):
 
     @model_validator(mode="after")
     def valid_mode(self):
+        if self.scope != "region" and (self.mode != "custom" or self.template_kind is not None):
+            raise ValueError("Non-region components use custom intent, not a region template.")
         if self.mode == "custom" and self.template_kind is not None:
             raise ValueError("A custom component has no template kind.")
         if self.mode != "custom" and self.template_kind is None:
@@ -66,7 +93,7 @@ class InventoryComponent(AssemblyValue):
 
 
 class InventoryCase(AssemblyValue):
-    id: Identifier
+    id: OpaqueId
     label: str = Field(min_length=1)
     source_refs: list[SourceId] = Field(default_factory=list)
     required_physics: list[str] = Field(default_factory=list)
@@ -74,9 +101,15 @@ class InventoryCase(AssemblyValue):
     missing_details: list[str] = Field(default_factory=list)
 
 
+class InventoryIdentity(AssemblyValue):
+    kind: Literal["machine", "component", "case"]
+    raw: OpaqueId
+    canonical: Identifier
+
+
 class MachineInventory(AssemblyValue):
     version: Literal[1] = 1
-    id: Identifier
+    id: OpaqueId
     title: str = Field(min_length=1)
     input_mode: Literal["natural_language", "paper", "combined"]
     family: str = Field(min_length=1)
@@ -84,9 +117,17 @@ class MachineInventory(AssemblyValue):
     required_physics: list[str] = Field(default_factory=list)
     components: list[InventoryComponent] = Field(min_length=1)
     cases: list[InventoryCase] = Field(default_factory=list)
-    selected_case_id: Identifier | None = None
+    selected_case_id: OpaqueId | None = None
     explanation: str = Field(min_length=1)
     questions: list[str] = Field(default_factory=list)
+    # Durable server metadata, deliberately absent from every provider schema.
+    # A provider response containing this field fails strict wire validation.
+    identity_map: SkipJsonSchema[list[InventoryIdentity]] = Field(default_factory=list)
+    _legacy_scopes: list[str] = PrivateAttr(default_factory=list)
+
+    @property
+    def id_map(self):
+        return [item.model_dump(mode="json") for item in self.identity_map]
 
     @model_validator(mode="after")
     def references(self):
@@ -105,6 +146,36 @@ class MachineInventory(AssemblyValue):
             raise ValueError("Inventory case ids must be unique.")
         if self.selected_case_id is not None and self.selected_case_id not in case_ids:
             raise ValueError("Select an existing inventory case.")
+        identities = {("machine", self.id), *(('component', item.id) for item in self.components),
+                      *(('case', item.id) for item in self.cases)}
+        if self.identity_map:
+            aliases = self.id_map
+            for kind in ("machine", "component", "case"):
+                entries = [item for item in aliases if item["kind"] == kind]
+                expected = _canonical_ids([item["raw"] for item in entries], kind)
+                if any(expected[item["raw"]] != item["canonical"] for item in entries):
+                    raise ValueError("Inventory aliases must match deterministic server normalization.")
+            if len({(item["kind"], item["canonical"]) for item in aliases}) != len(aliases) or identities != {
+                    (item["kind"], item["canonical"]) for item in aliases}:
+                raise ValueError("Inventory aliases must cover its exact canonical identities without merging them.")
+            # Nested model validation and persisted reload retain the original
+            # map only after checking its full deterministic correspondence.
+            return self
+        machine_map = _canonical_ids([self.id], "machine")
+        component_map = _canonical_ids([component.id for component in self.components], "component")
+        case_map = _canonical_ids(case_ids, "case")
+        self.identity_map = [InventoryIdentity(kind=kind, raw=raw, canonical=canonical)
+            for kind, mapping in (("machine", machine_map), ("component", component_map), ("case", case_map))
+            for raw, canonical in mapping.items()]
+        self.id = machine_map[self.id]
+        for component in self.components:
+            component.id = component_map[component.id]
+            if component.parent_id is not None:
+                component.parent_id = component_map[component.parent_id]
+        for case in self.cases:
+            case.id = case_map[case.id]
+        if self.selected_case_id is not None:
+            self.selected_case_id = case_map[self.selected_case_id]
         return self
 
 
@@ -141,7 +212,7 @@ class FactDraft(AssemblyValue):
     calculation_op: Literal["add", "subtract", "multiply", "divide", "negate", "scale"] | None
     calculation_inputs: list[FactId]
     calculation_factor: float | None
-    source_parameter_id: FactId | None
+    source_parameter_id: SourceParameterId | None
     explanation: str
 
     def to_fact(self):
@@ -234,7 +305,7 @@ class FeatureIntent(AssemblyValue):
 
 class ComponentDraft(AssemblyValue):
     """A component checkpoint declares intent, then each shape is filled separately."""
-    depends_on: list[Identifier]
+    depends_on: list[OpaqueId]
     transform: TransformDraft
     template: TemplateDraft | None
     feature_intents: list[FeatureIntent]
@@ -243,6 +314,63 @@ class ComponentDraft(AssemblyValue):
     description: str
     questions: list[str]
     explanation: str = Field(min_length=1)
+
+
+class BindingSelector(AssemblyValue):
+    fact_id: FactId
+
+    def to_binding(self):
+        common = {"label_x": "/label/x", "label_y": "/label/y", "mesh_mm": "/mesh_mm"}
+        fields = {"x_min": "/shape/x_min", "x_max": "/shape/x_max", "y_min": "/shape/y_min",
+            "y_max": "/shape/y_max", "center_x": "/shape/center/x", "center_y": "/shape/center/y",
+            "radius": "/shape/radius", "start_x": "/shape/start/x", "start_y": "/shape/start/y",
+            "tolerance_mm": "/shape/tolerance_mm"}
+        target = self.target
+        if target in common:
+            path = common[target]
+        elif target in fields:
+            path = fields[target]
+        elif target in {"point_x", "point_y"}:
+            path = "/shape/points/" + str(self.index) + "/" + target[-1]
+        elif target in {"edge_end_x", "edge_end_y"}:
+            path = "/shape/edges/" + str(self.index) + "/end/" + target[-1]
+        elif target == "edge_sweep_deg":
+            path = "/shape/edges/" + str(self.index) + "/sweep_deg"
+        else:
+            raise ValueError("Unknown typed binding target.")
+        return FieldBinding(path=path, fact_id=self.fact_id, unit="deg" if target == "edge_sweep_deg" else "mm")
+
+
+class AnnotationBinding(BindingSelector):
+    target: Literal["label_x", "label_y", "mesh_mm"]
+
+
+class RectangleBinding(BindingSelector):
+    target: Literal["x_min", "x_max", "y_min", "y_max", "label_x", "label_y", "mesh_mm"]
+
+
+class CircleBinding(BindingSelector):
+    target: Literal["center_x", "center_y", "radius", "label_x", "label_y", "mesh_mm"]
+
+
+class IndexedBinding(BindingSelector):
+    index: int | None = Field(ge=0, strict=True)
+
+    @model_validator(mode="after")
+    def index_contract(self):
+        indexed = self.target.startswith("point_") or self.target.startswith("edge_")
+        if indexed != (self.index is not None):
+            raise ValueError("Point/edge bindings require an index; other targets use index=null.")
+        return self
+
+
+class PolygonBinding(IndexedBinding):
+    target: Literal["point_x", "point_y", "label_x", "label_y", "mesh_mm"]
+
+
+class ClosedPathBinding(IndexedBinding):
+    target: Literal["start_x", "start_y", "edge_end_x", "edge_end_y", "edge_sweep_deg",
+                    "tolerance_mm", "label_x", "label_y", "mesh_mm"]
 
 
 class FeatureDetails(AssemblyValue):
@@ -255,7 +383,7 @@ class FeatureDetails(AssemblyValue):
     pattern: PatternDraft | None
     fact_ids: list[FactId]
     source_refs: list[SourceId]
-    bindings: list[FieldBinding]
+    bindings: list[AnnotationBinding]
     depends_on: list[str]
     required_physics: list[str]
     description: str
@@ -263,14 +391,17 @@ class FeatureDetails(AssemblyValue):
 
 class RectangleFeatureDraft(FeatureDetails):
     shape: Rectangle
+    bindings: list[RectangleBinding]
 
 
 class CircleFeatureDraft(FeatureDetails):
     shape: Circle
+    bindings: list[CircleBinding]
 
 
 class PolygonFeatureDraft(FeatureDetails):
     shape: Polygon
+    bindings: list[PolygonBinding]
 
 
 class PathEdgeDraft(AssemblyValue):
@@ -294,6 +425,7 @@ class ClosedPathDraft(AssemblyValue):
 
 class ClosedPathFeatureDraft(FeatureDetails):
     shape: ClosedPathDraft
+    bindings: list[ClosedPathBinding]
 
 
 class UnresolvedFeatureDraft(FeatureDetails):
@@ -338,6 +470,15 @@ No geometry-quality scores, proposed solver results, scripts or code. Do not cho
 case instead of the requested machine. Keep selected_case_id consistent with any supplied selected
 case. State unknowns without discarding the component intent. Built-in air permeability is a
 declared capability, not a missing paper fact. Disclosed numerical choices need no blocking question."""
+DISCOVERY_SYSTEM += """
+Choose each component's operational scope explicitly: region for a material face (including an
+interior air cavity), background for the single exterior domain/background, measurement for
+probes/force intent, group for hierarchy/transforms, or intent for unresolved/unsupported intent
+without a contour. All non-region scopes use mode=custom and template_kind=null. Background and
+measurement are represented by global settings, never duplicate material features. Do not infer
+scope from a component name or the word air. IDs are opaque labels: the server normalizes internal
+machine/component/case IDs and their references; source span and parameter IDs remain untouched.
+Use parent/selected-case references consistently; do not merge components with similar labels."""
 
 DETAIL_SYSTEM = """Detail the supplied machine/component inventory as an editable typed feature graph.
 Return only the enforced response JSON. Every machine/component family is open text. Preserve
@@ -385,7 +526,9 @@ Do not return components or geometry. Select domain_kind for a subsequent typed 
 unresolved preserves an unknown exterior. In each flat fact use exactly one of value_number or
 value_text, or both null for missing/conflict. Without a calculation use calculation_op=null,
 calculation_inputs=[] and calculation_factor=null. A non-paper fact has source_parameter_id=null.
-NL inputs remain user-origin facts; never label them paper facts to bypass the NL source check.
+NL inputs remain user-origin facts; never label them paper facts. Literal NL matching is an
+advisory audit, not an approval gate. Preserve paraphrases and number words faithfully, retain
+unknown physical inputs as missing, and never use a text annotation as a numeric physical value.
 Use built-in material id air directly where appropriate, without inventing a sourced air fact.
 Only source/user supplied physical values and exact typed derivations are permitted. Numerical
 domain/mesh/label choices may be disclosed in numerical_notes without unresolved questions."""
@@ -405,6 +548,11 @@ The exterior air domain/background and measurement probes live in the frozen ass
 Do not duplicate the exterior contour as a solid feature. An inventory air-domain or measurement
 component may keep an empty feature list and descriptive intent. Unknown/unsupported components
 may retain empty or unresolved geometry; never invent a contour merely to populate the hierarchy."""
+COMPONENT_SYSTEM += """
+The server skips background and measurement components because their intent is linked directly
+to frozen settings. A group or intent header must have template=null and feature_intents=[];
+preserve its transforms, dependencies and description. A region must have its template or at
+least one typed feature, which may explicitly be unresolved. Do not change scope to hide a face."""
 
 GEOMETRY_SYSTEM = DETAIL_SYSTEM + """
 This stage fills only the addressed typed geometry, using the frozen inventory, facts/settings
@@ -415,6 +563,12 @@ in the intent and assembled locally. No other shape type can be substituted. For
 line edges require sweep_deg=null and arc edges require a nonzero signed sweep; the final edge
 must explicitly return to start. Retain all vertices/edges and disclose tolerance_mm. Unknown
 geometry uses the unresolved contract with shape=null and an explicit description of missing intent."""
+GEOMETRY_SYSTEM += """
+Bindings use only the shape-specific target selectors in this contract, not JSON paths. Point
+and edge targets require their zero-based index; non-indexed targets use index=null when that
+field exists. The server converts selectors to internal paths and units and checks exact numeric
+agreement against unchanged fact values. A coordinate in millimeters binds after unit conversion;
+an arc sweep binds in degrees. Do not add a free path or unit field to a binding."""
 
 
 def _usage(packet):
@@ -591,7 +745,9 @@ async def _request(key, base_url, model, response_model, system, payload, *, sta
             candidate = json.loads(content)
             parsed = response_model.model_validate(structured.validate_response(candidate, response_model))
             if validate is not None:
-                validate(parsed)
+                advisories = validate(parsed)
+                if isinstance(advisories, dict):
+                    record["validation_advisories"] = advisories
         except AssemblyProviderError as error:
             if error.attempts:
                 raise
@@ -639,6 +795,8 @@ async def discover_assembly(prompt: str, key: str, base_url: str, model: str, *,
     inventory, usage, metadata = await _request(key, base_url, model, MachineInventory, DISCOVERY_SYSTEM,
         _context(prompt, evidence_context), decision_model=decision_model, decision_base_url=decision_base_url,
         validate=lambda value: _validate_case(value, evidence_context))
+    metadata["inventory_id_map"] = inventory.id_map
+    metadata["attempts"][-1]["inventory_id_map"] = inventory.id_map
     return AssemblyDiscovery(inventory=inventory, usage=usage, requested_model=model, provider_metadata=metadata)
 
 
@@ -649,6 +807,7 @@ def _validate_source_facts(assembly, prompt, evidence_context):
     import math
     source = {parameter.get("id"): parameter for parameter in (evidence_context or {}).get("parameters", [])
               if isinstance(parameter, dict) and isinstance(parameter.get("id"), str)}
+    advisories = []
     for raw_fact in assembly.facts:
         fact = raw_fact.to_fact() if isinstance(raw_fact, FactDraft) else raw_fact
         if fact.status == "paper":
@@ -672,8 +831,10 @@ def _validate_source_facts(assembly, prompt, evidence_context):
             valid = (fact.value in prompt if isinstance(fact.value, str)
                      else _explicit_numeric_matches(fact.value, fact.unit, prompt))
             if not valid:
-                raise AssemblyProviderError(422, "A user physical fact is not present in the natural-language source; supply it explicitly or mark it missing: "+fact.id,
-                                            path="/facts/"+fact.id+"/value")
+                advisories.append({"code": "literal_source_presence_unconfirmed", "fact_id": fact.id,
+                    "path": "/facts/"+fact.id+"/value", "advisory_only": True,
+                    "message": "Literal matching did not confirm this NL fact; paraphrases and number words require independent intent audit. This does not approve or reject the model."})
+    return advisories
 
 
 def validate_paper_facts(assembly, evidence_context):
@@ -691,17 +852,49 @@ def validate_paper_facts(assembly, evidence_context):
 
 def _inventory(value):
     value = value.inventory if isinstance(value, AssemblyDiscovery) else value
-    return value if isinstance(value, MachineInventory) else MachineInventory.model_validate(value)
+    if isinstance(value, MachineInventory):
+        return value
+    # Persisted v1 inventories predate operational scopes. Preserve their former
+    # region behavior explicitly, with an audit note; never infer it from names.
+    raw = json.loads(json.dumps(value))
+    legacy = []
+    for component in raw.get("components", []):
+        if "scope" not in component:
+            component["scope"] = "region"
+            legacy.append(component.get("id"))
+    inventory = MachineInventory.model_validate(raw)
+    inventory._legacy_scopes = legacy
+    return inventory
+
+
+def _identity_reference(value, inventory, kind):
+    for item in inventory.id_map:
+        if item["kind"] == kind and value in {item["raw"], item["canonical"]}:
+            return item["canonical"]
+    return value
+
+
+def _feature_reference(value, inventory):
+    if value is None:
+        return None
+    aliases = [(alias, item["canonical"]) for item in inventory.id_map if item["kind"] == "component"
+               for alias in {item["raw"], item["canonical"]}]
+    for alias, canonical in sorted(aliases, key=lambda item: len(item[0]), reverse=True):
+        if value.startswith(alias + "."):
+            return canonical + value[len(alias):]
+    return value
 
 
 def _validate_case(inventory, evidence_context):
     selected = (evidence_context or {}).get("case_id")
-    if selected is not None and inventory.selected_case_id != selected:
+    if selected is not None and inventory.selected_case_id != _identity_reference(selected, inventory, "case"):
         raise AssemblyProviderError(422, "The discovered operating case differs from the selected evidence case.")
 
 
-def _validate_settings(settings, prompt, evidence_context):
-    _validate_source_facts(settings, prompt, evidence_context)
+def _validate_settings(settings, prompt, evidence_context, inventory=None):
+    advisories = _validate_source_facts(settings, prompt, evidence_context)
+    if inventory is not None:
+        settings.force_feature_id = _feature_reference(settings.force_feature_id, inventory)
     facts_only = SimpleNamespace(facts=[fact.to_fact() for fact in settings.facts])
     issues = []
     _resolved_facts(facts_only, issues)
@@ -716,12 +909,21 @@ def _validate_settings(settings, prompt, evidence_context):
             + [ref for item in settings.materials for ref in item.property_refs])
     if any(ref is not None and ref not in facts for ref in refs):
         raise ValueError("A settings reference names an undefined physical fact.")
+    return {"nl_source_presence": {"policy": "advisory_only", "raw_prompt": prompt, "notes": advisories,
+        "meaning": "Literal presence does not prove semantic property binding; it is never an execution gate."}}
 
 
 def _validate_component(header, component, settings, inventory, completed=()):
+    header.depends_on = [_identity_reference(identity, inventory, "component") for identity in header.depends_on]
+    if component.scope != "region" and (header.template is not None or header.feature_intents):
+        raise StageValidationError([{"path": "/feature_intents", "code": "non_region_scope",
+            "message": "This component scope cannot create material features; its settings/hierarchy intent remains retained."}])
     if component.mode == "custom":
         if header.template is not None or any(intent.operation != "feature" for intent in header.feature_intents):
             raise ValueError("A custom component has template=null and only feature operations.")
+        if component.scope == "region" and not header.feature_intents:
+            raise StageValidationError([{"path": "/feature_intents", "code": "unresolved_region",
+                "message": "A region needs typed geometry or an explicit unresolved feature; use group for hierarchy without a face."}])
     else:
         if header.template is None or header.template.kind != component.template_kind:
             raise ValueError("The component must preserve its discovered supported template kind.")
@@ -767,8 +969,11 @@ def _validate_assignments(material_id, circuit_id, settings):
         raise ValueError("The feature circuit is not declared in the frozen settings.")
 
 
-def _feature(details, intent, settings):
+def _feature(details, intent, settings, inventory=None):
     data = details.model_dump(mode="json")
+    data["bindings"] = [binding.to_binding().model_dump(mode="json") for binding in details.bindings]
+    if inventory is not None:
+        data["depends_on"] = [_feature_reference(reference, inventory) for reference in data["depends_on"]]
     shape = data.get("shape")
     if shape and shape["type"] == "closed_path":
         for edge in shape["edges"]:
@@ -782,6 +987,12 @@ def _feature(details, intent, settings):
             + [binding.fact_id for binding in feature.bindings])
     if any(identity is not None and identity not in ids for identity in refs):
         raise ValueError("A feature reference names an undefined physical fact.")
+    facts, resolved = _resolved_facts(SimpleNamespace(facts=[fact.to_fact() for fact in settings.facts]), [])
+    try:
+        validate_feature_bindings(feature, facts, resolved)
+    except FeatureBindingError as error:
+        raise StageValidationError([{"path": "/bindings/"+str(error.index), "code": "invalid_binding",
+            "message": str(error), "coordinate_path": error.path}]) from None
     return feature
 
 
@@ -792,31 +1003,53 @@ async def detail_assembly(prompt: str, key: str, base_url: str, model: str, *, i
     _validate_case(inventory, evidence_context)
     base = {**_context(prompt, evidence_context), "inventory": inventory.model_dump(mode="json")}
     attempts = []
+    routing = [{"component_id": component.id, "scope": component.scope,
+        "settings_refs": (["/domain", "/air_label"] if component.scope == "background" else
+                          ["/probes", "/force_feature_id"] if component.scope == "measurement" else []),
+        "component_provider_call": component.scope not in {"background", "measurement"}}
+        for component in inventory.components]
+    inventory_audit = {"inventory_id_map": inventory.id_map, "component_routing": routing,
+                       "legacy_scope_defaults": inventory._legacy_scopes}
 
     async def stage(contract, system, payload, name, validator=None):
         try:
             value, _, metadata = await _request(key, base_url, model, contract, system, payload,
                 stage=name, validate=validator, decision_model=decision_model, decision_base_url=decision_base_url)
         except AssemblyProviderError as error:
+            if not attempts and error.attempts:
+                error.attempts[0].update(inventory_audit)
             raise AssemblyProviderError(error.status_code, error.message, attempts=attempts + error.attempts) from None
+        if not attempts and metadata["attempts"]:
+            metadata["attempts"][0].update(inventory_audit)
         attempts.extend(metadata["attempts"])
         return value
 
     settings = await stage(AssemblySettingsDraft, SETTINGS_SYSTEM, base, "facts_and_settings",
-        lambda value: _validate_settings(value, prompt, evidence_context))
+        lambda value: _validate_settings(value, prompt, evidence_context, inventory))
     checkpoint = {**base, "settings": settings.model_dump(mode="json")}
     domain = None
     if settings.domain_kind != "unresolved":
         domain = await stage(DOMAIN_CONTRACTS[settings.domain_kind], GEOMETRY_SYSTEM,
             {**checkpoint, "geometry_role": "exterior_domain", "shape_kind": settings.domain_kind}, "exterior_geometry")
+    checkpoint["exterior_geometry"] = domain.model_dump(mode="json") if domain else None
     components, questions, explanations = [], list(settings.questions), [settings.explanation]
     for component in inventory.components:
+        if component.scope in {"background", "measurement"}:
+            components.append(AssemblyComponent(id=component.id, name=component.name, role=component.role,
+                family=component.family, mode="custom", parent_id=component.parent_id,
+                source_refs=component.source_refs, required_physics=component.required_physics,
+                description=component.intent))
+            if component.scope == "measurement" and not settings.probes and settings.force_feature_id is None:
+                questions.append("Measurement component '"+component.name+"' has no probe or force selector in settings.")
+            continue
         payload = {**checkpoint, "component": component.model_dump(mode="json"),
                    "completed_components": [item.model_dump(mode="json") for item in components]}
         header = await stage(ComponentDraft, COMPONENT_SYSTEM, payload, "component:" + component.id,
             lambda value, selected=component: _validate_component(value, selected, settings, inventory, components))
         features, overrides = [], []
         questions.extend(header.questions)
+        if component.scope == "intent":
+            questions.append("Component '"+component.name+"' remains intent only; its physical geometry is unresolved or unsupported.")
         explanations.append(header.explanation)
         for intent in header.feature_intents:
             if intent.operation == "remove":
@@ -828,8 +1061,8 @@ async def detail_assembly(prompt: str, key: str, base_url: str, model: str, *, i
                  "completed_features": [item.model_dump(mode="json") for item in features],
                  "completed_overrides": [item.model_dump(mode="json") for item in overrides]},
                 "feature:" + component.id + "." + intent.id,
-                lambda value, selected=intent: _feature(value, selected, settings))
-            feature = _feature(details, intent, settings)
+                lambda value, selected=intent: _feature(value, selected, settings, inventory))
+            feature = _feature(details, intent, settings, inventory)
             if intent.operation == "feature":
                 features.append(feature)
             else:

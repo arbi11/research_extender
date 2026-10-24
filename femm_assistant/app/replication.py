@@ -17,21 +17,16 @@ import tempfile
 import time
 
 from fastapi import HTTPException, Request
-import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from . import papers, provenance, structured
+from . import papers, provenance
 from .plan import GeometryPlan
 from .targets import NumericalTarget, TargetContract, contract_fingerprint, freeze_targets
 from .assembly_provider import AssemblyProviderError
 
 
 MAX_CONTEXT_BYTES = 8 * 1024 * 1024
-MAX_PROVIDER_BYTES = 8 * 1024 * 1024
 MAX_JSON_FILE_BYTES = 32 * 1024 * 1024
-# The provider's native output/reasoning budget is used. Owners can explicitly
-# configure a deadline; the application does not cut reasoning off at 90 seconds.
-EXTRACTION_TIMEOUT_SECONDS = None
 ID_PATTERN = r"^[a-f0-9]{64}$"
 
 
@@ -331,6 +326,11 @@ def _redact_audit(value, secrets, *, depth=0):
 def _validation_issues(error) -> list[dict]:
     if getattr(error, "issues", None):
         return list(error.issues)
+    if isinstance(error, AssemblyProviderError):
+        for attempt in reversed(error.attempts):
+            if attempt.get("validation_issues"):
+                return list(attempt["validation_issues"])
+        return [{"path": error.path, "code": "assembly_discovery_failed", "message": error.message}]
     if isinstance(error, papers.PaperEvidenceError):
         return [error.issue]
     if isinstance(error, ValidationError):
@@ -359,23 +359,21 @@ class ExtractionOutcome:
 async def extract_with_provider(document: papers.PaperDocument, instructions: str, settings) -> ExtractionOutcome:
     if not settings.ai_key or not settings.ai_model:
         raise HTTPException(503, "Paper extraction needs the server OpenRouter API key and model configuration.")
-    response_model = papers.source_evidence_model()
-    messages = papers.extraction_messages(document, instructions)
-    # Eligibility depends on the actual execution contract, rather than an
-    # undefined request for a 'supported' problem or a remembered machine shape.
-    from .assembly import capability_manifest
-    messages.insert(1, {"role": "system", "content": "Execution capabilities and representation requirements: "
-                     + json.dumps(capability_manifest(), ensure_ascii=True)})
-    payload = structured.request_payload(settings.ai_model, messages,
-        response_model=response_model, name="paper_source_evidence", temperature=None)
+    from . import paper_provider
+
     audit_store = ReplicationStore(settings.data_dir)
     secrets = [settings.ai_key, getattr(settings, "token", "")]
-    packet, content, decoded_candidate, finish_reason = {}, None, None, None
-    discovery = None
-    stage, started = "provider_request", time.monotonic()
+    discovery, discovery_failure, paper_result, decoded_candidate = None, None, None, None
+    paper_attempts = []
+    stage, started = "machine_and_case_discovery", time.monotonic()
 
     def combined_usage():
-        values = [_usage(packet)] + ([discovery.usage] if discovery is not None else [])
+        values = [_usage({"usage": attempt.get("usage", {})}) for attempt in paper_attempts]
+        if discovery is not None:
+            values.append(_usage({"usage": discovery.usage}))
+        elif discovery_failure is not None:
+            values.extend(_usage({"usage": attempt.get("usage", {})})
+                          for attempt in discovery_failure.get("attempts", []))
         result = {}
         for value in values:
             for key, entry in value.items():
@@ -389,18 +387,27 @@ async def extract_with_provider(document: papers.PaperDocument, instructions: st
         return result
 
     def record_audit(status, issues):
-        audit = {"version": 1, "status": status, "stage": stage,
+        last = paper_attempts[-1] if paper_attempts else {}
+        packet = last.get("provider_response", {})
+        packet = packet if isinstance(packet, dict) else {}
+        candidate = decoded_candidate if decoded_candidate is not None else last.get("candidate")
+        audit = {"version": 2, "extraction_protocol": "strict_paper_stages_v3",
+            "status": status, "stage": stage,
             "paper_sha256": document.sha256, "source_id": document.source_id,
             "page_count": document.page_count, "requested_model": settings.ai_model,
-            "instructions": instructions, "finish_reason": finish_reason,
+            "instructions": instructions, "finish_reason": last.get("finish_reason"),
             "returned_model": packet.get("model"), "provider": packet.get("provider"),
-            "provider_request_id": packet.get("id"),
-            "contract": structured.contract_metadata(response_model),
-            "request": payload, "provider_response": packet,
+            "provider_request_id": packet.get("id"), "contract": last.get("contract"),
+            "request": last.get("request"), "provider_response": packet,
+            "paper_attempts": paper_attempts,
+            "case_selection": paper_result.cases.model_dump(mode="json") if paper_result is not None else None,
             "assembly_discovery": discovery.model_dump(mode="json") if discovery is not None else None,
-            "usage": combined_usage(), "issues": issues,
-            "candidate": decoded_candidate if decoded_candidate is not None else content,
-            "candidate_bytes": len(content.encode()) if isinstance(content, str) else None,
+            "assembly_discovery_failure": discovery_failure,
+            "provider_metadata": ({"discovery": discovery.provider_metadata} if discovery is not None else
+                                  {"discovery_failure": discovery_failure} if discovery_failure is not None else {}),
+            "usage": combined_usage(), "issues": issues, "candidate": candidate,
+            "candidate_bytes": (len(_encode(_redact_audit(candidate, secrets)))
+                                if decoded_candidate is not None else last.get("candidate_bytes")),
             "elapsed_seconds": round(time.monotonic()-started, 3)}
         audit = _redact_audit(audit, secrets)
         audit_id = audit_store.put_extraction_audit(audit)
@@ -418,49 +425,18 @@ async def extract_with_provider(document: papers.PaperDocument, instructions: st
     try:
         if getattr(settings, "hierarchical_ai", True):
             from .assembly_provider import discover_assembly
-            stage = "machine_and_case_discovery"
             discovery = await discover_assembly(instructions or "Identify the machine, its components and operating cases in this paper.",
                 settings.ai_key, settings.ai_base_url, settings.ai_model,
                 decision_model=settings.decision_model, decision_base_url=settings.decision_base_url,
                 evidence_context={"input_mode": "combined" if instructions.strip() else "paper",
                                   "paper_source_inventory": papers.source_inventory(document)})
-            messages.insert(2, {"role": "system", "content": "First-stage machine/component/case inventory: "
-                + discovery.inventory.model_dump_json() + "\nUse selected_case_id exactly for the selected operating case. "
-                "Extract its complete inputs and measurements; do not mix another variant's figures, values or targets. "
-                "A discovered name is not evidence for a physical value. Preserve missing information explicitly."})
-            payload = structured.request_payload(settings.ai_model, messages, response_model=response_model,
-                name="paper_source_evidence", temperature=None)
-        stage = "provider_request"
-        deadline = getattr(settings, "ai_timeout", EXTRACTION_TIMEOUT_SECONDS)
-        async with asyncio.timeout(deadline):
-            async with httpx.AsyncClient(timeout=httpx.Timeout(deadline, connect=20), follow_redirects=False) as client:
-                async with client.stream("POST", settings.ai_base_url.rstrip("/") + "/chat/completions",
-                    headers={"Authorization": "Bearer " + settings.ai_key}, json=payload) as response:
-                    if response.status_code >= 300:
-                        if response.status_code == 429:
-                            raise HTTPException(429, "OpenRouter is rate limiting paper extraction. Try again later.")
-                        if response.status_code in (401, 402, 403):
-                            raise HTTPException(502, "OpenRouter rejected paper extraction access or credit. Check the server key and permitted models.")
-                        raise HTTPException(502, "The paper-extraction provider rejected the request or is unavailable.")
-                    body = bytearray()
-                    async for chunk in response.aiter_bytes(chunk_size=8192):
-                        body.extend(chunk)
-                        if len(body) > MAX_PROVIDER_BYTES:
-                            raise HTTPException(502, "The paper-extraction provider returned too much data.")
-        stage = "provider_envelope"
-        packet = json.loads(body)
-        choice = packet["choices"][0]
-        content = choice["message"]["content"]
-        finish_reason = choice.get("finish_reason")
-        if choice.get("finish_reason") == "length" or not isinstance(content, str) or not 1 <= len(content.encode()) <= papers.MAX_EVIDENCE_BYTES:
-            raise ValueError("Truncated or missing paper evidence.")
-        if any(len(secret) >= 8 and secret in content for secret in secrets):
-            raise ValueError("Unexpected credential in provider content.")
-        stage = "candidate_json"
-        decoded_candidate = json.loads(content)
-        wire = structured.validate_response(decoded_candidate, response_model)
-        parsed = _extraction_tolerances(papers.resolve_source_evidence(document, wire))
+        stage = "paper_cases"
+        paper_result = await paper_provider.extract_source_evidence(document, instructions, settings,
+            inventory=discovery.inventory if discovery is not None else None)
+        paper_attempts = list(paper_result.attempts)
+        decoded_candidate = paper_result.candidate
         stage = "schema_and_source_validation"
+        parsed = _extraction_tolerances(papers.resolve_source_evidence(document, decoded_candidate))
         evidence, issues, rejected_count = papers.validate_partial_evidence(document, parsed)
         if any(len(secret) >= 8 and secret in evidence.model_dump_json() for secret in secrets):
             raise ValueError("Unexpected credential in decoded evidence.")
@@ -471,14 +447,14 @@ async def extract_with_provider(document: papers.PaperDocument, instructions: st
         audit_id, _ = record_audit("complete", [])
         return ExtractionOutcome(evidence, combined_usage(), audit_id=audit_id,
             inventory=discovery.inventory.model_dump(mode="json") if discovery is not None else None)
-    except HTTPException as error:
-        raise failure(error.status_code, str(error.detail), error) from None
-    except AssemblyProviderError as error:
+    except paper_provider.PaperProviderError as error:
+        paper_attempts = error.attempts
+        stage = error.stage
         raise failure(error.status_code, error.message, error) from None
-    except (TimeoutError, httpx.TimeoutException):
-        raise failure(504, "Paper extraction timed out. The uploaded paper remains available; no model or solve was created.", TimeoutError("The bounded extraction deadline expired.")) from None
-    except httpx.HTTPError:
-        raise failure(502, "Could not connect to OpenRouter for paper extraction.", ValueError("The provider connection failed; request headers are not recorded.")) from None
+    except AssemblyProviderError as error:
+        discovery_failure = {"stage": stage, "attempts": error.attempts,
+            "provider_calls": error.provider_calls, "path": error.path}
+        raise failure(error.status_code, error.message, error) from None
     except (ValidationError, ValueError, TypeError, KeyError, IndexError, AttributeError, RecursionError) as error:
         raise failure(502, "Paper evidence failed validation. Review the cited claim or schema field listed below; no geometry was applied.", error) from None
 

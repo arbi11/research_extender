@@ -31,6 +31,43 @@ def wire_evidence(doc, legacy=None):
     return papers.SourcePaperEvidence.model_validate(packet).model_dump(mode="json")
 
 
+def staged_reply(packet, request):
+    """Split existing synthetic evidence across the actual small wire contracts."""
+    payload = json.loads(request.content) if isinstance(request, httpx.Request) else request
+    name = payload["response_format"]["json_schema"]["name"]
+    source = {"source_id": packet["source_id"]}
+    for field in ("questions", "limitations"):
+        if field in packet:
+            # Full-evidence fixtures keep their messages in one checkpoint.
+            source[field] = packet[field] if name == "paper_cases" else []
+    if name == "paper_cases":
+        ids = list(dict.fromkeys(claim.get("case_id", "baseline")
+            for field in ("parameters", "targets") for claim in packet.get(field, []))) or ["baseline"]
+        selected = next((case for case in ids if case != "baseline"), "baseline")
+        return {**source, "title": packet["title"], "summary": packet["summary"],
+                "case_ids": ids, "selected_case_id": selected}
+    if name == "paper_parameters":
+        values = []
+        for parameter in packet.get("parameters", []):
+            entry = copy.deepcopy(parameter)
+            value = entry.pop("value")
+            entry["value_number"] = value if not isinstance(value, str) else None
+            entry["value_text"] = value if isinstance(value, str) else None
+            values.append(entry)
+        return {**source, "parameters": values}
+    if name == "paper_references":
+        values = []
+        for target in packet.get("targets", []):
+            entry = copy.deepcopy(target)
+            observable = entry.pop("observable")
+            entry.update(quantity=observable["quantity"], circuit_id=observable.get("circuit_id"),
+                         probe_index=observable.get("probe_index"))
+            entry.pop("tolerance")
+            values.append(entry)
+        return {**source, "targets": values}
+    raise AssertionError("Unexpected strict stage " + name)
+
+
 class _Budget:
     def __init__(self):
         self.calls = []
@@ -265,7 +302,7 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rejected.status_code, 422)
         self.assertEqual(self.store.get_evidence(record["evidence_id"]), record)
 
-    async def test_single_strict_provider_call_has_no_artificial_cap_and_retains_private_audit(self):
+    async def test_three_strict_provider_stages_have_no_artificial_cap_and_retain_private_audit(self):
         uploaded = await self.upload()
         doc = papers.PaperDocument.model_validate(uploaded["document"])
         real_client = httpx.AsyncClient
@@ -283,19 +320,19 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
             packet = wire_evidence(doc)
             packet["targets"][0]["tolerance"]["relative"] = .99
             return httpx.Response(200, json={"id": "generation-test", "model": "returned-test-model", "provider": "provider-test",
-                "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(packet)}}],
+                "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(staged_reply(packet, request))}}],
                 "usage": {"cost": .002, "prompt_tokens": 100, "completion_tokens": 20, "total_tokens": 120,
                           "completion_tokens_details": {"reasoning_tokens": 12, "secret": self.settings.ai_key},
                           "secret": self.settings.ai_key}, "provider_secret": self.settings.ai_key})
-        with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
+        with patch("app.paper_provider.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
             response = await self.extract(uploaded, instructions="Reproduce the original case")
         self.assertEqual(response.status_code, 200, response.text)
-        self.assertEqual(len(calls), 1)
-        self.assertEqual(response.json()["usage"]["cost"], .002)
+        self.assertEqual(len(calls), 3)
+        self.assertAlmostEqual(response.json()["usage"]["cost"], .006)
         self.assertEqual(response.json()["evidence"]["targets"][0]["tolerance"]["relative"], .02)
         self.assertNotIn(self.settings.ai_key, response.text)
         private = self.store.get_extraction_audit(response.json()["audit_id"])
-        self.assertEqual(private["usage"]["completion_tokens_details"], {"reasoning_tokens": 12})
+        self.assertEqual(private["usage"]["completion_tokens_details"], {"reasoning_tokens": 36})
         self.assertEqual(private["returned_model"], "returned-test-model")
         self.assertEqual(private["provider"], "provider-test")
         self.assertEqual(private["provider_request_id"], "generation-test")
@@ -306,8 +343,8 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
         def leaked(request):
             packet = wire_evidence(doc)
             packet["summary"] = self.settings.ai_key
-            return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(packet)}}]})
-        with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(leaked), **kwargs)):
+            return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(staged_reply(packet, request))}}]})
+        with patch("app.paper_provider.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(leaked), **kwargs)):
             rejected = await self.extract(uploaded)
         self.assertEqual(rejected.status_code, 502)
         self.assertNotIn(self.settings.ai_key, rejected.text)
@@ -325,24 +362,24 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
             calls.append(request)
             packet = wire_evidence(doc)
             packet["targets"][0]["value"] = 1.9
-            return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(packet)}}],
+            return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(staged_reply(packet, request))}}],
                 "usage": {"prompt_tokens": 33, "completion_tokens": 10, "total_tokens": 43, "cost": .001}})
-        with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
+        with patch("app.paper_provider.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
             rejected = await self.extract(uploaded)
         self.assertEqual(rejected.status_code, 200)
-        self.assertEqual(len(calls), 1)
+        self.assertEqual(len(calls), 3)
         self.assertIsNone(self.jobs.next())
         detail = rejected.json()
         self.assertEqual(detail["extraction_status"], "partial")
         self.assertEqual(detail["rejected_claim_count"], 1)
         self.assertFalse(detail["evidence"]["targets"])
         self.assertEqual(detail["evidence"]["parameters"][0]["id"], "current")
-        self.assertEqual(detail["usage"]["cost"], .001)
+        self.assertAlmostEqual(detail["usage"]["cost"], .003)
         self.assertEqual(detail["validation_summary"][0]["path"], "targets.0.value")
         self.assertEqual(detail["validation_summary"][0]["code"], "numeric_value_or_unit_unverified")
         private = self.store.get_extraction_audit(detail["audit_id"])
         self.assertEqual(private["candidate"]["targets"][0]["value"], 1.9)
-        self.assertEqual(private["usage"]["total_tokens"], 43)
+        self.assertEqual(private["usage"]["total_tokens"], 129)
         self.assertNotIn("candidate", detail)
 
     async def test_schema_failure_audit_has_field_path_and_no_provider_headers(self):
@@ -353,8 +390,8 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
             packet = wire_evidence(doc)
             packet["parameters"][0]["value"] = None
             return httpx.Response(200, headers={"provider-private-header": self.settings.ai_key},
-                json={"choices": [{"message": {"content": json.dumps(packet)}}], "usage": {"cost": .002}})
-        with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
+                json={"choices": [{"message": {"content": json.dumps(staged_reply(packet, request))}}], "usage": {"cost": .002}})
+        with patch("app.paper_provider.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
             response = await self.extract(uploaded)
         self.assertEqual(response.status_code, 200)
         detail = response.json()
@@ -362,7 +399,7 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(detail["evidence"]["parameters"])
         self.assertEqual(detail["validation_summary"][0]["path"], "parameters.0.value")
         private = self.store.get_extraction_audit(detail["audit_id"])
-        self.assertEqual(private["usage"]["cost"], .002)
+        self.assertAlmostEqual(private["usage"]["cost"], .006)
         self.assertNotIn("provider-private-header", json.dumps(private))
         self.assertNotIn(self.settings.ai_key, json.dumps(private))
 
@@ -375,8 +412,8 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
             bad_boundary = copy.deepcopy(packet["parameters"][0])
             bad_boundary.update(id="bad_boundary", description="Invalid invented boundary unit", value=0, unit="Wb")
             packet["parameters"].append(bad_boundary)
-            return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(packet)}}], "usage": {"cost": .002}})
-        with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
+            return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(staged_reply(packet, request))}}], "usage": {"cost": .002}})
+        with patch("app.paper_provider.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
             response = await self.extract(uploaded)
         self.assertEqual(response.status_code, 200, response.text)
         result = response.json()
@@ -402,8 +439,8 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
                     packet["targets"][0]["value"] = 999
                 else:
                     packet["source_id"] = "paper_" + "a" * 24
-                return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(packet)}}]})
-            with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
+                return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(staged_reply(packet, request))}}]})
+            with patch("app.paper_provider.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
                 response = await self.extract(uploaded)
             with self.subTest(mode=mode):
                 self.assertEqual(response.status_code, 502, response.text)
@@ -421,8 +458,8 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
             calls.append(request)
             packet = wire_evidence(doc)
             packet.pop("questions")
-            return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(packet)}}]})
-        with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
+            return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(staged_reply(packet, request))}}]})
+        with patch("app.paper_provider.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
             response = await self.extract(uploaded)
         self.assertEqual(response.status_code, 502, response.text)
         self.assertEqual(len(calls), 1)
@@ -449,8 +486,8 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
         real_client, calls = httpx.AsyncClient, []
         def handler(request):
             calls.append(request)
-            return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(packet)}}]})
-        with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
+            return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(staged_reply(packet, request))}}]})
+        with patch("app.paper_provider.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
             response = await self.extract(uploaded)
             packet["targets"][0]["value"] = .53
             wrong = await self.extract(uploaded)
@@ -462,9 +499,9 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(wrong.status_code, 200, wrong.text)
         self.assertEqual(wrong.json()["extraction_status"], "partial")
         self.assertFalse(wrong.json()["evidence"]["targets"])
-        self.assertEqual(len(calls), 2)  # Two explicit API requests, no implicit repair.
+        self.assertEqual(len(calls), 6)  # Two explicit API requests, three stages each; no implicit repair.
 
-    async def test_hierarchical_discovery_and_extraction_use_two_strict_provider_responses(self):
+    async def test_hierarchical_discovery_and_extraction_use_four_strict_provider_responses(self):
         from app.assembly_provider import MachineInventory
         uploaded = await self.upload()
         doc = papers.PaperDocument.model_validate(uploaded["document"])
@@ -473,12 +510,12 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
             family="air_core_coils", physics="axisymmetric_dc_magnetics",
             required_physics=["axisymmetric_dc_magnetics"], components=[{
                 "id": "coil", "name": "Coil", "role": "winding", "family": "air_core_coil",
-                "mode": "custom", "source_refs": [span.span_id], "intent": "Preserve the source winding"}],
+                "mode": "custom", "scope": "region", "source_refs": [span.span_id], "intent": "Preserve the source winding"}],
             cases=[{"id": "thin", "label": "Thin-wall case", "source_refs": [span.span_id],
                     "required_physics": ["zero_thickness_winding"], "geometry_requirements": ["zero radial width"]},
                    {"id": "finite", "label": "Finite-volume case", "source_refs": [span.span_id],
                     "required_physics": ["axisymmetric_dc_magnetics"], "geometry_requirements": ["positive winding area"]}],
-            selected_case_id="finite", explanation="Select the eligible source case.").model_dump(mode="json")
+            selected_case_id="finite", explanation="Select the eligible source case.").model_dump(mode="json", exclude={"identity_map"})
         extraction = wire_evidence(doc)
         for section in ("parameters", "targets"):
             for claim in extraction[section]:
@@ -498,16 +535,16 @@ class ReplicationApiTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(supplied["pages"][0]["spans"][0]["span_id"], span.span_id)
                 candidate = inventory
             else:
-                self.assertEqual(name, "paper_source_evidence")
+                self.assertIn(name, {"paper_cases", "paper_parameters", "paper_references"})
                 self.assertTrue(any('"selected_case_id":"finite"' in message["content"] for message in payload["messages"]))
-                candidate = extraction
+                candidate = staged_reply(extraction, payload)
             return httpx.Response(200, json={"id": name + "-generation", "model": "test-model",
                 "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(candidate)}}],
                 "usage": {"cost": .001, "prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}})
-        with patch("app.replication.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
+        with patch("app.paper_provider.httpx.AsyncClient", side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs)):
             response = await self.extract(uploaded, hierarchical=True)
         self.assertEqual(response.status_code, 200, response.text)
-        self.assertEqual(len(requests), 2)
+        self.assertEqual(len(requests), 4)
         result = response.json()
         self.assertEqual(result["assembly_inventory"]["selected_case_id"], "finite")
         self.assertEqual({claim["case_id"] for claim in result["evidence"]["parameters"]}, {"finite"})

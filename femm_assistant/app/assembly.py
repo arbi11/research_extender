@@ -25,6 +25,7 @@ class AssemblyValue(BaseModel):
 
 
 FactId = Annotated[str, Field(pattern=r"^[A-Za-z][A-Za-z0-9_]{0,63}$")]
+SourceParameterId = Annotated[str, Field(pattern=r"^[A-Za-z][A-Za-z0-9_-]{0,63}$")]
 SourceId = Annotated[str, Field(min_length=1)]
 
 
@@ -45,6 +46,11 @@ def capability_manifest() -> dict:
         "templates": {"block": ["x_min", "x_max", "y_min", "y_max"],
                       "annular_coil": ["r_inner", "r_outer", "z_min", "z_max"]},
         "family_policy": "Unknown or novel families may contain custom components. A family label never establishes physical support.",
+        "component_scopes": {"region": "Material face, including a genuine interior air cavity",
+            "background": "The single exterior domain/background stored in model settings",
+            "measurement": "Probe/force intent stored in model settings",
+            "group": "Hierarchy and transforms without an owned material face",
+            "intent": "Unresolved or unsupported intent retained without invented geometry"},
         "checks": ["fact provenance and dimensions", "feature dependencies", "deterministic geometry", "native mesh", "native solver", "frozen targets"]}
 
 
@@ -64,7 +70,7 @@ class PhysicalFact(AssemblyValue):
     source_refs: list[SourceId] = Field(default_factory=list)
     depends_on: list[FactId] = Field(default_factory=list)
     calculation: Calculation | None = None
-    source_parameter_id: FactId | None = None
+    source_parameter_id: SourceParameterId | None = None
     explanation: str = Field(default="", max_length=1200)
 
     @field_validator("value", mode="before")
@@ -509,6 +515,31 @@ def _get_path(value, path):
     return value
 
 
+class FeatureBindingError(ValueError):
+    """One deterministic binding error, shared by staging and compilation."""
+    def __init__(self, message, index, path):
+        super().__init__(message)
+        self.index, self.path = index, path
+
+
+def validate_feature_bindings(feature, facts, resolved):
+    """Check the addressed numeric field and exact converted source value.
+
+    This is independent of native meshing and requires no semantic approval.
+    Keeping it here lets a staged feature fail before accepting its checkpoint
+    while retaining the same checks for saved or manually edited assemblies.
+    """
+    raw = feature.model_dump(mode="json")
+    for index, binding in enumerate(feature.bindings):
+        try:
+            expected = _number(facts, resolved, binding.fact_id, binding.unit)
+            actual = _get_path(raw, binding.path)
+            if isinstance(actual, bool) or not isinstance(actual, (int, float)) or not math.isclose(actual, expected, rel_tol=1e-9, abs_tol=1e-9):
+                raise ValueError("Feature coordinate disagrees with its source fact binding: " + binding.path)
+        except (ValueError, KeyError, IndexError, TypeError) as error:
+            raise FeatureBindingError(str(error), index, binding.path) from None
+
+
 def compile_assembly(value: MachineAssembly | dict) -> AssemblyCompilation:
     assembly = value if isinstance(value, MachineAssembly) else MachineAssembly.model_validate(value)
     issues, expanded, graph, feature_map = [], [], {}, {}
@@ -559,12 +590,7 @@ def compile_assembly(value: MachineAssembly | dict) -> AssemblyCompilation:
                             raise ValueError("Feature refers to an unresolved/undefined physical fact: " + fact_id)
                     if not fact_ids and not feature.source_refs and not component.source_refs:
                         raise ValueError("A feature needs physical fact or source references; geometry has no memory defaults.")
-                    raw = feature.model_dump(mode="json")
-                    for binding in feature.bindings:
-                        expected = _number(facts, resolved, binding.fact_id, binding.unit)
-                        actual = _get_path(raw, binding.path)
-                        if not isinstance(actual, (int, float)) or not math.isclose(actual, expected, rel_tol=1e-9, abs_tol=1e-9):
-                            raise ValueError("Feature coordinate disagrees with its source fact binding: " + binding.path)
+                    validate_feature_bindings(feature, facts, resolved)
                     shape, approximation = _arc_polygon(feature.shape) if isinstance(feature.shape, ClosedPath) else (feature.shape, None)
                     turns = _number(facts, resolved, feature.turns_ref, "turns", "turns") if feature.circuit_id else 0
                     if feature.turns_ref and not feature.circuit_id:
