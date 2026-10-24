@@ -27,12 +27,31 @@ class FemmCadProgram:
     def __init__(self, model):
         self.model = model
         self.lines = []
-        if model.get("units") != "millimeters" or model.get("physics") != "planar_dc_magnetics":
-            raise ValueError("Only millimeter, planar DC magnetic models are supported")
-        self.number(model["depth_mm"])
+        if model.get("units") != "millimeters" or model.get("physics") not in ("planar_dc_magnetics", "axisymmetric_dc_magnetics"):
+            raise ValueError("Only millimeter planar or axisymmetric DC magnetic models are supported")
+        self.axisymmetric = model["physics"] == "axisymmetric_dc_magnetics"
+        if self.axisymmetric:
+            if model.get("depth_mm") is not None:
+                raise ValueError("Axisymmetric depth_mm must be null: FEMM integrates the full 360-degree volume")
+            shapes = [model["domain"]] + [region["shape"] for region in model["regions"]]
+            if model["domain"]["type"] == "circle" or self.bounds(model["domain"])[0] != 0:
+                raise ValueError("Axisymmetric domains require a straight r=0 boundary")
+            for shape in shapes:
+                if self.bounds(shape)[0] < 0:
+                    raise ValueError("Axisymmetric geometry requires nonnegative radius (x=r, y=z)")
+                if self.bounds(shape)[0] == 0:
+                    nodes = self.nodes(shape)
+                    if shape["type"] == "circle" or not any(a[0] == b[0] == 0 for a, b in zip(nodes, nodes[1:]+nodes[:1])):
+                        raise ValueError("Contours meeting r=0 require a straight axis edge")
+            if any(point["x"] < 0 for point in model["probes"]):
+                raise ValueError("Axisymmetric probes require nonnegative radius")
+        else:
+            self.number(model["depth_mm"])
+            if model["depth_mm"] <= 0:
+                raise ValueError("Planar depth must be positive")
         self.number(model["mesh_mm"])
-        if model["depth_mm"] <= 0 or model["mesh_mm"] <= 0:
-            raise ValueError("Depth and mesh size must be positive")
+        if model["mesh_mm"] <= 0:
+            raise ValueError("Mesh size must be positive")
         for item in model["materials"] + model["circuits"] + model["regions"]:
             if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", item["id"]):
                 raise ValueError("Material, circuit and region ids must be ASCII identifiers")
@@ -103,19 +122,48 @@ class FemmCadProgram:
     def define_problem(self):
         self.lines.append("-- Stage 1: define the problem.")
         self.call("newdocument", 0)
-        self.call("mi_probdef", 0, "millimeters", "planar", 1e-8, self.model["depth_mm"], 30)
+        # Axisymmetric integrals cover the complete body of revolution; the
+        # native depth argument is zero and never multiplies energy or force.
+        self.call("mi_probdef", 0, "millimeters", "axi" if self.axisymmetric else "planar",
+                  1e-8, 0 if self.axisymmetric else self.model["depth_mm"], 30)
+
+    def contour_nodes(self, shape):
+        nodes = self.nodes(shape)
+        if not self.axisymmetric or shape["type"] == "circle":
+            return nodes
+        # A material face may meet the symmetry axis. Split the domain's axis
+        # edge at every material endpoint so no overlapping edges are emitted.
+        shapes = [self.model["domain"]] + [region["shape"] for region in self.model["regions"]]
+        axis_z = sorted({y for item in shapes for x, y in self.nodes(item) if x == 0})
+        expanded = []
+        for first, second in zip(nodes, nodes[1:]+nodes[:1]):
+            expanded.append(first)
+            if first[0] == second[0] == 0:
+                middle = [z for z in axis_z if min(first[1], second[1]) < z < max(first[1], second[1])]
+                if second[1] < first[1]:
+                    middle.reverse()
+                expanded.extend((0, z) for z in middle)
+        return expanded
 
     def draw_geometry(self):
         self.lines.append("-- Stage 2: draw closed contours.")
+        seen_nodes, seen_segments = set(), set()
         for shape in [self.model["domain"]] + [region["shape"] for region in self.model["regions"]]:
-            nodes = self.nodes(shape)
+            nodes = self.contour_nodes(shape)
             for x, y in nodes:
-                self.call("mi_addnode", x, y)
-            for (x1, y1), (x2, y2) in zip(nodes, nodes[1:] + nodes[:1]):
+                if not self.axisymmetric or (x, y) not in seen_nodes:
+                    self.call("mi_addnode", x, y)
+                seen_nodes.add((x, y))
+            for first, second in zip(nodes, nodes[1:] + nodes[:1]):
+                x1, y1 = first
+                x2, y2 = second
                 if shape["type"] == "circle":
                     self.call("mi_addarc", x1, y1, x2, y2, 90, 5)
                 else:
-                    self.call("mi_addsegment", x1, y1, x2, y2)
+                    key = tuple(sorted((first, second)))
+                    if not self.axisymmetric or key not in seen_segments:
+                        self.call("mi_addsegment", x1, y1, x2, y2)
+                    seen_segments.add(key)
 
     def assign_materials(self):
         self.lines.append("-- Stage 3: create linear isotropic materials.")
@@ -149,7 +197,7 @@ class FemmCadProgram:
                 self.call("mi_selectarcsegment", shape["center"]["x"] + shape["radius"]*math.cos(radians), shape["center"]["y"] + shape["radius"]*math.sin(radians))
             self.call("mi_setarcsegmentprop", 5, "outer_a_zero", 0, 0)
         else:
-            nodes = self.nodes(shape)
+            nodes = self.contour_nodes(shape)
             for (x1, y1), (x2, y2) in zip(nodes, nodes[1:] + nodes[:1]):
                 self.call("mi_selectsegment", (x1+x2)/2, (y1+y2)/2)
             self.call("mi_setsegmentprop", "outer_a_zero", 0, 1, 0, 0)
@@ -174,11 +222,17 @@ class FemmCadProgram:
                            'write(out,"energy,",energy,",J\\n")'])
         if self.model["force_region"]:
             group = next(index for index, region in enumerate(self.model["regions"], start=1) if region["id"] == self.model["force_region"])
-            self.lines.extend([f"mo_groupselectblock({group})", "fx = mo_blockintegral(18)", "fy = mo_blockintegral(19)", "mo_clearblock()", 'write(out,"force_x,",fx,",N\\n")', 'write(out,"force_y,",fy,",N\\n")'])
+            if self.axisymmetric:
+                # Radial components cancel around a complete body of revolution.
+                # Report only the physically meaningful net axial force.
+                self.lines.extend([f"mo_groupselectblock({group})", "fz = mo_blockintegral(19)", "mo_clearblock()", 'write(out,"force_z,",fz,",N\\n")'])
+            else:
+                self.lines.extend([f"mo_groupselectblock({group})", "fx = mo_blockintegral(18)", "fy = mo_blockintegral(19)", "mo_clearblock()", 'write(out,"force_x,",fx,",N\\n")', 'write(out,"force_y,",fy,",N\\n")'])
         for circuit in self.model["circuits"]:
             self.lines.extend([f'amps, volts, linkage = mo_getcircuitproperties({self.quote(circuit["id"])})', f'write(out,"current_{circuit["id"]},",amps,",A\\n")', f'write(out,"flux_linkage_{circuit["id"]},",linkage,",Wb-turn\\n")'])
+        first_component, second_component = ("br", "bz") if self.axisymmetric else ("bx", "by")
         for index, point in enumerate(self.model["probes"]):
-            self.lines.extend([f'a, bx, by = mo_getpointvalues({self.number(point["x"])},{self.number(point["y"])})', f'write(out,"bx_{index},",bx,",T\\n")', f'write(out,"by_{index},",by,",T\\n")'])
+            self.lines.extend([f'a, bx, by = mo_getpointvalues({self.number(point["x"])},{self.number(point["y"])})', f'write(out,"{first_component}_{index},",bx,",T\\n")', f'write(out,"{second_component}_{index},",by,",T\\n")'])
         self.lines.extend(["closefile(out)", 'out = openfile("field.csv","w")', 'write(out,"x_mm,y_mm,bx_t,by_t\\n")'])
         xmin, xmax, ymin, ymax = self.bounds(self.model["domain"])
         dx, dy = (xmax-xmin)/40, (ymax-ymin)/30
@@ -236,13 +290,14 @@ class FemmCadProgram:
 def required_results(plan: GeometryPlan) -> dict[str, str]:
     result = {"energy": "J"}
     if plan.force_region:
-        result.update(force_x="N", force_y="N")
+        result.update({"force_z": "N"} if plan.physics == "axisymmetric_dc_magnetics" else {"force_x": "N", "force_y": "N"})
     for circuit in plan.circuits:
         result[f"current_{circuit.id}"] = "A"
         result[f"flux_linkage_{circuit.id}"] = "Wb-turn"
+    first, second = ("br", "bz") if plan.physics == "axisymmetric_dc_magnetics" else ("bx", "by")
     for index, _ in enumerate(plan.probes):
-        result[f"bx_{index}"] = "T"
-        result[f"by_{index}"] = "T"
+        result[f"{first}_{index}"] = "T"
+        result[f"{second}_{index}"] = "T"
     return result
 
 
@@ -288,12 +343,21 @@ the mesh in the FEMM GUI when those optional diagnostic files are absent.
 The full solve writes model.fem, model.ans, results.csv and field.csv.
 
 ASSUMPTIONS AND MEASUREMENTS
-2D planar DC magnetostatics, millimeter coordinates and specified out-of-plane
-depth. Materials are linear and isotropic. The outer contour has fixed A=0.
+DC magnetostatics with linear isotropic materials. In planar models, x/y are
+Cartesian coordinates in millimeters and depth_mm is the out-of-plane depth.
+In axisymmetric models, x=r and y=z in millimeters, r>=0, depth_mm is null,
+and FEMM integrates the complete 360-degree body of revolution. No planar
+extrusion-depth factor is applied. A straight r=0 edge is the symmetry axis.
+The outer contour has fixed A=0 (including regularity at the symmetry axis).
 Each contour's labeled face excludes any nested child contours. Optional force
 uses the weighted stress tensor on the selected material region. Field probes
-and the 41 by 31 sampled grid report Bx and By in tesla; samples outside or on
-the outer boundary are zero-filled for plotting, not field measurements there.
+report Bx/By for planar models and Br/Bz for axisymmetric models, in tesla.
+Axisymmetric force_z is the net axial force on the complete revolved body;
+a net radial force is not reported. The 41 by 31 sampled field.csv grid keeps
+compatible x_mm,y_mm,bx_t,by_t column names: these mean r_mm,z_mm,br_t,bz_t
+for axisymmetric models. Samples outside or on the outer boundary are
+zero-filled for plotting, not field measurements there. Explicit r=0 probes
+are allowed away from material interfaces and axis endpoints.
 Circuit quantities use total flux linkage in Wb-turn. Energy is in joules.
 Mesh and outer-domain convergence must be assessed for quantitative design.
 Results are finite-element calculations, not AI-generated numerical predictions.

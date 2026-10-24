@@ -18,7 +18,9 @@ from .generate import preview_svg, source_zip
 from .jobs import BusyError, JobStore, SolverWorker
 from .model import ASSUMPTIONS, CCoreSpec
 from .plan import GeometryPlan, wire_example
-from . import plan_generate, planner, decisions, vision
+from .examples import axisymmetric_example
+from . import plan_generate, planner, decisions, vision, cases
+from .history import ModelRevisionStore
 
 
 @dataclass
@@ -60,12 +62,14 @@ class PlanInterpretRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     prompt: str = Field(min_length=5, max_length=3000)
     current: GeometryPlan | None = None
+    allowed_paths: list[str] | None = Field(default=None, max_length=64)
 
 
 class PlanSolveRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     spec: GeometryPlan
     mesh_job_id: str = Field(pattern=r"^[a-f0-9]{32}$")
+    revision_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
 
 
 class VisualReviewRequest(BaseModel):
@@ -95,7 +99,9 @@ class Budget:
 def create_app(settings: Settings | None = None):
     settings = settings or Settings.from_env()
     store = JobStore(settings.data_dir)
-    worker = SolverWorker(store, settings.femm_lua, settings.timeout, settings.retention_hours)
+    history = ModelRevisionStore(settings.data_dir)
+    worker = SolverWorker(store, settings.femm_lua, settings.timeout, settings.retention_hours,
+                          revision_store=history)
     budget = Budget()
 
     @asynccontextmanager
@@ -107,7 +113,7 @@ def create_app(settings: Settings | None = None):
             worker.stop()
 
     app = FastAPI(title="FEMM Assistant", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
-    app.state.store, app.state.worker = store, worker
+    app.state.store, app.state.worker, app.state.history = store, worker, history
 
     async def authenticate(authorization: str = Header(default="")):
         # An empty token supports the owner's explicitly configured local trial.
@@ -123,7 +129,7 @@ def create_app(settings: Settings | None = None):
             body = bytearray()
             async for chunk in request.stream():
                 body.extend(chunk)
-                limit = 128000 if request.url.path.startswith("/api/plan/") else 16000
+                limit = 128000 if request.url.path.startswith(("/api/plan/", "/api/revisions")) else 16000
                 if len(body) > limit:
                     return Response("Request is too large.", status_code=413)
             request._body = bytes(body)
@@ -146,12 +152,14 @@ def create_app(settings: Settings | None = None):
                 "solver_detected": bool(shutil.which(settings.femm_lua)), "defaults": CCoreSpec().model_dump(),
                 "assumptions": ASSUMPTIONS, "retention_hours": settings.retention_hours,
                 "plan_example": wire_example().model_dump(), "plan_schema": GeometryPlan.model_json_schema(),
+                "axisymmetric_example": axisymmetric_example().model_dump(),
                 "drafting_model": settings.ai_model, "decision_model": settings.decision_model,
                 "decision_threshold": None, "decision_role": "function_routing_and_error_diagnostics", "mesh_required": True,
                 "argument_diagnosis_available": bool(settings.ai_key and settings.decision_model),
                 "visual_review_available": bool(settings.ai_key and settings.vision_model),
                 "visual_review_model": settings.vision_model,
-                "plan_capabilities": ["2D planar DC magnetostatics", "Circles, rectangles and simple polygons",
+                "revision_history_available": True,
+                "plan_capabilities": ["Planar and axisymmetric DC magnetostatics", "Circles, rectangles and simple polygons",
                                       "Nested or separate closed regions with linear materials",
                                       "DC circuits, an outer zero-potential boundary, field probes and optional force"]}
 
@@ -227,17 +235,19 @@ def create_app(settings: Settings | None = None):
                                                 settings.ai_base_url, settings.ai_model,
                                                 decision_model=settings.decision_model,
                                                 decision_base_url=settings.decision_base_url,
-                                                decision_threshold=settings.decision_threshold)
+                                                decision_threshold=settings.decision_threshold,
+                                                allowed_paths=request.allowed_paths)
         except planner.PlannerError as exc:
             raise HTTPException(exc.status_code, exc.message) from None
 
     @app.post("/api/plan/mesh", dependencies=secured, status_code=202)
-    async def plan_mesh(spec: GeometryPlan):
+    async def plan_mesh(spec: GeometryPlan, x_model_revision: str | None = Header(default=None)):
         if not shutil.which(settings.femm_lua):
             raise HTTPException(503, "FEMM 5 is not installed on this server. You can still preview and download the source bundle.")
         budget.use("mesh", 20)
+        revision = cases.require_revision(history, x_model_revision, spec)
         try:
-            return store.create(spec, kind="mesh")
+            return store.create(spec, kind="mesh", revision_id=revision["id"])
         except BusyError as exc:
             raise HTTPException(429, str(exc))
 
@@ -250,9 +260,13 @@ def create_app(settings: Settings | None = None):
             raise HTTPException(409, "Run a successful mesh check before solving this model.")
         if mesh_job["spec"] != request.spec.model_dump(mode="json"):
             raise HTTPException(409, "The model changed after its mesh check. Check the mesh again before solving.")
+        revision_id = request.revision_id or mesh_job.get("revision_id")
+        revision = cases.require_revision(history, revision_id, request.spec)
+        if request.revision_id and mesh_job.get("revision_id") != request.revision_id:
+            raise HTTPException(409, "This mesh belongs to a different model revision. Check the current revision's mesh.")
         budget.use("solve", 20)
         try:
-            return store.create(request.spec)
+            return store.create(request.spec, revision_id=revision["id"])
         except BusyError as exc:
             raise HTTPException(429, str(exc))
 
@@ -324,5 +338,6 @@ def create_app(settings: Settings | None = None):
         media = {"download.zip": "application/zip", "field.svg": "image/svg+xml", "mesh.svg": "image/svg+xml", "solver.log": "text/plain"}[artifact]
         return FileResponse(path, media_type=media, filename=artifact if artifact not in {"field.svg", "mesh.svg"} else None)
 
+    cases.register_routes(app, secured, history)
     app.mount("/", StaticFiles(directory=Path(__file__).parent / "static", html=True), name="web")
     return app

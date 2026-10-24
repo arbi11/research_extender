@@ -171,8 +171,8 @@ class DecisionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertFalse(hasattr(result, "allowed"))
                 self.assertAlmostEqual(result.trace[0].probability, probability)
 
-    async def test_diagnostic_catalog_includes_only_model_mesh_and_solve_functions(self):
-        for function in ["create_plan", "modify_plan", "mesh_plan", "solve_plan", "solve_ccore"]:
+    async def test_diagnostic_catalog_includes_model_mesh_solver_and_target_checks(self):
+        for function in ["create_plan", "modify_plan", "mesh_plan", "solve_plan", "solve_ccore", "check_targets"]:
             with self.subTest(function=function):
                 _, requests = await self.check_diagnostic(diagnostic(), function=function)
                 self.assertEqual(json.loads(requests[0].content)["state"]["function"]["name"], function)

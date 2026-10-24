@@ -82,8 +82,9 @@ No visual request runs automatically during drafting or numerical execution.
 
 General plans use circles, rectangles and simple polygons with separate or nested
 regions, linear isotropic materials, DC circuits, signed turns, labeled regions,
-an enclosing A=0 domain and bounded meshing. Physics is 2D planar DC magnetostatics
-in millimeters with explicit out-of-plane depth. Contours cannot touch or cross.
+an enclosing A=0 domain and bounded meshing. Physics is planar or axisymmetric DC magnetostatics in millimeters. Planar
+models have explicit out-of-plane depth; axisymmetric models use `depth_mm=null`
+and r/z coordinates with full revolved volumes. Contours cannot touch or cross.
 The separate C-core numeric example retains its original solve workflow.
 
 The mesh report uses the actual native mesh. It checks triangle validity,
@@ -103,7 +104,7 @@ Rerunning needs FEMM 5, without an AI key, repository or Python dependencies.
 `deploy/patch_femm_mesh.py` adds opt-in `FEMM_MESH_EXPORT=1` output from the actual
 in-memory mesh without changing numerical algorithms. The image retains the
 upstream archive and patcher. Detailed mesh diagnostics require the patch;
-portable scripts can also run with stock FEMM 5. The runtime has five Python
+portable scripts can also run with stock FEMM 5. The runtime has six Python
 dependencies, including CairoSVG for visual rendering.
 
 Development runs in Docker on this laptop at port 8001. Preserve `.env`, tokens,
@@ -129,8 +130,7 @@ availability depends on a successful workflow for that exact commit.
    current/energy scaling, refinement, domain-radius and coaxial cancellation
    checks. Circular symmetry cases do not establish convergence for arbitrary
    boundaries. See the [evaluation guide](evaluation/README.md) and saved reports.
-5. **Broader physics and CAD.** Axisymmetry, AC, nonlinear B-H curves, permanent
-   magnets, shared-edge Boolean geometry and 3D need explicit schemas,
+5. **Broader physics and CAD.** AC, nonlinear B-H curves, permanent magnets, shared-edge Boolean geometry and 3D need explicit schemas,
    deterministic validation and native reference tests before being offered.
 
 Earlier Jev semantic-gate reports, including the original 28-case run, describe a
@@ -140,3 +140,5 @@ thresholds do not describe the current routing architecture.
 Complete, test and push milestones to the existing PR #3. Do not present pending
 CI or live runs as successful. No production deployment is implied by development
 image builds or benchmark runs.
+
+Immutable revision history, typed modification patches and native execution manifests now underpin controlled recovery. Axisymmetric linear DC schemas and compilation are implemented; use current test reports for numerical verification.

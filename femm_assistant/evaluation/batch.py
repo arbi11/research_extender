@@ -106,7 +106,7 @@ def physical_signature(data: dict | GeometryPlan) -> dict:
                 "permeability": materials[region.material], "circuit": circuits.get(region.circuit),
                 "turns": region.turns, "mesh_mm": _number(region.mesh_mm or plan.mesh_mm)} for region in plan.regions]
     force_target = next((_shape(region.shape) for region in plan.regions if region.id == plan.force_region), None)
-    return {"physics": plan.physics, "units": plan.units, "depth_mm": _number(plan.depth_mm),
+    return {"physics": plan.physics, "units": plan.units, "depth_mm": (None if plan.depth_mm is None else _number(plan.depth_mm)),
             "mesh_mm": _number(plan.mesh_mm), "domain": _shape(plan.domain), "air_label": _point(plan.air_label),
             "circuits": _sort(list(circuits.values())), "regions": _sort(regions),
             "probes": _sort([_point(point) for point in plan.probes]), "force_target": force_target}

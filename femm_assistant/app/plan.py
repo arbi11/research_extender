@@ -210,12 +210,51 @@ class Region(PlanValue):
         return self
 
 
+def axis_interior(shape: Rectangle | Circle | Polygon, point: Point) -> bool:
+    """Whether a point is on the interior of a straight r=0 symmetry edge.
+
+    The axis is a coordinate boundary, not a material interface. Its endpoints
+    and any non-axis boundary remain excluded from field probes.
+    """
+    if point.x != 0 or isinstance(shape, Circle):
+        return False
+    return any(a.x == b.x == 0 and min(a.y, b.y) < point.y < max(a.y, b.y)
+               for a, b in pairs(shape_points(shape)))
+
+
+def contours_intersect_off_axis(first, second) -> bool:
+    """Reject all contour intersections except contacts on the symmetry axis."""
+    if isinstance(first, Circle) or isinstance(second, Circle):
+        # Axis-tangent circles are rejected separately, so every circle contact
+        # in a supported axisymmetric model occurs at positive radius.
+        return contours_intersect(first, second)
+    for a, b in pairs(shape_points(first)):
+        for c, d in pairs(shape_points(second)):
+            if not segments_intersect(a, b, c, d):
+                continue
+            denominator = (b.x-a.x)*(d.y-c.y) - (b.y-a.y)*(d.x-c.x)
+            if abs(denominator) <= EPS:
+                # Collinear overlap away from the axis remains ambiguous.
+                if min(max(a.x, b.x), max(c.x, d.x)) > EPS:
+                    return True
+            else:
+                t = ((c.x-a.x)*(d.y-c.y) - (c.y-a.y)*(d.x-c.x)) / denominator
+                if a.x + t*(b.x-a.x) > EPS:
+                    return True
+    return False
+
+
+def radial_witness(shape):
+    """A contour point away from the axis for nesting and containment tests."""
+    return max(shape_points(shape), key=lambda point: point.x)
+
+
 class GeometryPlan(PlanValue):
     kind: Literal["magnetostatic_plan"] = "magnetostatic_plan"
     title: str = Field(min_length=1, max_length=160, pattern=r"^[^\x00-\x1f\x7f]+$")
     units: Literal["millimeters"] = "millimeters"
-    physics: Literal["planar_dc_magnetics"] = "planar_dc_magnetics"
-    depth_mm: float = Field(ge=0.1, le=1000)
+    physics: Literal["planar_dc_magnetics", "axisymmetric_dc_magnetics"] = "planar_dc_magnetics"
+    depth_mm: float | None = Field(default=None, ge=0.1, le=1000)
     mesh_mm: float = Field(ge=0.05, le=25)
     domain: Shape
     air_label: Point
@@ -227,6 +266,25 @@ class GeometryPlan(PlanValue):
 
     @model_validator(mode="after")
     def well_defined_faces(self):
+        axisymmetric = self.physics == "axisymmetric_dc_magnetics"
+        if axisymmetric:
+            if self.depth_mm is not None:
+                raise ValueError("Axisymmetric models use the full 360-degree volume; depth_mm must be null or omitted.")
+            if isinstance(self.domain, Circle) or bounds(self.domain)[0] != 0:
+                raise ValueError("An axisymmetric domain must be a rectangle or polygon with a straight boundary at r=0.")
+            for shape in [self.domain] + [region.shape for region in self.regions]:
+                if bounds(shape)[0] < 0:
+                    raise ValueError("Axisymmetric coordinates use x=r, y=z in millimeters; every radius must be nonnegative.")
+                if bounds(shape)[0] == 0:
+                    if isinstance(shape, Circle) or not any(a.x == b.x == 0 for a, b in pairs(shape_points(shape))):
+                        raise ValueError("A contour reaching r=0 must have a straight axis edge; isolated axis tangencies are unsupported.")
+            if any(point.x < 0 for point in self.probes):
+                raise ValueError("Axisymmetric field probes require nonnegative radius.")
+        elif self.depth_mm is None:
+            raise ValueError("Planar models require a positive out-of-plane depth_mm.")
+        intersects = contours_intersect_off_axis if axisymmetric else contours_intersect
+        contour_witness = radial_witness if axisymmetric else witness
+
         def unique(items, name):
             ids = [item.id for item in items]
             if len(set(ids)) != len(ids):
@@ -248,8 +306,8 @@ class GeometryPlan(PlanValue):
                 raise ValueError(f"Region '{region.id}' refers to an undefined material.")
             if region.circuit is not None and region.circuit not in circuit_ids:
                 raise ValueError(f"Region '{region.id}' refers to an undefined circuit.")
-            if contours_intersect(self.domain, region.shape) or not contains(self.domain, witness(region.shape)):
-                raise ValueError(f"Region '{region.id}' must lie strictly inside the domain without touching its boundary.")
+            if intersects(self.domain, region.shape) or not contains(self.domain, contour_witness(region.shape)):
+                raise ValueError(f"Region '{region.id}' must lie strictly inside the domain without touching its outer boundary (axisymmetric regions may share r=0).")
             if not contains(region.shape, region.label):
                 raise ValueError(f"Label for region '{region.id}' must lie strictly inside its contour.")
         if circuit_ids != {r.circuit for r in self.regions if r.circuit is not None}:
@@ -258,11 +316,11 @@ class GeometryPlan(PlanValue):
         children = {r.id: [] for r in self.regions}
         for i, first in enumerate(self.regions):
             for second in self.regions[i + 1:]:
-                if contours_intersect(first.shape, second.shape):
+                if intersects(first.shape, second.shape):
                     raise ValueError(f"Contours '{first.id}' and '{second.id}' cross or touch. Split or merge them explicitly.")
-                if contains(first.shape, witness(second.shape)):
+                if contains(first.shape, contour_witness(second.shape)):
                     children[first.id].append(second)
-                elif contains(second.shape, witness(first.shape)):
+                elif contains(second.shape, contour_witness(first.shape)):
                     children[second.id].append(first)
         for region in self.regions:
             if any(contains(child.shape, region.label, include_boundary=True) for child in children[region.id]):
@@ -274,14 +332,18 @@ class GeometryPlan(PlanValue):
             if self.force_region not in region_ids:
                 raise ValueError("force_region must name an existing region.")
             selected = next(r for r in self.regions if r.id == self.force_region)
-            parents = [r for r in self.regions if contains(r.shape, witness(selected.shape)) and r.id != selected.id]
+            parents = [r for r in self.regions if contains(r.shape, contour_witness(selected.shape)) and r.id != selected.id]
             parent = min(parents, key=lambda r: area(r.shape)) if parents else None
             if children[selected.id] or (parent is not None and parent.material != "air"):
                 raise ValueError("Force extraction requires a single region without nested contours and surrounded by air.")
 
         for point in self.probes:
-            if not contains(self.domain, point) or any(point_location(r.shape, point) == 0 for r in self.regions):
-                raise ValueError("Field probes must be strictly inside the domain and away from material interfaces.")
+            in_domain = contains(self.domain, point) or (axisymmetric and axis_interior(self.domain, point))
+            on_interface = any(point_location(region.shape, point) == 0
+                               and not (axisymmetric and axis_interior(region.shape, point))
+                               for region in self.regions)
+            if not in_domain or on_interface:
+                raise ValueError("Field probes must be inside the domain and away from material interfaces; r=0 symmetry-axis probes are allowed.")
         # Conservative area-over-size planning bound, not a promise of a final
         # element count. Native solver timeout and memory caps remain necessary.
         cells = area(self.domain) / self.mesh_mm ** 2

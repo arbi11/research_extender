@@ -14,6 +14,7 @@ let mode = sessionStorage.getItem("femm_mode") === "ccore" ? "ccore" : "plan";
 let token = sessionStorage.getItem("femm_token") || "";
 let validatedPlan = null, validatedEditor = null, validatedCore = null;
 let meshJob = null, meshPolling, meshBusy = false, meshValidation = null, planSolve = null, planRevision = 0;
+let recordedRevision = null, pendingEdits = null;
 const questions = {
   plan: {items: [], explanation: "", resolved: false, hasSpec: true, decisions: []},
   ccore: {items: [], explanation: "", resolved: false, hasSpec: true, decisions: []},
@@ -27,10 +28,10 @@ function message(text, error = false) {
   $("message").textContent = text;
   $("message").classList.toggle("error", error);
 }
-async function api(path, body) {
+async function api(path, body, extraHeaders = {}) {
   const response = await fetch(path, {
     method: body === undefined ? "GET" : "POST",
-    headers: {"Authorization": "Bearer " + token, ...(body === undefined ? {} : {"Content-Type": "application/json"})},
+    headers: {"Authorization": "Bearer " + token, ...(body === undefined ? {} : {"Content-Type": "application/json"}), ...extraHeaders},
     ...(body === undefined ? {} : {body: JSON.stringify(body)}),
   });
   if (!response.ok) {
@@ -272,17 +273,47 @@ function summarizePlan(plan) {
     plan.title || "Magnetic model",
     shapes.length + (shapes.length === 1 ? " region" : " regions"),
     circuits.length + (circuits.length === 1 ? " circuit" : " circuits"),
-    "depth " + plan.depth_mm + " mm",
+    plan.physics === "axisymmetric_dc_magnetics" ? "axisymmetric · r/z coordinates" : "depth " + plan.depth_mm + " mm",
     "mesh " + plan.mesh_mm + " mm",
   ];
   $("plan-summary").textContent = parts.join(" · ");
   $("model-tag").textContent = "CUSTOM MODEL";
   $("dimensions").textContent = shapes.length + " regions";
 }
-function setPlan(value) {
+function setPlan(value, {fresh = false, patch = null} = {}) {
+  if (fresh) recordedRevision = null;
+  pendingEdits = patch;
   $("plan-json").value = value ? JSON.stringify(value, null, 2) : "";
   invalidateModel(value ? "Model received. Checking geometry and assignments…" : "Add the missing details to create a model.");
   $("plan-summary").textContent = value ? "Checking the proposed model…" : "No model has been created yet.";
+}
+async function recordCurrentRevision(values) {
+  if (!config.revision_history_available) return;
+  const body = {spec: values, evidence: [{source: "user", reference: "Model editor", detail: $("prompt").value.slice(0, 3000)}]};
+  if (recordedRevision) Object.assign(body, {parent_id: recordedRevision.id, branch: recordedRevision.branch});
+  if (pendingEdits?.edits?.length && recordedRevision) Object.assign(body, {edits: pendingEdits.edits,
+    allowed_paths: pendingEdits.allowed_paths, reason: pendingEdits.explanation || "Requested model modification"});
+  const revision = await (await api("/api/revisions", body)).json();
+  recordedRevision = revision; pendingEdits = null;
+  $("model-history").hidden = false;
+  $("revision-summary").textContent = "Revision " + revision.id.slice(0, 12) + " · " + revision.branch;
+  $("revision-changes").replaceChildren(...revision.changes.map(change => {
+    const row = document.createElement("li");
+    row.textContent = change.path === "/" ? "Created this model." : change.path + ": " + JSON.stringify(change.before) + " → " + JSON.stringify(change.after);
+    return row;
+  }));
+  await refreshRevisionHistory();
+}
+async function refreshRevisionHistory() {
+  const id = recordedRevision?.id;
+  if (!id) return;
+  const revision = await (await api("/api/revisions/" + id)).json();
+  if (recordedRevision?.id !== id) return;
+  $("revision-checks").replaceChildren(...(revision.checks || []).map(check => {
+    const row = document.createElement("li");
+    row.textContent = check.stage + ": " + check.status + " · job " + check.job_id.slice(0, 12);
+    return row;
+  }));
 }
 function controls() {
   const ready = Boolean(config) && isReady() && !hasUnresolvedQuestions();
@@ -320,6 +351,8 @@ async function preview() {
     const now = mode === "plan" ? $("plan-json").value : JSON.stringify(coreSpec(false));
     if (snapshot !== now) return false;
     if (mode === "plan") {
+      await recordCurrentRevision(values);
+      if (previewRequest !== serial || requestedMode !== mode || snapshot !== $("plan-json").value) return false;
       validatedPlan = structuredClone(values);
       validatedEditor = snapshot;
       summarizePlan(values);
@@ -409,6 +442,7 @@ $("prompt").addEventListener("input", () => { clearVisualReview(); controls(); }
 $("resolved").addEventListener("change", () => { questions[mode].resolved = $("resolved").checked; controls(); });
 $("plan-json").addEventListener("input", () => {
   if (mode !== "plan") return;
+  pendingEdits = null;
   invalidateModel("The model plan changed. Choose Validate & preview to check it.");
   $("plan-summary").textContent = "Unvalidated draft — changes have not been applied to the preview.";
   message("Model plan changed. Validate it before solving or downloading a script.");
@@ -416,9 +450,13 @@ $("plan-json").addEventListener("input", () => {
 $("validate-plan").addEventListener("click", preview);
 $("load-example").addEventListener("click", async () => {
   resetQuestions();
-  setPlan(config.plan_example);
+  setPlan(config.plan_example, {fresh: true});
   $("request-action").value = "modify";
   await preview();
+});
+$("load-axisymmetric").addEventListener("click", async () => {
+  resetQuestions(); setPlan(config.axisymmetric_example, {fresh: true});
+  $("request-action").value = "modify"; await preview();
 });
 $("interpret").addEventListener("click", async () => {
   const requestedMode = mode;
@@ -437,7 +475,7 @@ $("interpret").addEventListener("click", async () => {
     }
     if (mode === "plan") {
       invalidateMesh();
-      if (proposal.spec || !modifyingPlan) setPlan(proposal.spec);
+      if (proposal.spec || !modifyingPlan) setPlan(proposal.spec, {fresh: !modifyingPlan, patch: modifyingPlan ? proposal : null});
     } else {
       fields.forEach(([key]) => { $(key).value = proposal.spec[key]; });
       invalidateModel();
@@ -491,7 +529,7 @@ $("mesh-check").addEventListener("click", async () => {
     invalidateMesh(); const revision = planRevision; meshBusy = true; controls();
     $("mesh-panel").hidden = false; $("mesh-status").textContent = "SUBMITTING";
     $("mesh-message").textContent = "Submitting the validated model for a mesh check…";
-    const job = await (await api("/api/plan/mesh", values)).json();
+    const job = await (await api("/api/plan/mesh", values, recordedRevision ? {"X-Model-Revision": recordedRevision.id} : {})).json();
     meshJob = {id: job.id, key, revision};
     message("Mesh check submitted. No field solution is being calculated at this stage.");
     await pollMesh();
@@ -518,6 +556,7 @@ async function pollMesh() {
       meshPolling = setTimeout(pollMesh, 2000); return;
     }
     $("mesh-log").hidden = false;
+    await refreshRevisionHistory();
     if (!current) {
       $("mesh-message").textContent = "This check belongs to an earlier model. Validate and check the current mesh before solving.";
       meshBusy = false; controls(); return;
@@ -561,7 +600,7 @@ $("solve").addEventListener("click", async () => {
     const general = mode === "plan";
     clearDiagnosis("solve");
     if (general && !hasCurrentMesh()) throw new Error("Run a successful mesh check for this exact model before solving.");
-    const job = await (await api(general ? "/api/plan/jobs" : "/api/jobs", general ? {spec: values, mesh_job_id: meshValidation.id} : values)).json();
+    const job = await (await api(general ? "/api/plan/jobs" : "/api/jobs", general ? {spec: values, mesh_job_id: meshValidation.id, ...(recordedRevision ? {revision_id: recordedRevision.id} : {})} : values)).json();
     planSolve = general ? {key: JSON.stringify(values), status: job.status, id: job.id} : null;
     currentJob = job.id; sessionStorage.setItem("femm_job", currentJob);
     $("results").hidden = false; $("result-body").hidden = true; $("log").hidden = true;
@@ -577,6 +616,9 @@ function quantityLabel(key, general) {
   if (key.startsWith("flux_linkage_")) return "Flux linkage · " + key.slice(13);
   if (key.startsWith("bx_")) return "Probe " + (Number(key.slice(3)) + 1) + " · Bx";
   if (key.startsWith("by_")) return "Probe " + (Number(key.slice(3)) + 1) + " · By";
+  if (key.startsWith("br_")) return "Probe " + (Number(key.slice(3)) + 1) + " · Br";
+  if (key.startsWith("bz_")) return "Probe " + (Number(key.slice(3)) + 1) + " · Bz";
+  if (key === "force_z") return "Region force, axial z";
   return key.replaceAll("_", " ");
 }
 async function poll() {
@@ -596,6 +638,7 @@ async function poll() {
       busy = true; controls(); polling = setTimeout(poll, 2000); return;
     }
     busy = false; controls(); $("log").hidden = false;
+    await refreshRevisionHistory();
     if (job.status === "failed") offerDiagnosis("solve", {id: jobId});
     if (job.status === "completed") {
       $("quantities").replaceChildren(...Object.entries(job.result).map(([key, quantity]) => {
@@ -623,6 +666,7 @@ $("log").addEventListener("click", async () => {
 async function init() {
   try {
     config = await (await api("/api/config")).json();
+    $("load-axisymmetric").hidden = !config.axisymmetric_example;
     $("access").hidden = !config.auth_required; $("token").value = token;
     $("availability").textContent = config.solver_detected ? "FEMM 5 launcher detected" : "Source export available · Solver not installed";
     if (!config.plan_example) { $("mode").querySelector('option[value="plan"]').disabled = true; mode = "ccore"; }

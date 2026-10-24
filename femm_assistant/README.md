@@ -1,14 +1,14 @@
 # FEMM 5 Assistant
 
 A small Linux application for describing, previewing, solving, and exporting
-**2D planar DC magnetic models**. It lives alongside the book and does not
+**2D planar and axisymmetric DC magnetic models**. It lives alongside the book and does not
 install the repository's machine-learning training dependencies.
 
 General geometry mode builds new models from circles, rectangles and simple
 polygons, or modifies an existing model plan. A separate C-core example retains
-the original numeric form and solver. Axisymmetric models, AC analysis,
-permanent magnets, nonlinear B-H curves, shared-edge Boolean operations and
-full 3D CAD remain outside this version.
+the original numeric form and solver. Axisymmetric models use radial/axial coordinates and full revolved volumes.
+AC analysis, permanent magnets, nonlinear B-H curves, shared-edge Boolean
+operations and full 3D CAD remain outside this version.
 
 The [implementation pipeline](PIPELINE.md) records the implemented stages and
 remaining validation and physics extensions.
@@ -359,3 +359,34 @@ outputs come from FEMM, not from AI predictions or a surrogate model.
 
 The existing LightRAG and MCP research tools remain independent. The assistant
 does not retrieve private Drive documents or invoke the research planner.
+
+## Model revisions and controlled recovery foundation
+
+Natural-language modifications now return typed named-feature edits rather than
+regenerating the entire model. Unmentioned fields are retained by deterministic
+code. A supplied allowed-path scope can further restrict an edit; automatically
+derived scopes bound execution but do not prove the model interpreted intent.
+
+Validated browser models receive immutable, content-hashed revisions. Native
+mesh/solve jobs bind to the exact revision and record actual artifact hashes and
+check outcomes. Downloads include the revision and execution manifests. Old jobs
+and saved settings remain readable through additive database migrations.
+
+Authenticated revision APIs expose creation, scoped patches and history. Recovery
+restores an ancestral checkpoint onto a separate branch only after a server-
+recorded failed check. It never reuses a prior success or erases the original
+failure. Dependency history supplies producer/modifier candidates, not proof of
+causal responsibility. Jev continues to diagnose actual failures only.
+
+Axisymmetric plans use `physics=axisymmetric_dc_magnetics`, `depth_mm=null`, and
+`x=r >= 0`, `y=z` in millimeters. The outer rectangle/polygon includes a straight
+`r=0` symmetry edge. Regions may share that axis, but other touching contours are
+still unsupported. Field probes return `br_i`/`bz_i`; force extraction is axial
+`force_z`. No planar extrusion depth is applied. Independent finite-winding
+Biot–Savart, refinement, outer-domain, current and energy checks accompany this
+physics extension.
+
+The evidence-linked paper and frozen-target modules provide typed contracts and
+offline checks in this milestone. Paper upload, extraction and end-to-end target
+comparison are subsequent integration work; these modules do not establish that
+a paper has already been reproduced.

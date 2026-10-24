@@ -103,20 +103,24 @@ ROUTING_QUESTIONS = {
 FUNCTION_CONTRACTS = {
     "create_plan": (
         "Accept a complete candidate JSON object with spec, explanation and questions "
-        "matching the supplied schema. Validate its typed 2D planar DC magnetic "
-        "geometry and assignments. A valid spec uses millimeters, depth_mm out of "
-        "plane, linear relative permeability, circuits in amperes and signed turns. "
+        "matching the supplied schema. Validate its typed 2D planar or axisymmetric "
+        "DC magnetic geometry and assignments. A valid spec uses millimeters, "
+        "depth_mm out of plane for planar geometry or null for axisymmetry with "
+        "x=r>=0 and y=z, linear relative permeability, circuits in amperes and signed turns. "
         "The outer A=0 boundary and background air are implicit. Closed circles, "
         "rectangles and simple polygons must pass deterministic topology and "
         "label checks. spec=null is permitted with clarification questions."
     ),
     "modify_plan": (
-        "Accept a complete replacement candidate JSON object with spec, explanation "
-        "and questions matching the supplied schema for an existing current plan. "
-        "The caller must supply the current model; preserve physical properties "
-        "not requested to change. Validate the same typed geometry and assignments "
-        "as create_plan, including deterministic topology and label checks. "
-        "spec=null is permitted with clarification questions."
+        "Accept a candidate JSON object with edits, explanation and questions "
+        "matching the supplied ModificationDraft schema for an existing current plan. "
+        "Edits are typed replace/add/remove operations addressing stable feature ids "
+        "such as /regions/core/shape/points/2/x, never feature list indices. Preserve "
+        "all fields outside the explicit edit paths and respect independently supplied "
+        "allowed_paths. Ids are immutable; add/remove requires a whole named feature. "
+        "Apply edits together and validate the same complete geometry and assignments "
+        "as create_plan, including deterministic topology and label checks. Empty "
+        "edits are permitted with clarification questions. A replacement spec is invalid."
     ),
     "mesh_plan": (
         "Accept the supplied typed model arguments, validate them and compile them "
@@ -140,6 +144,14 @@ FUNCTION_CONTRACTS = {
         "prerequisites, then execute the FEMM solve. Native solver and prerequisite "
         "errors are authoritative failures; successful argument matching does "
         "not establish that the solve succeeded or that results are accurate."
+    ),
+    "check_targets": (
+        "Compare actual native solver quantities against an immutable numerical target "
+        "contract frozen before solving for the exact model revision. A mismatch or "
+        "unavailable quantity is a real check failure. Diagnose supplied model, "
+        "measurement and target arguments against the cited operating conditions. "
+        "Do not change published target values, tolerances or protected source inputs "
+        "to manufacture agreement. A diagnostic cannot mark a failed target as passed."
     ),
 }
 ERROR_QUESTIONS = {
