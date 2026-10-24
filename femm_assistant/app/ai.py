@@ -3,13 +3,14 @@ import json
 import httpx
 from pydantic import BaseModel, ConfigDict, Field
 from .model import CCoreSpec
+from . import structured
 
 
 class Proposal(BaseModel):
     model_config = ConfigDict(extra="forbid")
     spec: CCoreSpec
-    explanation: str = Field(max_length=2500)
-    questions: list[str] = Field(default_factory=list, max_length=8)
+    explanation: str
+    questions: list[str] = Field(default_factory=list)
 
 
 SYSTEM = '''You configure a teaching model of a C-core electromagnetic actuator in FEMM 5.
@@ -27,13 +28,16 @@ Do not invent numerical simulation results or claim the model has been solved.
 
 
 async def interpret(prompt: str, current: CCoreSpec, key: str, base_url: str, model: str) -> Proposal:
-    schema = Proposal.model_json_schema()
-    async with httpx.AsyncClient(timeout=40) as client:
-        response = await client.post(base_url.rstrip("/") + "/chat/completions", headers={"Authorization": "Bearer " + key}, json={
-            "model": model, "temperature": 0, "max_tokens": 1500,
-            "messages": [{"role": "system", "content": SYSTEM + "\nJSON schema: " + json.dumps(schema)},
-                         {"role": "user", "content": json.dumps({"current_spec": current.model_dump(), "request": prompt})}],
-            "response_format": {"type": "json_object"},
-        })
+    payload = structured.request_payload(model, response_model=Proposal, messages=[
+        {"role": "system", "content": SYSTEM},
+        {"role": "user", "content": json.dumps({"current_spec": current.model_dump(), "request": prompt})},
+    ])
+    async with httpx.AsyncClient(timeout=httpx.Timeout(None, connect=20), follow_redirects=False) as client:
+        response = await client.post(base_url.rstrip("/") + "/chat/completions",
+            headers={"Authorization": "Bearer " + key}, json=payload)
         response.raise_for_status()
-        return Proposal.model_validate_json(response.json()["choices"][0]["message"]["content"])
+        choice = response.json()["choices"][0]
+        if choice.get("finish_reason") == "length":
+            raise ValueError("The provider truncated its parameter proposal.")
+        candidate = json.loads(choice["message"]["content"])
+        return Proposal.model_validate(structured.validate_response(candidate, Proposal))

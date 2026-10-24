@@ -15,6 +15,7 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from . import plan_generate
+from . import structured
 from .plan import GeometryPlan
 
 
@@ -25,7 +26,7 @@ MAX_SVG_NODES = 50_000
 MAX_PNG_BYTES = 4 * 1024 * 1024
 RENDER_WIDTH = 1024
 RENDER_HEIGHT = 768
-TOTAL_TIMEOUT_SECONDS = 30
+TOTAL_TIMEOUT_SECONDS = None
 
 
 class VisionError(Exception):
@@ -177,7 +178,7 @@ def _provider_error(status: int) -> VisionError:
 
 async def review(client: httpx.AsyncClient, key: str, base_url: str, model: str,
                  prompt: str, spec: GeometryPlan, *, mesh_svg: str | None = None) -> VisualReview:
-    """Make one bounded advisory request, without mutating the typed model."""
+    """Make one advisory request, without mutating the typed model."""
     if not isinstance(key, str) or not key or not isinstance(model, str) or not 1 <= len(model.strip()) <= 160:
         raise VisionError(503, "Visual review needs an API key and image-input model configured on the server.")
     if not isinstance(prompt, str) or not 1 <= len(prompt) <= 3000:
@@ -197,10 +198,8 @@ async def review(client: httpx.AsyncClient, key: str, base_url: str, model: str,
                               ensure_ascii=True)
             content = [{"type": "text", "text": text}]
             content.extend({"type": "image_url", "image_url": {"url": "data:image/png;base64," + base64.b64encode(png).decode("ascii")}} for png in images)
-            payload = {"model": model, "temperature": 0, "max_tokens": 1200,
-                       "response_format": {"type": "json_object"},
-                       "messages": [{"role": "system", "content": SYSTEM + "\nResponse JSON schema:\n" + json.dumps(_VisualAnswer.model_json_schema())},
-                                    {"role": "user", "content": content}]}
+            payload = structured.request_payload(model, response_model=_VisualAnswer,
+                messages=[{"role": "system", "content": SYSTEM}, {"role": "user", "content": content}])
             endpoint = base_url.rstrip("/") + "/chat/completions"
             async with client.stream("POST", endpoint, headers={"Authorization": "Bearer " + key}, json=payload,
                                      timeout=httpx.Timeout(TOTAL_TIMEOUT_SECONDS, connect=10), follow_redirects=False) as response:
@@ -219,7 +218,7 @@ async def review(client: httpx.AsyncClient, key: str, base_url: str, model: str,
                     raise ValueError("Missing or truncated review")
                 if key in result:
                     raise ValueError("Unexpected credential in review")
-                answer = _VisualAnswer.model_validate_json(result)
+                answer = _VisualAnswer.model_validate(structured.validate_response(json.loads(result), _VisualAnswer))
                 return VisualReview(**answer.model_dump(), requested_model=model, usage=_usage(packet))
             except (ValidationError, ValueError, TypeError, KeyError, IndexError, AttributeError):
                 raise VisionError(502, "The visual-review provider returned an invalid or incomplete advisory response. Try again or choose another image-input model.") from None

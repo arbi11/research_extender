@@ -46,9 +46,13 @@ class VisionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(received), 1)
         self.assertEqual(received[0].url.path, "/api/v1/chat/completions")
         payload = json.loads(received[0].content)
-        self.assertEqual(payload["max_tokens"], 1200)
-        self.assertEqual(payload["temperature"], 0)
+        self.assertNotIn("max_tokens", payload)
+        self.assertNotIn("temperature", payload)
         self.assertNotIn("reasoning", payload)
+        self.assertEqual(payload["response_format"]["type"], "json_schema")
+        self.assertTrue(payload["response_format"]["json_schema"]["strict"])
+        self.assertTrue(payload["provider"]["require_parameters"])
+        self.assertIsNone(received[0].extensions["timeout"]["read"])
         self.assertIn("never approve or reject", payload["messages"][0]["content"])
         content = payload["messages"][1]["content"]
         self.assertEqual(len(content), 2)
@@ -122,7 +126,7 @@ class VisionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(caught.exception.status_code, status)
                 self.assertNotIn("private-test-key", str(caught.exception))
 
-    async def test_total_deadline_is_enforced(self):
+    async def test_explicit_test_deadline_is_enforced(self):
         async def handler(request):
             await asyncio.sleep(1)
             return httpx.Response(200, json=completion())

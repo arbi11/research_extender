@@ -67,13 +67,15 @@ The result is diagnostic information for the bounded repair. A yes answer does
 not turn the failed call into a success. A diagnostic provider failure does not
 prevent the repair from being validated normally.
 
-Each request has at most one logical route call, one logical failed-call
-diagnostic and two drafts within 90 seconds overall. A Jev logical call can make
-at most two transport attempts after connection-establishment failures, inside the
-same deadline. This bounded transport retry does not rerun a completed draft,
-introduce a score gate or create a whole-case retry. Each draft is capped at
-6000 generated tokens. Arithmetic, units, topology, labels, material/circuit references, resource limits
-and stage transitions remain deterministic.
+Each legacy planning request has at most one logical route call, one logical
+failed-call diagnostic and two drafts. Hierarchical creation applies the same
+one-diagnostic/one-repair rule independently to an actually failed typed stage,
+keeping completed stages fixed. A Jev logical call can make at most two transport
+attempts after connection-establishment failures. It never retries an ambiguous
+read/write failure or creates a whole-case retry. These paths impose no output
+token or reasoning cap and no default AI read/wall deadline. Arithmetic, units,
+topology, labels, material/circuit references and stage transitions remain
+deterministic. Native execution can still report actual resource failures.
 
 Users may manually diagnose failed native `mesh_plan` or `solve_plan` jobs using
 the actual spec, original error and bounded log. The result is cached as an
@@ -97,7 +99,7 @@ No visual request runs automatically during drafting or numerical execution.
 
 General plans use circles, rectangles and simple polygons with separate or nested
 regions, linear isotropic materials, DC circuits, signed turns, labeled regions,
-an enclosing A=0 domain and bounded meshing. Physics is planar or axisymmetric DC magnetostatics in millimeters. Planar
+an enclosing A=0 domain and native meshing. Physics is planar or axisymmetric DC magnetostatics in millimeters. Planar
 models have explicit out-of-plane depth; axisymmetric models use `depth_mm=null`
 and r/z coordinates with full revolved volumes. Contours cannot touch or cross,
 except for explicitly supported shared axis edges at r=0 in axisymmetric models.
