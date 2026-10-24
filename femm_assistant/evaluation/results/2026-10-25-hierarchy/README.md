@@ -14,6 +14,12 @@ The fresh paper selections were checked against the application's prior exposure
 provider pretraining exposure cannot be established. The second paper explicitly
 combined source evidence with a user-selected 1 A linear-inductance normalization.
 
+After outcomes were locked, independent source inspection disclosed a PDF-intake
+risk: the second source visibly uses µH, while its frozen text extraction rendered
+mH. Literal acceptance could cause a 1,000-fold error. This did not cause the
+recorded stops: no complete typed evidence or numerical target was accepted.
+Strict JSON and a successful solver cannot establish faithful source-unit intake.
+
 After the shared OpenRouter key reached its weekly limit, general corrections
 continued offline: smaller paper contracts, scoped component routing, durable
 internal ID maps, faithful external claim IDs, early typed bindings, advisory

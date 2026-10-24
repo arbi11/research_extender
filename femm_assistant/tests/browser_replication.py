@@ -118,6 +118,9 @@ def exercise(url, folder):
             response = route.fetch()
             if mode['late_revision']:
                 mode['late_revision'] = False
+                expected = mode['late_revision_expected']
+                assert route.request.post_data_json['spec']['title'] == expected['title'], 'Late-response fixture intercepted another model'
+                assert route.request.post_data_json.get('parent_id') == expected['id'], 'Late-response fixture intercepted another model branch'
                 replacement = wire_example().model_dump(mode='json')
                 replacement['title'] = 'Fresh case while old save is pending'
                 page.evaluate('spec => setPlan(spec, {fresh:true})', replacement)
@@ -244,20 +247,43 @@ def exercise(url, folder):
         assert rebound['evidence_id'] == original_contract['evidence_id']
         if artifact_dir:
             page.screenshot(path=str(artifact_dir/'paper-recovered-target-pass.png'), full_page=True)
-        page.locator('#load-example').click()
+        # Loading hides recovery controls synchronously, but its preview and
+        # revision save finish later. Wait for that exact persisted revision and
+        # its accepted preview before arming the next delayed-response fixture.
+        with page.expect_response(lambda response: response.url.endswith('/api/revisions')
+                                  and response.request.method == 'POST') as loaded_response:
+            page.locator('#load-example').click()
+        loaded_revision = loaded_response.value.json()
+        expect(page.locator('#revision-summary')).to_contain_text(loaded_revision['id'][:12])
+        expect(page.locator('#mesh-check')).to_be_enabled()
+        assert page.evaluate('recordedRevision.id') == loaded_revision['id']
+        assert 'parent_id' not in loaded_response.value.request.post_data_json
+        assert history.get(loaded_revision['id'])['parent_id'] is None
         expect(page.locator('#recovery-controls')).to_be_hidden()
         page.evaluate('job => offerRecovery(job)', first_failed_job)
         expect(page.locator('#recovery-controls')).to_be_hidden()
         assert page.evaluate('recoveryJob') is None
 
         # Withhold an old revision response until a fresh draft replaces it.
+        mode['late_revision_expected'] = {'id': loaded_revision['id'], 'title': loaded_revision['plan']['title']}
         mode['late_revision'] = True
-        page.locator('#validate-plan').click()
+        with page.expect_response(lambda response: response.url.endswith('/api/revisions')
+                                  and response.request.method == 'POST') as stale_response:
+            page.locator('#validate-plan').click()
+        assert stale_response.value.request.post_data_json['parent_id'] == loaded_revision['id']
+        assert history.get(stale_response.value.json()['id'])['plan'] == loaded_revision['plan']
         expect(page.locator('#plan-json')).to_have_value(re.compile('Fresh case while old save is pending'))
         assert page.evaluate('recordedRevision') is None, 'Late save reattached the old model branch'
-        page.locator('#validate-plan').click()
+        with page.expect_response(lambda response: response.url.endswith('/api/revisions')
+                                  and response.request.method == 'POST'
+                                  and response.request.post_data_json['spec']['title'] == 'Fresh case while old save is pending') as fresh_response:
+            page.locator('#validate-plan').click()
+        fresh_revision = fresh_response.value.json()
+        expect(page.locator('#revision-summary')).to_contain_text(fresh_revision['id'][:12])
         expect(page.locator('#mesh-check')).to_be_enabled()
-        assert 'parent_id' not in revision_requests[-1]
+        assert page.evaluate('recordedRevision.id') == fresh_revision['id']
+        assert 'parent_id' not in fresh_response.value.request.post_data_json, 'Fresh model inherited an earlier revision'
+        assert history.get(fresh_revision['id'])['parent_id'] is None
 
         # Clearing during extraction and replacing a file during upload discard
         # their late responses; neither can silently restore paper context.
