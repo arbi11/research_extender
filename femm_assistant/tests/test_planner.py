@@ -16,6 +16,26 @@ def completion(content):
 
 
 class PlannerTests(unittest.IsolatedAsyncioTestCase):
+    async def test_paper_current_density_mismatch_uses_existing_bounded_error_repair(self):
+        from app.examples import axisymmetric_example
+        invalid = axisymmetric_example().model_dump(mode="json")
+        valid = json.loads(json.dumps(invalid))
+        valid["circuits"][0]["current_a"] = 2.0
+        context = {"preserve_paper_excitation": True, "parameters": [{
+            "id": "uniform_current_density", "value": 1.0, "unit": "A/mm2",
+            "evidence_kind": "explicit", "citations": [{"source_id": "synthetic", "page": 1, "quote": "J=1 A/mm2"}]}]}
+        requests = []
+        def handler(request):
+            requests.append(json.loads(request.content))
+            return httpx.Response(200, json=completion(json.dumps({
+                "spec": invalid if len(requests) == 1 else valid,
+                "explanation": "Use the cited density and winding section; no target fitting.", "questions": []})))
+        result = await self.call_with(handler, evidence_context=context)
+        self.assertEqual(result.attempts, 2)
+        self.assertEqual(result.spec.circuits[0].current_a, 2)
+        self.assertEqual(result.decision_trace[-1].stage, "function_error")
+        self.assertIn("current_a", requests[-1]["messages"][-1]["content"])
+
     async def test_omitted_measurement_arguments_are_real_function_errors(self):
         complete = {"spec": wire_example().model_dump(), "explanation": "Requested wire.", "questions": []}
         omitted = json.loads(json.dumps(complete))

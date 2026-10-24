@@ -6,9 +6,15 @@ numerical reference passed. Check the reports and CI for the commit being used.
 
 ## Current sequence
 
-`prompt → Jev function route → typed draft → deterministic plan checks → preview`
+`prompt and/or cited paper case → Jev function route → typed draft → deterministic plan checks → preview`
 
-`→ native mesh only → measured mesh report → exact-spec mesh prerequisite → solve → export`
+`→ immutable revision → native mesh check → exact-spec prerequisite → solve → frozen target comparison → export`
+
+After an observed failure, one requested recovery uses checkpoint ancestry,
+feature edits and native evidence to propose a scoped branch repair. Its fresh
+mesh and solve are checked against unchanged frozen targets. Paid recovery
+requests are claimed/cached per failed job; duplicate clicks do not initiate a
+second provider attempt. Queue pressure can resume the already prepared repair.
 
 A failed draft can receive one argument diagnostic and one repair. Optional visual
 review and manual native failure diagnosis produce advice beside this sequence;
@@ -17,6 +23,9 @@ they do not approve geometry or control whether it can be meshed or solved.
 | Stage | Responsibility | Status |
 |---|---|---|
 | Request | Capture a new geometry or changes to a current plan | Implemented |
+| Paper intake | Preserve PDF bytes, page quotes, explicit/derived parameters and missing information | Implemented; text PDFs only |
+| Source binding | Bind selected paper case to exact generated model and immutable revision | Implemented; provenance only |
+| Source arithmetic | Check cited uniform current density against one winding's area, turns and circuit current | Opt-in; reports ambiguous/inapplicable cases |
 | Function route | Jev selects `create_plan`, `modify_plan` or `clarify` | Implemented; fixed catalog |
 | Typed draft | Draft model proposes constrained data or clarification questions | Implemented; no executable AI code |
 | Plan checks | Validate contours, labels, references, physics and mesh budget | Implemented; deterministic |
@@ -27,6 +36,8 @@ they do not approve geometry or control whether it can be meshed or solved.
 | Mesh report | Inspect actual triangles, shape, domain and label coverage | Implemented; not an accuracy certificate |
 | Solve | Require a passed mesh for the exact current spec; run native FEMM | Implemented |
 | Extract | Read computed quantities, probes, field samples and eligible forces | Implemented |
+| Target | Freeze numerical references before execution and compare actual native results | Implemented; separate from solver success |
+| Recovery | Diagnose an observed failure and run one scoped checkpoint/repair branch | Implemented; bounded and user initiated |
 | Export | Save editable Python CAD, native Lua, spec, artifacts and reports | Implemented |
 
 ## Jev's bounded role
@@ -84,7 +95,8 @@ General plans use circles, rectangles and simple polygons with separate or neste
 regions, linear isotropic materials, DC circuits, signed turns, labeled regions,
 an enclosing A=0 domain and bounded meshing. Physics is planar or axisymmetric DC magnetostatics in millimeters. Planar
 models have explicit out-of-plane depth; axisymmetric models use `depth_mm=null`
-and r/z coordinates with full revolved volumes. Contours cannot touch or cross.
+and r/z coordinates with full revolved volumes. Contours cannot touch or cross,
+except for explicitly supported shared axis edges at r=0 in axisymmetric models.
 The separate C-core numeric example retains its original solve workflow.
 
 The mesh report uses the actual native mesh. It checks triangle validity,
@@ -104,8 +116,8 @@ Rerunning needs FEMM 5, without an AI key, repository or Python dependencies.
 `deploy/patch_femm_mesh.py` adds opt-in `FEMM_MESH_EXPORT=1` output from the actual
 in-memory mesh without changing numerical algorithms. The image retains the
 upstream archive and patcher. Detailed mesh diagnostics require the patch;
-portable scripts can also run with stock FEMM 5. The runtime has six Python
-dependencies, including CairoSVG for visual rendering.
+portable scripts can also run with stock FEMM 5. CairoSVG renders passive previews
+and pypdf extracts bounded page text for paper intake.
 
 Development runs in Docker on this laptop at port 8001. Preserve `.env`, tokens,
 keys, local Compose edits and jobs. Leave the old port-8000 installation and old
@@ -141,4 +153,9 @@ Complete, test and push milestones to the existing PR #3. Do not present pending
 CI or live runs as successful. No production deployment is implied by development
 image builds or benchmark runs.
 
-Immutable revision history, typed modification patches and native execution manifests now underpin controlled recovery. Axisymmetric linear DC schemas and compilation are implemented; use current test reports for numerical verification.
+The Lubin 2012 axisymmetric coil paper supplies three independently transcribed
+native reference cases. Published target tolerance (2%) and mesh/domain criteria
+(0.5%) are fixed separately from an auxiliary energy identity diagnostic. Initial
+coarse-mesh failures remain recorded. See the evaluation guide for the refined
+protocol, source audit and distinction between gold-fixture execution and live
+PDF-to-model extraction.

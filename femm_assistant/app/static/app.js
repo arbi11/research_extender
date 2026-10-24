@@ -15,6 +15,7 @@ let token = sessionStorage.getItem("femm_token") || "";
 let validatedPlan = null, validatedEditor = null, validatedCore = null;
 let meshJob = null, meshPolling, meshBusy = false, meshValidation = null, planSolve = null, planRevision = 0;
 let recordedRevision = null, pendingEdits = null;
+let recoveryJob = null, automaticRecovery = null;
 const questions = {
   plan: {items: [], explanation: "", resolved: false, hasSpec: true, decisions: []},
   ccore: {items: [], explanation: "", resolved: false, hasSpec: true, decisions: []},
@@ -39,6 +40,11 @@ async function api(path, body, extraHeaders = {}) {
     try {
       const data = await response.json();
       if (typeof data.detail === "string") detail = data.detail;
+      else if (data.detail && typeof data.detail.message === "string") {
+        const summaries = Array.isArray(data.detail.validation_summary) ? data.detail.validation_summary : [];
+        detail = data.detail.message + (summaries.length ? " " + summaries.map(item => typeof item === "string" ? item : item.message || item.msg || "").filter(Boolean).join("; ") : "") +
+          (data.detail.audit_id ? " Audit: " + data.detail.audit_id : "");
+      }
       else if (Array.isArray(data.detail)) detail = data.detail.map(item => (item.loc || []).slice(1).join(".") + ": " + item.msg).join("; ");
     } catch (_) { /* A plain-text response has no structured error details. */ }
     throw new Error(detail || "Request failed (" + response.status + ").");
@@ -119,6 +125,7 @@ function requestFingerprint() {
     prompt: $("prompt").value,
     draft: mode === "plan" ? $("plan-json").value : coreSpec(false),
     action: mode === "plan" ? $("request-action").value : "modify",
+    paper: typeof paperFingerprint === "function" ? paperFingerprint() : null,
   });
 }
 function imageBlob(id, blob) {
@@ -134,7 +141,14 @@ function emptyPreview(text) {
   $("preview-empty").hidden = false;
   $("dimensions").textContent = "";
 }
+function clearRecoveryOffer() {
+  recoveryJob = null; automaticRecovery = null;
+  $("recovery-controls").hidden = true;
+  $("recovery-status").textContent = "";
+}
 function invalidateModel(text) {
+  clearRecoveryOffer();
+  if (typeof clearPaperModelBinding === "function") clearPaperModelBinding();
   clearVisualReview();
   previewRequest = Symbol();
   if (mode === "plan") {
@@ -287,14 +301,20 @@ function setPlan(value, {fresh = false, patch = null} = {}) {
   invalidateModel(value ? "Model received. Checking geometry and assignments…" : "Add the missing details to create a model.");
   $("plan-summary").textContent = value ? "Checking the proposed model…" : "No model has been created yet.";
 }
-async function recordCurrentRevision(values) {
-  if (!config.revision_history_available) return;
+async function recordCurrentRevision(values, serial, requestedMode, snapshot) {
+  if (!config.revision_history_available) return true;
+  const parent = recordedRevision;
+  const patch = pendingEdits;
   const body = {spec: values, evidence: [{source: "user", reference: "Model editor", detail: $("prompt").value.slice(0, 3000)}]};
-  if (recordedRevision) Object.assign(body, {parent_id: recordedRevision.id, branch: recordedRevision.branch});
-  if (pendingEdits?.edits?.length && recordedRevision) Object.assign(body, {edits: pendingEdits.edits,
-    allowed_paths: pendingEdits.allowed_paths, reason: pendingEdits.explanation || "Requested model modification"});
+  if (typeof paperSourceEvidence === "function") body.evidence.push(...paperSourceEvidence(values));
+  if (typeof paperRevisionInput === "function") Object.assign(body, paperRevisionInput(values));
+  if (parent) Object.assign(body, {parent_id: parent.id, branch: parent.branch});
+  if (patch?.edits?.length && parent) Object.assign(body, {edits: patch.edits,
+    allowed_paths: patch.allowed_paths, reason: patch.explanation || "Requested model modification"});
   const revision = await (await api("/api/revisions", body)).json();
+  if (previewRequest !== serial || requestedMode !== mode || snapshot !== $("plan-json").value || recordedRevision !== parent) return false;
   recordedRevision = revision; pendingEdits = null;
+  if (typeof paperModelRecorded === "function") paperModelRecorded(revision, values);
   $("model-history").hidden = false;
   $("revision-summary").textContent = "Revision " + revision.id.slice(0, 12) + " · " + revision.branch;
   $("revision-changes").replaceChildren(...revision.changes.map(change => {
@@ -303,6 +323,7 @@ async function recordCurrentRevision(values) {
     return row;
   }));
   await refreshRevisionHistory();
+  return previewRequest === serial && requestedMode === mode && snapshot === $("plan-json").value;
 }
 async function refreshRevisionHistory() {
   const id = recordedRevision?.id;
@@ -317,7 +338,7 @@ async function refreshRevisionHistory() {
 }
 function controls() {
   const ready = Boolean(config) && isReady() && !hasUnresolvedQuestions();
-  const working = busy || meshBusy;
+  const working = busy || meshBusy || (typeof paperIsBusy === "function" && paperIsBusy());
   const needsCurrent = mode === "plan" && $("request-action").value === "modify";
   $("solve").disabled = working || !ready || !config?.solver_detected || (mode === "plan" && !hasCurrentMesh());
   $("source").disabled = working || !ready;
@@ -326,6 +347,7 @@ function controls() {
   $("interpret").disabled = working || !config?.ai_available || $("prompt").value.trim().length < 5 || (needsCurrent && !isReady());
   $("validate-plan").disabled = working || !$("plan-json").value.trim();
   $("load-example").disabled = working || !config?.plan_example;
+  $("load-axisymmetric").disabled = working || !config?.axisymmetric_example;
   $("visual-review-controls").hidden = mode !== "plan" || !config?.visual_review_available;
   $("visual-review").disabled = working || visualBusy || !ready || !$("prompt").value.trim();
   $("visual-review").textContent = visualBusy ? "Reviewing geometry…" : "Review geometry visually";
@@ -335,6 +357,7 @@ function controls() {
   $("mode").disabled = working;
   $("request-action").disabled = working;
   $("interpret").textContent = mode === "ccore" ? "Apply request ↗" : needsCurrent ? "Update model ↗" : "Create model ↗";
+  if (typeof updatePaperControls === "function") updatePaperControls();
   renderPipeline();
 }
 async function preview() {
@@ -351,7 +374,7 @@ async function preview() {
     const now = mode === "plan" ? $("plan-json").value : JSON.stringify(coreSpec(false));
     if (snapshot !== now) return false;
     if (mode === "plan") {
-      await recordCurrentRevision(values);
+      if (!await recordCurrentRevision(values, serial, requestedMode, snapshot)) return false;
       if (previewRequest !== serial || requestedMode !== mode || snapshot !== $("plan-json").value) return false;
       validatedPlan = structuredClone(values);
       validatedEditor = snapshot;
@@ -381,6 +404,7 @@ async function preview() {
   }
 }
 async function showMode() {
+  clearRecoveryOffer();
   clearVisualReview();
   clearTimeout(previewTimer);
   previewRequest = Symbol();
@@ -467,7 +491,8 @@ $("interpret").addEventListener("click", async () => {
     const modifyingPlan = mode === "plan" && $("request-action").value === "modify";
     if (modifyingPlan && !isReady()) throw new Error("Validate the current model before asking the AI to modify it.");
     const current = mode === "plan" ? modifyingPlan ? structuredClone(validatedPlan) : null : coreSpec();
-    const response = await api(mode === "plan" ? "/api/plan/interpret" : "/api/interpret", {prompt, current});
+    const response = await api(mode === "plan" ? "/api/plan/interpret" : "/api/interpret", {prompt, current,
+      ...(mode === "plan" && typeof paperPlanningInput === "function" ? paperPlanningInput() : {})});
     const proposal = await response.json();
     if (requestedMode !== mode || fingerprint !== requestFingerprint()) {
       message("Your request or model changed while the AI was working. Its response was not applied; submit your current request again.");
@@ -475,7 +500,10 @@ $("interpret").addEventListener("click", async () => {
     }
     if (mode === "plan") {
       invalidateMesh();
-      if (proposal.spec || !modifyingPlan) setPlan(proposal.spec, {fresh: !modifyingPlan, patch: modifyingPlan ? proposal : null});
+      if (proposal.spec || !modifyingPlan) {
+        setPlan(proposal.spec, {fresh: !modifyingPlan, patch: modifyingPlan ? proposal : null});
+        if (proposal.spec && typeof applyPaperProposal === "function") applyPaperProposal(proposal);
+      }
     } else {
       fields.forEach(([key]) => { $(key).value = proposal.spec[key]; });
       invalidateModel();
@@ -561,7 +589,7 @@ async function pollMesh() {
       $("mesh-message").textContent = "This check belongs to an earlier model. Validate and check the current mesh before solving.";
       meshBusy = false; controls(); return;
     }
-    if (job.status === "failed") offerDiagnosis("mesh", {id: submitted.id});
+    if (job.status === "failed") { offerDiagnosis("mesh", {id: submitted.id}); offerRecovery(job); automaticRecovery = null; }
     if (job.status !== "completed") throw new Error(job.error || "Mesh generation failed. Review the model or use a coarser mesh and try again.");
     if (job.result?.status !== "passed") throw new Error("The mesh did not pass its checks. Review the mesh log, adjust the model and check it again.");
     const blob = await (await api("/api/jobs/" + submitted.id + "/mesh.svg")).blob();
@@ -578,6 +606,10 @@ async function pollMesh() {
     $("mesh-scope").hidden = false; $("mesh-download").hidden = false;
     message("Mesh checks passed. The current model is ready to solve.");
     meshBusy = false; controls();
+    if (automaticRecovery?.mesh_id === submitted.id && hasCurrentMesh()) {
+      const recovery = automaticRecovery; automaticRecovery = null;
+      await submitSolve(recovery.target_contract_id || null);
+    }
   } catch (error) {
     if (meshJob !== submitted) return;
     meshValidation = null; meshBusy = false; controls();
@@ -593,14 +625,21 @@ $("mesh-log").addEventListener("click", async () => {
   try { if (meshJob) await saveResponse(await api("/api/jobs/" + meshJob.id + "/solver.log"), "mesh-solver.log"); }
   catch (error) { message(error.message, true); }
 });
-$("solve").addEventListener("click", async () => {
+async function submitSolve(targetOverride = undefined) {
   busy = true; controls();
   try {
     const values = readySpec();
     const general = mode === "plan";
+    const fingerprint = requestFingerprint(), revisionId = recordedRevision?.id, meshId = meshValidation?.id;
     clearDiagnosis("solve");
     if (general && !hasCurrentMesh()) throw new Error("Run a successful mesh check for this exact model before solving.");
-    const job = await (await api(general ? "/api/plan/jobs" : "/api/jobs", general ? {spec: values, mesh_job_id: meshValidation.id, ...(recordedRevision ? {revision_id: recordedRevision.id} : {})} : values)).json();
+    const targetContract = targetOverride !== undefined ? targetOverride :
+      general && typeof freezePaperTargets === "function" ? await freezePaperTargets() : null;
+    if (fingerprint !== requestFingerprint() || (general && (recordedRevision?.id !== revisionId || meshValidation?.id !== meshId || !hasCurrentMesh()))) {
+      throw new Error("The model, paper case or targets changed while preparing the solve. Submit the current model again.");
+    }
+    const job = await (await api(general ? "/api/plan/jobs" : "/api/jobs", general ? {spec: values, mesh_job_id: meshValidation.id,
+      ...(recordedRevision ? {revision_id: recordedRevision.id} : {}), ...(targetContract ? {target_contract_id: targetContract} : {})} : values)).json();
     planSolve = general ? {key: JSON.stringify(values), status: job.status, id: job.id} : null;
     currentJob = job.id; sessionStorage.setItem("femm_job", currentJob);
     $("results").hidden = false; $("result-body").hidden = true; $("log").hidden = true;
@@ -608,6 +647,45 @@ $("solve").addEventListener("click", async () => {
     message("Simulation submitted. Results will use this submitted model, even if you edit the draft.");
     await poll();
   } catch (error) { message(error.message, true); busy = false; controls(); }
+}
+$("solve").addEventListener("click", () => submitSolve());
+function offerRecovery(job) {
+  if (!config?.controlled_recovery_available || !job.evidence?.failure_id || !job.revision_id ||
+      mode !== "plan" || !isReady() || recordedRevision?.id !== job.revision_id || JSON.stringify(job.spec) !== planKey()) return;
+  recoveryJob = job; $("recovery-controls").hidden = false;
+  $("recovery-status").textContent = "Failure recorded for revision " + job.revision_id.slice(0, 12) + ". Select a repair scope.";
+}
+$("recover-model").addEventListener("click", async () => {
+  if (!recoveryJob || busy || meshBusy) return;
+  if (mode !== "plan" || !isReady() || recordedRevision?.id !== recoveryJob.revision_id || JSON.stringify(recoveryJob.spec) !== planKey()) {
+    clearRecoveryOffer(); message("This failure belongs to another model revision. Open its model before requesting recovery.", true); return;
+  }
+  const failed = recoveryJob, fingerprint = requestFingerprint();
+  busy = true; controls(); $("recover-model").disabled = true;
+  $("recovery-status").textContent = "Tracing the failed call and preparing one bounded repair…";
+  try {
+    const scope = $("recovery-scope").value;
+    const body = {scope, instruction: $("recovery-instruction").value,
+      ...(scope === "custom" ? {allowed_paths: $("recovery-paths").value.split(",").map(x => x.trim()).filter(Boolean)} : {})};
+    const response = await (await api("/api/jobs/" + failed.id + "/recover", body)).json();
+    const frozenRecord = response.target_contract_id ? await (await api("/api/targets/" + response.target_contract_id)).json() : null;
+    if (frozenRecord && frozenRecord.revision_id !== response.revision?.id) throw new Error("The recovery targets belong to another model revision.");
+    if (fingerprint !== requestFingerprint()) throw new Error("The current request changed. The recovery branch is retained; its model was not applied to this draft.");
+    if (!response.revision) {
+      $("recovery-status").textContent = [response.proposal.explanation, ...(response.proposal.questions || [])].join(" ");
+      return;
+    }
+    setPlan(response.revision.plan, {fresh: true}); recordedRevision = response.revision;
+    if (typeof adoptPaperRevision === "function") adoptPaperRevision(response.revision, frozenRecord);
+    resetQuestions();
+    if (!await preview()) throw new Error("The recovery branch could not be previewed. Its native job and evidence remain available.");
+    const submitted = response.mesh_job;
+    automaticRecovery = {mesh_id: submitted.id, target_contract_id: response.target_contract_id};
+    meshJob = {id: submitted.id, key: planKey(), revision: planRevision};
+    meshBusy = true; $("mesh-panel").hidden = false; $("recovery-status").textContent = response.proposal.explanation + " Checking the repaired mesh…";
+    busy = false; controls(); await pollMesh();
+  } catch (error) { $("recovery-status").textContent = error.message; message(error.message, true); }
+  finally { busy = false; controls(); $("recover-model").disabled = false; }
 });
 function quantityLabel(key, general) {
   const labels = {force_x: general ? "Region force, x" : "Armature force, x", force_y: general ? "Region force, y" : "Armature force, y", energy: "Magnetic energy", flux_linkage: "Flux linkage", current: "Coil current", runtime: "Solve & extraction time"};
@@ -639,8 +717,10 @@ async function poll() {
     }
     busy = false; controls(); $("log").hidden = false;
     await refreshRevisionHistory();
-    if (job.status === "failed") offerDiagnosis("solve", {id: jobId});
+    if (job.status === "failed") { offerDiagnosis("solve", {id: jobId}); offerRecovery(job); }
     if (job.status === "completed") {
+      if (typeof renderTargetResults === "function") renderTargetResults(job);
+      if (job.evidence?.target_report?.status !== "passed") offerRecovery(job);
       $("quantities").replaceChildren(...Object.entries(job.result).map(([key, quantity]) => {
         const row = document.createElement("tr"), label = document.createElement("td"), value = document.createElement("td");
         label.textContent = quantityLabel(key, general);

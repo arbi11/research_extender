@@ -1,5 +1,48 @@
 # Language-to-CAD, visual and numerical evaluation
 
+## Paper replication and controlled recovery
+
+`python -m evaluation.replication --output /reports/lubin --protocol near_field_v3`
+runs three independently transcribed cases from
+[Lubin, Berger and Rezzoug (2012)](https://www.jpier.org/PIERB/pier.php?paper=12051105):
+centred iron-core inductance, displaced-coil axial force and air-core inductance.
+Each case uses base/refined/far-boundary profiles. It freezes the paper targets
+before native work, audits the actual FEMM file and compares native CSV results.
+All targets use 2%; mesh/domain changes must be below 0.5%. The explicit v3 energy
+diagnostic is 1e-4 relative because FEMM's axisymmetric energy and circuit-linkage
+quadratures differ at finite mesh. The pinned engine source and rationale are
+recorded. This correction does not change paper values or their 2% tolerances.
+
+`--audit-existing /reports/previous/report.json --output /reports/new-audit`
+verifies artifact hashes and rereads native CSV/spec files under the new protocol
+without rerunning FEMM. Original failures and report hashes remain available;
+re-audit time is not reported as native solve time. Gold fixtures are independent
+reference inputs, not evidence that AI read the paper correctly.
+
+The separate `python -m evaluation.paper_live --live --pdf /papers/source.pdf
+--output /reports/paper-live` uses the real upload/extraction/planning APIs and
+actual native execution. It makes one extraction request and one normal bounded
+planning request, retaining all failures and questions. Source gold numbers are
+used only after model generation for an independent audit. Numerical domain/mesh
+choices are explicitly supplied as user instructions. A source-validation stop
+is a failed trial, not a successful paper reproduction.
+`--resume-evidence /reports/previous/report.json` revalidates and reuses that
+attempt's real extraction without another extraction call. It links the original
+report digest and retains the failed planning attempt. This continuation is
+reported separately from a wholly fresh end-to-end trial. The runner requests
+the opt-in single-winding current-density arithmetic check; a mismatch uses the
+normal one-diagnostic/one-repair planning bound.
+
+`python -m evaluation.recovery_loop --output /reports/recovery` injects a current
+error into a known reference case and tests frozen-target failure and checkpoint
+recovery with real native FEMM. Add `--live` and the existing env-file to exercise
+one Jev diagnosis and one draft repair proposal. The deterministic mode makes no
+provider calls. Neither mode establishes comparative resource savings; retain
+the failed branch, invocation counts, timings and unknown usage as unknown.
+
+These commands run inside the isolated development image with fresh report
+directories and `FEMM_MESH_EXPORT=1`, as in the examples below.
+
 Run live evaluations in a separate development FEMM container. They use real
 OpenRouter responses and native FEMM where specified, without connecting to the
 deployed assistant or its jobs volume. Preserve the existing `.env`, local

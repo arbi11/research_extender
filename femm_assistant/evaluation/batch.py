@@ -328,12 +328,13 @@ def main(argv=None):
     parser.add_argument("--rounds", type=int, default=2)
     parser.add_argument("--max-cases", type=int, default=12)
     parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--cases", type=Path, default=DEFAULT_CASES, help="Explicit versioned prompt dataset")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     for name, value, maximum in (("rounds", args.rounds, 5), ("max-cases", args.max_cases, 80), ("workers", args.workers, 3)):
         if not 1 <= value <= maximum:
             parser.error(f"--{name} must be between 1 and {maximum}")
-    cases = load_cases()[:args.max_cases]
+    cases = load_cases(args.cases)[:args.max_cases]
     settings = Settings.from_env()
     if not settings.ai_key:
         parser.error("Set OPENROUTER_API_KEY in the environment; never pass it on the command line")
@@ -350,7 +351,7 @@ def main(argv=None):
     artifact_dir.mkdir()
     report = {"schema_version": 1, "source": "live_openrouter_and_native_femm", "status": "running",
               "created_utc": datetime.now(timezone.utc).isoformat(),
-              "dataset_sha256": hashlib.sha256(DEFAULT_CASES.read_bytes()).hexdigest(),
+              "dataset_sha256": hashlib.sha256(args.cases.read_bytes()).hexdigest(),
               "drafting_model": settings.ai_model, "decision_model": settings.decision_model,
               "rounds_requested": args.rounds, "workers": args.workers, "selected_ids": [case.id for case in cases],
               "artifact_directory": artifact_dir.name, "rows": [], "round_summaries": [],

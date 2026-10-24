@@ -1,0 +1,329 @@
+{
+  "benchmark": "straight_wire_controlled_recovery",
+  "date": "2026-10-24",
+  "evidence_policy": "Only allowlisted quantitative records, hashes and the scoped proposal are copied. No credentials, environment files, private documents or paper text are included.",
+  "frozen_target": {
+    "case_id": "wire_1a",
+    "citations": [
+      {
+        "figure": null,
+        "page": null,
+        "quote": null,
+        "section": "Ampere's law: magnetic field outside a long straight wire",
+        "source_id": "https://openstax.org/books/university-physics-volume-2/pages/12-6-amperes-law",
+        "table": null
+      }
+    ],
+    "conditions": "Planar, infinitely long straight conductor in air; radius 1 mm, current +1 A, one positive turn, probe (2,0) mm. The concentric circular A=0 boundary fixes the vector-potential reference.",
+    "derivation": "B=mu0*I/(2*pi*r), with mu0=4*pi*1e-7 H/m, I=1 A and r=0.002 m; By is positive at x>0.",
+    "description": "External azimuthal magnetic field at x=2 mm, y=0 mm",
+    "evidence_kind": "derived",
+    "id": "wire_by",
+    "observable": {
+      "circuit_id": null,
+      "probe_index": 0,
+      "quantity": "by"
+    },
+    "reference_kind": "analytical",
+    "tolerance": {
+      "absolute": 0.0,
+      "relative": 0.03
+    },
+    "unit": "T",
+    "value": 9.999999999999999e-05
+  },
+  "frozen_target_definition_sha256": "c4250d79764365f77facb3ce750e11ff2c410e6704f5de60933b9c88695372fa",
+  "input_case": {
+    "depth_mm": 20.0,
+    "global_mesh_mm": 0.2,
+    "injected_current_a": 2.0,
+    "outer_domain_radius_mm": 10.0,
+    "physics": "planar_dc_magnetics",
+    "probe_mm": [
+      2.0,
+      0.0
+    ],
+    "reference_current_a": 1.0,
+    "signed_turns": 1,
+    "wire_radius_mm": 1.0
+  },
+  "limitations": [
+    "This is one deliberately injected, known-cause current error, not an estimate of general autonomous diagnosis accuracy.",
+    "The live instruction explicitly specifies the independent 1 A reference and provides the two ancestral checkpoints.",
+    "Each run executes three explicit mesh jobs and three full solve jobs; full solve jobs also mesh internally. Each run therefore makes six native FEMM invocations.",
+    "No restart-from-scratch comparator was measured. Comparative resource savings are not proven.",
+    "Live provider usage, tokens and cost were not retained by the transport and remain unknown, not zero.",
+    "The default deterministic run uses no provider and does not measure Jev or draft-model diagnosis.",
+    "The single mesh is structurally checked; mesh-refinement and boundary convergence are not established by this benchmark.",
+    "This reference uses Ampere's law rather than reproducing a journal paper."
+  ],
+  "live_recovery_proposal": "recovery-proposal.json",
+  "runner": "python -m evaluation.recovery_loop",
+  "runs": [
+    {
+      "attempts": [
+        {
+          "absolute_error_t": 3.505254821909858e-07,
+          "actual_by_t": 9.9649474517809e-05,
+          "contract_sha256": "49fac87971a32beb5ca380a0b65e7b0fb02b13043f6a86ef1aa2594382515312",
+          "current_a": 1.0,
+          "mesh": {
+            "convergence_verified": false,
+            "element_count": 18575,
+            "max_aspect_ratio": 3.418115357627032,
+            "min_angle_deg": 30.00690117082142,
+            "node_count": 9445
+          },
+          "mesh_report_sha256": "844a0b497fca41c828b301974f68ebca5ca551f44ba204aaa42c9e8fc89d42b4",
+          "mesh_status": "passed",
+          "model_sha256": "a7143433444c566daecaa6b9d6afedb64c340509798581b4bded2750550e0589",
+          "name": "baseline",
+          "native_artifact_sha256": {
+            "model.ans": "615b6fea0e6bb217f98c88e7125efa9963779e1eaec863a225e26ae5e6b06d7c",
+            "model.fem": "69d6a6dc576d234352bcefd3caffd27616e1affd692932e99a8b99d3cd4b2fdf",
+            "model.lua": "028cf12e23dbcc1b480b3a74c85051be2b22b3c1a042a7d460812dafa12658dd",
+            "results.csv": "fddbb2cee7aa5d4b0a921fe3edb4da24d3a9a7dec964c7a3c691ebfe78c56e46",
+            "target-report.json": "abf0be728ed9cf20bd01f649c7a69f6ec42d6aeba639b39c633ea8e9a3d668ca"
+          },
+          "relative_error": 0.003505254821909858,
+          "revision_id": "67b458e68f596d4aaabff12fa75db0d6a88bbde5490781c2187d379e20aa7577",
+          "solver_status": "passed",
+          "target_definition_sha256": "c4250d79764365f77facb3ce750e11ff2c410e6704f5de60933b9c88695372fa",
+          "target_status": "passed"
+        },
+        {
+          "absolute_error_t": 9.929894903562e-05,
+          "actual_by_t": 0.00019929894903562,
+          "contract_sha256": "b8c6c5257569b9eae02808d1e60b3eef6858cee1a4d409305c30e188f3e93bc1",
+          "current_a": 2.0,
+          "mesh": {
+            "convergence_verified": false,
+            "element_count": 18575,
+            "max_aspect_ratio": 3.418115357627032,
+            "min_angle_deg": 30.00690117082142,
+            "node_count": 9445
+          },
+          "mesh_report_sha256": "844a0b497fca41c828b301974f68ebca5ca551f44ba204aaa42c9e8fc89d42b4",
+          "mesh_status": "passed",
+          "model_sha256": "a96ac4d6c7973fbf92d07f6b0d2061f1adfab1d76b720c11b23d78a920f060b2",
+          "name": "injected_2a",
+          "native_artifact_sha256": {
+            "model.ans": "e1e29318ca60cc4c797e32785e4b668f94f0d103365af37373cbe2f936d56135",
+            "model.fem": "740f771386de69dd0c0ab0c9b515b943d58f093832539c84b06814d0a9a3a61e",
+            "model.lua": "72f40dbea1d342f95e297cd1d2e1c5bc5a362411c0c309c05d40d8e33c9ecadf",
+            "results.csv": "ed10df11f8b1603f5c6c5b82dbad7d3d2934b41de9e473168c9671750a096816",
+            "target-report.json": "063c5997eca88bf09128f8c51a8a29f2fbeca55c8bd23ce919abdc53100a81dc"
+          },
+          "relative_error": 0.9929894903562001,
+          "revision_id": "a117b364dbef80c243898232685c179d13c81d29f08534567493dcc97048c30c",
+          "solver_status": "passed",
+          "target_definition_sha256": "c4250d79764365f77facb3ce750e11ff2c410e6704f5de60933b9c88695372fa",
+          "target_status": "failed"
+        },
+        {
+          "absolute_error_t": 3.505254821909858e-07,
+          "actual_by_t": 9.9649474517809e-05,
+          "contract_sha256": "49fac87971a32beb5ca380a0b65e7b0fb02b13043f6a86ef1aa2594382515312",
+          "current_a": 1.0,
+          "mesh": {
+            "convergence_verified": false,
+            "element_count": 18575,
+            "max_aspect_ratio": 3.418115357627032,
+            "min_angle_deg": 30.00690117082142,
+            "node_count": 9445
+          },
+          "mesh_report_sha256": "844a0b497fca41c828b301974f68ebca5ca551f44ba204aaa42c9e8fc89d42b4",
+          "mesh_status": "passed",
+          "model_sha256": "a7143433444c566daecaa6b9d6afedb64c340509798581b4bded2750550e0589",
+          "name": "recovered_1a",
+          "native_artifact_sha256": {
+            "model.ans": "615b6fea0e6bb217f98c88e7125efa9963779e1eaec863a225e26ae5e6b06d7c",
+            "model.fem": "69d6a6dc576d234352bcefd3caffd27616e1affd692932e99a8b99d3cd4b2fdf",
+            "model.lua": "028cf12e23dbcc1b480b3a74c85051be2b22b3c1a042a7d460812dafa12658dd",
+            "results.csv": "fddbb2cee7aa5d4b0a921fe3edb4da24d3a9a7dec964c7a3c691ebfe78c56e46",
+            "target-report.json": "abf0be728ed9cf20bd01f649c7a69f6ec42d6aeba639b39c633ea8e9a3d668ca"
+          },
+          "relative_error": 0.003505254821909858,
+          "revision_id": "5562cd907ec0986a0729454f7bbc55ce72894f73c867bf8ee83fe5b8a4f1b2eb",
+          "solver_status": "passed",
+          "target_definition_sha256": "c4250d79764365f77facb3ce750e11ff2c410e6704f5de60933b9c88695372fa",
+          "target_status": "passed"
+        }
+      ],
+      "failure_localization": {
+        "causation_note": "Candidates identify producing/modifying operations; the last writer is not a proven root cause.",
+        "failure_id": "0eb0ea62d36392fbe6e1bfb7b0a0e9220f0612d1b6deb9aa12cf9ad3a3fea6e5",
+        "implicated_paths": [
+          "/circuits/wire/current_a"
+        ],
+        "known_injected_cause": "Current changed from 1 A to 2 A while the target remains the 1 A reference.",
+        "stage": "target"
+      },
+      "id": "known_injection",
+      "metrics": {
+        "explicit_mesh_jobs": 3,
+        "model_attempts": 3,
+        "native_invocations": 6,
+        "solve_jobs": 3,
+        "wall_seconds": 5.465653517996543,
+        "worker_runtime_seconds": 4.535
+      },
+      "mode": "deterministic_known_injection",
+      "private_evidence_path": "work/replication-development/recovery/recovery-loop",
+      "provider_usage": {
+        "calls": 0,
+        "cost_usd": 0.0,
+        "maximum_calls": 0,
+        "note": "No provider is called in deterministic mode."
+      },
+      "source_summary_sha256": "7b5c64c3762950b7268026859af9ff71d4f6fbfc81e6581ca946f7a8325509c5",
+      "status": "passed",
+      "verification": {
+        "checks": {
+          "baseline_three_checks_pass": true,
+          "frozen_target_definitions_unchanged": true,
+          "injected_model_mesh_solver_pass_but_target_fails": true,
+          "original_failure_retained": true,
+          "recovered_three_checks_pass": true,
+          "restored_plan_matches_baseline": true,
+          "wrong_model_remains_main_head": true,
+          "wrong_model_retained": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "attempts": [
+        {
+          "absolute_error_t": 3.505254821909858e-07,
+          "actual_by_t": 9.9649474517809e-05,
+          "contract_sha256": "49fac87971a32beb5ca380a0b65e7b0fb02b13043f6a86ef1aa2594382515312",
+          "current_a": 1.0,
+          "mesh": {
+            "convergence_verified": false,
+            "element_count": 18575,
+            "max_aspect_ratio": 3.418115357627032,
+            "min_angle_deg": 30.00690117082142,
+            "node_count": 9445
+          },
+          "mesh_report_sha256": "844a0b497fca41c828b301974f68ebca5ca551f44ba204aaa42c9e8fc89d42b4",
+          "mesh_status": "passed",
+          "model_sha256": "a7143433444c566daecaa6b9d6afedb64c340509798581b4bded2750550e0589",
+          "name": "baseline",
+          "native_artifact_sha256": {
+            "model.ans": "615b6fea0e6bb217f98c88e7125efa9963779e1eaec863a225e26ae5e6b06d7c",
+            "model.fem": "69d6a6dc576d234352bcefd3caffd27616e1affd692932e99a8b99d3cd4b2fdf",
+            "model.lua": "028cf12e23dbcc1b480b3a74c85051be2b22b3c1a042a7d460812dafa12658dd",
+            "results.csv": "fddbb2cee7aa5d4b0a921fe3edb4da24d3a9a7dec964c7a3c691ebfe78c56e46",
+            "target-report.json": "abf0be728ed9cf20bd01f649c7a69f6ec42d6aeba639b39c633ea8e9a3d668ca"
+          },
+          "relative_error": 0.003505254821909858,
+          "revision_id": "6d68195d3f72da75973a91f0c805e5eea5d470624571505f88fadc819d7e17b8",
+          "solver_status": "passed",
+          "target_definition_sha256": "c4250d79764365f77facb3ce750e11ff2c410e6704f5de60933b9c88695372fa",
+          "target_status": "passed"
+        },
+        {
+          "absolute_error_t": 9.929894903562e-05,
+          "actual_by_t": 0.00019929894903562,
+          "contract_sha256": "b8c6c5257569b9eae02808d1e60b3eef6858cee1a4d409305c30e188f3e93bc1",
+          "current_a": 2.0,
+          "mesh": {
+            "convergence_verified": false,
+            "element_count": 18575,
+            "max_aspect_ratio": 3.418115357627032,
+            "min_angle_deg": 30.00690117082142,
+            "node_count": 9445
+          },
+          "mesh_report_sha256": "844a0b497fca41c828b301974f68ebca5ca551f44ba204aaa42c9e8fc89d42b4",
+          "mesh_status": "passed",
+          "model_sha256": "a96ac4d6c7973fbf92d07f6b0d2061f1adfab1d76b720c11b23d78a920f060b2",
+          "name": "injected_2a",
+          "native_artifact_sha256": {
+            "model.ans": "e1e29318ca60cc4c797e32785e4b668f94f0d103365af37373cbe2f936d56135",
+            "model.fem": "740f771386de69dd0c0ab0c9b515b943d58f093832539c84b06814d0a9a3a61e",
+            "model.lua": "72f40dbea1d342f95e297cd1d2e1c5bc5a362411c0c309c05d40d8e33c9ecadf",
+            "results.csv": "ed10df11f8b1603f5c6c5b82dbad7d3d2934b41de9e473168c9671750a096816",
+            "target-report.json": "063c5997eca88bf09128f8c51a8a29f2fbeca55c8bd23ce919abdc53100a81dc"
+          },
+          "relative_error": 0.9929894903562001,
+          "revision_id": "4cc57d40ad6881c657342e5620b6de133512596f29a7ef520f88e3561928ad05",
+          "solver_status": "passed",
+          "target_definition_sha256": "c4250d79764365f77facb3ce750e11ff2c410e6704f5de60933b9c88695372fa",
+          "target_status": "failed"
+        },
+        {
+          "absolute_error_t": 3.505254821909858e-07,
+          "actual_by_t": 9.9649474517809e-05,
+          "contract_sha256": "49fac87971a32beb5ca380a0b65e7b0fb02b13043f6a86ef1aa2594382515312",
+          "current_a": 1.0,
+          "mesh": {
+            "convergence_verified": false,
+            "element_count": 18575,
+            "max_aspect_ratio": 3.418115357627032,
+            "min_angle_deg": 30.00690117082142,
+            "node_count": 9445
+          },
+          "mesh_report_sha256": "844a0b497fca41c828b301974f68ebca5ca551f44ba204aaa42c9e8fc89d42b4",
+          "mesh_status": "passed",
+          "model_sha256": "a7143433444c566daecaa6b9d6afedb64c340509798581b4bded2750550e0589",
+          "name": "recovered_1a",
+          "native_artifact_sha256": {
+            "model.ans": "615b6fea0e6bb217f98c88e7125efa9963779e1eaec863a225e26ae5e6b06d7c",
+            "model.fem": "69d6a6dc576d234352bcefd3caffd27616e1affd692932e99a8b99d3cd4b2fdf",
+            "model.lua": "028cf12e23dbcc1b480b3a74c85051be2b22b3c1a042a7d460812dafa12658dd",
+            "results.csv": "fddbb2cee7aa5d4b0a921fe3edb4da24d3a9a7dec964c7a3c691ebfe78c56e46",
+            "target-report.json": "abf0be728ed9cf20bd01f649c7a69f6ec42d6aeba639b39c633ea8e9a3d668ca"
+          },
+          "relative_error": 0.003505254821909858,
+          "revision_id": "792242f5139d7641c9ea4d8ecca7f00d80faf5876a17c00b0d0d81871a68a781",
+          "solver_status": "passed",
+          "target_definition_sha256": "c4250d79764365f77facb3ce750e11ff2c410e6704f5de60933b9c88695372fa",
+          "target_status": "passed"
+        }
+      ],
+      "failure_localization": {
+        "causation_note": "Candidates identify producing/modifying operations; the last writer is not a proven root cause.",
+        "failure_id": "33940ac5b9a6385abe107f97665427f25b0345c1b492f45a329c02faa4737f93",
+        "implicated_paths": [
+          "/circuits/wire/current_a"
+        ],
+        "known_injected_cause": "Current changed from 1 A to 2 A while the target remains the 1 A reference.",
+        "stage": "target"
+      },
+      "id": "live_openrouter",
+      "metrics": {
+        "explicit_mesh_jobs": 3,
+        "model_attempts": 3,
+        "native_invocations": 6,
+        "solve_jobs": 3,
+        "wall_seconds": 9.923737224002252,
+        "worker_runtime_seconds": 5.5280000000000005
+      },
+      "mode": "live_jev_repair_proposal",
+      "private_evidence_path": "work/replication-development/recovery-live-v1",
+      "provider_usage": {
+        "calls": null,
+        "cost_usd": null,
+        "maximum_calls": 2,
+        "note": "One diagnostic and one draft maximum; current planning transport does not expose provider usage/cost."
+      },
+      "source_summary_sha256": "0aa88e4635e51bf580193a3e4227c63f752af8484737d56ba34baf658da0a202",
+      "status": "passed",
+      "verification": {
+        "checks": {
+          "baseline_three_checks_pass": true,
+          "frozen_target_definitions_unchanged": true,
+          "injected_model_mesh_solver_pass_but_target_fails": true,
+          "original_failure_retained": true,
+          "recovered_three_checks_pass": true,
+          "restored_plan_matches_baseline": true,
+          "wrong_model_remains_main_head": true,
+          "wrong_model_retained": true
+        },
+        "passed": true
+      }
+    }
+  ],
+  "schema_version": 1
+}

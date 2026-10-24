@@ -36,7 +36,7 @@ class JobStore:
             if "kind" not in {row[1] for row in db.execute("PRAGMA table_info(jobs)")}:
                 db.execute("ALTER TABLE jobs ADD COLUMN kind TEXT NOT NULL DEFAULT 'solve'")
             columns = {row[1] for row in db.execute("PRAGMA table_info(jobs)")}
-            for column in ("revision_id", "evidence"):
+            for column in ("revision_id", "evidence", "target_contract_id"):
                 if column not in columns:
                     db.execute(f"ALTER TABLE jobs ADD COLUMN {column} TEXT")
 
@@ -45,7 +45,7 @@ class JobStore:
         db.row_factory = sqlite3.Row
         return db
 
-    def create(self, spec: CCoreSpec | GeometryPlan, max_pending=5, *, kind="solve", revision_id=None):
+    def create(self, spec: CCoreSpec | GeometryPlan, max_pending=5, *, kind="solve", revision_id=None, target_contract_id=None):
         if kind not in {"solve", "mesh"} or (kind == "mesh" and not isinstance(spec, GeometryPlan)):
             raise ValueError("Mesh checks require a general geometry plan.")
         now = time.time()
@@ -55,7 +55,7 @@ class JobStore:
             count = db.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]
             if count >= max_pending:
                 raise BusyError("The simulation queue is full. Please try again after a job finishes.")
-            db.execute("INSERT INTO jobs (id,spec,status,created,updated,result,error,kind,revision_id) VALUES (?,?,?,?,?,?,?,?,?)", (job_id, spec.model_dump_json(), "queued", now, now, None, None, kind, revision_id))
+            db.execute("INSERT INTO jobs (id,spec,status,created,updated,result,error,kind,revision_id,target_contract_id) VALUES (?,?,?,?,?,?,?,?,?,?)", (job_id, spec.model_dump_json(), "queued", now, now, None, None, kind, revision_id, target_contract_id))
         return self.get(job_id)
 
     def get(self, job_id):
@@ -140,12 +140,13 @@ def field_plot(folder: Path, spec=None):
 
 
 class SolverWorker:
-    def __init__(self, store: JobStore, command="femm-lua", timeout=180, retention_hours=24, *, revision_store=None):
+    def __init__(self, store: JobStore, command="femm-lua", timeout=180, retention_hours=24, *, revision_store=None, replication_store=None):
         self.store, self.command, self.timeout, self.retention = store, command, timeout, retention_hours
         self.stopping = threading.Event()
         self.thread = None
         self.process = None
         self.revision_store = revision_store
+        self.replication_store = replication_store
 
     def record_check(self, job, folder, stage, status, details):
         if not self.revision_store or not job.get("revision_id"):
@@ -153,7 +154,7 @@ class SolverWorker:
         # Capture actual files that exist at this stage, not inferred output paths.
         artifacts = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                      for p in folder.iterdir() if p.is_file() and p.name in
-                     {"spec.json", "model.lua", "model.fem", "model.ans", "mesh-report.json", "results.csv", "solver.log"}}
+                     {"spec.json", "model.lua", "model.fem", "model.ans", "mesh-report.json", "results.csv", "solver.log", "target-contract.json", "target-report.json"}}
         manifest = {"job_id": job["id"], "revision_id": job["revision_id"],
                     "stage": stage, "status": status, "artifacts": artifacts}
         encoded = json.dumps(manifest, sort_keys=True, allow_nan=False)
@@ -216,6 +217,16 @@ class SolverWorker:
             is_plan = job["spec"].get("kind") == "magnetostatic_plan"
             mesh_only = job.get("kind", "solve") == "mesh"
             spec = GeometryPlan.model_validate(job["spec"]) if is_plan else CCoreSpec.model_validate(job["spec"])
+            target_record = None
+            if job.get("target_contract_id"):
+                if not self.replication_store:
+                    raise RuntimeError("The frozen target store is unavailable.")
+                from .targets import TargetContract, model_fingerprint
+                target_record = self.replication_store.get_contract(job["target_contract_id"])
+                if (not target_record or target_record["revision_id"] != job.get("revision_id") or
+                        TargetContract.model_validate(target_record["contract"]).model_sha256 != model_fingerprint(spec)):
+                    raise RuntimeError("The frozen target contract does not match this job revision.")
+                (folder / "target-contract.json").write_text(json.dumps(target_record, indent=2, allow_nan=False))
             files = plan_generate.source_files(spec, mesh_only=mesh_only) if is_plan else source_files(spec)
             expected = plan_generate.required_results(spec) if is_plan else None
             for name, content in files.items():
@@ -248,6 +259,10 @@ class SolverWorker:
                     if self.process:
                         self.process.wait(timeout=5)
                     self.process = None
+            # A full solve also performs native meshing. Attribute deterministic
+            # mesh validation failures to that stage before reading field output.
+            if is_plan:
+                stage = "mesh"
             mesh_report = validate_mesh(folder, spec) if is_plan else None
             if mesh_report is not None:
                 (folder / "mesh-report.json").write_text(json.dumps(mesh_report, indent=2, allow_nan=False))
@@ -257,13 +272,25 @@ class SolverWorker:
                     raise RuntimeError("A mesh-only job unexpectedly produced a field solution.")
                 result = mesh_report
             else:
+                stage = "solver"
                 result = read_results(folder, expected)
                 field_plot(folder, spec)
                 self.record_check(job, folder, "solver", "passed", {"quantity_names": list(result)})
+                if target_record:
+                    from .targets import TargetContract, evaluate_target_file, contract_fingerprint
+                    stage = "target"
+                    contract = TargetContract.model_validate(target_record["contract"])
+                    target_report = evaluate_target_file(contract, folder, plan=spec,
+                                            expected_contract_sha256=target_record["contract_sha256"])
+                    (folder / "target-report.json").write_text(json.dumps(target_report, indent=2, allow_nan=False))
+                    self.store.annotate(job_id, target_report=target_report)
+                    self.record_check(job, folder, "target", "passed" if target_report["status"] == "passed" else "failed",
+                                      {"target_report": target_report, "target_contract_id": job["target_contract_id"]})
             result["runtime"] = {"value": round(time.monotonic()-started, 3), "unit": "s"}
             (folder / "results.json").write_text(json.dumps(result, indent=2, allow_nan=False))
             allowed = ["model.lua", "model.py", "run.py", "spec.json", "geometry.svg", "README.txt", "model.fem", "model.ans", "results.csv", "field.csv", "field.svg", "results.json", "solver.log", "mesh.csv", "mesh.svg", "mesh-report.json", "model.node", "model.ele", "model.edge", "model.1.node", "model.1.ele", "model.1.edge"]
             allowed.extend(["revision.json", "mesh-execution.json", "solver-execution.json"])
+            allowed.extend(["target-contract.json", "target-report.json", "target-execution.json"])
             with zipfile.ZipFile(folder / "download.zip", "w", zipfile.ZIP_DEFLATED) as archive:
                 for name in allowed:
                     if (folder / name).is_file():

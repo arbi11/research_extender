@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .history import (EvidenceReference, FeatureEdit, HistoryConflict,
                       HistoryIntegrityError, ModelRevisionStore, plan_diff, apply_feature_edits)
 from .plan import GeometryPlan
+from . import provenance
 
 
 class RevisionRequest(BaseModel):
@@ -23,6 +24,10 @@ class RevisionRequest(BaseModel):
     edits: list[FeatureEdit] | None = Field(default=None, max_length=64)
     allowed_paths: list[str] | None = Field(default=None, max_length=64)
     reason: str = Field(default="", max_length=4000)
+    planning_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    evidence_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    case_id: str = Field(default="baseline", pattern=r"^[A-Za-z][A-Za-z0-9_-]{0,79}$")
+    preserve_paper_excitation: bool = False
 
 
 class PatchRequest(BaseModel):
@@ -82,13 +87,33 @@ def require_revision(history: ModelRevisionStore, revision_id, spec: GeometryPla
     return revision
 
 
-def register_routes(app, secured, history: ModelRevisionStore):
+def register_routes(app, secured, history: ModelRevisionStore, paper_store=None):
     @app.post("/api/revisions", dependencies=secured, status_code=201)
     async def create_revision(request: RevisionRequest):
         try:
-            return record_revision(history, request.spec, parent_id=request.parent_id,
-                                   branch=request.branch, evidence=request.evidence, edits=request.edits,
+            evidence = list(request.evidence)
+            if request.planning_id is not None:
+                if paper_store is None or request.evidence_id is None:
+                    raise ValueError("Paper model recording requires its evidence and planning ids.")
+                evidence.append(provenance.binding_evidence(paper_store, request.spec, request.planning_id,
+                                                           request.evidence_id, request.case_id,
+                                                           preserve_paper_excitation=request.preserve_paper_excitation))
+            elif request.evidence_id is not None:
+                raise ValueError("A paper evidence id requires the exact generated model's planning id.")
+            provenance.validate_reserved_references(paper_store, request.spec, evidence)
+            parent_id, branch = request.parent_id, request.branch
+            if request.planning_id and parent_id:
+                parent = history.get(parent_id)
+                if parent and parent["plan"] == request.spec.model_dump(mode="json"):
+                    old = provenance.revision_binding(paper_store, parent)
+                    if old.get("planning_id") != request.planning_id:
+                        # A different source binding is a new case even when its
+                        # numerical model happens to be identical.
+                        parent_id, branch = None, None
+            revision = record_revision(history, request.spec, parent_id=parent_id,
+                                   branch=branch, evidence=evidence, edits=request.edits,
                                    allowed_paths=request.allowed_paths, reason=request.reason)
+            return {**revision, **(provenance.revision_binding(paper_store, revision) if paper_store else {})}
         except HistoryConflict as exc:
             raise HTTPException(409, str(exc)) from None
         except ValueError as exc:
@@ -100,13 +125,19 @@ def register_routes(app, secured, history: ModelRevisionStore):
         if revision is None:
             raise HTTPException(404, "Model revision not found.")
         lineage = history.lineage(revision_id)
-        return {**revision, "checks": history.checks(revision_id),
+        return {**revision, **(provenance.revision_binding(paper_store, revision) if paper_store else {}),
+                "checks": history.checks(revision_id),
                 "lineage": [{key: row[key] for key in ("id", "parent_id", "action", "changes", "created")}
                             for row in lineage[:100]]}
 
     @app.post("/api/revisions/{revision_id}/patch", dependencies=secured, status_code=201)
     async def patch_revision(revision_id: str, request: PatchRequest):
         try:
+            parent = history.get(revision_id)
+            if parent is None:
+                raise ValueError("Unknown parent revision.")
+            proposed, _ = apply_feature_edits(GeometryPlan.model_validate(parent["plan"]), request.edits, request.allowed_paths)
+            provenance.validate_reserved_references(paper_store, proposed, request.evidence)
             return {**history.apply_patch(revision_id, request.edits, allowed_paths=request.allowed_paths,
                     branch=request.branch, evidence=request.evidence, reason=request.reason), "branch": request.branch}
         except HistoryConflict as exc:

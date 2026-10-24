@@ -15,7 +15,7 @@ import unicodedata
 from pathlib import PurePath
 from typing import Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, ValidationError, field_validator, model_validator
 
 from .targets import FrozenModel, NumericalTarget, SourceCitation, _UNITS, convert_units, unit_dimension
 
@@ -26,10 +26,26 @@ MAX_DOCUMENT_CHARACTERS = 100_000
 MAX_PAGE_CHARACTERS = 16_000
 MAX_EVIDENCE_BYTES = 96 * 1024
 MAX_CONTEXT_CHARACTERS = 64_000
+CANONICAL_PARAMETER_UNITS = ["1", "turns", "mm", "cm", "m", "in", "um", "A", "mA",
+    "A/mm2", "A/m2", "mm2", "cm2", "m2", "T", "mT", "uT", "J", "mJ", "uJ",
+    "N", "mN", "H", "mH", "uH", "Wb-turn", "mWb-turn", "uWb-turn", "Wb",
+    "Hz", "kHz", "S/m", "MS/m", "A/m", "kA/m", "deg", "rad", "text"]
 
 
 class PaperError(ValueError):
     """A safe intake error suitable for a client-facing explanation."""
+
+
+class PaperEvidenceError(PaperError):
+    """Structured provenance failure; quotes stay in the private audit only."""
+
+    def __init__(self, message: str, *, path: str, code: str, claim_id=None, citation=None):
+        super().__init__(message)
+        self.issue = {"path": path, "code": code, "message": message}
+        if claim_id is not None:
+            self.issue["claim_id"] = claim_id
+        if citation is not None:
+            self.issue["citation"] = citation.model_dump(mode="json")
 
 
 class PaperPage(FrozenModel):
@@ -127,12 +143,22 @@ class EvidenceParameter(FrozenModel):
     id: str = Field(pattern=r"^[A-Za-z][A-Za-z0-9_-]{0,63}$")
     description: str = Field(min_length=1, max_length=600)
     value: float | str
-    unit: str = Field(min_length=1, max_length=24)
+    unit: str = Field(min_length=1, max_length=24,
+        description="Use a canonical physical-unit spelling from the enum. Dimensionless is '1', current density is 'A/mm2', and text labels use 'text'.",
+        json_schema_extra={"enum": CANONICAL_PARAMETER_UNITS})
     evidence_kind: Literal["explicit", "derived", "assumption"]
     citations: tuple[SourceCitation, ...] = Field(default=(), max_length=12)
     derivation: str | None = Field(default=None, min_length=1, max_length=1200)
     assumption_reason: str | None = Field(default=None, min_length=1, max_length=1000)
     case_id: str = Field(default="baseline", pattern=r"^[A-Za-z][A-Za-z0-9_-]{0,79}$")
+
+    @field_validator("unit", mode="before")
+    @classmethod
+    def exact_unit_spellings(cls, value):
+        # These are exact notational aliases, not guessed units or conversions.
+        # Keep the original notation visible in the immutable source citation.
+        return {"dimensionless": "1", "A/mm^2": "A/mm2", "A/m^2": "A/m2",
+                "mm^2": "mm2", "cm^2": "cm2", "m^2": "m2"}.get(value, value) if isinstance(value, str) else value
 
     @field_validator("value", mode="before")
     @classmethod
@@ -196,6 +222,7 @@ def _explicit_numeric_matches(value: float, unit: str, quotes: str) -> bool:
     explicit interpretation limitation, not an assertion of semantic fidelity.
     """
     text = unicodedata.normalize("NFKC", quotes).replace("−", "-")
+    text = re.sub(r"\b(mm|cm|m)\s+([23])\b", r"\1\2", text)
     number = r"(?<![A-Za-z0-9_.])([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)"
     if unit == "1":
         return any(math.isclose(float(match.group(1)), value, rel_tol=1e-9, abs_tol=1e-14)
@@ -232,31 +259,95 @@ def validate_evidence(document: PaperDocument, evidence: PaperEvidence | dict | 
     else:
         evidence = PaperEvidence.model_validate(evidence.model_dump(mode="json"))
     if evidence.source_id != document.source_id:
-        raise PaperError("The extracted evidence belongs to a different uploaded paper.")
+        raise PaperEvidenceError("The extracted evidence belongs to a different uploaded paper. Use the supplied source_id exactly.",
+                                 path="source_id", code="source_id_mismatch")
     if len(evidence.model_dump_json().encode()) > MAX_EVIDENCE_BYTES:
         raise PaperError("The extracted evidence exceeds the size limit.")
-    for claim in (*evidence.parameters, *evidence.targets):
-        for citation in claim.citations:
+    claims = [(f"parameters.{index}", claim) for index, claim in enumerate(evidence.parameters)] + [
+              (f"targets.{index}", claim) for index, claim in enumerate(evidence.targets)]
+    for path, claim in claims:
+        for citation_index, citation in enumerate(claim.citations):
+            citation_path = f"{path}.citations.{citation_index}"
             if citation.source_id != document.source_id:
-                raise PaperError("An extracted claim cites a different paper.")
+                raise PaperEvidenceError("An extracted claim cites a different paper. Use this uploaded document's source_id.",
+                    path=citation_path + ".source_id", code="citation_source_mismatch", claim_id=claim.id, citation=citation)
             if citation.page is None or citation.page > document.page_count:
-                raise PaperError("Every paper claim must cite a physical PDF page within the document.")
+                raise PaperEvidenceError("Every paper claim must cite a physical PDF page within the document. Use 1-based PDF page numbers, not printed journal page numbers.",
+                    path=citation_path + ".page", code="citation_page_out_of_range", claim_id=claim.id, citation=citation)
             if not citation.quote or len(_normalized(citation.quote)) < 3:
-                raise PaperError("Every cited paper claim requires a short verbatim source quote.")
+                raise PaperEvidenceError("Every cited paper claim requires a short verbatim source quote copied from its stated PDF page.",
+                    path=citation_path + ".quote", code="citation_quote_missing", claim_id=claim.id, citation=citation)
             if _normalized(citation.quote) not in _normalized(document.pages[citation.page - 1].text):
-                raise PaperError("A cited quote was not found on the stated PDF page. Check extraction and figure transcription.")
+                raise PaperEvidenceError("A cited quote was not found on the stated PDF page. Copy the extracted text verbatim; do not paraphrase or silently repair formula spacing.",
+                    path=citation_path + ".quote", code="citation_quote_not_found", claim_id=claim.id, citation=citation)
         if claim.evidence_kind == "explicit" and not claim.citations:
             raise PaperError("An explicit paper value requires a verifiable citation.")
         if claim.evidence_kind == "explicit" and not isinstance(claim.value, str):
             if not _explicit_numeric_matches(claim.value, claim.unit,
                                              "\n".join(citation.quote for citation in claim.citations)):
-                raise PaperError("An explicit numeric value and its units could not be verified in the cited quotes; provide the original source units or mark a documented derivation.")
+                raise PaperEvidenceError("An explicit numeric value and its units could not be verified in the cited quotes; provide the original source units or mark a documented derivation.",
+                    path=path + ".value", code="numeric_value_or_unit_unverified", claim_id=claim.id)
+        if isinstance(claim, NumericalTarget):
+            conditions = _normalized(claim.conditions)
+            numerical = bool(re.search(r"\b(?:fem|finite[- ]element|fe simulations?|fe solutions?)\b", conditions))
+            experimental = bool(re.search(r"\b(?:experimental(?:ly)?|measured)\b", conditions))
+            conflict = ((numerical and not experimental and claim.reference_kind != "reported_numerical") or
+                        (experimental and not numerical and claim.reference_kind != "experimental"))
+            if conflict:
+                raise PaperEvidenceError("The reference category conflicts with its stated operating conditions. Keep finite-element/numerical, analytical and experimental targets separate; verify the category against the paper.",
+                    path=path + ".reference_kind", code="reference_kind_conflict", claim_id=claim.id)
     if document.missing_information:
         missing = tuple(dict.fromkeys((*evidence.limitations, *document.missing_information)))
         if len(missing) > 24:
             missing = missing[:23] + ("Additional PDF pages have no extractable text; inspect the complete page inventory.",)
         evidence = evidence.model_copy(update={"limitations": missing})
     return evidence
+
+
+def validate_partial_evidence(document: PaperDocument, candidate: dict) -> tuple[PaperEvidence, list[dict], int]:
+    """Keep independently verified claims and explicitly exclude bad claims.
+
+    The document identity and top-level schema must still be valid. An invalid
+    claim is never repaired, used for planning or turned into an assumed value.
+    """
+    if not isinstance(candidate, dict):
+        raise PaperError("Paper evidence must be an object.")
+    if len(json.dumps(candidate, ensure_ascii=True, allow_nan=True).encode()) > MAX_EVIDENCE_BYTES:
+        raise PaperError("The extracted evidence exceeds the size limit.")
+    metadata = {**candidate, "parameters": [], "targets": []}
+    base = validate_evidence(document, metadata)
+    retained, issues, questions, rejected = {"parameters": [], "targets": []}, [], list(base.questions), 0
+    for section, maximum in (("parameters", 120), ("targets", 32)):
+        claims = candidate.get(section, [])
+        if not isinstance(claims, list) or len(claims) > maximum:
+            raise PaperError("Paper claims require bounded parameter and target arrays.")
+        for index, claim in enumerate(claims):
+            claim_id = str(claim.get("id", f"{section}_{index}"))[:64] if isinstance(claim, dict) else f"{section}_{index}"
+            try:
+                checked = validate_evidence(document, {**metadata, section: [claim]})
+                retained[section].append(getattr(checked, section)[0].model_dump(mode="json"))
+            except (ValidationError, PaperError) as error:
+                rejected += 1
+                if isinstance(error, PaperEvidenceError):
+                    claim_issues = [dict(error.issue)]
+                elif isinstance(error, ValidationError):
+                    claim_issues = [{"path": ".".join(str(item) for item in issue["loc"]),
+                        "code": issue["type"], "message": issue["msg"][:1000]} for issue in error.errors(include_input=False, include_url=False)[:8]]
+                else:
+                    claim_issues = [{"path": section + ".0", "code": type(error).__name__, "message": str(error)[:1000]}]
+                for issue in claim_issues:
+                    prefix = section + ".0"
+                    if issue["path"] == prefix or issue["path"].startswith(prefix + "."):
+                        issue["path"] = section + "." + str(index) + issue["path"][len(prefix):]
+                    issue["claim_id"] = claim_id
+                issues.extend(claim_issues)
+                questions.append(f"Resolve excluded claim '{claim_id}': {claim_issues[0]['message']} The rejected value is not available to geometry planning.")
+    if not retained["parameters"] and not retained["targets"]:
+        raise PaperError("No useful independently verified paper claims remain. Provide a clearer source or manually transcribe cited parameters.")
+    if len(questions) > 24 or any(len(question) > 1200 for question in questions):
+        raise PaperError("Too many unresolved paper claims remain; select one operating case or provide a smaller cited extract.")
+    evidence = validate_evidence(document, {**metadata, **retained, "questions": questions})
+    return evidence, issues, rejected
 
 
 class ParameterOverride(FrozenModel):
@@ -348,7 +439,15 @@ This stage extracts evidence; it does not create, mesh or solve geometry.
 
 Keep parameters from different configurations separate using case_id. State units
 explicitly; use numeric JSON values for numeric parameters and unit 'text' for
-labels. Record each value as explicit, derived or assumption. Explicit and derived
+labels. Use unit '1' for dimensionless values, 'turns' for a turn count, and
+'A/mm2' for current density in amperes per square millimeter. Recognized length
+units include mm, cm, m and in. Use T/mT/uT, J/mJ/uJ, N/mN and H/mH/uH for the
+corresponding target quantities; never change their physical dimension.
+Boundary conditions such as 'A=0' or 'homogeneous Dirichlet' are categorical text
+parameters with unit 'text'. Do not turn them into a numeric zero with an invented
+unit such as Wb: magnetic vector potential is not magnetic flux. Only extract a
+numeric boundary quantity when its physical quantity and units are explicit.
+Record each value as explicit, derived or assumption. Explicit and derived
 claims require citations with source_id, a physical PDF page number (1-based), and
 a short verbatim quote present on that page. Include table/figure locators where
 applicable. Keep quoted units and source values; do not guess a diameter is a radius.
@@ -362,7 +461,12 @@ observable, and a tolerance fixed before solving. A tolerance is a numerical
 acceptance choice, not a claim about paper accuracy; explain that choice in the
 description. Do not invent missing target values. Inductance is flux linkage
 divided by the named circuit's current, not an arbitrary expression. Distinguish
-experimental values from finite-element or analytical predictions. Put incomplete
+experimental values from finite-element or analytical predictions. In particular,
+a paper's FEMM/FE simulation result is reported_numerical, never experimental;
+its semi-analytical expression is analytical, even when evaluated numerically.
+Copy quotes exactly from the supplied pdf_pages text, retaining mathematical
+minus signs and source spacing. Copy '−' as '−'; do not replace it with '-'.
+Do not retype a formula or turn a quotation into a polished paraphrase. Put incomplete
 geometry, material laws, excitation, boundaries or target definitions in questions.
 
 User instructions can request a variation but do not change published evidence.
@@ -374,9 +478,13 @@ instructions separately. Never change a target to make a simulated result pass.
 def extraction_messages(document: PaperDocument, instructions: str = "") -> list[dict]:
     if len(instructions) > 3000:
         raise PaperError("User instructions must contain at most 3000 characters.")
+    schema = PaperEvidence.model_json_schema()
+    schema["$defs"]["NumericalTarget"]["properties"]["reference_kind"]["description"] = (
+        "FEMM/FE simulation output is reported_numerical. A semi-analytical calculation is analytical. "
+        "Only a physical experimental measurement is experimental; never classify FE as experimental.")
     return [{"role": "system", "content": EXTRACTION_SYSTEM + "\nResponse JSON schema:\n"
-             + json.dumps(PaperEvidence.model_json_schema(), ensure_ascii=True)},
+             + json.dumps(schema, ensure_ascii=True)},
             {"role": "user", "content": json.dumps({"source_id": document.source_id,
                 "user_instructions": instructions,
                 "pdf_pages": [page.model_dump() for page in document.pages],
-                "missing_information": list(document.missing_information)}, ensure_ascii=True)}]
+                "missing_information": list(document.missing_information)}, ensure_ascii=False)}]

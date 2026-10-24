@@ -20,7 +20,9 @@ image, preserving deployment settings and jobs.
 ## What a reader can do
 
 1. Describe a new geometry or a modification in natural language, load a round-wire
-   example, or use the C-core numeric form.
+   or axisymmetric coil example, or use the C-core numeric form. Alternatively,
+   upload a text PDF, extract cited parameters and numerical references, select
+   its operating case, and combine that evidence with your own instructions.
 2. Inspect the geometry and assumptions. Optional visual review reports advisory
    findings about the rendered geometry and, when available, its actual mesh.
    Select **Check mesh** and inspect the actual triangles, counts, minimum angle,
@@ -30,6 +32,48 @@ image, preserving deployment settings and jobs.
 4. Download a ZIP containing an editable Python CAD script `model.py`, native Lua
    bridge `model.lua`, compatibility launcher `run.py`, `spec.json`, previews and
    available mesh/solve artifacts, field CSV, quantities and solver log.
+
+### Paper inputs, targets and recovery
+
+PDF upload retains the original bytes and page text locally. **Extract paper**
+makes one bounded OpenRouter call; upload alone makes none. Supported inputs are
+text PDFs up to 8 MiB and 40 pages. Extracted claims require matching page quotes,
+numbers and units. Derived values, numerical assumptions, missing dimensions and
+published analytical versus numerical results stay distinct. Scans, graph
+digitization and automatic reconstruction of figure dimensions are not supported.
+Only the selected operating case and common parameters enter model planning.
+An invalid individual claim is excluded with a visible question and private audit;
+verified claims remain available. An invalid source identity or no valid claims
+stops extraction.
+
+Choose **Create geometry from scratch**, add instructions about numerical choices
+or a requested variation, and create the model. The server binds that exact model
+to its evidence and operating case. Changing the source, case or physical model
+requires a fresh model binding before linked paper comparisons can be enabled.
+This binding records provenance; it does not assert semantic correctness.
+**Use the paper's excitation** adds a narrow deterministic check for one uniform
+winding and one cited current density: `I = J × section area / |turns|`. It reports
+when the calculation is inapplicable. Uncheck it for an instructed excitation
+variation. A failed calculation uses the existing bounded failed-call repair;
+neither Jev nor a confidence score approves the geometry. Other source conditions
+still require review: a linear inductance target alone cannot reveal a wrong current.
+
+Before solving, selected targets and tolerances are frozen against the immutable
+revision. Actual native results produce a separate target report. A successful
+mesh and solver can therefore still miss the published target. Target agreement
+alone does not establish reproduction if geometry, excitation or operating
+conditions differ. Compare those conditions and check mesh/domain convergence.
+Targets, source references, execution hashes and reports accompany the job ZIP.
+
+Each validated model has a revision and typed feature changes. After a recorded
+mesh, solver or target failure, **Recover once** asks Jev about the actual failed
+call and asks the draft model for a checkpoint/scoped repair. Mesh-only edits are
+the default; broader changes need a selected edit scope. A repair creates a new
+branch, reruns mesh and then solve, and retains the original frozen targets and
+failed evidence. It does not recursively retry or change acceptance tolerances.
+The last editor is evidence for diagnosis, not proof of causation. Recovery has
+passed a seeded live-provider/native test; comparative resource savings have not
+been established.
 
 Source-only downloads work before a solve and without an AI credential. They do
 not contain a FEMM model/solution or numerical results. The portable scripts need

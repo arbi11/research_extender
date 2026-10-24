@@ -21,6 +21,8 @@ from .plan import GeometryPlan, wire_example
 from .examples import axisymmetric_example
 from . import plan_generate, planner, decisions, vision, cases
 from .history import ModelRevisionStore
+from . import replication, recovery_api, provenance, paper_constraints
+from .targets import TargetContract, model_fingerprint
 
 
 @dataclass
@@ -63,6 +65,9 @@ class PlanInterpretRequest(BaseModel):
     prompt: str = Field(min_length=5, max_length=3000)
     current: GeometryPlan | None = None
     allowed_paths: list[str] | None = Field(default=None, max_length=64)
+    evidence_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    case_id: str = Field(default="baseline", pattern=r"^[A-Za-z][A-Za-z0-9_-]{0,79}$")
+    preserve_paper_excitation: bool = False
 
 
 class PlanSolveRequest(BaseModel):
@@ -70,6 +75,7 @@ class PlanSolveRequest(BaseModel):
     spec: GeometryPlan
     mesh_job_id: str = Field(pattern=r"^[a-f0-9]{32}$")
     revision_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    target_contract_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
 
 
 class VisualReviewRequest(BaseModel):
@@ -100,8 +106,9 @@ def create_app(settings: Settings | None = None):
     settings = settings or Settings.from_env()
     store = JobStore(settings.data_dir)
     history = ModelRevisionStore(settings.data_dir)
+    paper_store = replication.ReplicationStore(settings.data_dir)
     worker = SolverWorker(store, settings.femm_lua, settings.timeout, settings.retention_hours,
-                          revision_store=history)
+                          revision_store=history, replication_store=paper_store)
     budget = Budget()
 
     @asynccontextmanager
@@ -114,6 +121,7 @@ def create_app(settings: Settings | None = None):
 
     app = FastAPI(title="FEMM Assistant", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.worker, app.state.history = store, worker, history
+    app.state.replication = paper_store
 
     async def authenticate(authorization: str = Header(default="")):
         # An empty token supports the owner's explicitly configured local trial.
@@ -129,7 +137,8 @@ def create_app(settings: Settings | None = None):
             body = bytearray()
             async for chunk in request.stream():
                 body.extend(chunk)
-                limit = 128000 if request.url.path.startswith(("/api/plan/", "/api/revisions")) else 16000
+                limit = (8 * 1024 * 1024 if request.url.path == "/api/papers" else
+                         128000 if request.url.path.startswith(("/api/plan/", "/api/revisions", "/api/papers/", "/api/targets")) else 16000)
                 if len(body) > limit:
                     return Response("Request is too large.", status_code=413)
             request._body = bytes(body)
@@ -159,6 +168,8 @@ def create_app(settings: Settings | None = None):
                 "visual_review_available": bool(settings.ai_key and settings.vision_model),
                 "visual_review_model": settings.vision_model,
                 "revision_history_available": True,
+                "paper_intake_available": True, "target_comparison_available": True,
+                "controlled_recovery_available": bool(settings.ai_key and settings.ai_model and settings.decision_model),
                 "plan_capabilities": ["Planar and axisymmetric DC magnetostatics", "Circles, rectangles and simple polygons",
                                       "Nested or separate closed regions with linear materials",
                                       "DC circuits, an outer zero-potential boundary, field probes and optional force"]}
@@ -231,14 +242,32 @@ def create_app(settings: Settings | None = None):
             raise HTTPException(503, "Set OPENROUTER_API_KEY and AI_MODEL on the server to enable AI geometry requests. You can load or edit a model plan directly.")
         budget.use("ai", 20)
         try:
-            return await planner.interpret_plan(request.prompt, request.current, settings.ai_key,
+            context = (paper_store.planning_context(request.evidence_id, case_id=request.case_id,
+                        instructions=request.prompt) if request.evidence_id else None)
+            if context is not None:
+                context["preserve_paper_excitation"] = request.preserve_paper_excitation
+            proposal = await planner.interpret_plan(request.prompt, request.current, settings.ai_key,
                                                 settings.ai_base_url, settings.ai_model,
                                                 decision_model=settings.decision_model,
                                                 decision_base_url=settings.decision_base_url,
                                                 decision_threshold=settings.decision_threshold,
-                                                allowed_paths=request.allowed_paths)
+                                                allowed_paths=request.allowed_paths, evidence_context=context)
+            result = proposal.model_dump(mode="json")
+            excitation_check = (paper_constraints.validate_excitation(proposal.spec, context)
+                                if request.evidence_id and proposal.spec is not None else None)
+            if excitation_check is not None:
+                result["paper_excitation_check"] = excitation_check
+            if request.evidence_id and proposal.spec is not None and not proposal.questions:
+                binding = provenance.put_planning(paper_store, proposal.spec, request.evidence_id,
+                                                   request.case_id, request.prompt,
+                                                   preserve_paper_excitation=request.preserve_paper_excitation,
+                                                   excitation_check=excitation_check)
+                result["planning_id"] = binding["planning_id"]
+            return result
         except planner.PlannerError as exc:
             raise HTTPException(exc.status_code, exc.message) from None
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
 
     @app.post("/api/plan/mesh", dependencies=secured, status_code=202)
     async def plan_mesh(spec: GeometryPlan, x_model_revision: str | None = Header(default=None)):
@@ -264,9 +293,14 @@ def create_app(settings: Settings | None = None):
         revision = cases.require_revision(history, revision_id, request.spec)
         if request.revision_id and mesh_job.get("revision_id") != request.revision_id:
             raise HTTPException(409, "This mesh belongs to a different model revision. Check the current revision's mesh.")
+        if request.target_contract_id:
+            record = paper_store.get_contract(request.target_contract_id)
+            if (record is None or record["revision_id"] != revision["id"] or
+                    TargetContract.model_validate(record["contract"]).model_sha256 != model_fingerprint(request.spec)):
+                raise HTTPException(409, "Freeze targets for this exact model revision before solving.")
         budget.use("solve", 20)
         try:
-            return store.create(request.spec, revision_id=revision["id"])
+            return store.create(request.spec, revision_id=revision["id"], target_contract_id=request.target_contract_id)
         except BusyError as exc:
             raise HTTPException(429, str(exc))
 
@@ -338,6 +372,8 @@ def create_app(settings: Settings | None = None):
         media = {"download.zip": "application/zip", "field.svg": "image/svg+xml", "mesh.svg": "image/svg+xml", "solver.log": "text/plain"}[artifact]
         return FileResponse(path, media_type=media, filename=artifact if artifact not in {"field.svg", "mesh.svg"} else None)
 
-    cases.register_routes(app, secured, history)
+    cases.register_routes(app, secured, history, paper_store)
+    replication.register_routes(app, secured, settings, budget, history, store)
+    recovery_api.register_routes(app, secured, settings, budget, history, store, paper_store)
     app.mount("/", StaticFiles(directory=Path(__file__).parent / "static", html=True), name="web")
     return app

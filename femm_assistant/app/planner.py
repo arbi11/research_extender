@@ -10,7 +10,7 @@ from typing import Literal
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-from . import decisions
+from . import decisions, paper_constraints
 from .decisions import DecisionTrace
 from .history import FeatureEdit, apply_feature_edits
 from .plan import GeometryPlan
@@ -182,6 +182,12 @@ explicit user overrides and identify missing or conflicting physical inputs with
 questions. A cited published target is a comparison target, never a simulated
 result you may claim to have obtained. Never alter physical inputs merely to fit
 a target.
+
+When preserve_paper_excitation is true and there is one verified uniform current
+density and one winding, use I=J*cross_section_area/abs(turns). This calculation is
+checked mechanically, without using a target output to choose excitation. The
+JSON current must equal the derived value. Inductance uses circuit flux linkage
+divided by current and does not require a field probe at an invented location.
 """
 
 
@@ -293,6 +299,8 @@ async def interpret_plan(prompt: str, current: GeometryPlan | None, key: str,
                     try:
                         draft = (modify_plan(candidate, context, allowed_paths=allowed_paths)
                                  if function_name == "modify_plan" else create_plan(candidate))
+                        if draft.spec is not None:
+                            paper_constraints.validate_excitation(draft.spec, evidence_context)
                     except ValidationError as error:
                         if attempt == MAX_ATTEMPTS:
                             raise PlannerError(502, "The AI could not produce a valid geometry after one repair attempt. Simplify the request or edit the plan; the current model has not changed.") from None

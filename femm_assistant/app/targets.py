@@ -43,6 +43,7 @@ class SourceCitation(FrozenModel):
 _UNITS = {
     "1": ("dimensionless", 1.0), "turn": ("turns", 1.0), "turns": ("turns", 1.0),
     "m": ("length", 1.0), "cm": ("length", .01), "mm": ("length", .001),
+    "in": ("length", .0254), "inch": ("length", .0254), "inches": ("length", .0254),
     "um": ("length", 1e-6), "µm": ("length", 1e-6), "μm": ("length", 1e-6),
     "A": ("current", 1.0), "mA": ("current", .001),
     "T": ("flux_density", 1.0), "mT": ("flux_density", .001),
@@ -57,6 +58,10 @@ _UNITS = {
     "µWb-turn": ("flux_linkage", 1e-6), "μWb-turn": ("flux_linkage", 1e-6), "Wb": ("magnetic_flux", 1.0),
     "Hz": ("frequency", 1.0), "kHz": ("frequency", 1000.0),
     "S/m": ("conductivity", 1.0), "MS/m": ("conductivity", 1e6),
+    "A/m2": ("current_density", 1.0), "A/m²": ("current_density", 1.0),
+    "A/mm2": ("current_density", 1e6), "A/mm²": ("current_density", 1e6),
+    "m2": ("area", 1.0), "m²": ("area", 1.0), "cm2": ("area", 1e-4),
+    "cm²": ("area", 1e-4), "mm2": ("area", 1e-6), "mm²": ("area", 1e-6),
     "A/m": ("field_strength", 1.0), "kA/m": ("field_strength", 1000.0),
     "deg": ("angle", 1.0), "rad": ("angle", 180 / math.pi),
 }
