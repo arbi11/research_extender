@@ -17,10 +17,12 @@
         <label for="mode">Model builder</label>
         <select id="mode"><option value="plan">General geometry</option><option value="ccore">C-core example</option></select>
         <p id="mode-note" class="muted"></p>
-        <label for="ai-model">AI model for this request</label>
-        <input id="ai-model" list="ai-model-options" maxlength="160" placeholder="Server default" autocomplete="off" spellcheck="false">
-        <datalist id="ai-model-options"><option value="~z-ai/glm-latest"></option><option value="anthropic/claude-haiku-5.5"></option><option value="deepseek/deepseek-v4-pro-0813"></option></datalist>
-        <p class="muted">Choose an OpenRouter model or enter its ID. Empty uses the server default. This applies to extraction, model generation and source-image review.</p>
+        <div id="ai-model-picker">
+          <label for="ai-model">Model for planning &amp; paper extraction</label>
+          <input id="ai-model" list="ai-model-options" maxlength="160" placeholder="Server default" autocomplete="off" spellcheck="false">
+          <datalist id="ai-model-options"><option value="~z-ai/glm-latest"></option><option value="anthropic/claude-haiku-5.5"></option><option value="deepseek/deepseek-v4-pro-0813"></option></datalist>
+          <p class="muted">Choose an OpenRouter model or enter its ID. Empty uses the server default for extraction and model generation.</p>
+        </div>
         <div id="plan-request-controls">
           <label for="request-action">What should the AI do?</label>
           <select id="request-action"><option value="new">Create geometry from scratch</option><option value="modify">Modify the current model</option></select>
@@ -87,6 +89,10 @@
         <div id="visual-review-controls" hidden><label class="visual-review-option" for="visual-include-mesh"><input id="visual-include-mesh" type="checkbox" checked aria-describedby="visual-mesh-help"> Include the checked FEMM mesh</label><p id="visual-mesh-help" class="muted"></p><button id="visual-review" disabled>Review geometry visually</button><p class="muted">Optional AI observations compare your request with the visible geometry and, when available, its actual mesh. Findings are advisory and do not block meshing or solving.</p><section id="visual-review-panel" class="mesh-panel" aria-label="Advisory visual review" hidden><h3>Visual observations · advisory</h3><p id="visual-review-source" class="muted"></p><p id="visual-review-summary" role="status" aria-live="polite"></p><ul id="visual-review-findings" class="mesh-checks"></ul></section></div>
         <details id="source-review-controls"><summary>Compare with original source images</summary>
           <p class="muted">Select saved figures/tables in the paper section. Compare object count, orientation and adjacency with this model. Observations remain advisory; mesh, solver and target checks run separately.</p>
+          <label for="source-image-model">Image model for source comparison (optional)</label>
+          <input id="source-image-model" list="source-image-model-options" maxlength="160" placeholder="Server image model" autocomplete="off" spellcheck="false" aria-describedby="source-image-model-help">
+          <datalist id="source-image-model-options"><option value="anthropic/claude-haiku-5.5"></option><option value="google/gemini-3.1-flash-lite"></option></datalist>
+          <p id="source-image-model-help" class="muted">Empty uses the configured image model. Choose a model that accepts images and strict JSON responses.</p>
           <label for="source-review-focus" class="inline-option"><input id="source-review-focus" type="checkbox"> Ask Jev to inspect the specific visual findings (experimental image support)</label>
           <label for="source-review-mesh" class="inline-option"><input id="source-review-mesh" type="checkbox"> Include the current checked FEMM mesh</label>
           <button id="source-review" type="button" disabled>Compare model with source</button>

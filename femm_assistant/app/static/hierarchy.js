@@ -5,7 +5,8 @@ let sourceInventory = null, sourceAssetBusy = false, sourceReviewBusy = false, s
 let shownSourceAsset = null, sourceDrag = null;
 const selectedSourceAssets = new Set(), hierarchyImageUrls = new Map();
 
-function selectedAiModel() { return $("ai-model").value.trim() || null; }
+function selectedAiModel() { return mode === "plan" ? $("ai-model").value.trim() || null : null; }
+function selectedSourceImageModel() { return $("source-image-model").value.trim() || null; }
 function stableJson(value) {
   if (Array.isArray(value)) return "[" + value.map(stableJson).join(",") + "]";
   if (value && typeof value === "object") return "{" + Object.keys(value).sort().map(key => JSON.stringify(key) + ":" + stableJson(value[key])).join(",") + "}";
@@ -212,17 +213,23 @@ async function createSourceAsset(fullPage = false) {
   } finally { sourceAssetBusy = false; updateHierarchyControls(); }
 }
 function sourceComparisonModel(includeMesh = false) {
+  if (mode !== "plan") throw new Error("Source comparison uses a general model or an assembly preview.");
   if (activeAssembly && (!activeAssembly.compilation.plan ||
       stableJson(activeAssembly.compilation.plan) === stableJson(editorPlan()))) {
     if (!includeMesh) return {assembly_id: activeAssembly.assembly_id};
     return {spec: editorPlan(), feature_map: activeAssembly.feature_map};
   }
-  if (mode !== "plan") throw new Error("Source comparison uses a general model or an assembly preview.");
   return {spec: editorPlan()};
 }
 function updateHierarchyControls() {
   const working = busy || meshBusy || paperBusy;
+  $("ai-model-picker").hidden = mode !== "plan";
+  $("source-review-controls").hidden = mode !== "plan";
   $("ai-model").disabled = working || assemblyUiBusy;
+  $("source-image-model").disabled = working || assemblyUiBusy || sourceReviewBusy;
+  $("source-image-model-help").textContent = "Empty uses the configured image model" +
+    (config?.visual_review_model ? ": " + config.visual_review_model : "") +
+    ". Choose a model that accepts images and strict JSON responses.";
   $("assembly-discover").disabled = working || assemblyUiBusy || !config?.ai_available || $("prompt").value.trim().length < 5;
   $("assembly-save").disabled = working || assemblyUiBusy || !$("assembly-json").value.trim();
   $("source-page-load").disabled = working || sourceAssetBusy || !sourcePageInfo();
@@ -299,6 +306,7 @@ for (const key of ["x0", "y0", "x1", "y1"]) $("source-crop-" + key).addEventList
 $("prompt").addEventListener("input", updateHierarchyControls);
 $("plan-json").addEventListener("input", clearAssemblyBinding);
 $("ai-model").addEventListener("input", updateHierarchyControls);
+$("source-image-model").addEventListener("input", updateHierarchyControls);
 document.addEventListener("femm:paper-context", () => { clearAssemblyBinding(); loadSourceInventory(); });
 
 function cropPointer(event) {
@@ -323,12 +331,12 @@ $("source-review").addEventListener("click", async () => {
   sourceReviewBusy = true; updateHierarchyControls(); clearSourceReview("Comparing the selected original source pixels with this model view…");
   let fingerprint;
   function snapshot() { return stableJson({model: sourceComparisonModel($("source-review-mesh").checked),
-    assets: [...selectedSourceAssets].sort(), case_id: currentPaperCase(), prompt: $("prompt").value, ai_model: selectedAiModel(),
+    assets: [...selectedSourceAssets].sort(), case_id: currentPaperCase(), prompt: $("prompt").value, image_model: selectedSourceImageModel(),
     focus: $("source-review-focus").checked, mesh_job_id: $("source-review-mesh").checked ? meshValidation?.id : null}); }
   function stillCurrent() { try { return fingerprint === snapshot(); } catch (_) { return false; } }
   try {
     fingerprint = snapshot();
-    const model = selectedAiModel(), body = {...sourceComparisonModel($("source-review-mesh").checked),
+    const model = selectedSourceImageModel(), body = {...sourceComparisonModel($("source-review-mesh").checked),
       asset_ids: [...selectedSourceAssets], case_id: currentPaperCase(), prompt: $("prompt").value.trim() || "Compare the selected source design with the model view.",
       focused_checks: $("source-review-focus").checked, ...(model ? {model} : {}),
       ...($("source-review-mesh").checked && hasCurrentMesh() ? {mesh_job_id: meshValidation.id} : {})};
