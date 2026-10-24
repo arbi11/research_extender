@@ -33,6 +33,23 @@ exactly one native circuit exists. Ambiguities, incomplete evidence, actual
 function failures and unsupported physics retain their original outcomes.
 Assemblies and previews remain available when execution is unsupported.
 
+Hierarchical drafting uses separate strict JSON schemas for inventory, physical
+facts/settings, exterior geometry, each component and each custom or modified
+feature. A feature request selects one typed shape contract; the full assembly
+is composed and checked locally. Templates, closed paths, patterns, transforms
+and unsupported intent share the same editable graph. There is no ordinary-JSON
+fallback or monolithic assembly response schema.
+
+After an actual wire or local validation error, only that stage may receive one
+Jev diagnostic and one repair with the precise errors and unchanged successful
+checkpoints. A diagnostic is advisory; its failure does not prevent that bounded
+repair, and its answer cannot approve invalid geometry. Provider grammar,
+configuration, access, budget and rate-limit failures stop without a physical
+repair. Reports retain failed/successful attempts and diagnostic usage when
+returned; missing usage stays unknown. Final compiler failures remain blocked
+assemblies with inspectable intent. Score the two clarification/unsupported NL
+cases by their expected disposition, separately from native-execution success.
+
 Source image comparison is opt-in through `source_assets` entries such as
 `{"page": 8, "purpose": "table", "label": "Comparison table"}`. Crops use
 `bbox` in the source API's displayed PDF-point coordinate system. Select an

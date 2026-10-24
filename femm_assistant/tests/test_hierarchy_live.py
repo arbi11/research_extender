@@ -74,6 +74,31 @@ class HierarchyHelpersTests(unittest.TestCase):
 
 
 class DecodedAuditTests(unittest.IsolatedAsyncioTestCase):
+    async def test_mid_response_read_failure_is_retained_and_reraised_without_masking(self):
+        failure = httpx.ReadError("Connection interrupted in the response body")
+        class PartialStream(httpx.AsyncByteStream):
+            async def __aiter__(self):
+                yield b'{"choices":'
+                raise failure
+        with tempfile.TemporaryDirectory() as temp:
+            audit = hierarchy_live.DecodedAudit(Path(temp), allowed_hosts={"provider.test"})
+            client_type = audit.client_class(httpx.AsyncClient)
+            async with client_type(transport=httpx.MockTransport(lambda request:
+                    httpx.Response(200, stream=PartialStream()))) as client:
+                with self.assertRaises(httpx.ReadError) as caught:
+                    await client.post("https://provider.test/complete", json={"model": "model"})
+            self.assertIs(caught.exception, failure)
+            record = json.loads((Path(temp) / "0001.json").read_bytes())
+            self.assertEqual(record["status_code"], 200)
+            self.assertEqual(record["response_observation_error"], "ReadError")
+            self.assertIn("elapsed_seconds", record)
+            self.assertNotIn("response", record)
+            summary = audit.summary()
+            self.assertFalse(summary["transcript_complete"])
+            self.assertEqual(summary["calls_without_reported_cost"], 1)
+            self.assertFalse(summary["reported_cost_complete"])
+            self.assertEqual(summary["observer_errors"], [{"stage": "response_observation", "type": "ReadError"}])
+
     async def test_gzip_body_is_saved_losslessly_after_decoding_and_application_can_still_read(self):
         with tempfile.TemporaryDirectory() as temp:
             packet = {"id": "generation", "model": "actual-model", "provider": "actual-provider",
@@ -126,6 +151,57 @@ class DecodedAuditTests(unittest.IsolatedAsyncioTestCase):
 
 
 class HierarchyFlowTests(unittest.IsolatedAsyncioTestCase):
+    async def test_real_hierarchical_planner_consumes_small_strict_stages_without_monolithic_fallback(self):
+        from tests.test_assembly import coil_assembly
+        from tests.test_assembly_provider import PROMPT, staged_replies
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            replies = staged_replies(coil_assembly(), include_discovery=True)
+            requests, native = [], []
+            real_client = httpx.AsyncClient
+            def provider(request):
+                payload = json.loads(request.content)
+                if request.url.path.endswith("/decisions"):
+                    return httpx.Response(200, json={"id": "routing-test", "model": "typesafe/jev-1.14",
+                        "answers": {"route": {"type": "choice", "choice": "create_plan", "confidence": 1,
+                            "probabilities": {"create_plan": 1, "modify_plan": 0, "clarify": 0}}},
+                        "usage": {"cost": .0001, "input_tokens": 10, "output_tokens": 2}})
+                requests.append(payload)
+                reply = replies[len(requests) - 1]
+                return httpx.Response(200, json={"id": "stage-" + str(len(requests)), "model": "stage-model",
+                    "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(reply)}}],
+                    "usage": {"cost": .001, "prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}})
+            class RoutedClient(real_client):
+                def __init__(self, *args, **kwargs):
+                    if "transport" not in kwargs:
+                        kwargs["transport"] = httpx.MockTransport(provider)
+                    super().__init__(*args, **kwargs)
+            def native_run(worker, job):
+                native.append(job["kind"])
+                folder = worker.store.root / job["id"]
+                folder.mkdir(parents=True, exist_ok=True)
+                if job["kind"] == "solve":
+                    with zipfile.ZipFile(folder / "download.zip", "w") as archive:
+                        archive.writestr("fixture.txt", "Offline native fixture")
+                worker.store.update(job["id"], "completed", result={"status": "passed"} if job["kind"] == "mesh" else {})
+            settings = Settings(data_dir=root / "unchanged", ai_key="provider-test-credential",
+                                ai_base_url="https://provider.test/v1")
+            case = hierarchy_live.LiveCase(id="staged_coil", prompt=PROMPT)
+            with patch.object(httpx, "AsyncClient", RoutedClient), patch.object(SolverWorker, "run", native_run), \
+                 patch("app.main.shutil.which", return_value="/mocked/femm-lua"):
+                report = await hierarchy_live.run_case(case, "stage-model", root / "trial", live=True, settings=settings)
+            self.assertTrue(report["execution_pipeline_passed"], report)
+            self.assertEqual(native, ["mesh", "solve"])
+            names = [request["response_format"]["json_schema"]["name"] for request in requests]
+            self.assertEqual(names, ["MachineInventory", "AssemblySettingsDraft", "Rectangle", "ComponentDraft"])
+            self.assertFalse(any("AssemblyDraft" == name or "MachineAssembly" == name for name in names))
+            self.assertEqual(report["proposal"]["assembly"]["components"][0]["id"], "coil")
+            self.assertEqual(report["provider_audit"]["provider_call_count"], 5)
+            self.assertTrue(report["provider_audit"]["transcript_complete"])
+            for request in requests:
+                self.assertTrue(request["provider"]["require_parameters"])
+                self.assertNotIn("max_tokens", request)
+
     async def test_live_guard_precedes_environment_source_and_output_access(self):
         with patch.object(hierarchy_live.Settings, "from_env") as settings:
             with self.assertRaisesRegex(ValueError, "--live"):

@@ -149,6 +149,12 @@ class DecodedAudit:
         except Exception as error:
             self.errors.append({"stage": "response_observation", "type": type(error).__name__})
             record["response_observation_error"] = type(error).__name__
+            record["elapsed_seconds"] = round(time.monotonic() - record["started_monotonic"], 6)
+            _write(self.directory / f'{record["id"]:04d}.json', record)
+            # A partial read has consumed the underlying stream. Swallowing its
+            # exception would make the caller attempt another read and replace
+            # the real network failure with a misleading StreamConsumed error.
+            raise
         record["elapsed_seconds"] = round(time.monotonic() - record["started_monotonic"], 6)
         _write(self.directory / f'{record["id"]:04d}.json', record)
 

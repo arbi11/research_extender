@@ -22,10 +22,9 @@ DEFAULT_BASE_URL = "https://openrouter.ai/api/alpha"
 # Kept for existing settings/imports only; no score threshold is used.
 DEFAULT_THRESHOLD = 0.90
 MAX_RESPONSE_BYTES = 32 * 1024
-MAX_STATE_BYTES = 160 * 1024
-# Match the drafting transport's connect allowance. Two connection attempts and
-# a response share this deadline; the planner still caps the whole flow at 90s.
-CALL_TIMEOUT_SECONDS = 25
+MAX_STATE_BYTES = 8 * 1024 * 1024
+# Keep connection bounds; model responses have no artificial read deadline.
+CALL_TIMEOUT_SECONDS = None
 CONNECT_TIMEOUT_SECONDS = 10
 MAX_CONNECT_ATTEMPTS = 2
 CONNECT_RETRY_DELAY_SECONDS = 0.2
@@ -101,6 +100,31 @@ ROUTING_QUESTIONS = {
         "or deterministic validation.", "criteria": _ROUTES},
 }
 FUNCTION_CONTRACTS = {
+    "discover_assembly": (
+        "Identify machine family, components, parent hierarchy, intended features and operating cases "
+        "using the supplied strict inventory schema. Preserve unknown/unsupported physics. "
+        "Custom components have no template_kind. A family name supplies no physical values."
+    ),
+    "fill_assembly_facts": (
+        "Fill the supplied typed facts and model settings from source/user evidence. Keep exact "
+        "source parameter references, quantities, units, current and turns; derived values name their "
+        "dependencies. Unknown physical inputs stay missing. Disclose numerical choices separately."
+    ),
+    "fill_assembly_domain": (
+        "Fill only the chosen surrounding-air domain shape using the supplied small shape schema. "
+        "Use millimeters and preserve the numerical/physical provenance. This domain is implicit air, "
+        "not a duplicate material region. The native geometry validator checks enclosure."
+    ),
+    "detail_component": (
+        "Detail one discovered stable component using its exact id and parent. Preserve template or "
+        "custom intent, transforms, patterns and dependencies. Identify typed features to fill next; "
+        "do not invent missing physical values or change unsupported physics."
+    ),
+    "detail_feature": (
+        "Fill one named geometric feature using the selected rectangle, circle, polygon or closed-path "
+        "schema. Preserve coordinates, assignments, source bindings and feature dependencies. "
+        "Only actual deterministic validation errors justify changing these function arguments."
+    ),
     "create_plan": (
         "Accept a complete candidate JSON object with spec, explanation and questions "
         "matching the supplied schema. Validate its typed 2D planar or axisymmetric "
@@ -202,9 +226,8 @@ async def _request(client: httpx.AsyncClient, key: str, base_url: str, model: st
     try:
         # A connection failure occurs before request delivery. Retry that phase
         # once, never an ambiguously delivered request (read/write/protocol
-        # failures), provider response, or invalid decision evidence. One wall
-        # deadline covers both connection attempts and the bounded response.
-        # The planner's outer 90-second deadline can cancel this at any point.
+        # failures), provider response, or invalid decision evidence. Optional
+        # caller cancellation remains supported without a default AI deadline.
         async with asyncio.timeout(CALL_TIMEOUT_SECONDS):
             for attempt in range(MAX_CONNECT_ATTEMPTS):
                 try:

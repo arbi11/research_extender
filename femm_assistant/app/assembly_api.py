@@ -121,7 +121,8 @@ def register_routes(app, secured, settings, budget, paper_store):
         try:
             context = paper_store.planning_context(request.evidence_id, request.case_id, request.prompt) if request.evidence_id else None
             value = await assembly_provider.discover_assembly(request.prompt, settings.ai_key, settings.ai_base_url,
-                request.model or settings.ai_model, evidence_context=context)
+                request.model or settings.ai_model, evidence_context=context,
+                decision_model=settings.decision_model, decision_base_url=settings.decision_base_url)
             return value.model_dump(mode="json")
         except assembly_provider.AssemblyProviderError as error:
             raise HTTPException(error.status_code, error.message) from None

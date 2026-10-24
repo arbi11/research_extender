@@ -83,7 +83,7 @@ class DecisionTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(result.trace[0].threshold)
         self.assertNotIn("fixture-private-key", result.model_dump_json())
         self.assertNotIn(body["state"]["request"], result.model_dump_json())
-        self.assertLessEqual(request.extensions["timeout"]["read"], decisions.CALL_TIMEOUT_SECONDS)
+        self.assertIsNone(request.extensions["timeout"]["read"])
 
     async def test_route_probability_and_confidence_never_gate_valid_choice(self):
         for probability, confidence in [(.34, 0), (.60, .40), (.99, .01)]:
@@ -261,8 +261,7 @@ class DecisionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(requests[0].headers, requests[1].headers)
         self.assertEqual(requests[0].extensions["timeout"]["connect"], decisions.CONNECT_TIMEOUT_SECONDS)
         self.assertEqual(requests[0].extensions["timeout"]["read"], decisions.CALL_TIMEOUT_SECONDS)
-        self.assertLess(2 * decisions.CONNECT_TIMEOUT_SECONDS + decisions.CONNECT_RETRY_DELAY_SECONDS,
-                        decisions.CALL_TIMEOUT_SECONDS)
+        self.assertIsNone(decisions.CALL_TIMEOUT_SECONDS)
         self.assertIsNone(result.trace[0].threshold)
 
     async def test_connection_error_retry_applies_to_failed_call_diagnostic_only(self):

@@ -126,6 +126,36 @@ class SourceReviewTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result.images[0].padded_for_multimodal_limits)
         self.assertEqual((result.images[0].width_px, result.images[0].height_px), (280, 280))
 
+    async def test_finite_token_and_cost_breakdowns_survive_actual_provider_usage_shapes(self):
+        asset, image = source_asset()
+        vlm_usage = {"prompt_tokens": 6202, "completion_tokens": 874, "total_tokens": 7076,
+            "cost": .0010572, "is_byok": False,
+            "prompt_tokens_details": {"cached_tokens": 0, "cache_write_tokens": 0, "audio_tokens": 0, "video_tokens": 0},
+            "completion_tokens_details": {"reasoning_tokens": 0, "image_tokens": 0, "audio_tokens": 0},
+            "cost_details": {"upstream_inference_prompt_cost": .0006202,
+                "upstream_inference_completions_cost": .000437, "upstream_inference_cost": .0010572},
+            "private_metadata": "never expose"}
+        decision_usage = {"input_tokens": 9361, "output_tokens": 129, "cost": .000393162,
+            "cost_details": {"upstream_inference_cost": .000393162, "unsafe": "never expose",
+                             "nonfinite": float("inf"), "boolean": True}}
+        def handler(request):
+            if request.url.path.endswith("/chat/completions"):
+                return httpx.Response(200, json=completion(answer(asset, findings=[finding(asset)], status="needs_inspection"), usage=vlm_usage))
+            # Valid JSON excludes the nonfinite value before transport; the
+            # usage sanitizer separately has direct nonfinite regression tests.
+            packet = {"answers": {"finding_0": {"type": "choice", "choice": "supported",
+                "probabilities": {"supported": .95, "contradicted": .03, "uncertain": .02}, "confidence": .92}},
+                "usage": {**decision_usage, "cost_details": {k: v for k, v in decision_usage["cost_details"].items() if k != "nonfinite"}}}
+            return httpx.Response(200, json=packet)
+        result = await self.call(handler, asset=asset, image=image, decision_model="typesafe/jev-1.14")
+        self.assertEqual(result.usage["cost_details"], vlm_usage["cost_details"])
+        self.assertEqual(result.usage["completion_tokens_details"], vlm_usage["completion_tokens_details"])
+        self.assertEqual(result.usage["prompt_tokens_details"], vlm_usage["prompt_tokens_details"])
+        self.assertNotIn("private_metadata", result.usage)
+        self.assertNotIn("is_byok", result.usage)
+        self.assertEqual(result.focused_check_usage["cost_details"], {"upstream_inference_cost": .000393162})
+        self.assertEqual(result.focused_check_status, "completed")
+
     async def test_case_hash_source_references_and_feature_ids_are_not_trusted(self):
         asset, image = source_asset()
         calls = []

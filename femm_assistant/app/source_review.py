@@ -32,6 +32,9 @@ MAX_CONTEXT_BYTES = 256 * 1024
 MAX_TOTAL_IMAGE_BYTES = 12 * 1024 * 1024
 FEATURE_PATTERN = r"^[A-Za-z][A-Za-z0-9_.@-]{0,159}$"
 MULTIMODAL_DECISIONS_DOC = "https://openrouter.ai/docs/guides/community/multimodal-decisions"
+# replication._usage retains finite numeric counters and one-level numeric
+# token/cost breakdowns. This public DTO must preserve that sanitized shape.
+ProviderUsage = dict[str, int | float | dict[str, int | float]]
 
 
 class SourceReviewError(Exception):
@@ -89,10 +92,10 @@ class SourceComparison(SourceAnswer):
     paper_id: str = Field(pattern=ID_PATTERN)
     asset_ids: list[str]
     images: list[ComparedImage]
-    usage: dict[str, int | float]
+    usage: ProviderUsage
     focused_check_model: str | None
     focused_checks: list[FocusedCheck]
-    focused_check_usage: dict[str, int | float]
+    focused_check_usage: ProviderUsage
     focused_check_status: Literal["not_requested", "not_needed", "completed", "failed"]
     focused_check_error: str | None
     multimodal_decisions_experimental: bool

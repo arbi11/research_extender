@@ -35,7 +35,7 @@ class PlannerError(Exception):
 class PlanDraft(BaseModel):
     model_config = ConfigDict(extra="forbid")
     spec: GeometryPlan | None
-    explanation: str = Field(min_length=1, max_length=2500)
+    explanation: str = Field(min_length=1)
     questions: list[str] = Field(default_factory=list)
 
     @model_validator(mode="before")
@@ -60,7 +60,7 @@ class ModificationDraft(BaseModel):
     """Only named feature edits are accepted for an existing model."""
     model_config = ConfigDict(extra="forbid", strict=True)
     edits: list[FeatureEdit] = Field(max_length=64)
-    explanation: str = Field(min_length=1, max_length=2500)
+    explanation: str = Field(min_length=1)
     questions: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -331,7 +331,8 @@ async def interpret_plan(prompt: str, current: GeometryPlan | None, key: str,
                 if hierarchical and function_name == "create_plan":
                     from .assembly_provider import plan_assembly, AssemblyProviderError
                     try:
-                        result = await plan_assembly(prompt, key, base_url, model, evidence_context=evidence_context)
+                        result = await plan_assembly(prompt, key, base_url, model, evidence_context=evidence_context,
+                            decision_model=decision_model, decision_base_url=decision_base_url)
                     except AssemblyProviderError as error:
                         raise PlannerError(error.status_code, error.message) from None
                     compilation = result.compilation

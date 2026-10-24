@@ -421,6 +421,7 @@ async def extract_with_provider(document: papers.PaperDocument, instructions: st
             stage = "machine_and_case_discovery"
             discovery = await discover_assembly(instructions or "Identify the machine, its components and operating cases in this paper.",
                 settings.ai_key, settings.ai_base_url, settings.ai_model,
+                decision_model=settings.decision_model, decision_base_url=settings.decision_base_url,
                 evidence_context={"input_mode": "combined" if instructions.strip() else "paper",
                                   "paper_source_inventory": papers.source_inventory(document)})
             messages.insert(2, {"role": "system", "content": "First-stage machine/component/case inventory: "
