@@ -19,6 +19,9 @@ from .assembly import (AssemblyCircuit, AssemblyCompilation, AssemblyComponent, 
     MachineAssembly, ParameterReference, Pattern, PhysicalFact, SourceId, TemplateSpec, Transform,
     _resolved_facts, capability_manifest, compile_assembly)
 from .plan import Circle, Point, Polygon, Rectangle
+from .targets import _UNITS
+
+FactUnit = Literal[tuple(_UNITS) + ("text",)]
 from . import decisions, structured
 
 
@@ -131,7 +134,7 @@ class FactDraft(AssemblyValue):
     role: Literal["length", "permeability", "current", "turns", "count", "angle", "mesh", "domain", "label", "other"]
     value_number: float | None
     value_text: str | None
-    unit: str | None
+    unit: FactUnit | None
     status: Literal["paper", "user", "derived", "numerical_assumption", "missing", "conflict"]
     source_refs: list[SourceId]
     depends_on: list[FactId]
@@ -375,6 +378,9 @@ never tune physical inputs to their values. Ask concise questions where source i
 
 SETTINGS_SYSTEM = DETAIL_SYSTEM + """
 This stage returns only the physical facts, materials, circuits and global numerical settings.
+Use the declared fact_units_by_role and the unit enum: relative permeability/count use unit="1",
+turn counts use "turn" or "turns", current uses amperes/milliamperes, lengths use a supported
+length unit, and text facts use "text". Null units are reserved for unresolved facts.
 Do not return components or geometry. Select domain_kind for a subsequent typed geometry stage;
 unresolved preserves an unknown exterior. In each flat fact use exactly one of value_number or
 value_text, or both null for missing/conflict. Without a calculation use calculation_op=null,

@@ -73,6 +73,27 @@ def staged_replies(assembly=None, *, include_discovery=False):
 
 
 class AssemblyProviderTests(unittest.IsolatedAsyncioTestCase):
+    def test_fact_units_are_an_explicit_provider_vocabulary_and_keep_roles(self):
+        from pydantic import ValidationError
+        from app.assembly import capability_manifest
+        schema = structured.strict_json_schema(assembly_provider.FactDraft)
+        variants = schema["properties"]["unit"]["anyOf"]
+        units = next(item["enum"] for item in variants if "enum" in item)
+        self.assertIn("1", units)
+        self.assertIn("turns", units)
+        self.assertNotIn("dimensionless", units)
+        self.assertEqual(capability_manifest()["fact_units_by_role"]["permeability"], ["1"])
+        common = dict(id="test", label="test", role="turns", value_number=3, value_text=None,
+            unit="turns", status="user", source_refs=["nl_request"], depends_on=[], calculation_op=None,
+            calculation_inputs=[], calculation_factor=None, source_parameter_id=None, explanation="User input")
+        self.assertEqual(assembly_provider.FactDraft.model_validate(common).to_fact().value, 3)
+        with self.assertRaises(ValidationError):
+            assembly_provider.FactDraft.model_validate({**common, "unit": "1"})
+        with self.assertRaises(ValidationError):
+            assembly_provider.FactDraft.model_validate({**common, "unit": "dimensionless"})
+        self.assertEqual(assembly_provider.FactDraft.model_validate({**common, "role": "permeability", "unit": "1"}).unit, "1")
+
+
     def fake(self, replies, *, diagnostic_reply=None):
         original = httpx.AsyncClient
         self.requests, self.options, self.decision_requests = [], [], []

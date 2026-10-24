@@ -4,8 +4,9 @@ A small Linux application for describing, previewing, solving, and exporting
 **2D planar and axisymmetric DC magnetic models**. It lives alongside the book and does not
 install the repository's machine-learning training dependencies.
 
-General geometry mode builds new models from circles, rectangles and simple
-polygons, or modifies an existing model plan. A separate C-core example retains
+General geometry mode fills a machine/component hierarchy using optional templates
+and custom circles, rectangles, polygons and closed line/arc paths, or modifies an
+existing model plan. Arc intent is retained with a disclosed polygon approximation. A separate C-core example retains
 the original numeric form and solver. Axisymmetric models use radial/axial coordinates and full revolved volumes.
 AC analysis, permanent magnets, nonlinear B-H curves, shared-edge Boolean
 operations and full 3D CAD remain outside this version.
@@ -36,7 +37,8 @@ image, preserving deployment settings and jobs.
 ### Paper inputs, targets and recovery
 
 PDF upload retains the original bytes and page text locally. **Extract paper**
-makes one bounded OpenRouter call; upload alone makes none. Supported inputs are
+first discovers the machine and operating cases, then requests source-linked
+structured evidence from OpenRouter; upload alone makes no provider call. Supported inputs are
 text PDFs up to 8 MiB and 40 pages. Extracted claims require matching page quotes,
 numbers and units. Derived values, numerical assumptions, missing dimensions and
 published analytical versus numerical results stay distinct. Scans, graph
@@ -136,22 +138,31 @@ Jev chooses one function from `create_plan`, `modify_plan` and `clarify`. It doe
 not judge support, physical-input sufficiency or fidelity as approval gates.
 The draft model returns constrained data, never executable Lua or Python, and
 can ask questions about missing inputs or unsupported requests. Deterministic
-code checks contours, labels, references, physics and mesh budgets. A valid typed
+code checks contours, labels, references and physics. Native meshing reports
+execution/resource failures; old pilot coordinate and topology-count caps are removed. A valid typed
 plan is available for preview without any confidence requirement. Review its
 geometry, dimensions, excitation and assumptions before checking its mesh.
 
-If a create/modify call actually fails deterministic validation, one optional
-Jev diagnostic compares that function's arguments with its contract and the
-reported errors. The draft model then gets one repair attempt. A request allows
-one logical route call, one logical failed-call diagnostic and two draft-model
-calls, capped at 6000 generated tokens per draft, within a 90 second total
-deadline. Each Jev logical call has a 25-second wall deadline and permits at most
-two connection attempts, with 10 seconds allowed to connect. Only connection
-establishment failures are retried; read/write failures and provider responses
-are not replayed. A transport retry does not
-repeat the entire planning request or relax validation. Route probabilities and
-diagnostic answers are recorded as information; neither can override a
-validation failure.
+Hierarchical creation uses separate strict provider schemas for the inventory,
+physical facts/settings, exterior domain, each component and each custom feature.
+Novel components can coexist with conventional templates. Successful stages are
+kept fixed; an actual wire/local validation error allows one advisory Jev diagnosis
+and one repair of that stage. Provider access, budget or schema-compilation errors
+stop without changing physics. The existing named-feature modification path also
+allows one deterministic-error repair. No ordinary-JSON fallback is used.
+
+These paths impose no output-token or reasoning cap and no default AI read/wall
+deadline. Connection establishment stays bounded; Jev retries connection failures
+once, but never replays an ambiguously delivered read/write failure. Optional
+`AI_REQUEST_TIMEOUT_SECONDS` is supported for explicit extraction-owner policy.
+Route probabilities and diagnostic answers cannot override a validation failure.
+
+The planning/extraction model can be selected per request without editing server
+settings. Source-image comparison has a separate optional image-model selector;
+empty uses the configured `VISION_MODEL`. PDF page/figure/table crops retain source
+hashes, page coordinates and exact compared PNGs. Their visual findings, including
+optional focused Jev image questions, remain advisory. Automatic quantitative graph
+digitization and reconstruction of unsourced figure dimensions remain unsupported.
 
 The optional **visual review** action sends the original request, typed plan
 and a rendered PNG of the visible geometry to `VISION_MODEL`, defaulting to
@@ -313,11 +324,11 @@ disable TLS verification. Source/version changes belong in
   result storage. No separate database, queue, GPU, or local language model.
 - Up to five queued/running jobs and 20 solve submissions per hour for the pilot.
 - Up to 20 AI planning requests per hour. A general geometry request may make one
-  logical Jev route call, one logical failed-call diagnostic and two draft-model
-  calls, capped at 6000 generated tokens per draft and 90 seconds total, including
-  one repair. Each Jev logical call has at most two transport attempts for
-  connection-establishment failures; neither probability nor confidence gates
-  geometry. Optional manual visual reviews and native failure diagnostics have separate
+  logical Jev route call and multiple strict drafting stages. An invalid stage may
+  make one advisory diagnostic and one repair; earlier checkpoints remain fixed.
+  No default model token/reasoning cap or AI response deadline is imposed. Each Jev
+  logical call has at most two connection-establishment attempts; neither
+  probability nor confidence gates geometry. Optional manual visual reviews and native failure diagnostics have separate
   hourly limits. These in-memory limits reset on restart; use the provider's
   spending controls for an account-level budget.
 - Each simulation has a 180 second timeout. The Compose container is limited to
@@ -376,13 +387,15 @@ benchmark against an independently established reference remains future work.
 
 ## Model details
 
-General geometry plans describe 2D planar DC magnetostatics in millimeters, with
-an explicit out-of-plane depth. They support circular, rectangular and simple
+General geometry plans describe planar or axisymmetric DC magnetostatics in
+millimeters. Planar models require explicit out-of-plane depth; axisymmetric models
+use radial/axial coordinates and no planar depth. They support circular, rectangular and simple
 polygonal contours; separate or nested labeled regions; linear isotropic
 materials; and signed-turn DC circuit assignments. An outer contour encloses
 background air with fixed magnetic vector potential A=0. Contours must not touch,
 cross, or share edges. Every face needs a valid label and all references must
-resolve. Plans outside the supported physics or bounded mesh budget are rejected.
+resolve. Unsupported physics is retained as inspectable assembly intent and is
+blocked from native execution.
 
 Outputs include energy, defined circuit currents and flux linkages, specified
 field probes, and optional force on an eligible region surrounded by air. Field
@@ -396,7 +409,7 @@ pole-edge refinement. Its paired winding cross-sections have opposite turn signs
 both pole gaps use the specified length, and core/armature permeability is
 constant. Armature force uses FEMM's weighted stress tensor block integral.
 
-Axisymmetry, AC, permanent magnets, nonlinear B-H curves, saturation, hysteresis,
+AC, permanent magnets, nonlinear B-H curves, saturation, hysteresis,
 losses, shared-edge Boolean geometry, and full 3D CAD are not supported. Mesh and
 outer-domain convergence still matter for quantitative interpretation. Numerical
 outputs come from FEMM, not from AI predictions or a surrogate model.

@@ -31,6 +31,10 @@ SourceId = Annotated[str, Field(min_length=1)]
 def capability_manifest() -> dict:
     return {"version": 1, "execution_physics": ["planar_dc_magnetics", "axisymmetric_dc_magnetics"],
         "material_laws": ["linear_isotropic"], "coordinate_units": "millimeters",
+        "fact_units_by_role": {"permeability": ["1"], "count": ["1"], "turns": ["turn", "turns"],
+            "length": ["m", "cm", "mm", "um", "in", "inch", "inches"],
+            "mesh": ["m", "cm", "mm", "um", "in", "inch", "inches"],
+            "current": ["A", "mA"], "angle": ["deg", "rad"], "text": ["text"]},
         "planar_depth": "explicit positive source/user value required",
         "axisymmetric": "r>=0, full revolution, finite winding cross-section; no planar depth",
         "geometry": ["rectangle", "circle", "simple_polygon", "closed_path"],
@@ -512,7 +516,7 @@ def compile_assembly(value: MachineAssembly | dict) -> AssemblyCompilation:
     components = {component.id: component for component in assembly.components}
     material_lookup = {item.id: item for item in assembly.materials}
     circuit_lookup = {item.id: item for item in assembly.circuits}
-    supported = set(capability_manifest()["execution_physics"])
+    supported = set(capability_manifest()["execution_physics"] + capability_manifest()["material_laws"])
     required = set(assembly.required_physics) | {assembly.physics}
     for component in assembly.components:
         required.update(component.required_physics)

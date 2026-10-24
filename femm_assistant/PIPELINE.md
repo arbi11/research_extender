@@ -6,7 +6,7 @@ numerical reference passed. Check the reports and CI for the commit being used.
 
 ## Current sequence
 
-`prompt and/or cited paper case → Jev function route → typed draft → deterministic plan checks → preview`
+`prompt and/or cited paper case → Jev function route → strict inventory → source facts/settings → component/feature filling → deterministic plan checks → preview`
 
 `→ immutable revision → native mesh check → exact-spec prerequisite → solve → frozen target comparison → export`
 
@@ -16,7 +16,10 @@ mesh and solve are checked against unchanged frozen targets. Paid recovery
 requests are claimed/cached per failed job; duplicate clicks do not initiate a
 second provider attempt. Queue pressure can resume the already prepared repair.
 
-A failed draft can receive one argument diagnostic and one repair. Optional visual
+An actual wire/local stage failure can receive one argument diagnostic and one
+repair of that stage, retaining earlier checkpoints. Provider/configuration failures
+do not justify changing physics. No default model output cap or AI response deadline
+is imposed. Optional visual
 review and manual native failure diagnosis produce advice beside this sequence;
 they do not approve geometry or control whether it can be meshed or solved.
 
@@ -27,8 +30,9 @@ they do not approve geometry or control whether it can be meshed or solved.
 | Source binding | Bind selected paper case to exact generated model and immutable revision | Implemented; provenance only |
 | Source arithmetic | Check cited uniform current density against one winding's area, turns and circuit current | Opt-in; reports ambiguous/inapplicable cases |
 | Function route | Jev selects `create_plan`, `modify_plan` or `clarify` | Implemented; fixed catalog |
-| Typed draft | Draft model proposes constrained data or clarification questions | Implemented; no executable AI code |
-| Plan checks | Validate contours, labels, references, physics and mesh budget | Implemented; deterministic |
+| Typed stages | Separate strict inventory, facts, domain, component and feature contracts; custom/template components compose locally | Implemented; no executable AI code or ordinary-JSON fallback |
+| Source images | Preserve PDF page/crop provenance and compare exact source/geometry/mesh pixels | Optional; advisory, separate image model |
+| Plan checks | Validate contours, labels, references and executable physics | Implemented; deterministic |
 | Failed-call diagnostic | Compare actual failed function arguments with its contract and errors | Optional; advisory |
 | Preview | Show valid typed geometry and assumptions for user inspection | Implemented; no confidence gate |
 | Visual review | Compare request, rendered geometry and typed plan, optionally actual mesh | Optional; advisory |

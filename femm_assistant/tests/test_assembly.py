@@ -46,6 +46,18 @@ def custom_assembly():
 
 
 class AssemblyTests(unittest.TestCase):
+    def test_advertised_linear_material_requirement_is_executable(self):
+        assembly = coil_assembly()
+        assembly.required_physics.append("linear_isotropic")
+        assembly.components[0].required_physics.append("linear_isotropic")
+        result = compile_assembly(assembly)
+        self.assertTrue(result.execution_supported, result.issues)
+        assembly.required_physics.append("nonlinear_bh")
+        blocked = compile_assembly(assembly)
+        self.assertFalse(blocked.execution_supported)
+        self.assertTrue(any(item.code == "unsupported_physics" for item in blocked.issues))
+
+
     def test_template_compiles_source_units_and_assignments(self):
         result = compile_assembly(coil_assembly())
         self.assertTrue(result.execution_supported, result.issues)
