@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FEMM Assistant · Computational Electromagnetism</title>
+  <link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script><script src="/paper.js" defer></script>
+</head>
+<body>
+  <header><a class="brand" href="/">∿ <span>FEMM <strong>Assistant</strong></span></a><a href="https://github.com/arbi11/research_extender" target="_blank" rel="noreferrer">Book &amp; source ↗</a></header>
+  <main>
+    <div class="intro"><p class="eyebrow">COMPUTATIONAL ELECTROMAGNETISM / MODEL BUILDER</p><h1>From an idea<br>to a field solution.</h1><p>Build a 2D magnetic model, inspect its geometry, and solve it with FEMM 5. Take the complete script with you.</p></div>
+    <div class="statusbar"><span class="pill">Planar &amp; axisymmetric · DC magnetostatics</span><span id="availability">Checking solver…</span></div>
+    <section id="access" class="panel access" hidden><div><h2>Private pilot access</h2><p>Enter the access token configured by the server owner.</p></div><form id="access-form"><label class="sr-only" for="token">Access token</label><input id="token" type="password" autocomplete="off" placeholder="Access token" required><button type="submit">Connect</button></form></section>
+    <div class="workspace">
+      <section class="panel request-panel">
+        <div class="section-heading"><span class="step">01</span><h2>Define the model</h2></div>
+        <label for="mode">Model builder</label>
+        <select id="mode"><option value="plan">General geometry</option><option value="ccore">C-core example</option></select>
+        <p id="mode-note" class="muted"></p>
+        <div id="plan-request-controls">
+          <label for="request-action">What should the AI do?</label>
+          <select id="request-action"><option value="new">Create geometry from scratch</option><option value="modify">Modify the current model</option></select>
+        </div>
+        <details id="paper-controls"><summary>Use a paper or technical report <span>PDF</span></summary>
+          <label for="paper-file">Paper PDF (up to 8 MiB, 40 pages)</label><input id="paper-file" type="file" accept="application/pdf">
+          <div class="draft-actions"><button id="paper-upload" type="button">Read PDF locally</button><button id="paper-extract" type="button" disabled>Extract parameters &amp; targets with AI</button></div>
+          <p class="muted">Reading extracts local text. The AI extraction action sends that text and your instructions to the configured OpenRouter model. Figure-only dimensions and scanned pages need additional information.</p>
+          <p id="paper-status" role="status" aria-live="polite"></p>
+          <div id="paper-evidence" hidden><h3 id="paper-title"></h3><label for="paper-case">Operating case</label><select id="paper-case"></select>
+            <label for="paper-preserve-excitation"><input id="paper-preserve-excitation" type="checkbox" checked> Use the paper’s excitation</label>
+            <p class="muted">For one uniform winding, check current from the cited current density, section area and turns. Uncheck for an instructed excitation variation.</p>
+            <ul id="paper-parameters"></ul><ul id="paper-questions"></ul>
+            <label for="compare-targets"><input id="compare-targets" type="checkbox" checked> Compare the selected published targets after solving</label>
+            <p class="muted">These references describe the paper's original conditions. Your instructions may create a variation; a variation is not automatically a reproduction.</p>
+            <details><summary>Review target quantities, selectors and tolerances</summary><label class="sr-only" for="target-json">Targets to freeze before solving</label><textarea id="target-json" rows="12" spellcheck="false"></textarea></details>
+            <button id="paper-clear" type="button">Continue without this paper</button>
+          </div>
+        </details>
+        <label for="prompt">What would you like to investigate?</label>
+        <textarea id="prompt" rows="5" maxlength="3000" placeholder="Describe the geometry, dimensions, materials, current and surrounding air region."></textarea>
+        <button id="interpret" class="primary">Create model <span>↗</span></button>
+        <p id="ai-note" class="muted"></p>
+        <p id="explanation" class="explanation" hidden></p>
+        <details id="decision-trace" class="decision-trace" hidden><summary>Function routing &amp; error diagnostics</summary><p class="muted">The router chooses which function to call. Probabilities describe its choice and do not approve geometry or block execution. Argument diagnosis is offered after a function fails.</p><ul id="decision-list"></ul></details>
+        <div id="questions" class="questions" hidden><strong>Clarification needed</strong><ul id="question-list"></ul><p id="question-help">Add these details to your request and apply it again, or address them in the model below.</p><label id="resolved-label"><input id="resolved" type="checkbox"> I have addressed these points in the model below.</label></div>
+        <div id="plan-controls">
+          <div class="draft-actions"><button id="load-example">Load a wire example</button><button id="validate-plan">Validate &amp; preview</button></div>
+          <button id="load-axisymmetric" hidden>Load an axisymmetric coil</button>
+          <p id="plan-summary" class="muted">Start with a description or load the round-wire example.</p>
+          <details id="plan-editor"><summary>View or edit the model plan <span>Advanced</span></summary><label class="sr-only" for="plan-json">Geometry, materials, circuits and boundary specification as JSON</label><textarea id="plan-json" rows="20" spellcheck="false" placeholder="A generated model plan will appear here."></textarea></details>
+          <details id="model-history" hidden><summary>Model changes &amp; check history</summary><p id="revision-summary" class="muted"></p><ul id="revision-changes"></ul><ul id="revision-checks"></ul><p class="muted">Each mesh and solution belongs to an exact model revision. A recovery creates a separate branch and requires new checks.</p></details>
+        </div>
+        <details id="ccore-controls" open hidden><summary>Model parameters <span>mm / A</span></summary><form id="parameters" class="parameters"></form></details>
+      </section>
+      <section class="panel model-panel">
+        <div class="section-heading"><span class="step">02</span><h2 id="inspect-title">Inspect, mesh &amp; solve</h2><span id="model-tag" class="tag">NEW MODEL</span></div>
+        <ol id="pipeline" class="pipeline" aria-label="Model progress"><li id="stage-model">Geometry, materials &amp; boundary</li><li id="stage-mesh">Mesh check</li><li id="stage-solve">Solve</li><li id="stage-results">Results</li></ol>
+        <div class="canvas"><img id="geometry" alt="Magnetic model geometry preview" hidden><p id="preview-empty" class="preview-empty">Describe a model or load an example to preview its geometry.</p><p id="canvas-note" class="canvas-note">Geometry and region assignments are checked before solving.</p></div>
+        <div class="preview-caption"><span id="preview-scope">Linear materials · Zero magnetic vector potential at the outer boundary</span><span id="dimensions"></span></div>
+        <div id="visual-review-controls" hidden><label class="visual-review-option" for="visual-include-mesh"><input id="visual-include-mesh" type="checkbox" checked aria-describedby="visual-mesh-help"> Include the checked FEMM mesh</label><p id="visual-mesh-help" class="muted"></p><button id="visual-review" disabled>Review geometry visually</button><p class="muted">Optional AI observations compare your request with the visible geometry and, when available, its actual mesh. Findings are advisory and do not block meshing or solving.</p><section id="visual-review-panel" class="mesh-panel" aria-label="Advisory visual review" hidden><h3>Visual observations · advisory</h3><p id="visual-review-source" class="muted"></p><p id="visual-review-summary" role="status" aria-live="polite"></p><ul id="visual-review-findings" class="mesh-checks"></ul></section></div>
+        <div id="mesh-controls"><button id="mesh-check" disabled>Check mesh with FEMM <span>→</span></button><p class="muted">Generate and inspect the mesh before solving. Changing the model requires a new mesh check.</p></div>
+        <section id="mesh-panel" class="mesh-panel" aria-label="Mesh check" hidden><div class="mesh-heading"><h3>Mesh check</h3><span id="mesh-status" class="tag"></span></div><p id="mesh-message" role="status" aria-live="polite"></p><img id="mesh-image" alt="Actual finite-element mesh generated by FEMM" hidden><dl id="mesh-quantities" class="mesh-quantities"></dl><ul id="mesh-checks" class="mesh-checks"></ul><ul id="mesh-warnings" class="mesh-warnings"></ul><p id="mesh-scope" class="muted" hidden>Mesh checks passed. Mesh convergence and physical accuracy have not been verified.</p><div class="mesh-downloads"><button id="mesh-download" hidden>Download mesh &amp; scripts</button><button id="mesh-log" hidden>Download mesh log</button><button id="mesh-diagnose" hidden>Diagnose failed function arguments</button></div><p id="mesh-diagnosis" class="muted" role="status" aria-live="polite" hidden></p></section>
+        <div class="actions"><button id="solve" class="primary" disabled>Solve with FEMM <span>→</span></button><button id="source" disabled>↓ Download script</button></div>
+        <p id="message" role="status" aria-live="polite"></p>
+        <section id="recovery-controls" class="mesh-panel" hidden><h3>Controlled recovery</h3><p>Trace the recorded failure and attempt one scoped repair on a separate model branch. Mesh, solve and any frozen target checks run again.</p>
+          <label for="recovery-scope">Permitted changes</label><select id="recovery-scope"><option value="mesh">Mesh settings only</option><option value="last_edit">Fields changed by the last model edit</option><option value="custom">Explicit feature paths below</option></select>
+          <label for="recovery-paths">Feature paths (for explicit scope, comma separated)</label><input id="recovery-paths" placeholder="/circuits/coil/current_a">
+          <label for="recovery-instruction">Recovery instructions</label><textarea id="recovery-instruction" rows="3" maxlength="3000" placeholder="Describe what should be restored or corrected. Published targets and unselected inputs remain fixed."></textarea>
+          <button id="recover-model">Attempt one controlled recovery</button><p id="recovery-status" role="status" aria-live="polite"></p>
+        </section>
+        <details class="assumptions"><summary>Model assumptions &amp; scope</summary><ul id="assumptions"></ul><p>Preview checks the geometry and assignments. The general builder then checks an actual FEMM mesh before solving. Numerical results appear after a successful finite-element solve. Planar and axisymmetric DC models use linear materials. AC analysis, saturation and losses are not supported.</p></details>
+      </section>
+    </div>
+    <section id="results" class="panel results" hidden>
+      <div class="section-heading"><span class="step">03</span><h2>Simulation results</h2><span id="job-status" class="tag"></span></div>
+      <p id="job-model" class="muted"></p><p id="job-message" role="status" aria-live="polite"></p>
+      <div id="result-body" hidden><p class="muted">Results belong to the model submitted for this job. Editing the current draft does not change these results. The download includes the submitted specification.</p><section id="target-results" hidden><h3 id="target-status"></h3><ul id="target-checks"></ul></section><div class="result-grid"><img id="field" alt="Computed magnetic flux density magnitude"><div><table><thead><tr><th>Quantity</th><th>Value</th></tr></thead><tbody id="quantities"></tbody></table><button id="download" class="primary">↓ Download model, results &amp; scripts</button></div></div></div><button id="log" hidden>Download solver log</button> <button id="solve-diagnose" hidden>Diagnose failed function arguments</button><p id="solve-diagnosis" class="muted" role="status" aria-live="polite" hidden></p>
+    </section>
+    <footer><span>A reproducible companion to the book.</span><span>Powered by native FEMM 5 on Linux · <a href="https://femm.info/doku/doku.php?id=download5" target="_blank" rel="noreferrer">About FEMM ↗</a></span></footer>
+  </main>
+</body>
+</html>

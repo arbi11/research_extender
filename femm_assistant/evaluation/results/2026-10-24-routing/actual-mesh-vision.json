@@ -1,0 +1,205 @@
+{
+  "source": "live OpenRouter review of actual native Docker FEMM mesh",
+  "prompt": "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Draw an asymmetric C-shaped steel polygon, vertices in order (-15,-12), (10,-12), (10,-6), (-7,-6), (-7,6), (6,6), (6,12), (-15,12), relative permeability 1000, label (-12,0). Add winding rectangles (-5,-4) to (0,4), label (-2.5,0), +50 turns, and (-22,-4) to (-17,4), label (-19.5,0), -50 turns. Both windings have relative permeability 1 and share a +1 A DC circuit. Use enclosing air rectangle (-40,-30) to (30,30), outer A=0, background label (20,20), and B probe (3,0). Use global mesh size 1 mm. No force extraction is requested. ",
+  "spec": {
+    "kind": "magnetostatic_plan",
+    "title": "Asymmetric C core",
+    "units": "millimeters",
+    "physics": "planar_dc_magnetics",
+    "depth_mm": 10.0,
+    "mesh_mm": 1.0,
+    "domain": {
+      "type": "rectangle",
+      "x_min": -40.0,
+      "y_min": -30.0,
+      "x_max": 30.0,
+      "y_max": 30.0
+    },
+    "air_label": {
+      "x": 20.0,
+      "y": 20.0
+    },
+    "materials": [
+      {
+        "id": "steel",
+        "relative_permeability": 1000.0
+      },
+      {
+        "id": "copper",
+        "relative_permeability": 1.0
+      }
+    ],
+    "circuits": [
+      {
+        "id": "drive",
+        "current_a": 1.0
+      }
+    ],
+    "regions": [
+      {
+        "id": "core",
+        "shape": {
+          "type": "polygon",
+          "points": [
+            {
+              "x": -15.0,
+              "y": -12.0
+            },
+            {
+              "x": 10.0,
+              "y": -12.0
+            },
+            {
+              "x": 10.0,
+              "y": -6.0
+            },
+            {
+              "x": -7.0,
+              "y": -6.0
+            },
+            {
+              "x": -7.0,
+              "y": 6.0
+            },
+            {
+              "x": 6.0,
+              "y": 6.0
+            },
+            {
+              "x": 6.0,
+              "y": 12.0
+            },
+            {
+              "x": -15.0,
+              "y": 12.0
+            }
+          ]
+        },
+        "material": "steel",
+        "label": {
+          "x": -12.0,
+          "y": 0.0
+        },
+        "circuit": null,
+        "turns": 0,
+        "mesh_mm": null
+      },
+      {
+        "id": "positive",
+        "shape": {
+          "type": "rectangle",
+          "x_min": -5.0,
+          "y_min": -4.0,
+          "x_max": 0.0,
+          "y_max": 4.0
+        },
+        "material": "copper",
+        "label": {
+          "x": -2.5,
+          "y": 0.0
+        },
+        "circuit": "drive",
+        "turns": 50,
+        "mesh_mm": null
+      },
+      {
+        "id": "negative",
+        "shape": {
+          "type": "rectangle",
+          "x_min": -22.0,
+          "y_min": -4.0,
+          "x_max": -17.0,
+          "y_max": 4.0
+        },
+        "material": "copper",
+        "label": {
+          "x": -19.5,
+          "y": 0.0
+        },
+        "circuit": "drive",
+        "turns": -50,
+        "mesh_mm": null
+      }
+    ],
+    "force_region": null,
+    "probes": [
+      {
+        "x": 3.0,
+        "y": 0.0
+      }
+    ]
+  },
+  "native_mesh": {
+    "status": "passed",
+    "node_count": 5752,
+    "element_count": 11213,
+    "edge_count": 16964,
+    "quality": {
+      "min_angle_deg": 30.003258827705316,
+      "max_aspect_ratio": 3.437983377205922,
+      "min_area_mm2": 0.003375760282312276,
+      "max_area_mm2": 0.7853274944072376,
+      "total_area_mm2": 4200.0000000000155,
+      "aspect_definition": "longest edge divided by its altitude (equilateral: 2/sqrt(3))"
+    },
+    "checks": [
+      {
+        "name": "native_artifacts",
+        "status": "passed",
+        "detail": "Finite 2D nodes, indexed three-node elements, unique triangles and consistent edges."
+      },
+      {
+        "name": "element_geometry",
+        "status": "passed",
+        "detail": "Every element has positive area; each internal edge has two incident triangles on opposite sides."
+      },
+      {
+        "name": "domain_coverage",
+        "status": "passed",
+        "detail": "Nodes lie inside the domain; one closed outer boundary and the expected filled area are present."
+      },
+      {
+        "name": "block_labels",
+        "status": "passed",
+        "detail": "Every compiler block-label index is present and covers its intended label seed."
+      }
+    ],
+    "warnings": [
+      "Mesh structure and element shape were inspected. Mesh-refinement and outer-boundary convergence have not been verified."
+    ],
+    "convergence_verified": false,
+    "files": [
+      "model.node",
+      "model.ele"
+    ],
+    "region_element_counts": {
+      "1": 9740,
+      "2": 1141,
+      "3": 165,
+      "4": 167
+    },
+    "runtime": {
+      "value": 0.551,
+      "unit": "s"
+    }
+  },
+  "mesh_sha256": "5f3866308c0c872aa978e922fdff0d9eba6ed4b716a40d6a8826561289fb7502",
+  "geometry_sha256": "9d347f3817d3cd00d40b2f596bbcb52a095fbc8872a2e4c5d2a42e7e3441dfa0",
+  "review": {
+    "advisory": true,
+    "status": "matches",
+    "summary": "The geometry and region assignments appear consistent with the source request. The C-shaped core and two winding rectangles are correctly positioned relative to each other. The probe location and domain boundaries match the specifications.",
+    "findings": [],
+    "requested_model": "google/gemini-3.1-flash-lite",
+    "usage": {
+      "prompt_tokens": 3704,
+      "completion_tokens": 70,
+      "total_tokens": 3774,
+      "cost": 0.001031,
+      "reasoning_tokens": 0
+    }
+  },
+  "latency_seconds": 4.762,
+  "native_job_unchanged": true,
+  "limitation": "One advisory example; no numerical convergence certification."
+}

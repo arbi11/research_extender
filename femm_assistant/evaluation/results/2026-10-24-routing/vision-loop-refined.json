@@ -1,0 +1,1317 @@
+{
+  "source": "live_public_geometry_advisory_ab",
+  "created_at_utc": "2026-10-23T20:00:57.951941+00:00",
+  "advisory_only": true,
+  "production_gate": false,
+  "sequential": true,
+  "requested_models": [
+    "qwen/qwen3-vl-30b-a3b-instruct",
+    "google/gemini-3.1-flash-lite"
+  ],
+  "planned_calls": 12,
+  "fixture_sha256": "30525fb7b2f5e3f3afe99ebb1beea8eeb137348a2214cc5ec40e4d9adc8c02d7",
+  "fixtures": [
+    {
+      "id": "correct_wire",
+      "prompt": "Create a 2D planar DC model in millimeters: a circular conductor centered at (0,0), radius 1 mm, relative permeability 1, current +1 A with one positive turn, out-of-plane depth 20 mm. Use an enclosing circular air domain of radius 10 mm with A=0, air label (5,0), global mesh 0.5 mm and a field probe at (3,0).",
+      "candidate": {
+        "kind": "magnetostatic_plan",
+        "title": "Round conductor in air",
+        "units": "millimeters",
+        "physics": "planar_dc_magnetics",
+        "depth_mm": 20.0,
+        "mesh_mm": 0.5,
+        "domain": {
+          "type": "circle",
+          "center": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "radius": 10.0
+        },
+        "air_label": {
+          "x": 5.0,
+          "y": 0.0
+        },
+        "materials": [
+          {
+            "id": "conductor",
+            "relative_permeability": 1.0
+          }
+        ],
+        "circuits": [
+          {
+            "id": "wire",
+            "current_a": 1.0
+          }
+        ],
+        "regions": [
+          {
+            "id": "wire",
+            "shape": {
+              "type": "circle",
+              "center": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "radius": 1.0
+            },
+            "material": "conductor",
+            "label": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "circuit": "wire",
+            "turns": 1,
+            "mesh_mm": null
+          }
+        ],
+        "force_region": null,
+        "probes": [
+          {
+            "x": 3.0,
+            "y": 0.0
+          }
+        ]
+      },
+      "expected": "matches",
+      "rationale": "The radius-1 conductor, excitation, domain and probe match the request.",
+      "geometry_png": "vision-loop-refined-cases/correct_wire.png"
+    },
+    {
+      "id": "wrong_wire_radius",
+      "prompt": "Create a 2D planar DC model in millimeters: a circular conductor centered at (0,0), radius 1 mm, relative permeability 1, current +1 A with one positive turn, out-of-plane depth 20 mm. Use an enclosing circular air domain of radius 10 mm with A=0, air label (5,0), global mesh 0.5 mm and a field probe at (3,0).",
+      "candidate": {
+        "kind": "magnetostatic_plan",
+        "title": "Round conductor in air",
+        "units": "millimeters",
+        "physics": "planar_dc_magnetics",
+        "depth_mm": 20.0,
+        "mesh_mm": 0.5,
+        "domain": {
+          "type": "circle",
+          "center": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "radius": 10.0
+        },
+        "air_label": {
+          "x": 5.0,
+          "y": 0.0
+        },
+        "materials": [
+          {
+            "id": "conductor",
+            "relative_permeability": 1.0
+          }
+        ],
+        "circuits": [
+          {
+            "id": "wire",
+            "current_a": 1.0
+          }
+        ],
+        "regions": [
+          {
+            "id": "wire",
+            "shape": {
+              "type": "circle",
+              "center": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "radius": 1.6
+            },
+            "material": "conductor",
+            "label": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "circuit": "wire",
+            "turns": 1,
+            "mesh_mm": null
+          }
+        ],
+        "force_region": null,
+        "probes": [
+          {
+            "x": 3.0,
+            "y": 0.0
+          }
+        ]
+      },
+      "expected": "issues",
+      "rationale": "The conductor radius is 1.6 mm instead of the requested 1 mm; the probe remains outside at x=3 mm.",
+      "geometry_png": "vision-loop-refined-cases/wrong_wire_radius.png"
+    },
+    {
+      "id": "correct_asymmetric_core",
+      "prompt": "Create a 2D planar DC magnetic model. All coordinates are in millimeters; out-of-plane depth is 10 mm.\n\nCreate an asymmetric C-shaped core using these polygon vertices in order:\n(-15,-12), (10,-12), (10,-6), (-7,-6),\n(-7,6), (6,6), (6,12), (-15,12).\nUse linear relative permeability 1000 and place its label at (-12,0).\n\nAdd two rectangular winding cross-sections, both with relative permeability 1:\n1. From (-5,-4) to (0,4), label (-2.5,0), +50 turns.\n2. From (-22,-4) to (-17,4), label (-19.5,0), -50 turns.\nAssign both to the same circuit carrying 1 A DC.\n\nUse an enclosing air rectangle from (-40,-30) to (30,30), with A=0 on its boundary and air label at (20,20).\nUse a global mesh size of 1 mm. Measure magnetic flux density at (3,0).",
+      "candidate": {
+        "kind": "magnetostatic_plan",
+        "title": "Asymmetric C-core with two windings and air domain",
+        "units": "millimeters",
+        "physics": "planar_dc_magnetics",
+        "depth_mm": 10.0,
+        "mesh_mm": 1.0,
+        "domain": {
+          "type": "rectangle",
+          "x_min": -40.0,
+          "y_min": -30.0,
+          "x_max": 30.0,
+          "y_max": 30.0
+        },
+        "air_label": {
+          "x": 20.0,
+          "y": 20.0
+        },
+        "materials": [
+          {
+            "id": "core_material",
+            "relative_permeability": 1000.0
+          }
+        ],
+        "circuits": [
+          {
+            "id": "coil_circuit",
+            "current_a": 1.0
+          }
+        ],
+        "regions": [
+          {
+            "id": "core",
+            "shape": {
+              "type": "polygon",
+              "points": [
+                {
+                  "x": -15.0,
+                  "y": -12.0
+                },
+                {
+                  "x": 10.0,
+                  "y": -12.0
+                },
+                {
+                  "x": 10.0,
+                  "y": -6.0
+                },
+                {
+                  "x": -7.0,
+                  "y": -6.0
+                },
+                {
+                  "x": -7.0,
+                  "y": 6.0
+                },
+                {
+                  "x": 6.0,
+                  "y": 6.0
+                },
+                {
+                  "x": 6.0,
+                  "y": 12.0
+                },
+                {
+                  "x": -15.0,
+                  "y": 12.0
+                }
+              ]
+            },
+            "material": "core_material",
+            "label": {
+              "x": -12.0,
+              "y": 0.0
+            },
+            "circuit": null,
+            "turns": 0,
+            "mesh_mm": null
+          },
+          {
+            "id": "coil1",
+            "shape": {
+              "type": "rectangle",
+              "x_min": -5.0,
+              "y_min": -4.0,
+              "x_max": 0.0,
+              "y_max": 4.0
+            },
+            "material": "air",
+            "label": {
+              "x": -2.5,
+              "y": 0.0
+            },
+            "circuit": "coil_circuit",
+            "turns": 50,
+            "mesh_mm": null
+          },
+          {
+            "id": "coil2",
+            "shape": {
+              "type": "rectangle",
+              "x_min": -22.0,
+              "y_min": -4.0,
+              "x_max": -17.0,
+              "y_max": 4.0
+            },
+            "material": "air",
+            "label": {
+              "x": -19.5,
+              "y": 0.0
+            },
+            "circuit": "coil_circuit",
+            "turns": -50,
+            "mesh_mm": null
+          }
+        ],
+        "force_region": null,
+        "probes": [
+          {
+            "x": 3.0,
+            "y": 0.0
+          }
+        ]
+      },
+      "expected": "matches",
+      "rationale": "All three requested regions and signed circuit assignments are present.",
+      "geometry_png": "vision-loop-refined-cases/correct_asymmetric_core.png"
+    },
+    {
+      "id": "missing_return_winding",
+      "prompt": "Create a 2D planar DC magnetic model. All coordinates are in millimeters; out-of-plane depth is 10 mm.\n\nCreate an asymmetric C-shaped core using these polygon vertices in order:\n(-15,-12), (10,-12), (10,-6), (-7,-6),\n(-7,6), (6,6), (6,12), (-15,12).\nUse linear relative permeability 1000 and place its label at (-12,0).\n\nAdd two rectangular winding cross-sections, both with relative permeability 1:\n1. From (-5,-4) to (0,4), label (-2.5,0), +50 turns.\n2. From (-22,-4) to (-17,4), label (-19.5,0), -50 turns.\nAssign both to the same circuit carrying 1 A DC.\n\nUse an enclosing air rectangle from (-40,-30) to (30,30), with A=0 on its boundary and air label at (20,20).\nUse a global mesh size of 1 mm. Measure magnetic flux density at (3,0).",
+      "candidate": {
+        "kind": "magnetostatic_plan",
+        "title": "Asymmetric C-core with two windings and air domain",
+        "units": "millimeters",
+        "physics": "planar_dc_magnetics",
+        "depth_mm": 10.0,
+        "mesh_mm": 1.0,
+        "domain": {
+          "type": "rectangle",
+          "x_min": -40.0,
+          "y_min": -30.0,
+          "x_max": 30.0,
+          "y_max": 30.0
+        },
+        "air_label": {
+          "x": 20.0,
+          "y": 20.0
+        },
+        "materials": [
+          {
+            "id": "core_material",
+            "relative_permeability": 1000.0
+          }
+        ],
+        "circuits": [
+          {
+            "id": "coil_circuit",
+            "current_a": 1.0
+          }
+        ],
+        "regions": [
+          {
+            "id": "core",
+            "shape": {
+              "type": "polygon",
+              "points": [
+                {
+                  "x": -15.0,
+                  "y": -12.0
+                },
+                {
+                  "x": 10.0,
+                  "y": -12.0
+                },
+                {
+                  "x": 10.0,
+                  "y": -6.0
+                },
+                {
+                  "x": -7.0,
+                  "y": -6.0
+                },
+                {
+                  "x": -7.0,
+                  "y": 6.0
+                },
+                {
+                  "x": 6.0,
+                  "y": 6.0
+                },
+                {
+                  "x": 6.0,
+                  "y": 12.0
+                },
+                {
+                  "x": -15.0,
+                  "y": 12.0
+                }
+              ]
+            },
+            "material": "core_material",
+            "label": {
+              "x": -12.0,
+              "y": 0.0
+            },
+            "circuit": null,
+            "turns": 0,
+            "mesh_mm": null
+          },
+          {
+            "id": "coil1",
+            "shape": {
+              "type": "rectangle",
+              "x_min": -5.0,
+              "y_min": -4.0,
+              "x_max": 0.0,
+              "y_max": 4.0
+            },
+            "material": "air",
+            "label": {
+              "x": -2.5,
+              "y": 0.0
+            },
+            "circuit": "coil_circuit",
+            "turns": 50,
+            "mesh_mm": null
+          }
+        ],
+        "force_region": null,
+        "probes": [
+          {
+            "x": 3.0,
+            "y": 0.0
+          }
+        ]
+      },
+      "expected": "issues",
+      "rationale": "The requested negative-turn return winding is absent; the positive winding still uses the circuit.",
+      "geometry_png": "vision-loop-refined-cases/missing_return_winding.png"
+    },
+    {
+      "id": "reversed_return_turns",
+      "prompt": "Create a 2D planar DC magnetic model. All coordinates are in millimeters; out-of-plane depth is 10 mm.\n\nCreate an asymmetric C-shaped core using these polygon vertices in order:\n(-15,-12), (10,-12), (10,-6), (-7,-6),\n(-7,6), (6,6), (6,12), (-15,12).\nUse linear relative permeability 1000 and place its label at (-12,0).\n\nAdd two rectangular winding cross-sections, both with relative permeability 1:\n1. From (-5,-4) to (0,4), label (-2.5,0), +50 turns.\n2. From (-22,-4) to (-17,4), label (-19.5,0), -50 turns.\nAssign both to the same circuit carrying 1 A DC.\n\nUse an enclosing air rectangle from (-40,-30) to (30,30), with A=0 on its boundary and air label at (20,20).\nUse a global mesh size of 1 mm. Measure magnetic flux density at (3,0).",
+      "candidate": {
+        "kind": "magnetostatic_plan",
+        "title": "Asymmetric C-core with two windings and air domain",
+        "units": "millimeters",
+        "physics": "planar_dc_magnetics",
+        "depth_mm": 10.0,
+        "mesh_mm": 1.0,
+        "domain": {
+          "type": "rectangle",
+          "x_min": -40.0,
+          "y_min": -30.0,
+          "x_max": 30.0,
+          "y_max": 30.0
+        },
+        "air_label": {
+          "x": 20.0,
+          "y": 20.0
+        },
+        "materials": [
+          {
+            "id": "core_material",
+            "relative_permeability": 1000.0
+          }
+        ],
+        "circuits": [
+          {
+            "id": "coil_circuit",
+            "current_a": 1.0
+          }
+        ],
+        "regions": [
+          {
+            "id": "core",
+            "shape": {
+              "type": "polygon",
+              "points": [
+                {
+                  "x": -15.0,
+                  "y": -12.0
+                },
+                {
+                  "x": 10.0,
+                  "y": -12.0
+                },
+                {
+                  "x": 10.0,
+                  "y": -6.0
+                },
+                {
+                  "x": -7.0,
+                  "y": -6.0
+                },
+                {
+                  "x": -7.0,
+                  "y": 6.0
+                },
+                {
+                  "x": 6.0,
+                  "y": 6.0
+                },
+                {
+                  "x": 6.0,
+                  "y": 12.0
+                },
+                {
+                  "x": -15.0,
+                  "y": 12.0
+                }
+              ]
+            },
+            "material": "core_material",
+            "label": {
+              "x": -12.0,
+              "y": 0.0
+            },
+            "circuit": null,
+            "turns": 0,
+            "mesh_mm": null
+          },
+          {
+            "id": "coil1",
+            "shape": {
+              "type": "rectangle",
+              "x_min": -5.0,
+              "y_min": -4.0,
+              "x_max": 0.0,
+              "y_max": 4.0
+            },
+            "material": "air",
+            "label": {
+              "x": -2.5,
+              "y": 0.0
+            },
+            "circuit": "coil_circuit",
+            "turns": 50,
+            "mesh_mm": null
+          },
+          {
+            "id": "coil2",
+            "shape": {
+              "type": "rectangle",
+              "x_min": -22.0,
+              "y_min": -4.0,
+              "x_max": -17.0,
+              "y_max": 4.0
+            },
+            "material": "air",
+            "label": {
+              "x": -19.5,
+              "y": 0.0
+            },
+            "circuit": "coil_circuit",
+            "turns": 50,
+            "mesh_mm": null
+          }
+        ],
+        "force_region": null,
+        "probes": [
+          {
+            "x": 3.0,
+            "y": 0.0
+          }
+        ]
+      },
+      "expected": "issues",
+      "rationale": "The return winding has +50 turns rather than -50. The typed plan deliberately accompanies the image.",
+      "geometry_png": "vision-loop-refined-cases/reversed_return_turns.png"
+    },
+    {
+      "id": "mirrored_asymmetric_core",
+      "prompt": "Create a 2D planar DC magnetic model. All coordinates are in millimeters; out-of-plane depth is 10 mm.\n\nCreate an asymmetric C-shaped core using these polygon vertices in order:\n(-15,-12), (10,-12), (10,-6), (-7,-6),\n(-7,6), (6,6), (6,12), (-15,12).\nUse linear relative permeability 1000 and place its label at (-12,0).\n\nAdd two rectangular winding cross-sections, both with relative permeability 1:\n1. From (-5,-4) to (0,4), label (-2.5,0), +50 turns.\n2. From (-22,-4) to (-17,4), label (-19.5,0), -50 turns.\nAssign both to the same circuit carrying 1 A DC.\n\nUse an enclosing air rectangle from (-40,-30) to (30,30), with A=0 on its boundary and air label at (20,20).\nUse a global mesh size of 1 mm. Measure magnetic flux density at (3,0).",
+      "candidate": {
+        "kind": "magnetostatic_plan",
+        "title": "Asymmetric C-core with two windings and air domain",
+        "units": "millimeters",
+        "physics": "planar_dc_magnetics",
+        "depth_mm": 10.0,
+        "mesh_mm": 1.0,
+        "domain": {
+          "type": "rectangle",
+          "x_min": -30.0,
+          "y_min": -30.0,
+          "x_max": 40.0,
+          "y_max": 30.0
+        },
+        "air_label": {
+          "x": -20.0,
+          "y": 20.0
+        },
+        "materials": [
+          {
+            "id": "core_material",
+            "relative_permeability": 1000.0
+          }
+        ],
+        "circuits": [
+          {
+            "id": "coil_circuit",
+            "current_a": 1.0
+          }
+        ],
+        "regions": [
+          {
+            "id": "core",
+            "shape": {
+              "type": "polygon",
+              "points": [
+                {
+                  "x": 15.0,
+                  "y": -12.0
+                },
+                {
+                  "x": -10.0,
+                  "y": -12.0
+                },
+                {
+                  "x": -10.0,
+                  "y": -6.0
+                },
+                {
+                  "x": 7.0,
+                  "y": -6.0
+                },
+                {
+                  "x": 7.0,
+                  "y": 6.0
+                },
+                {
+                  "x": -6.0,
+                  "y": 6.0
+                },
+                {
+                  "x": -6.0,
+                  "y": 12.0
+                },
+                {
+                  "x": 15.0,
+                  "y": 12.0
+                }
+              ]
+            },
+            "material": "core_material",
+            "label": {
+              "x": 12.0,
+              "y": 0.0
+            },
+            "circuit": null,
+            "turns": 0,
+            "mesh_mm": null
+          },
+          {
+            "id": "coil1",
+            "shape": {
+              "type": "rectangle",
+              "x_min": -0.0,
+              "y_min": -4.0,
+              "x_max": 5.0,
+              "y_max": 4.0
+            },
+            "material": "air",
+            "label": {
+              "x": 2.5,
+              "y": 0.0
+            },
+            "circuit": "coil_circuit",
+            "turns": 50,
+            "mesh_mm": null
+          },
+          {
+            "id": "coil2",
+            "shape": {
+              "type": "rectangle",
+              "x_min": 17.0,
+              "y_min": -4.0,
+              "x_max": 22.0,
+              "y_max": 4.0
+            },
+            "material": "air",
+            "label": {
+              "x": 19.5,
+              "y": 0.0
+            },
+            "circuit": "coil_circuit",
+            "turns": -50,
+            "mesh_mm": null
+          }
+        ],
+        "force_region": null,
+        "probes": [
+          {
+            "x": -3.0,
+            "y": 0.0
+          }
+        ]
+      },
+      "expected": "issues",
+      "rationale": "The entire geometry, domain, labels and probe are reflected across x=0; the request specifies the original coordinates.",
+      "geometry_png": "vision-loop-refined-cases/mirrored_asymmetric_core.png"
+    }
+  ],
+  "rows": [
+    {
+      "id": "correct_wire",
+      "requested_model": "qwen/qwen3-vl-30b-a3b-instruct",
+      "expected": "matches",
+      "advisory": {
+        "advisory": true,
+        "status": "matches",
+        "summary": "The geometry shows a circular conductor at (0,0) with radius 1 mm inside a larger circular air domain of radius 10 mm. The conductor is labeled and has a single positive turn with 1 A current. An air label is present at (5,0), and a field probe is located at (3,0). The model uses a 20 mm depth and 0.5 mm mesh size. All elements match the typed plan.",
+        "findings": [
+          {
+            "location": "conductor region",
+            "issue": "No mesh visible in the image to verify mesh size or quality.",
+            "suggestion": "Verify meshing by checking the meshed view to ensure 0.5 mm mesh resolution is applied."
+          },
+          {
+            "location": "air domain",
+            "issue": "No mesh visible in the image to verify mesh size or quality.",
+            "suggestion": "Verify meshing by checking the meshed view to ensure 0.5 mm mesh resolution is applied."
+          },
+          {
+            "location": "probe at (3,0)",
+            "issue": "No mesh visible in the image to verify probe placement.",
+            "suggestion": "Verify probe placement by checking the meshed view to confirm the probe is at (3,0)."
+          },
+          {
+            "location": "circuit current",
+            "issue": "No mesh visible in the image to verify current assignment.",
+            "suggestion": "Verify current assignment by checking the circuit settings to confirm 1 A with positive turn count."
+          },
+          {
+            "location": "material properties",
+            "issue": "No mesh visible in the image to verify material properties.",
+            "suggestion": "Verify material properties by checking the conductor material to confirm relative permeability of 1.0."
+          },
+          {
+            "location": "domain boundary",
+            "issue": "No mesh visible in the image to verify domain boundary.",
+            "suggestion": "Verify domain boundary by checking the domain to confirm radius of 10 mm."
+          },
+          {
+            "location": "depth",
+            "issue": "No mesh visible in the image to verify depth.",
+            "suggestion": "Verify depth by checking the model settings to confirm 20 mm depth."
+          },
+          {
+            "location": "air label",
+            "issue": "No mesh visible in the image to verify label placement.",
+            "suggestion": "Verify label placement by checking the label to confirm it is at (5,0)."
+          }
+        ],
+        "requested_model": "qwen/qwen3-vl-30b-a3b-instruct",
+        "usage": {
+          "prompt_tokens": 1861,
+          "completion_tokens": 495,
+          "total_tokens": 2356,
+          "cost": 0.00103469,
+          "reasoning_tokens": 0
+        }
+      },
+      "usage": {
+        "prompt_tokens": 1861,
+        "completion_tokens": 495,
+        "total_tokens": 2356,
+        "cost": 0.00103469,
+        "reasoning_tokens": 0
+      },
+      "latency_seconds": 13.61209
+    },
+    {
+      "id": "wrong_wire_radius",
+      "requested_model": "qwen/qwen3-vl-30b-a3b-instruct",
+      "expected": "issues",
+      "advisory": {
+        "advisory": true,
+        "status": "issues",
+        "summary": "The geometry shows a circular conductor at (0,0) with a radius of 1 mm, enclosed by a larger air domain of radius 10 mm, matching the request. However, the conductor's radius in the typed plan is 1.6 mm, which is inconsistent with the requested 1 mm. The current is +1 A with one positive turn, and the depth is 20 mm, all matching. The field probe is at (3,0), and the air label is at (5,0), both correct. The mesh size is 0.5 mm, as requested. The material is correctly assigned to the conductor with relative permeability 1.0. The overall shape and relative positions are correct, but the conductor radius is incorrect.",
+        "findings": [
+          {
+            "location": "conductor region",
+            "issue": "The conductor radius is 1.6 mm in the plan, but the request specifies 1 mm.",
+            "suggestion": "Adjust the conductor radius to 1 mm to match the request."
+          }
+        ],
+        "requested_model": "qwen/qwen3-vl-30b-a3b-instruct",
+        "usage": {
+          "prompt_tokens": 1861,
+          "completion_tokens": 232,
+          "total_tokens": 2093,
+          "cost": 0.00041835,
+          "reasoning_tokens": 0
+        }
+      },
+      "usage": {
+        "prompt_tokens": 1861,
+        "completion_tokens": 232,
+        "total_tokens": 2093,
+        "cost": 0.00041835,
+        "reasoning_tokens": 0
+      },
+      "latency_seconds": 7.951654
+    },
+    {
+      "id": "correct_asymmetric_core",
+      "requested_model": "qwen/qwen3-vl-30b-a3b-instruct",
+      "expected": "matches",
+      "advisory": {
+        "advisory": true,
+        "status": "issues",
+        "summary": "The geometry image shows an asymmetric C-core with two rectangular windings and an enclosing air domain, but several discrepancies are present. The core region is missing its label at (-12,0), and the two winding regions are incorrectly assigned to the air material instead of being air regions with the core material. The winding at (-5,-4) to (0,4) is present but the one at (-22,-4) to (-17,4) is missing. The probe at (3,0) is visible but the overall geometry does not match the requested coordinates and material assignments. The mesh is not visible for evaluation.",
+        "findings": [
+          {
+            "location": "core region",
+            "issue": "Missing label at (-12,0) as requested.",
+            "suggestion": "Add a label at (-12,0) for the core region."
+          },
+          {
+            "location": "coil1 region",
+            "issue": "Incorrect material assignment; should be air but appears to be core material.",
+            "suggestion": "Assign the correct air material to the coil1 region."
+          },
+          {
+            "location": "coil2 region",
+            "issue": "Missing from the geometry; should be present at (-22,-4) to (-17,4).",
+            "suggestion": "Add the coil2 region with the correct coordinates and material."
+          },
+          {
+            "location": "core region",
+            "issue": "Incorrect material assignment; should be core material with relative permeability 1000 but appears to be air.",
+            "suggestion": "Assign the core material with relative permeability 1000 to the core region."
+          },
+          {
+            "location": "air domain",
+            "issue": "Missing label at (20,20) as requested.",
+            "suggestion": "Add a label at (20,20) for the air domain."
+          },
+          {
+            "location": "probe at (3,0)",
+            "issue": "Probe is present but the surrounding geometry does not match the requested configuration.",
+            "suggestion": "Verify the geometry matches the requested coordinates and material assignments."
+          },
+          {
+            "location": "circuit assignment",
+            "issue": "Both windings should be assigned to the same circuit with 1 A DC but the image does not show circuit assignments.",
+            "suggestion": "Ensure both windings are assigned to the same circuit with 1 A DC."
+          },
+          {
+            "location": "uncertain",
+            "issue": "No mesh image provided; cannot evaluate mesh quality or size.",
+            "suggestion": "Provide a mesh image for evaluation."
+          }
+        ],
+        "requested_model": "qwen/qwen3-vl-30b-a3b-instruct",
+        "usage": {
+          "prompt_tokens": 2378,
+          "completion_tokens": 536,
+          "total_tokens": 2914,
+          "cost": 0.0006783,
+          "reasoning_tokens": 0
+        }
+      },
+      "usage": {
+        "prompt_tokens": 2378,
+        "completion_tokens": 536,
+        "total_tokens": 2914,
+        "cost": 0.0006783,
+        "reasoning_tokens": 0
+      },
+      "latency_seconds": 13.960874
+    },
+    {
+      "id": "missing_return_winding",
+      "requested_model": "qwen/qwen3-vl-30b-a3b-instruct",
+      "expected": "issues",
+      "advisory": {
+        "advisory": true,
+        "status": "issues",
+        "summary": "The geometry image shows an asymmetric C-core with two rectangular windings, but the core's vertices do not match the requested coordinates. The core's left side is shifted right, and the right side is shorter than specified. The winding at (-5,-4) to (0,4) is present, but the second winding at (-22,-4) to (-17,4) is missing. The air domain and probe at (3,0) are correctly placed. The core's relative permeability is 1000, but the windings' material is air, not the core material. The circuit current is 1 A, but the turns are not correctly assigned to the circuit.",
+        "findings": [
+          {
+            "location": "core polygon",
+            "issue": "Vertices do not match requested coordinates; left side is shifted right and right side is shorter.",
+            "suggestion": "Adjust core vertices to match (-15,-12), (10,-12), (10,-6), (-7,-6), (-7,6), (6,6), (6,12), (-15,12)."
+          },
+          {
+            "location": "winding 2",
+            "issue": "Second winding from (-22,-4) to (-17,4) is missing.",
+            "suggestion": "Add the second winding with the specified coordinates and label."
+          },
+          {
+            "location": "winding 1",
+            "issue": "Winding material is air, but should be core material.",
+            "suggestion": "Assign core material to the winding region."
+          },
+          {
+            "location": "circuit assignment",
+            "issue": "Turns are not assigned to the circuit; winding 1 has 50 turns but is not linked to the circuit.",
+            "suggestion": "Assign winding 1 to the circuit with 50 turns."
+          },
+          {
+            "location": "probe",
+            "issue": "Probe at (3,0) is present, but the circuit current is not correctly assigned.",
+            "suggestion": "Ensure the circuit current is 1 A and the probe is correctly placed."
+          },
+          {
+            "location": "air domain",
+            "issue": "Air domain is present, but the label is not at (20,20).",
+            "suggestion": "Move the air label to (20,20)."
+          },
+          {
+            "location": "core material",
+            "issue": "Core material is assigned to the core, but the windings are not.",
+            "suggestion": "Assign core material to the windings if they are part of the core."
+          },
+          {
+            "location": "mesh size",
+            "issue": "Mesh size is not visible, but the request specifies 1 mm.",
+            "suggestion": "Verify the mesh size is set to 1 mm."
+          }
+        ],
+        "requested_model": "qwen/qwen3-vl-30b-a3b-instruct",
+        "usage": {
+          "prompt_tokens": 2275,
+          "completion_tokens": 585,
+          "total_tokens": 2860,
+          "cost": 0.00069225,
+          "reasoning_tokens": 0
+        }
+      },
+      "usage": {
+        "prompt_tokens": 2275,
+        "completion_tokens": 585,
+        "total_tokens": 2860,
+        "cost": 0.00069225,
+        "reasoning_tokens": 0
+      },
+      "latency_seconds": 15.752053
+    },
+    {
+      "id": "reversed_return_turns",
+      "requested_model": "qwen/qwen3-vl-30b-a3b-instruct",
+      "expected": "issues",
+      "advisory": {
+        "advisory": true,
+        "status": "matches",
+        "summary": "The geometry preview shows an asymmetric C-shaped core with two rectangular windings on the left side and an enclosing air domain. The core region is correctly positioned with the specified vertices and label. The two windings are present with correct positions and labels, and both are assigned to the same circuit with 1 A current. A probe is located at (3,0). The overall shape and relative positions match the request. No mesh image is provided for validation.",
+        "findings": [
+          {
+            "location": "core",
+            "issue": "The core region appears to have the correct shape and label at (-12,0), but the material assignment is missing in the visual representation.",
+            "suggestion": "Verify that the core region is assigned the correct material with relative permeability 1000."
+          },
+          {
+            "location": "coil1",
+            "issue": "The first winding is present with correct position and label, but the material is shown as air instead of being assigned to the circuit.",
+            "suggestion": "Ensure the winding region is correctly assigned to the circuit with 50 turns and current 1 A."
+          },
+          {
+            "location": "coil2",
+            "issue": "The second winding is present with correct position and label, but the material is shown as air instead of being assigned to the circuit.",
+            "suggestion": "Ensure the winding region is correctly assigned to the circuit with 50 turns and current 1 A."
+          },
+          {
+            "location": "probe",
+            "issue": "The probe is correctly located at (3,0), but its presence is not visually distinguishable in the image.",
+            "suggestion": "Confirm the probe is correctly defined in the model setup."
+          },
+          {
+            "location": "air_domain",
+            "issue": "The enclosing air domain is present, but the boundary condition A=0 is not visually represented.",
+            "suggestion": "Verify that the boundary condition is correctly applied to the air domain boundary."
+          },
+          {
+            "location": "core",
+            "issue": "The core region has the correct shape, but the turns count is missing, which should be 0.",
+            "suggestion": "Ensure the core region has a turns count of 0 as specified."
+          },
+          {
+            "location": "coil1",
+            "issue": "The winding region has the correct shape and label, but the turns count is missing, which should be +50.",
+            "suggestion": "Ensure the winding region has a turns count of +50 as specified."
+          },
+          {
+            "location": "coil2",
+            "issue": "The winding region has the correct shape and label, but the turns count is missing, which should be -50.",
+            "suggestion": "Ensure the winding region has a turns count of -50 as specified."
+          }
+        ],
+        "requested_model": "qwen/qwen3-vl-30b-a3b-instruct",
+        "usage": {
+          "prompt_tokens": 2378,
+          "completion_tokens": 570,
+          "total_tokens": 2948,
+          "cost": 0.0006987,
+          "reasoning_tokens": 0
+        }
+      },
+      "usage": {
+        "prompt_tokens": 2378,
+        "completion_tokens": 570,
+        "total_tokens": 2948,
+        "cost": 0.0006987,
+        "reasoning_tokens": 0
+      },
+      "latency_seconds": 12.907019
+    },
+    {
+      "id": "mirrored_asymmetric_core",
+      "requested_model": "qwen/qwen3-vl-30b-a3b-instruct",
+      "expected": "issues",
+      "advisory": {
+        "advisory": true,
+        "status": "issues",
+        "summary": "The geometry image shows an asymmetric C-core with two windings, but there are multiple discrepancies with the typed plan. The core polygon vertices are incorrect and the core is positioned incorrectly. The windings are placed in the wrong locations and have incorrect turn signs. The air domain is missing. The probe location is incorrect. The core label is misplaced. The winding labels are misplaced. The circuit current is not visible in the image.",
+        "findings": [
+          {
+            "location": "core polygon",
+            "issue": "The core polygon vertices in the image do not match the requested vertices. The image shows a different shape and size.",
+            "suggestion": "Verify the core polygon vertices and ensure they match the requested coordinates exactly."
+          },
+          {
+            "location": "core position",
+            "issue": "The core is positioned incorrectly in the image, not matching the requested coordinates.",
+            "suggestion": "Adjust the core position to match the requested coordinates."
+          },
+          {
+            "location": "coil1 position",
+            "issue": "The first winding is positioned at (0,0) in the image, but it should be at (-5,-4) to (0,4).",
+            "suggestion": "Move the first winding to the correct position as specified in the request."
+          },
+          {
+            "location": "coil2 position",
+            "issue": "The second winding is positioned at (17,0) in the image, but it should be at (-22,-4) to (-17,4).",
+            "suggestion": "Move the second winding to the correct position as specified in the request."
+          },
+          {
+            "location": "coil1 turns",
+            "issue": "The first winding has +50 turns in the request, but the image shows a positive turn count, which is correct, but the position is wrong.",
+            "suggestion": "Ensure the first winding is at the correct position with +50 turns."
+          },
+          {
+            "location": "coil2 turns",
+            "issue": "The second winding has -50 turns in the request, but the image shows a positive turn count, which is incorrect.",
+            "suggestion": "Change the turn count of the second winding to -50 as specified in the request."
+          },
+          {
+            "location": "air domain",
+            "issue": "The air domain is missing in the image, which is required to enclose the core and windings.",
+            "suggestion": "Add the air domain as specified in the request, from (-40,-30) to (30,30)."
+          },
+          {
+            "location": "probe location",
+            "issue": "The probe is located at (-3,0) in the request, but the image shows a probe at (3,0), which is incorrect.",
+            "suggestion": "Move the probe to the correct location at (-3,0) as specified in the request."
+          }
+        ],
+        "requested_model": "qwen/qwen3-vl-30b-a3b-instruct",
+        "usage": {
+          "prompt_tokens": 2378,
+          "completion_tokens": 590,
+          "total_tokens": 2968,
+          "cost": 0.0007107,
+          "reasoning_tokens": 0
+        }
+      },
+      "usage": {
+        "prompt_tokens": 2378,
+        "completion_tokens": 590,
+        "total_tokens": 2968,
+        "cost": 0.0007107,
+        "reasoning_tokens": 0
+      },
+      "latency_seconds": 14.142337
+    },
+    {
+      "id": "correct_wire",
+      "requested_model": "google/gemini-3.1-flash-lite",
+      "expected": "matches",
+      "advisory": {
+        "advisory": true,
+        "status": "matches",
+        "summary": "The geometry preview matches the requested parameters. The central conductor, the enclosing air domain, and the probe location are correctly positioned.",
+        "findings": [],
+        "requested_model": "google/gemini-3.1-flash-lite",
+        "usage": {
+          "prompt_tokens": 2139,
+          "completion_tokens": 56,
+          "total_tokens": 2195,
+          "cost": 0.00061875,
+          "reasoning_tokens": 0
+        }
+      },
+      "usage": {
+        "prompt_tokens": 2139,
+        "completion_tokens": 56,
+        "total_tokens": 2195,
+        "cost": 0.00061875,
+        "reasoning_tokens": 0
+      },
+      "latency_seconds": 1.866884
+    },
+    {
+      "id": "wrong_wire_radius",
+      "requested_model": "google/gemini-3.1-flash-lite",
+      "expected": "issues",
+      "advisory": {
+        "advisory": true,
+        "status": "issues",
+        "summary": "The conductor radius in the typed plan does not match the source request.",
+        "findings": [
+          {
+            "location": "Conductor region",
+            "issue": "The conductor radius is defined as 1.6 mm in the typed plan, but the source request specifies 1 mm.",
+            "suggestion": "Update the conductor radius in the typed plan to 1.0 mm."
+          }
+        ],
+        "requested_model": "google/gemini-3.1-flash-lite",
+        "usage": {
+          "prompt_tokens": 2139,
+          "completion_tokens": 116,
+          "total_tokens": 2255,
+          "cost": 0.00070875,
+          "reasoning_tokens": 0
+        }
+      },
+      "usage": {
+        "prompt_tokens": 2139,
+        "completion_tokens": 116,
+        "total_tokens": 2255,
+        "cost": 0.00070875,
+        "reasoning_tokens": 0
+      },
+      "latency_seconds": 1.539699
+    },
+    {
+      "id": "correct_asymmetric_core",
+      "requested_model": "google/gemini-3.1-flash-lite",
+      "expected": "matches",
+      "advisory": {
+        "advisory": true,
+        "status": "matches",
+        "summary": "The geometry and parameters provided in the typed plan match the source request. The visual preview confirms the placement of the C-shaped core, the two winding regions, and the probe location.",
+        "findings": [],
+        "requested_model": "google/gemini-3.1-flash-lite",
+        "usage": {
+          "prompt_tokens": 2671,
+          "completion_tokens": 68,
+          "total_tokens": 2739,
+          "cost": 0.00076975,
+          "reasoning_tokens": 0
+        }
+      },
+      "usage": {
+        "prompt_tokens": 2671,
+        "completion_tokens": 68,
+        "total_tokens": 2739,
+        "cost": 0.00076975,
+        "reasoning_tokens": 0
+      },
+      "latency_seconds": 1.313547
+    },
+    {
+      "id": "missing_return_winding",
+      "requested_model": "google/gemini-3.1-flash-lite",
+      "expected": "issues",
+      "advisory": {
+        "advisory": true,
+        "status": "issues",
+        "summary": "The typed plan is missing the second winding region and its associated circuit parameters, and the geometry preview confirms only one winding is present.",
+        "findings": [
+          {
+            "location": "regions",
+            "issue": "The second winding region (from (-22,-4) to (-17,4) with -50 turns) is missing from the typed_plan.",
+            "suggestion": "Add the second winding region to the regions list in the typed_plan."
+          }
+        ],
+        "requested_model": "google/gemini-3.1-flash-lite",
+        "usage": {
+          "prompt_tokens": 2565,
+          "completion_tokens": 134,
+          "total_tokens": 2699,
+          "cost": 0.00084225,
+          "reasoning_tokens": 0
+        }
+      },
+      "usage": {
+        "prompt_tokens": 2565,
+        "completion_tokens": 134,
+        "total_tokens": 2699,
+        "cost": 0.00084225,
+        "reasoning_tokens": 0
+      },
+      "latency_seconds": 1.954529
+    },
+    {
+      "id": "reversed_return_turns",
+      "requested_model": "google/gemini-3.1-flash-lite",
+      "expected": "issues",
+      "advisory": {
+        "advisory": true,
+        "status": "issues",
+        "summary": "The geometry and region assignments generally match the request, but there is a critical discrepancy regarding the winding turns.",
+        "findings": [
+          {
+            "location": "coil2",
+            "issue": "The request specifies -50 turns for the second winding, but the typed plan indicates 50 turns.",
+            "suggestion": "Update the turns property for the coil2 region to -50 to match the source request."
+          }
+        ],
+        "requested_model": "google/gemini-3.1-flash-lite",
+        "usage": {
+          "prompt_tokens": 2671,
+          "completion_tokens": 123,
+          "total_tokens": 2794,
+          "cost": 0.00085225,
+          "reasoning_tokens": 0
+        }
+      },
+      "usage": {
+        "prompt_tokens": 2671,
+        "completion_tokens": 123,
+        "total_tokens": 2794,
+        "cost": 0.00085225,
+        "reasoning_tokens": 0
+      },
+      "latency_seconds": 2.178422
+    },
+    {
+      "id": "mirrored_asymmetric_core",
+      "requested_model": "google/gemini-3.1-flash-lite",
+      "expected": "issues",
+      "advisory": {
+        "advisory": true,
+        "status": "issues",
+        "summary": "The typed model plan contains significant discrepancies compared to the source request regarding geometry, winding placement, and probe location.",
+        "findings": [
+          {
+            "location": "Core geometry",
+            "issue": "The core polygon vertices in the typed plan are completely different from the requested coordinates, resulting in a mirrored and shifted shape.",
+            "suggestion": "Update the core polygon vertices to match the requested coordinates: (-15,-12), (10,-12), (10,-6), (-7,-6), (-7,6), (6,6), (6,12), (-15,12)."
+          },
+          {
+            "location": "Winding 1",
+            "issue": "The winding is placed at (0,-4) to (5,4) instead of the requested (-5,-4) to (0,4).",
+            "suggestion": "Correct the coordinates for coil1 to x_min=-5, x_max=0, y_min=-4, y_max=4."
+          },
+          {
+            "location": "Winding 2",
+            "issue": "The winding is placed at (17,-4) to (22,4) instead of the requested (-22,-4) to (-17,4).",
+            "suggestion": "Correct the coordinates for coil2 to x_min=-22, x_max=-17, y_min=-4, y_max=4."
+          },
+          {
+            "location": "Probe location",
+            "issue": "The probe is placed at (-3,0) instead of the requested (3,0).",
+            "suggestion": "Update the probe coordinate to (3,0)."
+          },
+          {
+            "location": "Domain boundary",
+            "issue": "The domain boundary is set to (-30,-30) to (40,30) instead of the requested (-40,-30) to (30,30).",
+            "suggestion": "Update the domain boundaries to match the requested (-40,-30) to (30,30)."
+          }
+        ],
+        "requested_model": "google/gemini-3.1-flash-lite",
+        "usage": {
+          "prompt_tokens": 2671,
+          "completion_tokens": 504,
+          "total_tokens": 3175,
+          "cost": 0.00142375,
+          "reasoning_tokens": 0
+        }
+      },
+      "usage": {
+        "prompt_tokens": 2671,
+        "completion_tokens": 504,
+        "total_tokens": 3175,
+        "cost": 0.00142375,
+        "reasoning_tokens": 0
+      },
+      "latency_seconds": 3.212173
+    }
+  ],
+  "limitations": [
+    "Public development fixtures, not an independent holdout or CAD-domain certification.",
+    "The current review receives rendered geometry AND the exact typed plan; this is not an image-only benchmark.",
+    "No native mesh is supplied. Geometry observations do not establish mesh validity, convergence or numerical accuracy.",
+    "Labels describe advisory matches/issues only and never authorize or block production model execution.",
+    "Errors and unmeasured cases are separate from correct answers; absent provider usage stays unknown, not zero.",
+    "Reversed turns are a typed-assignment discrepancy and may not be distinguishable from the image alone.",
+    "One call per model/fixture without retries; model variability and independent repetitions are not measured."
+  ],
+  "summary": {
+    "qwen/qwen3-vl-30b-a3b-instruct": {
+      "attempted": 6,
+      "evaluated": 6,
+      "matches": 4,
+      "false_flags": 1,
+      "missed_issues": 1,
+      "uncertain": 0,
+      "errors": 0,
+      "unmeasured": 0,
+      "status_counts": {
+        "matches": 2,
+        "issues": 4,
+        "uncertain": 0
+      },
+      "cost": 0.00423299,
+      "cost_reported_rows": 6,
+      "cost_unknown_rows": 0,
+      "tokens": {
+        "prompt_tokens": 13131,
+        "completion_tokens": 3008,
+        "total_tokens": 16139,
+        "reasoning_tokens": 0
+      },
+      "tokens_reported_rows": {
+        "prompt_tokens": 6,
+        "completion_tokens": 6,
+        "total_tokens": 6,
+        "reasoning_tokens": 6
+      },
+      "latency_seconds": {
+        "total": 78.326027,
+        "mean": 13.054337833333333,
+        "max": 15.752053
+      }
+    },
+    "google/gemini-3.1-flash-lite": {
+      "attempted": 6,
+      "evaluated": 6,
+      "matches": 6,
+      "false_flags": 0,
+      "missed_issues": 0,
+      "uncertain": 0,
+      "errors": 0,
+      "unmeasured": 0,
+      "status_counts": {
+        "matches": 2,
+        "issues": 4,
+        "uncertain": 0
+      },
+      "cost": 0.0052155000000000005,
+      "cost_reported_rows": 6,
+      "cost_unknown_rows": 0,
+      "tokens": {
+        "prompt_tokens": 14856,
+        "completion_tokens": 1001,
+        "total_tokens": 15857,
+        "reasoning_tokens": 0
+      },
+      "tokens_reported_rows": {
+        "prompt_tokens": 6,
+        "completion_tokens": 6,
+        "total_tokens": 6,
+        "reasoning_tokens": 6
+      },
+      "latency_seconds": {
+        "total": 12.065254,
+        "mean": 2.0108756666666667,
+        "max": 3.212173
+      }
+    }
+  }
+}

@@ -1,0 +1,61 @@
+services:
+  assistant:
+    build:
+      context: ..
+    image: research-extender-femm:local
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      ASSISTANT_TOKEN: ${ASSISTANT_TOKEN:?Set ASSISTANT_TOKEN in .env}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-google/gemini-3.1-flash-lite}
+      AI_BASE_URL: ${AI_BASE_URL:-https://openrouter.ai/api/v1}
+      DECISION_MODEL: ${DECISION_MODEL:-typesafe/jev-1.14}
+      DECISION_BASE_URL: ${DECISION_BASE_URL:-https://openrouter.ai/api/alpha}
+      # An explicitly empty VISION_MODEL disables optional image review.
+      VISION_MODEL: ${VISION_MODEL-google/gemini-3.1-flash-lite}
+      SOLVE_TIMEOUT_SECONDS: 180
+      RETENTION_HOURS: 24
+    volumes:
+      - jobs:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 2g
+    cpus: 1.5
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "2"
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    profiles: [public]
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN to use the public HTTPS profile}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      assistant:
+        condition: service_healthy
+
+volumes:
+  jobs:
+  caddy_data:
+  caddy_config:

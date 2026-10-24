@@ -1,0 +1,79 @@
+{
+  "scope": "Discretization and outer-domain verification of one finite linear axisymmetric air winding; not a general convergence guarantee.",
+  "initial_sparse_air_evidence": "../axisym/measurements.json",
+  "changes": {
+    "air_nearfield": "same physical air, rectangle r=[0,60]mm,z=[-80,80]mm; local mesh2 then1mm",
+    "air_outer_domain": "r=[0,320]mm,z=[-320,320]mm then640mm, holding mesh4mm and local mesh fixed",
+    "winding": "unchanged r=[20,30]mm,z=[-20,20]mm,200turns,1A; mesh.5 then.25mm",
+    "iron_check": "same centered axis-touching iron core; air mesh.5mm,core and winding.25mm"
+  },
+  "source_audit": {
+    "archive_sha256": "0ae785ab5f12b32f9529f479e9f1cbafea18aa23b32976d8ea559a08e016450d",
+    "file": "femm-qt/libfemm/results_doc.cpp",
+    "pinned_sha256": "baa86f5ab23c3d15a971d8ccd182c1957821f032a7bbe5cc009de52f46eb2c4a",
+    "local_sha256": "baa86f5ab23c3d15a971d8ccd182c1957821f032a7bbe5cc009de52f46eb2c4a",
+    "exact_match": true
+  },
+  "source_paths": {
+    "energy": "libfemm/results_doc.cpp:3272 BlockIntegral2 -> AxiFluxFit/AxiDensityIntegral",
+    "linkage": "libfemm/results_doc.cpp:4264 GetFluxLinkage -> GetJA -> AxiInt",
+    "solver": "solvers/fkn/prob3big.cpp:375 r\u00b2,z flux-function stiffness assembly"
+  },
+  "interpretation": "Energy and circuit linkage follow distinct element interpolation/quadrature paths, so the continuum W=0.5*I*psi identity is a finite-element consistency diagnostic rather than an algebraically exact residual. Refinement data supports a0.01% consistency bound for these fixtures.",
+  "energy_tolerance_relative": 0.0001,
+  "unchanged_field_tolerance_relative": 0.035,
+  "unchanged_mesh_and_domain_tolerance_relative": 0.02,
+  "air_cases": {
+    "base320": {
+      "bz_relative_errors": [
+        0.0019395480690528322,
+        0.0036635377720168893,
+        0.006288731965835015
+      ],
+      "energy_identity_relative_error": 6.554816365667016e-05,
+      "mesh_elements": 38909
+    },
+    "refined320": {
+      "bz_relative_errors": [
+        0.001141256516072775,
+        0.0027148899363307333,
+        0.00959990651037268
+      ],
+      "energy_identity_relative_error": 1.1073562925734137e-05,
+      "mesh_elements": 67952
+    },
+    "far640": {
+      "bz_relative_errors": [
+        0.0003989344201579259,
+        0.007714258794641271,
+        0.0071888966644714225
+      ],
+      "energy_identity_relative_error": 8.15111061824858e-06,
+      "mesh_elements": 157149
+    },
+    "double320": {
+      "bz_relative_errors": [
+        0.0011412565160853205,
+        0.0027148899363307333,
+        0.00959990651040954
+      ],
+      "energy_identity_relative_error": 1.1073562933505698e-05,
+      "mesh_elements": 67952
+    }
+  },
+  "mesh_change_relative": [
+    0.0007992036493525978,
+    0.0009460793344222562,
+    0.0033432696203319345
+  ],
+  "domain_change_relative": [
+    0.000743170243798108,
+    0.010400911401279966,
+    0.0024343796630776904
+  ],
+  "iron_air_refinement_energy_errors": {
+    "iron_nearfield2": 0.00023049033935274021,
+    "iron_nearfield1": 9.670976121256558e-05,
+    "iron_nearfield0.5": 2.7127293621531656e-05
+  }
+}

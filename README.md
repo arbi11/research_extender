@@ -1,3 +1,15 @@
+# FEMM 5 interactive companion
+
+The [FEMM Assistant](femm_assistant/README.md) creates and modifies 2D planar DC
+magnetic models from circles, rectangles and simple polygons, alongside a C-core
+example. Jev checks request intent and plan fidelity; deterministic checks validate
+geometry and an actual mesh before native Linux FEMM solves. Readers follow
+**AI → preview → Check mesh → Solve → Download** and export editable Python CAD
+scripts with their native Lua bridge. See its README for supported physics,
+OpenRouter setup, local or single-VPS deployment, and numerical verification.
+
+---
+
 # Enhanced LightRAG Integration System
 
 A complete system for building and querying knowledge graphs from LaTeX papers and source code using LightRAG with OpenRouter LLMs and Ollama embeddings.
@@ -187,3 +199,4 @@ architectural choices like BatchNorm and Dropout..."
 - Verify both lightrag_code_index and lightrag_latex_index exist
 - Check that KGs were integrated successfully
 - Try different query modes (hybrid recommended)
+

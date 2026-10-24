@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "id": "lubin2012",
+  "source": {
+    "title": "Inductance and Force Calculation for Axisymmetric Coil Systems Including an Iron Core of Finite Length",
+    "authors": ["Thierry Lubin", "Kevin Berger", "Abderrezak Rezzoug"],
+    "year": 2012,
+    "doi": "10.2528/PIERB12051105",
+    "journal": "Progress In Electromagnetics Research B, 41, 377-396",
+    "url": "https://www.jpier.org/PIERB/pier.php?paper=12051105",
+    "pdf_url": "https://www.jpier.org/ac_api/preview.php?t=ab&id=12051105",
+    "pdf_sha256": "f2b9e94000c52195756375a1389dfac141abdd9ef4c4e4a8da749a1b132c7f7c",
+    "source_id": "paper_f2b9e94000c52195756375a1",
+    "page_numbers": "Physical PDF pages start at 1; physical page 15 is printed page 391.",
+    "distribution": "The paper is not bundled. This fixture records factual parameters, numerical references and short source quotations; copyright remains with its rightsholder."
+  },
+  "parameters": {
+    "core_radius_mm": {"value": 30, "unit": "mm", "kind": "derived", "page": 15, "table": "1", "source_value": "R1 = 3 cm", "derivation": "3 cm multiplied by 10 mm/cm."},
+    "coil_inner_radius_mm": {"value": 50, "unit": "mm", "kind": "derived", "page": 15, "table": "1", "source_value": "R2 = 5 cm", "derivation": "5 cm multiplied by 10 mm/cm."},
+    "coil_outer_radius_mm": {"value": 70, "unit": "mm", "kind": "derived", "page": 15, "table": "1", "source_value": "R3 = 7 cm", "derivation": "7 cm multiplied by 10 mm/cm."},
+    "coil_z_min_mm": {"value": -100, "unit": "mm", "kind": "derived", "page": 15, "table": "1", "source_value": "z1 = 90 cm", "derivation": "900 mm minus the 1000 mm coil-centre coordinate."},
+    "coil_z_max_mm": {"value": 100, "unit": "mm", "kind": "derived", "page": 15, "table": "1", "source_value": "z2 = 110 cm", "derivation": "1100 mm minus the 1000 mm coil-centre coordinate."},
+    "core_half_length_mm": {"value": 50, "unit": "mm", "kind": "derived", "page": 15, "table": "1", "source_value": "l = 10 cm", "derivation": "100 mm length divided by 2."},
+    "turns": {"value": 1000, "unit": "turns", "kind": "explicit", "page": 15, "table": "1"},
+    "current_a": {"value": 20, "unit": "A", "kind": "derived", "page": 11, "equation": "44", "derivation": "I = J*(R3-R2)*L/N = 5 A/mm^2 * 20 mm * 200 mm / 1000 = 20 A; J and dimensions are from Table 1, physical PDF page 15."},
+    "relative_permeability": {"value": 10000, "unit": "1", "kind": "explicit", "page": 13, "section": "6", "note": "This is the finite-element material. The paper's semi-analytical model assumes infinite permeability; those references are kept separate."},
+    "axial_half_domain_mm": {"value": 1000, "unit": "mm", "kind": "derived", "page": 12, "section": "6", "derivation": "Original z=0 to z5=200 cm becomes z=-1000 to +1000 mm after translating the origin by -1000 mm."}
+  },
+  "numerical_choices": {
+    "target_relative_tolerance": 0.02,
+    "tolerance_origin": "Our acceptance criterion declared before any solve; the paper does not supply this tolerance.",
+    "convergence_relative_tolerance": 0.005,
+    "profiles": {
+      "base": {"region_mesh_mm": 2, "global_mesh_mm": 25, "radial_domain_mm": 750},
+      "refined": {"region_mesh_mm": 1, "global_mesh_mm": 12.5, "radial_domain_mm": 750},
+      "far": {"region_mesh_mm": 1, "global_mesh_mm": 12.5, "radial_domain_mm": 1000}
+    },
+    "protocols": {
+      "near_field_v2": {
+        "reason": "The initial protocol exposed inadequate air-region refinement for weighted-stress force and on-axis field integration. This protocol adds an air-only internal contour for mesh control, retaining all published physical dimensions, excitation, permeability, target values and 2% tolerances.",
+        "near_air_rectangle_mm": {"r_min": 0, "r_max": 200, "z_min": -250, "z_max": 250},
+        "profiles": {
+          "base": {"region_mesh_mm": 1, "near_air_mesh_mm": 2, "global_mesh_mm": 25, "radial_domain_mm": 750},
+          "refined": {"region_mesh_mm": 0.5, "near_air_mesh_mm": 1.5, "global_mesh_mm": 25, "radial_domain_mm": 750},
+          "far": {"region_mesh_mm": 0.5, "near_air_mesh_mm": 1.5, "global_mesh_mm": 25, "radial_domain_mm": 1000}
+        }
+      },
+      "near_field_v3": {
+        "reason": "Same physical models, meshes, published targets and 2% target tolerances as near_field_v2. Correct only the auxiliary energy/linkage consistency bound after auditing the pinned native integration methods. This is not a changed paper target or a fit to its references.",
+        "near_air_rectangle_mm": {"r_min": 0, "r_max": 200, "z_min": -250, "z_max": 250},
+        "energy_consistency_relative_tolerance": 0.0001,
+        "energy_consistency_basis": {
+          "file": "femm-qt/libfemm/results_doc.cpp",
+          "file_sha256": "baa86f5ab23c3d15a971d8ccd182c1957821f032a7bbe5cc009de52f46eb2c4a",
+          "energy_method": "BlockIntegral(2), AxiFluxFit and AxiDensityIntegral integrate the magnetic field through the axisymmetric flux polynomial.",
+          "linkage_method": "GetFluxLinkage, GetJA and AxiInt integrate nodal Aphi/r for circuit linkage.",
+          "interpretation": "The continuous linear identity W=0.5*I*linkage is not an algebraic identity between these two distinct finite-element quadratures. Use an explicit 0.01% auxiliary consistency criterion alongside independent mesh/domain convergence and unchanged published-target checks. Retain the initial and v2 failures under their original 1e-5 diagnostic."
+        },
+        "profiles": {
+          "base": {"region_mesh_mm": 1, "near_air_mesh_mm": 2, "global_mesh_mm": 25, "radial_domain_mm": 750},
+          "refined": {"region_mesh_mm": 0.5, "near_air_mesh_mm": 1.5, "global_mesh_mm": 25, "radial_domain_mm": 750},
+          "far": {"region_mesh_mm": 0.5, "near_air_mesh_mm": 1.5, "global_mesh_mm": 25, "radial_domain_mm": 1000}
+        }
+      }
+    },
+    "boundary": "A=0 on the r=0 symmetry axis and on the remaining rectangular outer edges. The axial endpoints reproduce the paper's homogeneous Dirichlet boundaries. The radial truncation is our declared numerical choice because the paper does not state its finite-element radial extent; compare 750 and 1000 mm.",
+    "resource_policy": "One mesh and one solve per profile/case, each worker timeout 180 s; existing application mesh and native artifact limits apply. Failure is retained, never repaired by altering physical parameters or targets."
+  },
+  "cases": [
+    {
+      "id": "iron_center",
+      "core_present": true,
+      "displacement_mm": 0,
+      "target": {"id": "inductance", "case_id": "iron_center", "description": "Published FEMM inductance at h=0; our 2% acceptance tolerance is fixed before solving.", "observable": {"quantity": "inductance", "circuit_id": "coil"}, "value": 87, "unit": "mH", "tolerance": {"relative": 0.02}, "reference_kind": "reported_numerical", "evidence_kind": "explicit", "conditions": "Table 1 geometry; linear iron mu_r=10000; h=0 mm; N=1000; I=20 A.", "citations": [{"source_id": "paper_f2b9e94000c52195756375a1", "page": 15, "figure": "6", "quote": "L11 = 87 mH"}]},
+      "separate_analytical_reference": {"value": 85.8, "unit": "mH", "conditions": "Infinite iron permeability, 50 harmonic terms; not the finite-element acceptance target."}
+    },
+    {
+      "id": "iron_displaced",
+      "core_present": true,
+      "displacement_mm": 75,
+      "target": {"id": "axial_force_magnitude", "case_id": "iron_displaced", "description": "Published FEMM force magnitude at h=75 mm; our 2% acceptance tolerance is fixed before solving.", "observable": {"quantity": "force_magnitude"}, "value": 77.9, "unit": "N", "tolerance": {"relative": 0.02}, "reference_kind": "reported_numerical", "evidence_kind": "explicit", "conditions": "Table 1 geometry; linear iron mu_r=10000; h=+75 mm; N=1000; I=20 A. Native force_z is expected to be negative toward the coil centre; the published target is a magnitude.", "citations": [{"source_id": "paper_f2b9e94000c52195756375a1", "page": 14, "figure": "5", "quote": "77.9 N with FEM."}]},
+      "separate_analytical_reference": {"value": 76.8, "unit": "N", "conditions": "Infinite iron permeability, 50 harmonic terms; not the finite-element acceptance target."}
+    },
+    {
+      "id": "air_core",
+      "core_present": false,
+      "displacement_mm": 0,
+      "target": {"id": "inductance", "case_id": "air_core", "description": "Published FEMM air-core inductance; our 2% acceptance tolerance is fixed before solving.", "observable": {"quantity": "inductance", "circuit_id": "coil"}, "value": 49, "unit": "mH", "tolerance": {"relative": 0.02}, "reference_kind": "reported_numerical", "evidence_kind": "explicit", "conditions": "Table 1 winding with the iron cylinder removed; N=1000; I=20 A.", "citations": [{"source_id": "paper_f2b9e94000c52195756375a1", "page": 15, "figure": "6", "quote": "49 mH with finite element simulations"}]},
+      "separate_analytical_reference": {"value": 48.8, "unit": "mH", "conditions": "50 harmonic terms; not the finite-element acceptance target."}
+    }
+  ],
+  "limitations": [
+    "This benchmark is an independently transcribed paper fixture; passing it does not establish that an LLM can reconstruct an arbitrary paper.",
+    "The paper compares numerical and semi-analytical models. No experimental target is claimed.",
+    "The finite-element radial boundary and original mesh are not fully specified. Radial truncation and our mesh are explicit numerical choices, checked independently.",
+    "The iron is linear with constant relative permeability 10000. This does not model saturation, hysteresis or real high-current steel behaviour."
+  ]
+}

@@ -1,0 +1,10 @@
+FROM femm-agent-suite:evaluation-019d6a6
+USER root
+# The suite searches the traditional FEMM layout. CMake installs these exact
+# upstream resources under share/femm on Linux; expose that layout with links.
+RUN ln -s share/femm/pyfemm /opt/femm/pyfemm && \
+    ln -s share/femm/examples /opt/femm/examples && \
+    mkdir -p /opt/femm/docs && \
+    ln -s ../share/femm/manual.pdf /opt/femm/docs/manual.pdf && \
+    pip install --no-cache-dir pypdf && pip freeze > /suite/evaluation-dependencies.txt
+USER assistant

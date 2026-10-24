@@ -1,0 +1,2547 @@
+[
+  {
+    "id": "round_wire",
+    "category": "create",
+    "tags": [
+      "circle",
+      "baseline"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 20 mm. Make a circular conductor centered at (0,0), radius 1, relative permeability 1; label (0,0). Put it on a DC circuit of +1 A with +1 turn. Use a circular air domain centered at (0,0), radius 10, A=0 on its boundary and background air label (5,0). Probe B at (2,0). Use global mesh size 0.5 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 20 mm. Make a circular conductor centered at (0,0), radius 1, relative permeability 1; label (0,0). Put it on a DC circuit of +1 A with +1 turn. Use a circular air domain centered at (0,0), radius 10, A=0 on its boundary and background air label (5,0). Probe B at (2,0). Set the global mesh size to 0.5 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Round conductor in air",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 20.0,
+      "mesh_mm": 0.5,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 10.0
+      },
+      "air_label": {
+        "x": 5.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "conductor",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "wire",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "conductor",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "wire",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 2.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "rectangular_wire",
+    "category": "create",
+    "tags": [
+      "rectangle",
+      "winding"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 12 mm. Make a rectangular conductor from (-2,-1) to (2,1), relative permeability 1, label (0,0), assigned to a +2 A DC circuit with +1 turn. Enclose it in an air rectangle from (-15,-12) to (15,12); impose A=0 on all outer edges, place background air label at (10,8), and probe B at (5,0). Use global mesh size 0.75 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 12 mm. Make a rectangular conductor from (-2,-1) to (2,1), relative permeability 1, label (0,0), assigned to a +2 A DC circuit with +1 turn. Enclose it in an air rectangle from (-15,-12) to (15,12); impose A=0 on all outer edges, place background air label at (10,8), and probe B at (5,0). Set the global mesh size to 0.75 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Rectangular wire",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 12.0,
+      "mesh_mm": 0.75,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -15.0,
+        "y_min": -12.0,
+        "x_max": 15.0,
+        "y_max": 12.0
+      },
+      "air_label": {
+        "x": 10.0,
+        "y": 8.0
+      },
+      "materials": [
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": 2.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "rectangle",
+            "x_min": -2.0,
+            "y_min": -1.0,
+            "x_max": 2.0,
+            "y_max": 1.0
+          },
+          "material": "copper",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 5.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "triangular_core",
+    "category": "create",
+    "tags": [
+      "triangle",
+      "linear_core"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Draw a triangular steel core with vertices (-6,-4), (6,-4), (0,6), linear relative permeability 400, label (0,0). Add a rectangular winding from (9,-2) to (12,2), relative permeability 1 and label (10.5,0), on a +0.8 A circuit with +12 turns. Use an air rectangle (-20,-20) to (20,20), outer A=0 and background label (16,16). Probe B at (8,0). Use global mesh size 1 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Draw a triangular steel core with vertices (-6,-4), (6,-4), (0,6), linear relative permeability 400, label (0,0). Add a rectangular winding from (9,-2) to (12,2), relative permeability 1 and label (10.5,0), on a +0.8 A circuit with +12 turns. Use an air rectangle (-20,-20) to (20,20), outer A=0 and background label (16,16). Probe B at (8,0). Set the global mesh size to 1 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Triangular core and coil",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 10.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -20.0,
+        "y_min": -20.0,
+        "x_max": 20.0,
+        "y_max": 20.0
+      },
+      "air_label": {
+        "x": 16.0,
+        "y": 16.0
+      },
+      "materials": [
+        {
+          "id": "steel",
+          "relative_permeability": 400.0
+        },
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": 0.8
+        }
+      ],
+      "regions": [
+        {
+          "id": "core",
+          "shape": {
+            "type": "polygon",
+            "points": [
+              {
+                "x": -6.0,
+                "y": -4.0
+              },
+              {
+                "x": 6.0,
+                "y": -4.0
+              },
+              {
+                "x": 0.0,
+                "y": 6.0
+              }
+            ]
+          },
+          "material": "steel",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "coil",
+          "shape": {
+            "type": "rectangle",
+            "x_min": 9.0,
+            "y_min": -2.0,
+            "x_max": 12.0,
+            "y_max": 2.0
+          },
+          "material": "copper",
+          "label": {
+            "x": 10.5,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": 12,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 8.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "missing_depth",
+    "category": "clarify",
+    "tags": [
+      "missing_input",
+      "depth"
+    ],
+    "prompts": [
+      "Create a planar DC round conductor at (0,0), radius 1 mm and relative permeability 1, carrying +1 A with +1 turn. Use a radius 10 mm circular air domain, air label (5,0), A=0 outside, mesh 0.5 mm and probe (2,0). The out-of-plane depth is unknown: do not assume it; ask me.",
+      "Please apply this instruction carefully: Create a planar DC round conductor at (0,0), radius 1 mm and relative permeability 1, carrying +1 A with +1 turn. Use a radius 10 mm circular air domain, air label (5,0), A=0 outside, mesh 0.5 mm and probe (2,0). The out-of-plane depth is unknown: do not assume it; ask me."
+    ],
+    "expected": null,
+    "current": null
+  },
+  {
+    "id": "modify_negative_current",
+    "category": "modify",
+    "tags": [
+      "modify",
+      "negative_current"
+    ],
+    "prompts": [
+      "Change only the existing wire circuit current to -2 A DC. Preserve its positive one-turn assignment and every other geometry, material, depth, label, boundary, mesh and probe setting.",
+      "Please apply this instruction carefully: Change only the existing wire circuit current to -2 A DC. Preserve its positive one-turn assignment and every other geometry, material, depth, label, boundary, mesh and probe setting."
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Round conductor in air",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 20.0,
+      "mesh_mm": 0.5,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 10.0
+      },
+      "air_label": {
+        "x": 5.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "conductor",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "wire",
+          "current_a": -2
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "conductor",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "wire",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 2.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": {
+      "kind": "magnetostatic_plan",
+      "title": "Round conductor in air",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 20.0,
+      "mesh_mm": 0.5,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 10.0
+      },
+      "air_label": {
+        "x": 5.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "conductor",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "wire",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "conductor",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "wire",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 2.0,
+          "y": 0.0
+        }
+      ]
+    }
+  },
+  {
+    "id": "concave_l_core",
+    "category": "create",
+    "tags": [
+      "concave_polygon",
+      "l_shape"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Draw an L-shaped steel polygon with ordered vertices (-8,-8), (8,-8), (8,-3), (-3,-3), (-3,8), (-8,8), relative permeability 600 and label (-6,0). Add a winding rectangle (-1,0) to (3,4), permeability 1, label (1,2), +25 turns on one +1.2 A circuit. Use enclosing air rectangle (-20,-20) to (20,20), A=0 on its boundary, background air label (15,15), and field probe (0,-1). Use global mesh size 1 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Draw an L-shaped steel polygon with ordered vertices (-8,-8), (8,-8), (8,-3), (-3,-3), (-3,8), (-8,8), relative permeability 600 and label (-6,0). Add a winding rectangle (-1,0) to (3,4), permeability 1, label (1,2), +25 turns on one +1.2 A circuit. Use enclosing air rectangle (-20,-20) to (20,20), A=0 on its boundary, background air label (15,15), and field probe (0,-1). Set the global mesh size to 1 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Concave L core",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 10.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -20.0,
+        "y_min": -20.0,
+        "x_max": 20.0,
+        "y_max": 20.0
+      },
+      "air_label": {
+        "x": 15.0,
+        "y": 15.0
+      },
+      "materials": [
+        {
+          "id": "steel",
+          "relative_permeability": 600.0
+        },
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": 1.2
+        }
+      ],
+      "regions": [
+        {
+          "id": "core",
+          "shape": {
+            "type": "polygon",
+            "points": [
+              {
+                "x": -8.0,
+                "y": -8.0
+              },
+              {
+                "x": 8.0,
+                "y": -8.0
+              },
+              {
+                "x": 8.0,
+                "y": -3.0
+              },
+              {
+                "x": -3.0,
+                "y": -3.0
+              },
+              {
+                "x": -3.0,
+                "y": 8.0
+              },
+              {
+                "x": -8.0,
+                "y": 8.0
+              }
+            ]
+          },
+          "material": "steel",
+          "label": {
+            "x": -6.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "coil",
+          "shape": {
+            "type": "rectangle",
+            "x_min": -1.0,
+            "y_min": 0.0,
+            "x_max": 3.0,
+            "y_max": 4.0
+          },
+          "material": "copper",
+          "label": {
+            "x": 1.0,
+            "y": 2.0
+          },
+          "circuit": "drive",
+          "turns": 25,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 0.0,
+          "y": -1.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "coax_nested_air",
+    "category": "create",
+    "tags": [
+      "coax",
+      "nested_air",
+      "signed_turns"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 20 mm. Use three nested circles centered at (0,0): radius 5 return conductor with label (4,0), radius 3 air region with label (2,0), and radius 1 inner conductor with label (0,0). Both conductors have relative permeability 1 and share one +2 A circuit; the return has -1 turn and the inner has +1 turn. The nested air region has permeability 1 and no circuit. Use a separate enclosing air circle radius 15, A=0 boundary, background label (10,0), and probe B at (6,0). Use global mesh size 0.5 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 20 mm. Use three nested circles centered at (0,0): radius 5 return conductor with label (4,0), radius 3 air region with label (2,0), and radius 1 inner conductor with label (0,0). Both conductors have relative permeability 1 and share one +2 A circuit; the return has -1 turn and the inner has +1 turn. The nested air region has permeability 1 and no circuit. Use a separate enclosing air circle radius 15, A=0 boundary, background label (10,0), and probe B at (6,0). Set the global mesh size to 0.5 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Coaxial wire and return",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 20.0,
+      "mesh_mm": 0.5,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 15.0
+      },
+      "air_label": {
+        "x": 10.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": 2.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "return",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 5.0
+          },
+          "material": "copper",
+          "label": {
+            "x": 4.0,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": -1,
+          "mesh_mm": null
+        },
+        {
+          "id": "insulation",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 3.0
+          },
+          "material": "air",
+          "label": {
+            "x": 2.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "inner",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "copper",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 6.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "unsupported_ac",
+    "category": "clarify",
+    "tags": [
+      "unsupported",
+      "ac"
+    ],
+    "prompts": [
+      "Build a 2D planar 50 Hz AC eddy-current model of a copper circle centered at (0,0), radius 1 mm, conductivity 58 MS/m and current 1 A rms. Depth 20 mm, enclosing air circle radius 10 mm, A=0 boundary, air label (5,0), mesh 0.5 mm, probe (2,0). I require AC losses and do not permit a DC substitute.",
+      "Please apply this instruction carefully: Build a 2D planar 50 Hz AC eddy-current model of a copper circle centered at (0,0), radius 1 mm, conductivity 58 MS/m and current 1 A rms. Depth 20 mm, enclosing air circle radius 10 mm, A=0 boundary, air label (5,0), mesh 0.5 mm, probe (2,0). I require AC losses and do not permit a DC substitute."
+    ],
+    "expected": null,
+    "current": null
+  },
+  {
+    "id": "modify_move_wire",
+    "category": "modify",
+    "tags": [
+      "modify",
+      "translation"
+    ],
+    "prompts": [
+      "Move only the circular wire center and its block label to (-3,2) mm. Leave its radius 1 mm and every other setting unchanged, including the original outer air circle, background air label and probe at (2,0).",
+      "Please apply this instruction carefully: Move only the circular wire center and its block label to (-3,2) mm. Leave its radius 1 mm and every other setting unchanged, including the original outer air circle, background air label and probe at (2,0)."
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Round conductor in air",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 20.0,
+      "mesh_mm": 0.5,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 10.0
+      },
+      "air_label": {
+        "x": 5.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "conductor",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "wire",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": -3,
+              "y": 2
+            },
+            "radius": 1.0
+          },
+          "material": "conductor",
+          "label": {
+            "x": -3,
+            "y": 2
+          },
+          "circuit": "wire",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 2.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": {
+      "kind": "magnetostatic_plan",
+      "title": "Round conductor in air",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 20.0,
+      "mesh_mm": 0.5,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 10.0
+      },
+      "air_label": {
+        "x": 5.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "conductor",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "wire",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "conductor",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "wire",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 2.0,
+          "y": 0.0
+        }
+      ]
+    }
+  },
+  {
+    "id": "opposed_rectangular_windings",
+    "category": "create",
+    "tags": [
+      "multiple_windings",
+      "signed_turns"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Make a steel core rectangle (-3,-8) to (3,8), relative permeability 500, label (0,0). Add two winding rectangles: left (-8,-6) to (-5,6), label (-6.5,0), +20 turns; right (5,-6) to (8,6), label (6.5,0), -20 turns. Both windings have relative permeability 1 and share the same +3 A DC circuit. Use air rectangle (-20,-20) to (20,20), outer A=0, background air label (15,15), and B probe (0,0). Use global mesh size 1 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Make a steel core rectangle (-3,-8) to (3,8), relative permeability 500, label (0,0). Add two winding rectangles: left (-8,-6) to (-5,6), label (-6.5,0), +20 turns; right (5,-6) to (8,6), label (6.5,0), -20 turns. Both windings have relative permeability 1 and share the same +3 A DC circuit. Use air rectangle (-20,-20) to (20,20), outer A=0, background air label (15,15), and B probe (0,0). Set the global mesh size to 1 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Opposed rectangular windings",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 10.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -20.0,
+        "y_min": -20.0,
+        "x_max": 20.0,
+        "y_max": 20.0
+      },
+      "air_label": {
+        "x": 15.0,
+        "y": 15.0
+      },
+      "materials": [
+        {
+          "id": "steel",
+          "relative_permeability": 500.0
+        },
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": 3.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "core",
+          "shape": {
+            "type": "rectangle",
+            "x_min": -3.0,
+            "y_min": -8.0,
+            "x_max": 3.0,
+            "y_max": 8.0
+          },
+          "material": "steel",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "left",
+          "shape": {
+            "type": "rectangle",
+            "x_min": -8.0,
+            "y_min": -6.0,
+            "x_max": -5.0,
+            "y_max": 6.0
+          },
+          "material": "copper",
+          "label": {
+            "x": -6.5,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": 20,
+          "mesh_mm": null
+        },
+        {
+          "id": "right",
+          "shape": {
+            "type": "rectangle",
+            "x_min": 5.0,
+            "y_min": -6.0,
+            "x_max": 8.0,
+            "y_max": 6.0
+          },
+          "material": "copper",
+          "label": {
+            "x": 6.5,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": -20,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "asymmetric_c_core",
+    "category": "create",
+    "tags": [
+      "concave_polygon",
+      "asymmetric",
+      "multiple_windings"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Draw an asymmetric C-shaped steel polygon, vertices in order (-15,-12), (10,-12), (10,-6), (-7,-6), (-7,6), (6,6), (6,12), (-15,12), relative permeability 1000, label (-12,0). Add winding rectangles (-5,-4) to (0,4), label (-2.5,0), +50 turns, and (-22,-4) to (-17,4), label (-19.5,0), -50 turns. Both windings have relative permeability 1 and share a +1 A DC circuit. Use enclosing air rectangle (-40,-30) to (30,30), outer A=0, background label (20,20), and B probe (3,0). Use global mesh size 1 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Draw an asymmetric C-shaped steel polygon, vertices in order (-15,-12), (10,-12), (10,-6), (-7,-6), (-7,6), (6,6), (6,12), (-15,12), relative permeability 1000, label (-12,0). Add winding rectangles (-5,-4) to (0,4), label (-2.5,0), +50 turns, and (-22,-4) to (-17,4), label (-19.5,0), -50 turns. Both windings have relative permeability 1 and share a +1 A DC circuit. Use enclosing air rectangle (-40,-30) to (30,30), outer A=0, background label (20,20), and B probe (3,0). Set the global mesh size to 1 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Asymmetric C core",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 10.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -40.0,
+        "y_min": -30.0,
+        "x_max": 30.0,
+        "y_max": 30.0
+      },
+      "air_label": {
+        "x": 20.0,
+        "y": 20.0
+      },
+      "materials": [
+        {
+          "id": "steel",
+          "relative_permeability": 1000.0
+        },
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "core",
+          "shape": {
+            "type": "polygon",
+            "points": [
+              {
+                "x": -15.0,
+                "y": -12.0
+              },
+              {
+                "x": 10.0,
+                "y": -12.0
+              },
+              {
+                "x": 10.0,
+                "y": -6.0
+              },
+              {
+                "x": -7.0,
+                "y": -6.0
+              },
+              {
+                "x": -7.0,
+                "y": 6.0
+              },
+              {
+                "x": 6.0,
+                "y": 6.0
+              },
+              {
+                "x": 6.0,
+                "y": 12.0
+              },
+              {
+                "x": -15.0,
+                "y": 12.0
+              }
+            ]
+          },
+          "material": "steel",
+          "label": {
+            "x": -12.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "positive",
+          "shape": {
+            "type": "rectangle",
+            "x_min": -5.0,
+            "y_min": -4.0,
+            "x_max": 0.0,
+            "y_max": 4.0
+          },
+          "material": "copper",
+          "label": {
+            "x": -2.5,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": 50,
+          "mesh_mm": null
+        },
+        {
+          "id": "negative",
+          "shape": {
+            "type": "rectangle",
+            "x_min": -22.0,
+            "y_min": -4.0,
+            "x_max": -17.0,
+            "y_max": 4.0
+          },
+          "material": "copper",
+          "label": {
+            "x": -19.5,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": -50,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 3.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "missing_permeability",
+    "category": "clarify",
+    "tags": [
+      "missing_input",
+      "permeability"
+    ],
+    "prompts": [
+      "Create a planar DC triangular steel core with vertices (-6,-4), (6,-4), (0,6), label (0,0), depth 10 mm. Add a winding rectangle (9,-2) to (12,2), relative permeability 1, label (10.5,0), +12 turns at +0.8 A. Outer air rectangle (-20,-20) to (20,20), A=0, air label (16,16), mesh 1 mm and probe (8,0). I have not specified the steel permeability or B-H data; do not invent it.",
+      "Please apply this instruction carefully: Create a planar DC triangular steel core with vertices (-6,-4), (6,-4), (0,6), label (0,0), depth 10 mm. Add a winding rectangle (9,-2) to (12,2), relative permeability 1, label (10.5,0), +12 turns at +0.8 A. Outer air rectangle (-20,-20) to (20,20), A=0, air label (16,16), mesh 1 mm and probe (8,0). I have not specified the steel permeability or B-H data; do not invent it."
+    ],
+    "expected": null,
+    "current": null
+  },
+  {
+    "id": "negative_offset_circle",
+    "category": "create",
+    "tags": [
+      "negative_coordinates",
+      "negative_current"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 15 mm. Make a circular conductor centered at (-6,-5), radius 1.5, relative permeability 1, label (-6,-5), with +1 turn on a -1.25 A DC circuit. Use enclosing air rectangle (-20,-15) to (10,15), outer A=0, background label (5,10), and B probe (-2,-5). Use global mesh size 0.75 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 15 mm. Make a circular conductor centered at (-6,-5), radius 1.5, relative permeability 1, label (-6,-5), with +1 turn on a -1.25 A DC circuit. Use enclosing air rectangle (-20,-15) to (10,15), outer A=0, background label (5,10), and B probe (-2,-5). Set the global mesh size to 0.75 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Offset negative wire",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 15.0,
+      "mesh_mm": 0.75,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -20.0,
+        "y_min": -15.0,
+        "x_max": 10.0,
+        "y_max": 15.0
+      },
+      "air_label": {
+        "x": 5.0,
+        "y": 10.0
+      },
+      "materials": [
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": -1.25
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": -6.0,
+              "y": -5.0
+            },
+            "radius": 1.5
+          },
+          "material": "copper",
+          "label": {
+            "x": -6.0,
+            "y": -5.0
+          },
+          "circuit": "drive",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": -2.0,
+          "y": -5.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "triangular_winding",
+    "category": "create",
+    "tags": [
+      "triangle",
+      "winding"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 8 mm. Create a triangular winding with vertices (-3,-2), (4,-2), (-3,5), relative permeability 1 and label (-1,0). Give it +2 turns on a +0.5 A DC circuit. Enclose it in an air circle centered at (0,0), radius 20, with A=0 boundary and background label (15,0). Probe B at (6,0). Use global mesh size 1 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 8 mm. Create a triangular winding with vertices (-3,-2), (4,-2), (-3,5), relative permeability 1 and label (-1,0). Give it +2 turns on a +0.5 A DC circuit. Enclose it in an air circle centered at (0,0), radius 20, with A=0 boundary and background label (15,0). Probe B at (6,0). Set the global mesh size to 1 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Triangular winding",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 8.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 20.0
+      },
+      "air_label": {
+        "x": 15.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": 0.5
+        }
+      ],
+      "regions": [
+        {
+          "id": "coil",
+          "shape": {
+            "type": "polygon",
+            "points": [
+              {
+                "x": -3.0,
+                "y": -2.0
+              },
+              {
+                "x": 4.0,
+                "y": -2.0
+              },
+              {
+                "x": -3.0,
+                "y": 5.0
+              }
+            ]
+          },
+          "material": "copper",
+          "label": {
+            "x": -1.0,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": 2,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 6.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "unsupported_three_dimensional",
+    "category": "clarify",
+    "tags": [
+      "unsupported",
+      "3d"
+    ],
+    "prompts": [
+      "Create and solve a full 3D magnetostatic cuboid copper conductor 2 mm by 2 mm by 20 mm carrying 1 A, surrounded by a 30 mm air cube. I need the actual three-dimensional end effects and do not allow a 2D cross-section approximation.",
+      "Please apply this instruction carefully: Create and solve a full 3D magnetostatic cuboid copper conductor 2 mm by 2 mm by 20 mm carrying 1 A, surrounded by a 30 mm air cube. I need the actual three-dimensional end effects and do not allow a 2D cross-section approximation."
+    ],
+    "expected": null,
+    "current": null
+  },
+  {
+    "id": "modify_wire_radius",
+    "category": "modify",
+    "tags": [
+      "modify",
+      "radius"
+    ],
+    "prompts": [
+      "Increase only the existing wire radius from 1 mm to 1.5 mm. Keep its center and block label at (0,0), and preserve all material, excitation, depth, air-domain, mesh and probe settings.",
+      "Please apply this instruction carefully: Increase only the existing wire radius from 1 mm to 1.5 mm. Keep its center and block label at (0,0), and preserve all material, excitation, depth, air-domain, mesh and probe settings."
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Round conductor in air",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 20.0,
+      "mesh_mm": 0.5,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 10.0
+      },
+      "air_label": {
+        "x": 5.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "conductor",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "wire",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.5
+          },
+          "material": "conductor",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "wire",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 2.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": {
+      "kind": "magnetostatic_plan",
+      "title": "Round conductor in air",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 20.0,
+      "mesh_mm": 0.5,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 10.0
+      },
+      "air_label": {
+        "x": 5.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "conductor",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "wire",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "conductor",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "wire",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 2.0,
+          "y": 0.0
+        }
+      ]
+    }
+  },
+  {
+    "id": "hexagonal_core",
+    "category": "create",
+    "tags": [
+      "hexagon",
+      "polygon"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 12 mm. Draw a hexagonal steel core with ordered vertices (-5,0), (-2.5,-4), (2.5,-4), (5,0), (2.5,4), (-2.5,4), relative permeability 200 and label (0,0). Add a winding rectangle (8,-2) to (10,2), relative permeability 1, label (9,0), +10 turns at +0.7 A. Use air rectangle (-18,-15) to (18,15), outer A=0, background label (14,12), and B probe (6,0). Use global mesh size 1 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 12 mm. Draw a hexagonal steel core with ordered vertices (-5,0), (-2.5,-4), (2.5,-4), (5,0), (2.5,4), (-2.5,4), relative permeability 200 and label (0,0). Add a winding rectangle (8,-2) to (10,2), relative permeability 1, label (9,0), +10 turns at +0.7 A. Use air rectangle (-18,-15) to (18,15), outer A=0, background label (14,12), and B probe (6,0). Set the global mesh size to 1 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Hexagonal core",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 12.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -18.0,
+        "y_min": -15.0,
+        "x_max": 18.0,
+        "y_max": 15.0
+      },
+      "air_label": {
+        "x": 14.0,
+        "y": 12.0
+      },
+      "materials": [
+        {
+          "id": "steel",
+          "relative_permeability": 200.0
+        },
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": 0.7
+        }
+      ],
+      "regions": [
+        {
+          "id": "core",
+          "shape": {
+            "type": "polygon",
+            "points": [
+              {
+                "x": -5.0,
+                "y": 0.0
+              },
+              {
+                "x": -2.5,
+                "y": -4.0
+              },
+              {
+                "x": 2.5,
+                "y": -4.0
+              },
+              {
+                "x": 5.0,
+                "y": 0.0
+              },
+              {
+                "x": 2.5,
+                "y": 4.0
+              },
+              {
+                "x": -2.5,
+                "y": 4.0
+              }
+            ]
+          },
+          "material": "steel",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "coil",
+          "shape": {
+            "type": "rectangle",
+            "x_min": 8.0,
+            "y_min": -2.0,
+            "x_max": 10.0,
+            "y_max": 2.0
+          },
+          "material": "copper",
+          "label": {
+            "x": 9.0,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": 10,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 6.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "rectangular_air_hole",
+    "category": "create",
+    "tags": [
+      "nested_air",
+      "rectangle"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Make a steel rectangle (-8,-7) to (8,7), relative permeability 800, label (-6,0). Nest an unexcited air rectangle (-3,-2) to (3,2) inside it, with air label (0,0). Add a separate circular winding at (12,0), radius 1, relative permeability 1, label (12,0), +15 turns at +1 A. Use enclosing air rectangle (-20,-20) to (20,20), outer A=0, background label (16,16), and probe B inside the hole at (0,1). Use global mesh size 1 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Make a steel rectangle (-8,-7) to (8,7), relative permeability 800, label (-6,0). Nest an unexcited air rectangle (-3,-2) to (3,2) inside it, with air label (0,0). Add a separate circular winding at (12,0), radius 1, relative permeability 1, label (12,0), +15 turns at +1 A. Use enclosing air rectangle (-20,-20) to (20,20), outer A=0, background label (16,16), and probe B inside the hole at (0,1). Set the global mesh size to 1 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Rectangular core with air hole",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 10.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -20.0,
+        "y_min": -20.0,
+        "x_max": 20.0,
+        "y_max": 20.0
+      },
+      "air_label": {
+        "x": 16.0,
+        "y": 16.0
+      },
+      "materials": [
+        {
+          "id": "steel",
+          "relative_permeability": 800.0
+        },
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "core",
+          "shape": {
+            "type": "rectangle",
+            "x_min": -8.0,
+            "y_min": -7.0,
+            "x_max": 8.0,
+            "y_max": 7.0
+          },
+          "material": "steel",
+          "label": {
+            "x": -6.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "hole",
+          "shape": {
+            "type": "rectangle",
+            "x_min": -3.0,
+            "y_min": -2.0,
+            "x_max": 3.0,
+            "y_max": 2.0
+          },
+          "material": "air",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "coil",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 12.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "copper",
+          "label": {
+            "x": 12.0,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": 15,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 0.0,
+          "y": 1.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "centimeter_milliamp_units",
+    "category": "create",
+    "tags": [
+      "unit_conversion",
+      "centimeters",
+      "milliamperes"
+    ],
+    "prompts": [
+      "Create a 2D planar DC magnetostatic model. In this request all coordinates and lengths are in centimeters: circular conductor center (0,0), radius 0.1 cm, relative permeability 1, label (0,0), +1 turn carrying +1500 mA. Out-of-plane depth is 2 cm. Enclosing air circle center (0,0), radius 1 cm, A=0 outer boundary, background label (0.5,0), mesh 0.05 cm, B probe (0.2,0). Convert all lengths to millimeters and current to amperes in the plan. No force extraction.",
+      "Starting from an empty model, implement this complete specification: Create a 2D planar DC magnetostatic model. In this request all coordinates and lengths are in centimeters: circular conductor center (0,0), radius 0.1 cm, relative permeability 1, label (0,0), +1 turn carrying +1500 mA. Out-of-plane depth is 2 cm. Enclosing air circle center (0,0), radius 1 cm, A=0 outer boundary, background label (0.5,0), mesh 0.05 cm, B probe (0.2,0). Convert all lengths to millimeters and current to amperes in the plan. No force extraction."
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Round conductor in air",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 20.0,
+      "mesh_mm": 0.5,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 10.0
+      },
+      "air_label": {
+        "x": 5.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "conductor",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "wire",
+          "current_a": 1.5
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "conductor",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "wire",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 2.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "unsupported_axisymmetric",
+    "category": "clarify",
+    "tags": [
+      "unsupported",
+      "axisymmetric"
+    ],
+    "prompts": [
+      "Build a 2D axisymmetric r-z solenoid model with bore radius 5 mm, outer winding radius 10 mm, length 30 mm, 100 turns and 1 A DC. Use an air domain extending to r=40 mm and z=+-50 mm. I require axisymmetric physics, not a planar approximation.",
+      "Please apply this instruction carefully: Build a 2D axisymmetric r-z solenoid model with bore radius 5 mm, outer winding radius 10 mm, length 30 mm, 100 turns and 1 A DC. Use an air domain extending to r=40 mm and z=+-50 mm. I require axisymmetric physics, not a planar approximation."
+    ],
+    "expected": null,
+    "current": null
+  },
+  {
+    "id": "modify_turns",
+    "category": "modify",
+    "tags": [
+      "modify",
+      "turns"
+    ],
+    "prompts": [
+      "Change only the wire region from +1 turn to +3 turns. Keep the circuit at +1 A and preserve every other physical value, contour, label, boundary, depth, mesh and probe.",
+      "Please apply this instruction carefully: Change only the wire region from +1 turn to +3 turns. Keep the circuit at +1 A and preserve every other physical value, contour, label, boundary, depth, mesh and probe."
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Round conductor in air",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 20.0,
+      "mesh_mm": 0.5,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 10.0
+      },
+      "air_label": {
+        "x": 5.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "conductor",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "wire",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "conductor",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "wire",
+          "turns": 3,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 2.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": {
+      "kind": "magnetostatic_plan",
+      "title": "Round conductor in air",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 20.0,
+      "mesh_mm": 0.5,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 10.0
+      },
+      "air_label": {
+        "x": 5.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "conductor",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "wire",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "conductor",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "wire",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 2.0,
+          "y": 0.0
+        }
+      ]
+    }
+  },
+  {
+    "id": "two_independent_circuits",
+    "category": "create",
+    "tags": [
+      "multiple_circuits",
+      "negative_current"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Make two circular conductors centered at (-4,0) and (4,0), each radius 1, relative permeability 1, with labels at their centers and +1 turn each. Assign the left conductor to its own +1 A DC circuit and the right to a different -2 A DC circuit. Use enclosing air rectangle (-15,-10) to (15,10), A=0 outer boundary, background air label (10,7), and B probe (0,0). Use global mesh size 0.75 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Make two circular conductors centered at (-4,0) and (4,0), each radius 1, relative permeability 1, with labels at their centers and +1 turn each. Assign the left conductor to its own +1 A DC circuit and the right to a different -2 A DC circuit. Use enclosing air rectangle (-15,-10) to (15,10), A=0 outer boundary, background air label (10,7), and B probe (0,0). Set the global mesh size to 0.75 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Separate DC circuits",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 10.0,
+      "mesh_mm": 0.75,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -15.0,
+        "y_min": -10.0,
+        "x_max": 15.0,
+        "y_max": 10.0
+      },
+      "air_label": {
+        "x": 10.0,
+        "y": 7.0
+      },
+      "materials": [
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "left_drive",
+          "current_a": 1.0
+        },
+        {
+          "id": "right_drive",
+          "current_a": -2.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "left",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": -4.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "copper",
+          "label": {
+            "x": -4.0,
+            "y": 0.0
+          },
+          "circuit": "left_drive",
+          "turns": 1,
+          "mesh_mm": null
+        },
+        {
+          "id": "right",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 4.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "copper",
+          "label": {
+            "x": 4.0,
+            "y": 0.0
+          },
+          "circuit": "right_drive",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "stepped_concave_core",
+    "category": "create",
+    "tags": [
+      "concave_polygon",
+      "stepped"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Draw a stepped steel polygon with ordered vertices (-7,-6), (7,-6), (7,-2), (1,-2), (1,2), (-3,2), (-3,6), (-7,6), relative permeability 300 and label (-5,0). Add a circular winding centered at (5,4), radius 1.5, relative permeability 1, label (5,4), +8 turns at +2 A. Enclose everything in an air circle centered at (0,0), radius 20, A=0 outer boundary, background label (14,10), and B probe (4,0). Use global mesh size 1 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Draw a stepped steel polygon with ordered vertices (-7,-6), (7,-6), (7,-2), (1,-2), (1,2), (-3,2), (-3,6), (-7,6), relative permeability 300 and label (-5,0). Add a circular winding centered at (5,4), radius 1.5, relative permeability 1, label (5,4), +8 turns at +2 A. Enclose everything in an air circle centered at (0,0), radius 20, A=0 outer boundary, background label (14,10), and B probe (4,0). Set the global mesh size to 1 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Stepped concave core",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 10.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 20.0
+      },
+      "air_label": {
+        "x": 14.0,
+        "y": 10.0
+      },
+      "materials": [
+        {
+          "id": "steel",
+          "relative_permeability": 300.0
+        },
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": 2.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "core",
+          "shape": {
+            "type": "polygon",
+            "points": [
+              {
+                "x": -7.0,
+                "y": -6.0
+              },
+              {
+                "x": 7.0,
+                "y": -6.0
+              },
+              {
+                "x": 7.0,
+                "y": -2.0
+              },
+              {
+                "x": 1.0,
+                "y": -2.0
+              },
+              {
+                "x": 1.0,
+                "y": 2.0
+              },
+              {
+                "x": -3.0,
+                "y": 2.0
+              },
+              {
+                "x": -3.0,
+                "y": 6.0
+              },
+              {
+                "x": -7.0,
+                "y": 6.0
+              }
+            ]
+          },
+          "material": "steel",
+          "label": {
+            "x": -5.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "coil",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 5.0,
+              "y": 4.0
+            },
+            "radius": 1.5
+          },
+          "material": "copper",
+          "label": {
+            "x": 5.0,
+            "y": 4.0
+          },
+          "circuit": "drive",
+          "turns": 8,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 4.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "modify_mesh_only",
+    "category": "modify",
+    "tags": [
+      "modify",
+      "mesh"
+    ],
+    "prompts": [
+      "Change only the global mesh size from 0.5 mm to 0.25 mm. Preserve all geometry, labels, material permeability, circuit current, turns, depth, outer boundary and field probe.",
+      "Please apply this instruction carefully: Change only the global mesh size from 0.5 mm to 0.25 mm. Preserve all geometry, labels, material permeability, circuit current, turns, depth, outer boundary and field probe."
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Round conductor in air",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 20.0,
+      "mesh_mm": 0.25,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 10.0
+      },
+      "air_label": {
+        "x": 5.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "conductor",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "wire",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "conductor",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "wire",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 2.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": {
+      "kind": "magnetostatic_plan",
+      "title": "Round conductor in air",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 20.0,
+      "mesh_mm": 0.5,
+      "domain": {
+        "type": "circle",
+        "center": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "radius": 10.0
+      },
+      "air_label": {
+        "x": 5.0,
+        "y": 0.0
+      },
+      "materials": [
+        {
+          "id": "conductor",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "wire",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "conductor",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "wire",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 2.0,
+          "y": 0.0
+        }
+      ]
+    }
+  },
+  {
+    "id": "passive_two_material_force",
+    "category": "create",
+    "tags": [
+      "multiple_materials",
+      "zero_excitation",
+      "force_target"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Create two separate passive steel regions: a circle centered at (-5,0), radius 2, linear relative permeability 100 and label (-5,0); and a rectangle (2,-3) to (6,3), relative permeability 500 and label (4,0). There are no currents, circuits, magnets or other excitations. Use enclosing air rectangle (-15,-12) to (15,12), outer A=0, background label (10,8), and B probe (0,0). Use global mesh size 1 mm. Extract force on the rectangular steel region. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Create two separate passive steel regions: a circle centered at (-5,0), radius 2, linear relative permeability 100 and label (-5,0); and a rectangle (2,-3) to (6,3), relative permeability 500 and label (4,0). There are no currents, circuits, magnets or other excitations. Use enclosing air rectangle (-15,-12) to (15,12), outer A=0, background label (10,8), and B probe (0,0). Set the global mesh size to 1 mm. Extract force on the rectangular steel region. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Two passive materials",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 10.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -15.0,
+        "y_min": -12.0,
+        "x_max": 15.0,
+        "y_max": 12.0
+      },
+      "air_label": {
+        "x": 10.0,
+        "y": 8.0
+      },
+      "materials": [
+        {
+          "id": "steel_a",
+          "relative_permeability": 100.0
+        },
+        {
+          "id": "steel_b",
+          "relative_permeability": 500.0
+        }
+      ],
+      "circuits": [],
+      "regions": [
+        {
+          "id": "round_core",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": -5.0,
+              "y": 0.0
+            },
+            "radius": 2.0
+          },
+          "material": "steel_a",
+          "label": {
+            "x": -5.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "rect_core",
+          "shape": {
+            "type": "rectangle",
+            "x_min": 2.0,
+            "y_min": -3.0,
+            "x_max": 6.0,
+            "y_max": 3.0
+          },
+          "material": "steel_b",
+          "label": {
+            "x": 4.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": "rect_core",
+      "probes": [
+        {
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "three_signed_windings",
+    "category": "create",
+    "tags": [
+      "multiple_windings",
+      "signed_turns"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Draw three circular winding cross-sections centered at (-6,0), (0,0), and (6,0), radius 1 each, relative permeability 1 and labels at their centers. All share one +0.4 A DC circuit. Assign turns +10 to the left, -20 to the center and +10 to the right. Enclose them in air rectangle (-16,-10) to (16,10), outer A=0, background label (12,7), and B probe (3,0). Use global mesh size 1 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Draw three circular winding cross-sections centered at (-6,0), (0,0), and (6,0), radius 1 each, relative permeability 1 and labels at their centers. All share one +0.4 A DC circuit. Assign turns +10 to the left, -20 to the center and +10 to the right. Enclose them in air rectangle (-16,-10) to (16,10), outer A=0, background label (12,7), and B probe (3,0). Set the global mesh size to 1 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Three signed windings",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 10.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -16.0,
+        "y_min": -10.0,
+        "x_max": 16.0,
+        "y_max": 10.0
+      },
+      "air_label": {
+        "x": 12.0,
+        "y": 7.0
+      },
+      "materials": [
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": 0.4
+        }
+      ],
+      "regions": [
+        {
+          "id": "left",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": -6.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "copper",
+          "label": {
+            "x": -6.0,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": 10,
+          "mesh_mm": null
+        },
+        {
+          "id": "center",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "copper",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": -20,
+          "mesh_mm": null
+        },
+        {
+          "id": "right",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 6.0,
+              "y": 0.0
+            },
+            "radius": 1.0
+          },
+          "material": "copper",
+          "label": {
+            "x": 6.0,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": 10,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 3.0,
+          "y": 0.0
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "circle_hole_in_triangle",
+    "category": "create",
+    "tags": [
+      "nested_air",
+      "triangle",
+      "circle"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Create a triangular steel region with vertices (-8,-6), (8,-6), (0,10), relative permeability 350, label (-4,-3). Nest an unexcited circular air hole centered at (0,0), radius 1.5 and label (0,0). Add a separate winding rectangle (11,-2) to (13,2), permeability 1, label (12,0), +10 turns at +1 A. Use enclosing air rectangle (-20,-20) to (20,20), outer A=0, background label (16,16), and B probe inside the hole at (0,0.5). Use global mesh size 1 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 10 mm. Create a triangular steel region with vertices (-8,-6), (8,-6), (0,10), relative permeability 350, label (-4,-3). Nest an unexcited circular air hole centered at (0,0), radius 1.5 and label (0,0). Add a separate winding rectangle (11,-2) to (13,2), permeability 1, label (12,0), +10 turns at +1 A. Use enclosing air rectangle (-20,-20) to (20,20), outer A=0, background label (16,16), and B probe inside the hole at (0,0.5). Set the global mesh size to 1 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Triangular core with round hole",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 10.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "rectangle",
+        "x_min": -20.0,
+        "y_min": -20.0,
+        "x_max": 20.0,
+        "y_max": 20.0
+      },
+      "air_label": {
+        "x": 16.0,
+        "y": 16.0
+      },
+      "materials": [
+        {
+          "id": "steel",
+          "relative_permeability": 350.0
+        },
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": 1.0
+        }
+      ],
+      "regions": [
+        {
+          "id": "core",
+          "shape": {
+            "type": "polygon",
+            "points": [
+              {
+                "x": -8.0,
+                "y": -6.0
+              },
+              {
+                "x": 8.0,
+                "y": -6.0
+              },
+              {
+                "x": 0.0,
+                "y": 10.0
+              }
+            ]
+          },
+          "material": "steel",
+          "label": {
+            "x": -4.0,
+            "y": -3.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "hole",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "radius": 1.5
+          },
+          "material": "air",
+          "label": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "circuit": null,
+          "turns": 0,
+          "mesh_mm": null
+        },
+        {
+          "id": "coil",
+          "shape": {
+            "type": "rectangle",
+            "x_min": 11.0,
+            "y_min": -2.0,
+            "x_max": 13.0,
+            "y_max": 2.0
+          },
+          "material": "copper",
+          "label": {
+            "x": 12.0,
+            "y": 0.0
+          },
+          "circuit": "drive",
+          "turns": 10,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 0.0,
+          "y": 0.5
+        }
+      ]
+    },
+    "current": null
+  },
+  {
+    "id": "pentagonal_outer_domain",
+    "category": "create",
+    "tags": [
+      "polygon_domain",
+      "negative_coordinates"
+    ],
+    "prompts": [
+      "Create a new 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 9 mm. Make a circular conductor centered at (-4,1), radius 1, relative permeability 1 and label (-4,1), with +1 turn at +0.75 A DC. Use a surrounding pentagonal air domain with ordered vertices (-20,-15), (18,-15), (22,0), (18,15), (-20,15). Apply A=0 on every outer segment, place the background air label at (15,10), and probe B at (0,1). Use global mesh size 1 mm. No force extraction is requested. ",
+      "Starting from an empty model, implement this complete specification: Build a 2D planar DC magnetostatic model. All coordinates and dimensions are in millimeters. Use out-of-plane depth 9 mm. Make a circular conductor centered at (-4,1), radius 1, relative permeability 1 and label (-4,1), with +1 turn at +0.75 A DC. Use a surrounding pentagonal air domain with ordered vertices (-20,-15), (18,-15), (22,0), (18,15), (-20,15). Apply A=0 on every outer segment, place the background air label at (15,10), and probe B at (0,1). Set the global mesh size to 1 mm. No force extraction is requested. "
+    ],
+    "expected": {
+      "kind": "magnetostatic_plan",
+      "title": "Polygon outer domain",
+      "units": "millimeters",
+      "physics": "planar_dc_magnetics",
+      "depth_mm": 9.0,
+      "mesh_mm": 1.0,
+      "domain": {
+        "type": "polygon",
+        "points": [
+          {
+            "x": -20.0,
+            "y": -15.0
+          },
+          {
+            "x": 18.0,
+            "y": -15.0
+          },
+          {
+            "x": 22.0,
+            "y": 0.0
+          },
+          {
+            "x": 18.0,
+            "y": 15.0
+          },
+          {
+            "x": -20.0,
+            "y": 15.0
+          }
+        ]
+      },
+      "air_label": {
+        "x": 15.0,
+        "y": 10.0
+      },
+      "materials": [
+        {
+          "id": "copper",
+          "relative_permeability": 1.0
+        }
+      ],
+      "circuits": [
+        {
+          "id": "drive",
+          "current_a": 0.75
+        }
+      ],
+      "regions": [
+        {
+          "id": "wire",
+          "shape": {
+            "type": "circle",
+            "center": {
+              "x": -4.0,
+              "y": 1.0
+            },
+            "radius": 1.0
+          },
+          "material": "copper",
+          "label": {
+            "x": -4.0,
+            "y": 1.0
+          },
+          "circuit": "drive",
+          "turns": 1,
+          "mesh_mm": null
+        }
+      ],
+      "force_region": null,
+      "probes": [
+        {
+          "x": 0.0,
+          "y": 1.0
+        }
+      ]
+    },
+    "current": null
+  }
+]
