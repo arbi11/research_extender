@@ -356,7 +356,8 @@ status lapses when any of them changes.
 
 `data/designs.json` holds new designs assembled only from components, in
 combinations no official example uses, each checked against a closed-form result
-with the 1% policy fixed before running:
+or an exact prediction from its construction (phase order, symmetry), with the 1%
+policy fixed before running:
 
 | Design | Components exercised | Result |
 |---|---|---|
@@ -367,6 +368,10 @@ with the 1% policy fixed before running:
 | Kelvin field at 70 degrees | Kelvin exterior alone, prediction declared before running | uniform 0.800 T at -70.0 degrees, as predicted |
 | Nonlinear M-19 ring | library B-H curve (33 points) around a 1000 A conductor; Ampere's law fixes H wherever the probes sit | B within 0.063% of the curve and H within 0.54% at four curve points from 1.56 to 1.84 T |
 | Inner-rotor 12-slot 10-pole SPM | inward teeth with divided slots, double-layer star-of-slots winding, radial arc magnets with seat arcs, laminated and solid nonlinear M-19, 24 rotor positions | each phase's flux-linkage fundamental within 0.005 electrical degrees of the construction's prediction, peaking A, B, C; amplitudes equal within 4e-6 |
+| Outer-rotor 24-slot 22-pole SPM | tabulated slot profiles opening outward (opening, wedge, tapered sides, arc bottoms), divided slots, outer rotor of radial arc magnets | each phase within 0.002 electrical degrees of the prediction, peaking A, B, C; amplitudes equal within 7e-5 |
+| One pole of a 4-pole SPM, sliding band | contours given as data (`entity_pattern`), antiperiodic ends (`segment_boundary`), A = 0 on an arc picked by a point (`arc_boundary`), a sector sliding band (`sector_air_gap`) turned through twice the sector | each phase within 0.004 electrical degrees of the prediction, peaking A, B, C; amplitudes equal within 1e-4. Swapping phases B and C fails the order check |
+| Rotating aluminium cylinder in a belt winding | `belt_winding` in free space, each spatial order solved at its slip frequency (harmonic superposition) at 0, 200 and 600 rad/s | torque, slip-power loss and eddy-current loss within 0.09% of the closed-form Bessel solution (`rotating_cylinder_torque`) |
+| 6/4 SRM symmetry | tapered stator poles with coil blocks and flat-rooted rotor poles (`salient_poles`), opposite-pole phases (`salient_pole_winding`), nonlinear M-19, 12 positions per phase | psi_B(theta - 30 deg) = psi_A(theta) within 0.014%; B_x equal at both aligned A poles within 7e-6, while equal coil polarity misses by 2.0 (`metric_relation`) |
 
 ```bash
 python3 -m femm_brain design --all --output work/designs --image research-extender-femm:dev-hierarchy-resumed-20261025
