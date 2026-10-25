@@ -81,6 +81,10 @@ class SimulationApiTests(unittest.TestCase):
         catalog = self.get_json('/api/simulations')
         self.assertEqual(len(catalog['cases']), 6)
         self.assertEqual(catalog['llm_calls'], 0)
+        verified = self.get_json('/api/verification')['native_simulations']
+        self.assertEqual(len(verified['cases']), 6)
+        self.assertEqual(verified['llm_calls'], 0)
+        self.assertTrue(all(case['status'] == 'passed' for case in verified['cases']))
         selection = self.get_json('/api/simulation-request?' + urlencode({'q': 'AirCore short solenoid at 2 A'}))
         self.assertEqual(selection['status'], 'ready')
         query = urlencode({'case': selection['selected_case_id'], 'parameters': json.dumps(selection['parameters'])})
