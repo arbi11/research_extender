@@ -196,6 +196,47 @@ the declared current and spacing. The 1% FEMM and 5% transfer acceptance bands
 are declared test tolerances, not accuracies certified by either source. A passing
 comparison does not establish convergence or validate all documented studies.
 
+## Reproduce the official examples
+
+`reproduce` checks the brain against FEMM's own examples at up to three
+independent levels, all sharing one typed measurement plan:
+
+| Level | What is built | What it shows |
+|---|---|---|
+| `original` | The unmodified official model file, opened as data | The published number is reproducible on this engine at all |
+| `rebuild` | A fresh model compiled from the brain's stored model record, then compared field by field with the saved native file | The brain's stored knowledge is complete for this model |
+| `article` | A model built from parameters quoted from the article text, with official library entries and FEMM defaults where the article relies on them | The brain can construct the problem from its description, without the model file |
+
+Published targets, quotes and the 1% tolerance policy are frozen in
+`data/reproductions.json`; every quote is verbatim source text, and a test checks
+it against the restored cache. Comparators (mesh-dependent values, other models
+or measurements) are reported but never decide a pass. Diagnostic controls scale
+explicit mesh constraints, override article parameters or toggle smart meshing,
+and report each metric's change without affecting acceptance.
+
+```bash
+python3 -m femm_brain restore-cache --for-reproductions   # official model files, digest-checked
+python3 -m femm_brain reproduce --all --controls --output work/reproductions \
+  --image research-extender-femm:dev-hierarchy-resumed-20261025
+python3 -m femm_brain reproduction-report --results work/reproductions --html work/reproductions.html
+```
+
+At the recorded snapshot, 27 cases from 19 official examples ran: 23 pass every
+attempted level, 3 fail their frozen targets and 1 has comparators only. All 26
+rebuilds reproduce their original's native values exactly; 6 article builds pass.
+The failures are kept with findings rather than relabeled:
+
+- **EI inductance/energy** remains about 1.5% above the article. Mesh refinement
+  moves it further away, so discretization does not explain it.
+- **Coilgun ball force** changes from -2.5% to +8% of the published value as the
+  mesh is refined; this small weighted-stress force is not mesh-converged.
+- **Rotor-motion cogging torque** varies by tens of percent between adjacent
+  6-degree samples and with smart meshing at the source's coarse mesh.
+
+Examples with a passing case mark only their own workflow node as numerically
+checked, citing `data/verification/official_reproductions.json`. Article builds
+exist for six examples; the others need dimensions that appear only in figures.
+
 ## Explore
 
 - Search for a machine, component or method and select a source example.
@@ -263,6 +304,16 @@ Refreshing sources requires network access:
 python3 -m femm_brain ingest
 python3 -m femm_brain build
 python3 -m femm_brain validate
+```
+
+The collection cache is not bundled. To restore the recorded snapshot without
+changing the manifest, `restore-cache` re-fetches each attachment and keeps it
+only when its bytes match the recorded digest. Wiki pages embed a per-request
+timestamp, so crawls also record each page's extracted-text digest and revision
+time; change detection compares text whenever the curation baseline holds it.
+
+```bash
+python3 -m femm_brain restore-cache --report work/restore-report.json
 ```
 
 Source collection is bounded and follows official FEMM links. Downloaded HTML,
