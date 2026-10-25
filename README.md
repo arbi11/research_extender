@@ -1,6 +1,6 @@
 # Continue FEMM development
 
-**New agent: start with the [FEMM agent handover](handover/README.md).** It records
+**New agent: start with the [FEMM agent handover](detailedREADME.md).** It records
 the active branch, tested implementation, known failures, local run commands,
 deployment boundaries and the next development milestones. The
 [second-brain README](femm_brain/README.md) documents the current knowledge-based

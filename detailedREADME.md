@@ -1,4 +1,4 @@
-# FEMM assistant: agent handover
+# FEMM assistant: detailed development README
 
 Updated 25 October 2026. Read this before continuing the work. This is a
 development handover, not a claim that general paper replication is solved.
@@ -130,7 +130,7 @@ Important qualifications:
   our reconstruction in the retained engine. This rules out reconstruction
   drift for that run; it does not identify a historical engine/model/article
   cause. Do not loosen the 1% comparison. See
-  [the discrepancy registry](../femm_brain/data/verification/reference_discrepancies.json).
+  [the discrepancy registry](femm_brain/data/verification/reference_discrepancies.json).
 - The bearing retains its source B-H data and signed winding circuits. Native
   source depth/lamination fill differ from nominal prose values; the discrepancy
   is disclosed. Do not replace it silently. Half-current, reversal, zero-current
@@ -275,7 +275,7 @@ The implementation passed both jobs in
 [CI run 40169159790](https://github.com/arbi11/research_extender/actions/runs/40169159790).
 Its downloaded native artifact digest and all nine plan hashes were independently
 checked against local evidence. See
-[the CI workflow](../.github/workflows/femm-brain.yml) for the full native recipe
+[the CI workflow](.github/workflows/femm-brain.yml) for the full native recipe
 checks and mandatory discrepancy audit. Documentation-only changes may not
 trigger this path-filtered workflow; the link above identifies the tested code
 snapshot, not a promise of a run for every subsequent documentation commit.
@@ -284,25 +284,25 @@ snapshot, not a promise of a run for every subsequent documentation commit.
 
 | Location | Responsibility |
 | --- | --- |
-| [`femm_brain/core.py`](../femm_brain/core.py), `store.py` | Canonical graph loading/validation and rebuildable SQLite index |
-| [`femm_brain/data/`](../femm_brain/data/) | Versioned source, workflow, method, operation and study records; JSON is canonical |
+| [`femm_brain/core.py`](femm_brain/core.py), `store.py` | Canonical graph loading/validation and rebuildable SQLite index |
+| [`femm_brain/data/`](femm_brain/data/) | Versioned source, workflow, method, operation and study records; JSON is canonical |
 | `data/simulations.json` | Executable study schemas, defaults, references and applicability |
 | `data/benchmark_methods.json`, `transfer_cases.json`, `external_sources.json` | Source-backed benchmark methods and vendor transfers |
 | `data/models/`, `model_manifest.json` | Extracted passive source-model data and provenance |
-| [`geometry.py`](../femm_brain/geometry.py), `catalog.py` | Typed construction/export, native-file parsing, teaching recipes and previews |
-| [`planner.py`](../femm_brain/planner.py) | Local known-study selection, explicit parameter/unit parsing and unsupported-request guards |
-| [`simulation.py`](../femm_brain/simulation.py) | Frozen plans/scripts, native execution/physical checks, mesh/field rendering and target assessments |
-| [`source_recipe.py`](../femm_brain/source_recipe.py) | Strict reconstruction from pinned passive native data and independent assignment verification |
-| [`vm270.py`](../femm_brain/vm270.py) | VM270 geometry/materials/mesh, independent saved-model verifier and signed force checks |
-| [`execution.py`](../femm_brain/execution.py) | Isolated Docker jobs, image pinning, queue, durable receipts, cleanup and plan-hash checks |
-| [`benchmark_audit.py`](../femm_brain/benchmark_audit.py) | Strict baseline audit and the narrowly scoped EI discrepancy |
-| [`native_check.py`](../femm_brain/native_check.py) | Actual native construction/mesh checks for the teaching recipes |
-| [`server.py`](../femm_brain/server.py), [`static/`](../femm_brain/static/) | Local API and browser UI |
-| [`tests/`](../femm_brain/tests/) | Graph, planning, physics verification, audit, API, execution and browser checks |
-| [`femm_assistant/`](../femm_assistant/) | Earlier natural-language/paper assistant; read its own README and retained experiment reports before modifying |
+| [`geometry.py`](femm_brain/geometry.py), `catalog.py` | Typed construction/export, native-file parsing, teaching recipes and previews |
+| [`planner.py`](femm_brain/planner.py) | Local known-study selection, explicit parameter/unit parsing and unsupported-request guards |
+| [`simulation.py`](femm_brain/simulation.py) | Frozen plans/scripts, native execution/physical checks, mesh/field rendering and target assessments |
+| [`source_recipe.py`](femm_brain/source_recipe.py) | Strict reconstruction from pinned passive native data and independent assignment verification |
+| [`vm270.py`](femm_brain/vm270.py) | VM270 geometry/materials/mesh, independent saved-model verifier and signed force checks |
+| [`execution.py`](femm_brain/execution.py) | Isolated Docker jobs, image pinning, queue, durable receipts, cleanup and plan-hash checks |
+| [`benchmark_audit.py`](femm_brain/benchmark_audit.py) | Strict baseline audit and the narrowly scoped EI discrepancy |
+| [`native_check.py`](femm_brain/native_check.py) | Actual native construction/mesh checks for the teaching recipes |
+| [`server.py`](femm_brain/server.py), [`static/`](femm_brain/static/) | Local API and browser UI |
+| [`tests/`](femm_brain/tests/) | Graph, planning, physics verification, audit, API, execution and browser checks |
+| [`femm_assistant/`](femm_assistant/) | Earlier natural-language/paper assistant; read its own README and retained experiment reports before modifying |
 
 Committed portable evidence is under
-[`femm_brain/data/verification/`](../femm_brain/data/verification/):
+[`femm_brain/data/verification/`](femm_brain/data/verification/):
 
 - `vendor_benchmarks.json`: latest nine-case reports, controls and test
   metadata at the tested implementation snapshot.
@@ -345,8 +345,8 @@ paper stop was a `baseline` parameter/case handoff mismatch, alongside other
 provenance, scope, reference and provider-output failures. Do not reduce the
 diagnosis to a weak extraction model or quietly patch a held-out case mid-test.
 Read the committed
-[resumed experiment report](../femm_assistant/evaluation/results/2026-10-25-resumed-hierarchy/README.md)
-and [assistant documentation](../femm_assistant/README.md) before attempting to
+[resumed experiment report](femm_assistant/evaluation/results/2026-10-25-resumed-hierarchy/README.md)
+and [assistant documentation](femm_assistant/README.md) before attempting to
 reuse that pipeline. Controlled recovery has not demonstrated comparative
 resource savings, and general dependency-aware backtracking is not complete.
 

@@ -1,7 +1,7 @@
 # FEMM second brain
 
 For another agent continuing development, read the repository
-[handover](https://github.com/arbi11/research_extender/blob/codex/femm-brain-solver-20261025/handover/README.md) for branch relationships, current evidence,
+[handover](https://github.com/arbi11/research_extender/blob/codex/femm-brain-solver-20261025/detailedREADME.md) for branch relationships, current evidence,
 known failures, protected services and the next milestones.
 
 A local, source-backed engineering knowledge graph with exactly three semantic
