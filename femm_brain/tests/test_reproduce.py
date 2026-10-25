@@ -206,6 +206,24 @@ class ReferenceModelTests(unittest.TestCase):
             self.assertEqual(run_assessor(assessor, case, {}, dict(metrics), model)["status"], "failed")
 
 
+class SourceChangeTests(unittest.TestCase):
+    def test_refreshed_markup_is_not_a_change_but_edited_text_is(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as temp:
+            data = Path(temp) / "data"
+            shutil.copytree(DATA, data)
+            baseline = json.loads((data / "curation_manifest.json").read_text())
+            manifest = json.loads((data / "source_manifest.json").read_text())
+            page = next(s for s in manifest["sources"] if s["id"] == "tubeexample")
+            page["sha256"] = "0" * 64  # a refreshed crawl always sees new markup
+            page["text_sha256"] = baseline["text_hashes"]["tubeexample"]
+            (data / "source_manifest.json").write_text(json.dumps(manifest))
+            self.assertEqual(load_graph(data)["source_changes"], [])
+            page["text_sha256"] = "1" * 64
+            (data / "source_manifest.json").write_text(json.dumps(manifest))
+            self.assertEqual(load_graph(data)["source_changes"], ["tubeexample"])
+
+
 class RestoreTests(unittest.TestCase):
     def test_restore_accepts_only_recorded_bytes_and_ignores_taskrunner_timestamps(self):
         page = b'<html><body>Example text<img src="/doku/lib/exe/taskrunner.php?id=x&amp;1792914100"></body></html>'

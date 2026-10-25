@@ -187,6 +187,20 @@ def content_digest(data):
     return hashlib.sha256(_TASKRUNNER.sub(rb"\1", data)).hexdigest()
 
 
+_MODIFIED = re.compile(r"Last modified: (\d{4})/(\d{2})/(\d{2}) (\d{2}):(\d{2})")
+
+
+def last_modified(text):
+    """DokuWiki's page footer revision time, as an ISO minute, when present."""
+    match = _MODIFIED.search(text)
+    return "{}-{}-{}T{}:{}".format(*match.groups()) if match else None
+
+
+def text_digest(text):
+    """Digest of the extracted page text: the content curation depends on."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
 def collect_page(name, cache, timeout=15):
     url = page_url(name)
     record = {"id": name, "url": url, "retrieved_at": now(), "status": "failed", "links": []}
@@ -202,7 +216,8 @@ def collect_page(name, cache, timeout=15):
         text_path = cache / "texts" / (name.replace(":", "_") + ".txt")
         text_path.parent.mkdir(parents=True, exist_ok=True)
         text_path.write_text(parser.text, encoding="utf-8")
-        record.update(title=parser.title, sha256=digest, content_sha256=content_digest(data), content_type=media,
+        record.update(title=parser.title, sha256=digest, content_sha256=content_digest(data),
+                      text_sha256=text_digest(parser.text), last_modified=last_modified(parser.text), content_type=media,
                       cache_key=key, text_cache_key=str(text_path.relative_to(cache)),
                       status="missing" if missing else "fetched", links=parser.links)
     except (OSError, ValueError, urllib.error.URLError, http.client.HTTPException) as error:
@@ -428,6 +443,7 @@ def restore(manifest, *, cache=DEFAULT_CACHE, workers=4, timeout=30, only=None):
             text_path = cache / source["text_cache_key"]
             text_path.parent.mkdir(parents=True, exist_ok=True)
             text_path.write_text(parser.text, encoding="utf-8")
+            result.update(observed_text_sha256=text_digest(parser.text), last_modified=last_modified(parser.text))
             result["status"] = "restored" if same else "current_text_unverifiable_snapshot"
         except (OSError, ValueError, urllib.error.URLError, http.client.HTTPException) as error:
             result.update(status="failed", error=type(error).__name__ + ": " + str(error)[:300])

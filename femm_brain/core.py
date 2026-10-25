@@ -223,8 +223,19 @@ def load_graph(data_dir=None):
     baseline = json.loads(baseline_path.read_text()) if baseline_path.exists() else {}
     baseline["source_hashes"] = {**external.get("curated_source_hashes", {}), **baseline.get("source_hashes", {})}
     observed_sources = {s["id"]: s.get("sha256") for s in graph["sources"]}
+    source_records = {s["id"]: s for s in graph["sources"]}
+    text_hashes = baseline.get("text_hashes", {})
+
+    def source_changed(identifier, digest):
+        # Page markup carries a per-request timestamp, so a refreshed crawl is
+        # compared on extracted text whenever the baseline recorded it.
+        record = source_records.get(identifier, {})
+        if identifier in text_hashes and record.get("text_sha256"):
+            return record["text_sha256"] != text_hashes[identifier]
+        return observed_sources.get(identifier) != digest
+
     changed_sources = {identifier for identifier, digest in baseline.get("source_hashes", {}).items()
-                       if observed_sources.get(identifier) != digest}
+                       if source_changed(identifier, digest)}
     for node in graph["nodes"]:
         node.setdefault("version", 1)
         node["source_versions"] = {identifier: baseline.get("source_hashes", {}).get(identifier, observed_sources.get(identifier)) for identifier in node.get("source_ids", [])}
