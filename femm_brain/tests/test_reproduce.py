@@ -96,22 +96,35 @@ class CatalogTests(unittest.TestCase):
                 self.assertTrue(target.get("relative_tolerance") or target.get("absolute_tolerance"), target)
             for parameter in (case.get("article") or {}).get("parameters", {}).values():
                 self.assertTrue(parameter["quote"], case["id"])
+            # A component parameter is either quoted or names the model entity it was identified from.
+            for name, parameter in (case.get("components") or {}).get("parameters", {}).items():
+                self.assertTrue(parameter.get("quote") or parameter.get("identified_from"), (case["id"], name))
+
+    def test_quotes_cite_portable_cache_entries(self):
+        for case in load_cases():
+            text = json.dumps(case)
+            self.assertNotIn("quote_file", text, case["id"])
+            self.assertNotIn("/home/", text, case["id"])
 
     @unittest.skipUnless((collect.DEFAULT_CACHE / "texts").is_dir(), "requires a restored source cache")
     def test_every_quote_is_verbatim_in_the_cited_official_text(self):
-        squash = lambda text: " ".join(text.replace(" ", " ").split()).lower()
+        squash = lambda text: " ".join(text.replace("\xa0", " ").split()).lower()
+        read = lambda path: squash(path.read_text(errors="replace"))
         for case in load_cases():
-            texts = []
-            for source in case["source_ids"]:
-                path = collect.DEFAULT_CACHE / "texts" / (source + ".txt")
-                if path.is_file():
-                    texts.append(squash(path.read_text(errors="replace")))
-            quoted = [t for t in case["targets"] if t.get("kind") != "analytic" and not t.get("quote_file")]
+            texts = [read(path) for source in case["source_ids"]
+                     if (path := collect.DEFAULT_CACHE / "texts" / (source + ".txt")).is_file()]
+            quoted = [t for t in case["targets"] if t.get("kind") != "analytic"]
             quoted += [p for p in (case.get("article") or {}).get("parameters", {}).values() if not p["quote"].startswith(("Not stated", "FEMM "))]
+            quoted += [p for p in (case.get("components") or {}).get("parameters", {}).values() if p.get("quote")]
             for item in quoted:
+                cited = texts
+                if item.get("quote_artifact"):
+                    cited = [read(collect.DEFAULT_CACHE / "artifact_texts" / (item["quote_artifact"] + ".txt"))]
+                elif item.get("quote_source"):
+                    cited = [read(collect.DEFAULT_CACHE / "texts" / (item["quote_source"] + ".txt"))]
                 quote = item["quote"].replace("...", "…")
                 parts = [squash(part) for part in quote.split("…") if part.strip()]
-                self.assertTrue(any(all(part in text for part in parts) for text in texts), (case["id"], item["quote"]))
+                self.assertTrue(any(all(part in text for part in parts) for text in cited), (case["id"], item["quote"]))
 
     def test_every_level_plans_without_execution(self):
         for case in load_cases():
@@ -256,6 +269,17 @@ class AuditTests(unittest.TestCase):
         record["catalog_sha256"] = "0" * 64
         self.assertEqual(self.audit(record)["status"], "failed")
 
+    def test_component_rebuilds_must_match_the_official_model(self):
+        record = self.record()
+        next(c for c in record["cases"] if c["case_id"] == "lrkanalysis-flux-sweep")["components_match_original"]["status"] = "failed"
+        self.assertTrue(any("does not agree with the original" in p for p in self.audit(record)["problems"]))
+        record = self.record()
+        next(c for c in record["cases"] if c["case_id"] == "lrkanalysis-flux-sweep")["levels"]["components"]["reference"] = "failed"
+        self.assertTrue(any("region by region" in p for p in self.audit(record)["problems"]))
+        record = self.record()
+        del next(c for c in record["cases"] if c["case_id"] == "lrkanalysis-flux-sweep")["levels"]["components"]
+        self.assertIn("lrkanalysis-flux-sweep/components: missing level.", self.audit(record)["problems"])
+
     def test_unreviewed_failures_and_resolved_reviews_fail(self):
         record = self.record()
         tube = next(c for c in record["cases"] if c["case_id"] == "heatflow-chimney")
@@ -267,6 +291,29 @@ class AuditTests(unittest.TestCase):
             for target in coilgun["levels"][level]["targets"]:
                 target["status"] = "passed"
         self.assertTrue(any("no longer fails" in p for p in self.audit(record)["problems"]))
+
+
+class ComponentAgreementTests(unittest.TestCase):
+    def report(self, flux, torque):
+        raw = {}
+        for k in range(61):
+            for ident in ("phA", "phB", "phC"):
+                raw[f"p{k:02d}|{ident}|2"] = [1e-3 * math.sin(k / 9) * flux, 0.0]
+            raw[f"p{k:02d}|torque|0"] = [1e-3 * math.cos(k / 3) * torque, 0.0]
+        return {"raw": raw, "metrics": {"flux_A_Wb@p00": 0.0}}
+
+    def test_agreement_binds_acceptance_measurements_and_reports_comparators(self):
+        case = next(c for c in load_cases() if c["id"] == "lrkanalysis-flux-sweep")
+        original = self.report(1, 1)
+        noisy_torque = compare_levels(case, {"original": original, "components": self.report(1.005, 1.5)})["components"]
+        self.assertEqual(noisy_torque["status"], "passed")
+        self.assertEqual(noisy_torque["bounded_measurements"], ["phA", "phB", "phC"])
+        self.assertAlmostEqual(noisy_torque["comparator_differences"]["torque"], 0.5)
+        wrong_flux = compare_levels(case, {"original": original, "components": self.report(1.02, 1)})["components"]
+        self.assertEqual(wrong_flux["status"], "failed")
+        missing = self.report(1, 1)
+        del missing["raw"]["p30|phB|2"]
+        self.assertEqual(compare_levels(case, {"original": original, "components": missing})["components"]["status"], "failed")
 
 
 class SourceChangeTests(unittest.TestCase):

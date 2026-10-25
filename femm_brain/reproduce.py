@@ -23,6 +23,7 @@ import hashlib
 import json
 import math
 import os
+import random
 from pathlib import Path
 import re
 import shutil
@@ -77,7 +78,7 @@ COLLECTIONS = {"magnetics": ("materials", "boundaries", "circuits", "point_prope
 POINT_FIELDS = {"magnetics": ("A", "B1", "B2", "Sig", "E", "H1", "H2", "Je", "Js", "Mu1", "Mu2", "Pe", "Ph", "ff"),
                 "electrostatics": ("V", "Dx", "Dy", "Ex", "Ey", "ex", "ey", "nrg"),
                 "heatflow": ("T", "Fx", "Fy", "Gx", "Gy", "kx", "ky")}
-LEVELS = ("original", "rebuild", "article")
+LEVELS = ("original", "rebuild", "article", "components")
 RELATIVE = 1e-9
 
 
@@ -337,6 +338,161 @@ def compile_model(model):
     return lines
 
 
+def _face_cycles(model, arc_step=1.0):
+    """Bounded faces of the contour graph, smallest first.
+
+    Contours (segments and arcs discretized at ``arc_step`` degrees) form a planar
+    graph; walking each half-edge with the face on its left yields face cycles,
+    of which the counterclockwise ones bound regions.
+    """
+    vertex_index, coordinates, adjacency = {}, [], {}
+
+    def vertex(x, y):
+        key = (round(x, 7), round(y, 7))
+        if key not in vertex_index:
+            vertex_index[key] = len(coordinates)
+            coordinates.append(key)
+            adjacency[vertex_index[key]] = set()
+        return vertex_index[key]
+
+    def edge(a, b):
+        if a != b:
+            adjacency[a].add(b)
+            adjacency[b].add(a)
+
+    nodes = model["nodes"]
+    for s in model["segments"]:
+        a, b = nodes[s["n0"]], nodes[s["n1"]]
+        edge(vertex(a["x"], a["y"]), vertex(b["x"], b["y"]))
+    for arc in model["arcs"]:
+        a, b = nodes[arc["n0"]], nodes[arc["n1"]]
+        info = arc_geometry((a["x"], a["y"]), (b["x"], b["y"]), arc["angle"])
+        pieces = max(1, math.ceil(arc["angle"] / arc_step))
+        chain = [vertex(a["x"], a["y"])]
+        for i in range(1, pieces):
+            theta = math.radians(info["start_angle"] + arc["angle"] * i / pieces)
+            chain.append(vertex(info["center"][0] + info["radius"] * math.cos(theta), info["center"][1] + info["radius"] * math.sin(theta)))
+        chain.append(vertex(b["x"], b["y"]))
+        for u, v in zip(chain, chain[1:]):
+            edge(u, v)
+    ordered = {v: sorted(adjacency[v], key=lambda w: math.atan2(coordinates[w][1] - coordinates[v][1],
+                                                               coordinates[w][0] - coordinates[v][0])) for v in adjacency}
+    visited, cycles = set(), []
+    for u in adjacency:
+        for v in adjacency[u]:
+            if (u, v) in visited:
+                continue
+            cycle, a, b = [], u, v
+            while (a, b) not in visited:
+                visited.add((a, b))
+                cycle.append(a)
+                around = ordered[b]
+                a, b = b, around[(around.index(a) - 1) % len(around)]
+            area = sum(coordinates[cycle[i]][0] * coordinates[cycle[(i + 1) % len(cycle)]][1]
+                       - coordinates[cycle[(i + 1) % len(cycle)]][0] * coordinates[cycle[i]][1] for i in range(len(cycle))) / 2
+            if area > 1e-12:
+                cycles.append((area, [coordinates[i] for i in cycle]))
+    cycles.sort(key=lambda item: item[0])
+    return [cycle for _, cycle in cycles]
+
+
+def _region_of(point, faces):
+    """Index of the smallest face containing the point, or None outside every closed contour."""
+    def inside(polygon):
+        x, y, result = point[0], point[1], False
+        for (x1, y1), (x2, y2) in zip(polygon, polygon[1:] + polygon[:1]):
+            if (y1 > y) != (y2 > y) and x < x1 + (y - y1) * (x2 - x1) / (y2 - y1):
+                result = not result
+        return result
+    return next((index for index, face in enumerate(faces) if inside(face)), None)
+
+
+def region_keys(model, points, arc_step=1.0):
+    """Identify the region each point lies in, from the model's contours alone.
+
+    A point's region is the smallest counterclockwise face containing it, so two
+    models with identical contours give identical keys wherever labels sit.
+    """
+    faces = _face_cycles(model, arc_step)
+    keys = []
+    for point in points:
+        index = _region_of(point, faces)
+        face = None if index is None else faces[index]
+        keys.append(None if face is None else (len(face), min(face), round(sum(p[0] for p in face), 5)))
+    return keys
+
+
+def check_regions(model, arc_step=1.0):
+    """Every block label and hole must lie inside a closed region of its own."""
+    faces = _face_cycles(model, arc_step)
+    owners, problems = {}, []
+    markers = ([(l["x"], l["y"], l["material"] or "<No Mesh>") for l in model["labels"]]
+               + [(h["x"], h["y"], "hole") for h in model["holes"]])
+    for x, y, name in markers:
+        index = _region_of((x, y), faces)
+        if index is None:
+            problems.append(f"{name} label at ({x:g}, {y:g}) lies outside every closed contour")
+        else:
+            owners.setdefault(index, []).append(f"{name} at ({x:g}, {y:g})")
+    problems += ["One region holds several labels: " + "; ".join(names) for names in owners.values() if len(names) > 1]
+    return problems
+
+
+def _used_properties(model):
+    used = {"materials": {l["material"] for l in model["labels"] if l["material"]},
+            "circuits": {l.get("circuit") for l in model["labels"] if l.get("circuit")},
+            "boundaries": {x["boundary"] for x in model["segments"] + model["arcs"] if x["boundary"]},
+            "conductors": {x.get("conductor") for x in model["segments"] + model["arcs"] + model["nodes"] if x.get("conductor")},
+            "point_properties": {n["point"] for n in model["nodes"] if n["point"]}}
+    return used
+
+
+def compare_regions(expected, actual):
+    """Region-by-region equivalence: identical contours, used properties and the
+    assignments of every region, wherever each model places its labels."""
+    differences = []
+    for model in (expected, actual):
+        model["_used"] = _used_properties(model)
+    trimmed = []
+    for model in (expected, actual):
+        copy = dict(model)
+        for collection, names in model["_used"].items():
+            copy[collection] = [item for item in model.get(collection, []) if item["name"] in names]
+        copy["labels"], copy["holes"] = [], []
+        copy.pop("_used")
+        trimmed.append(copy)
+    for model in (expected, actual):
+        model.pop("_used")
+    differences += compare_models(*trimmed)
+
+    def assignments(model):
+        points = [(l["x"], l["y"]) for l in model["labels"]] + [(h["x"], h["y"]) for h in model["holes"]]
+        keys = region_keys(model, points)
+        regions = {}
+        for key, label in zip(keys, model["labels"] + [{"material": "<No Mesh>"} for _ in model["holes"]]):
+            value = {k: label.get(k) for k in ("material", "circuit", "turns", "magdir_function", "group", "mesh", "external")}
+            if label.get("magdir") is not None and not label.get("magdir_function"):
+                value["magdir"] = round(label["magdir"] % 360, 9) % 360
+            if key is None:
+                differences.append({"where": "regions.unbounded_label", "expected": None, "observed": label.get("material")})
+            elif key in regions:
+                differences.append({"where": "regions.duplicate_label", "expected": None, "observed": [regions[key], value]})
+            regions[key] = value
+        return regions
+
+    a, b = assignments(expected), assignments(actual)
+    if set(a) != set(b):
+        differences.append({"where": "regions.labelled", "expected": len(a), "observed": len(b),
+                            "unmatched": len(set(a) ^ set(b))})
+    for key in set(a) & set(b):
+        for field, value in a[key].items():
+            other = b[key].get(field)
+            same = math.isclose(value, other, rel_tol=RELATIVE, abs_tol=1e-9) if isinstance(value, float) and isinstance(other, float) else value == other
+            if not same:
+                differences.append({"where": f"regions.{a[key].get('material')}.{field}", "expected": value, "observed": other})
+    return differences
+
+
 def compare_models(expected, actual):
     """Return differences between two typed models, independent of entity order."""
     differences = []
@@ -355,6 +511,8 @@ def compare_models(expected, actual):
     for key, value in expected["problem"].items():
         # Axisymmetric problems ignore depth, and the engine re-saves it as one.
         if key == "depth" and expected["problem"].get("type") == "axisymmetric":
+            continue
+        if key == "coordinates" and value == "cartesian" and key not in actual["problem"]:
             continue
         compare("problem." + key, value, actual["problem"].get(key))
     for collection in COLLECTIONS[expected["physics"]]:
@@ -410,6 +568,8 @@ def _selection_lines(case, physics, selection, labels):
     post = PHYSICS[physics]["post"]
     if selection.get("all"):
         return [post + "_groupselectblock()"]
+    if "group" in selection:
+        return [_call(post + "_groupselectblock", selection["group"])]
     if "conductor" in selection:
         return [_call(post + "_selectconductor", selection["conductor"])]
     if "labels" in selection:
@@ -467,6 +627,11 @@ def solve_lines(case, physics, labels):
         if not re.fullmatch(r"[A-Za-z0-9_.+-]+", label):
             raise ValueError("Step labels must be simple identifiers")
         for change in step.get("modify", []):
+            if change["function"] == "rotate_group":
+                # Rotate a group (for example a rotor) about the origin, as machine scripts do between positions.
+                lines += [_call(pre + "_selectgroup", change["group"]), _call(pre + "_moverotate", 0, 0, change["angle"]),
+                          pre + "_clearselected()"]
+                continue
             if change["function"] not in ("modifyboundprop", "modifymaterial", "modifycircprop", "modifyconductorprop"):
                 raise ValueError("Unsupported step modification")
             lines.append(_call(pre + "_" + change["function"], change["name"], change["property"], change["value"]))
@@ -524,7 +689,8 @@ def assess(target, metrics):
 # Catalog and execution
 # ---------------------------------------------------------------------------
 
-BINDING_FIELDS = ("id", "source_model_sha256", "steps", "measurements", "metrics", "targets", "assessors", "article")
+BINDING_FIELDS = ("id", "source_model_sha256", "steps", "measurements", "metrics", "targets", "assessors", "article", "components",
+                  "components_agreement_tolerance")
 
 
 def case_binding_digest(case):
@@ -567,26 +733,64 @@ def scale_mesh(model, factor):
                     "explicit_segments": sum(bool(x["mesh"]) for x in model["segments"]), "arcs": len(model["arcs"])}
 
 
+def permute_entities(model, seed):
+    """The same model with its nodes, contours and labels in another order.
+
+    The mesher's output depends on input order, so a result that moves under
+    this permutation is mesh noise rather than a property of the problem.
+    """
+    rng = random.Random(seed)
+    permuted = deepcopy(model)
+    order = list(range(len(model["nodes"])))
+    rng.shuffle(order)
+    position = {old: new for new, old in enumerate(order)}
+    permuted["nodes"] = [deepcopy(model["nodes"][i]) for i in order]
+    for section in ("segments", "arcs"):
+        for item in permuted[section]:
+            item["n0"], item["n1"] = position[item["n0"]], position[item["n1"]]
+    for section in ("segments", "arcs", "labels", "holes"):
+        rng.shuffle(permuted[section])
+    return permuted
+
+
+def jitter_coordinates(model, seed, size):
+    """The same model with every node moved by at most ``size`` model units in x and y.
+
+    Symmetric machine geometry puts many points on common circles, where the
+    mesher's decisions turn on the last bits of the coordinates. A result that
+    moves under a sub-nanometre perturbation is mesh noise rather than physics.
+    """
+    if not 0 < size <= 1e-9:
+        raise ValueError("Coordinate jitter must be positive and at most 1e-9 model units")
+    rng = random.Random(seed)
+    jittered = deepcopy(model)
+    for node in jittered["nodes"]:
+        node["x"] += rng.uniform(-size, size)
+        node["y"] += rng.uniform(-size, size)
+    return jittered
+
+
 def plan_level(case, level, control=None):
     """Freeze construction, measurement Lua and targets for one level of one case.
 
-    A control is a diagnostic variant (scaled explicit mesh, or overridden
-    article parameters). It is reported beside the level and never changes
-    the level's acceptance.
+    A control is a diagnostic variant (scaled explicit mesh, overridden article
+    or component parameters, the same entities in another order, or coordinates
+    moved by a sub-nanometre jitter). It is reported beside the level and never
+    changes the level's acceptance.
     """
     if level not in LEVELS:
         raise ValueError("Unknown reproduction level: " + str(level))
     if control:
         if control.get("level") != level or level == "original":
-            raise ValueError("Controls vary the rebuild or article level they name")
+            raise ValueError("Controls vary the rebuild, article or components level they name")
         if control.get("parameters"):
-            if level != "article":
-                raise ValueError("Only article-level controls may override article parameters")
+            if level not in ("article", "components"):
+                raise ValueError("Only article and component controls may override parameters")
             case = deepcopy(case)
             for name, value in control["parameters"].items():
-                if name not in case["article"]["parameters"]:
-                    raise ValueError("Unknown article parameter in control: " + name)
-                case["article"]["parameters"][name]["value"] = value
+                if name not in case[level]["parameters"]:
+                    raise ValueError(f"Unknown {level} parameter in control: " + name)
+                case[level]["parameters"][name]["value"] = value
     record, model = _source_record(case)
     if level in ("original", "rebuild") and model is None:
         return {"case_id": case["id"], "level": level, "status": "not_applicable",
@@ -597,9 +801,23 @@ def plan_level(case, level, control=None):
         if built.get("status") == "not_attempted":
             return {"case_id": case["id"], "level": level, "status": "not_attempted", "reason": built["reason"]}
         model = built["model"]
+    reference = None
+    if level == "components":
+        spec = case.get("components")
+        if not spec:
+            return {"case_id": case["id"], "level": level, "status": "not_attempted",
+                    "reason": "No reconstruction from machine components is registered for this case."}
+        from .components import assemble
+        reference = model
+        model, used = assemble(spec["assembly"], {name: item["value"] for name, item in spec["parameters"].items()})
+        built = {"parameters": spec["parameters"], "components": used, "assumptions": spec.get("assumptions", [])}
     mesh_scaling = None
     if control and control.get("mesh_scale", 1) != 1:
         model, mesh_scaling = scale_mesh(model, control["mesh_scale"])
+    if control and control.get("entity_order_seed") is not None:
+        model = permute_entities(model, control["entity_order_seed"])
+    if control and control.get("coordinate_jitter"):
+        model = jitter_coordinates(model, control["coordinate_jitter"]["seed"], control["coordinate_jitter"]["size"])
     if control and control.get("problem"):
         unknown = set(control["problem"]) - {"smart_mesh", "precision", "min_angle"}
         if unknown:
@@ -623,12 +841,14 @@ def plan_level(case, level, control=None):
             "expected_model": model if level != "original" else None,
             "article_parameters": built.get("parameters") if level == "article" else None,
             "article_assumptions": built.get("assumptions") if level == "article" else None,
+            "component_parameters": built.get("parameters") if level == "components" else None,
+            "reference_model": reference,
             "targets": targets, "assessors": case.get("assessors", []), "lua": lua,
             "control": control, "mesh_scaling": mesh_scaling, "case_binding_sha256": case_binding_digest(case),
             "module_sha256": _sha(__file__),
             "catalog_sha256": _sha(DATA / ("reproductions.json" if case.get("example_id") else "designs.json")),
             "requires_ai": False}
-    if level == "article":
+    if level in ("article", "components"):
         plan["article_recipe_sha256"] = _sha(Path(__file__).with_name("article_recipes.py"))
         plan["components_sha256"] = _sha(Path(__file__).with_name("components.py"))
         plan["component_catalog_sha256"] = _sha(DATA / "components.json")
@@ -692,7 +912,8 @@ def run_level(case, level, output, *, engine="docker", image=None, timeout=900, 
         shutil.copyfile(source, folder / ("original" + extension))
     report = {"schema_version": 1, "case_id": case["id"], "example_id": case.get("example_id"), "level": level,
               "physics": physics, "plan_sha256": plan["plan_sha256"], "started_at": datetime.now(timezone.utc).isoformat(),
-              "checks": {name: {"status": "not_run"} for name in ("build", "solve", "targets")},
+              "checks": {name: {"status": "not_run"} for name in ("build", "solve", "targets")
+                         } | ({"reference": {"status": "not_run"}} if level == "components" else {}),
               "requires_ai": False, "status": "failed", "metrics": {}, "control": control,
               "mesh_scaling": plan.get("mesh_scaling"), "components_used": plan.get("components_used"),
               "component_digests": plan.get("component_digests"), "case_binding_sha256": plan["case_binding_sha256"],
@@ -713,9 +934,28 @@ def run_level(case, level, output, *, engine="docker", image=None, timeout=900, 
                                          "original_sha256": _sha(folder / ("original" + extension))}
         else:
             differences = compare_models(plan["expected_model"], actual)
-            report["checks"]["build"] = {"status": "passed" if not differences else "failed",
-                                         "compared_against": "stored passive model record" if level == "rebuild" else "article recipe model",
+            against = {"rebuild": "stored passive model record", "article": "article recipe model",
+                       "components": "component assembly"}[level]
+            report["checks"]["build"] = {"status": "passed" if not differences else "failed", "compared_against": against,
                                          "differences": differences[:50], "difference_count": len(differences)}
+            if level in ("article", "components"):
+                # Assembled models must give every label a closed region of its own.
+                problems = check_regions(plan["expected_model"])
+                report["checks"]["build"]["regions"] = {"status": "passed" if not problems else "failed", "problems": problems[:20]}
+                if problems:
+                    report["checks"]["build"]["status"] = "failed"
+            if level == "components" and control:
+                report["checks"]["reference"] = {"status": "not_applicable",
+                                                 "reason": "A control varies the component model on purpose."}
+            elif level == "components":
+                # The component model must be the official model region by region:
+                # identical contours, used properties and assignments.
+                reference = compare_regions(deepcopy(plan["reference_model"]), deepcopy(plan["expected_model"]))
+                report["checks"]["reference"] = {"status": "passed" if not reference else "failed",
+                                                 "compared_against": "official model, region by region",
+                                                 "differences": reference[:50], "difference_count": len(reference)}
+                if reference:
+                    report["checks"]["build"]["status"] = "failed"
         stage = "solve"
         if not (folder / "solve-completed.txt").is_file():
             raise ValueError("Native solve or measurement did not complete")
@@ -748,6 +988,31 @@ def run_level(case, level, output, *, engine="docker", image=None, timeout=900, 
     return report
 
 
+def acceptance_measurements(case):
+    """Measurement ids that feed an acceptance target or an assessor; the rest feed only comparators."""
+    definitions = {metric["name"]: metric for metric in case["metrics"]}
+
+    def sources(metric_name):
+        metric = definitions.get(metric_name.split("@")[0])
+        if metric is None:
+            return set()
+        return {metric["value"][0].split(":")[0]} | ({metric["divide"][0].split(":")[0]} if metric.get("divide") else set())
+
+    used = set()
+    for target in case["targets"]:
+        if target.get("used_for_acceptance", True):
+            used |= sources(target["metric"])
+    for assessor in case.get("assessors", []):
+        for key, value in assessor.items():
+            names = value.values() if isinstance(value, dict) else value if isinstance(value, list) else [value]
+            if key.endswith(("metric", "metrics")):
+                for name in names:
+                    used |= sources(name) if isinstance(name, str) else set()
+            elif key == "measurement":
+                used.add(value)
+    return used
+
+
 def compare_levels(case, reports):
     """Rebuild must reproduce the original's native numbers; article results are compared for information."""
     original = reports.get("original")
@@ -770,6 +1035,36 @@ def compare_levels(case, reports):
         result["rebuild"] = {"status": "passed" if worst <= tolerance and not missing else "failed",
                              "compared_raw_values": len(original["raw"]), "maximum_scaled_difference": worst,
                              "relative_tolerance": tolerance, "unmatched_values": missing[:20]}
+    components = reports.get("components")
+    if components and components.get("raw"):
+        # Component builds mesh differently from the original (entity order,
+        # segment direction and label positions all reach the mesher), so their
+        # agreement bound is declared per case. It binds the measurements behind
+        # acceptance targets and assessors; comparator-only quantities are
+        # reported with their differences, since comparators never decide acceptance.
+        bound = case.get("components_agreement_tolerance")
+        bounded = acceptance_measurements(case)
+        scales = {}
+        for key, (re_part, im_part) in original["raw"].items():
+            ident = key.split("|")[1]
+            scales[ident] = max(scales.get(ident, 0), abs(complex(re_part, im_part)))
+        worst, worst_key, comparators = 0.0, None, {}
+        for key in set(original["raw"]) & set(components["raw"]):
+            ident = key.split("|")[1]
+            if ident.startswith("mesh_"):
+                continue
+            a, b = complex(*original["raw"][key]), complex(*components["raw"][key])
+            difference = abs(a - b) / max(scales[ident], 1e-300)
+            if ident.split(":")[0] not in bounded:
+                comparators[ident] = max(comparators.get(ident, 0.0), difference)
+            elif difference > worst:
+                worst, worst_key = difference, key
+        missing = sorted((set(original["raw"]) ^ set(components["raw"])))
+        result["components"] = {"status": "passed" if bound is not None and worst_key is not None and worst <= bound and not missing
+                                else "failed",
+                                "maximum_scaled_difference": worst, "at": worst_key, "bound": bound,
+                                "bounded_measurements": sorted(bounded), "comparator_differences": comparators,
+                                "unmatched_values": missing[:20]}
     article = reports.get("article")
     if article and article.get("metrics"):
         rows = {}

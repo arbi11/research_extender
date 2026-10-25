@@ -180,7 +180,109 @@ def _applied_field(assessor, case, raw, metrics, model):
             "target": {"used_for_acceptance": True, "kind": "analytic", "quote": assessor.get("quote")}}
 
 
-ASSESSORS = {"tube_bessel": _tube, "dipole_torque": _dipole_torque, "applied_field": _applied_field}
+def _polygon_centroid(polygon):
+    area = cx = cy = 0.0
+    for (x1, y1), (x2, y2) in zip(polygon, polygon[1:] + polygon[:1]):
+        cross = x1 * y2 - x2 * y1
+        area, cx, cy = area + cross, cx + (x1 + x2) * cross, cy + (y1 + y2) * cross
+    return cx / (3 * area), cy / (3 * area)
+
+
+def linkage_prediction(model, pole_pairs, circuits, rotor_group):
+    """Fundamental flux-linkage phasor of each circuit, from the model's construction alone.
+
+    Each coil side contributes its signed turns at the angle of its region's
+    centroid, and each magnet its radial magnetization (positive outward) at its
+    region's centroid. Magnetization continues radially across the air gap, so
+    with the rotor's fundamental phasor R = sum(m_r e^(i p theta)) the vector
+    potential at the conductors varies as sin(p theta - arg R), and a circuit with
+    S = sum(turns e^(i p theta)) links Im(S e^(-i arg R)). Turning the rotor
+    counterclockwise by alpha advances arg R by p alpha.
+    """
+    from .reproduce import _face_cycles, _region_of
+    faces = _face_cycles(model)
+    coercivity = {m["name"]: m["props"].get("H_c", 0) for m in model["materials"]}
+
+    def centroid_angle(label):
+        index = _region_of((label["x"], label["y"]), faces)
+        if index is None:
+            raise ValueError(f"Label at ({label['x']}, {label['y']}) lies outside every closed contour")
+        x, y = _polygon_centroid(faces[index])
+        return math.atan2(y, x)
+
+    windings = {name: 0j for name in circuits}
+    rotor = 0j
+    for label in model["labels"]:
+        if label.get("circuit") in windings:
+            windings[label["circuit"]] += label["turns"] * cmath.exp(1j * pole_pairs * centroid_angle(label))
+        elif label.get("group") == rotor_group and coercivity.get(label["material"]):
+            theta = centroid_angle(label)
+            function = (label.get("magdir_function") or "").replace(" ", "")
+            if function not in ("", "theta", "theta+180"):
+                raise ValueError("Unsupported magnetization function: " + function)
+            direction = (math.degrees(theta) + (180 if function == "theta+180" else 0)) if function else label["magdir"]
+            radial = math.cos(math.radians(direction) - theta)
+            rotor += coercivity[label["material"]] * radial * cmath.exp(1j * pole_pairs * theta)
+    if not rotor or not all(windings.values()):
+        raise ValueError("The model has no rotor magnetization fundamental or a circuit links nothing")
+    return windings, rotor
+
+
+def _phase_linkage(assessor, case, raw, metrics, model):
+    """Winding sign and phase linkage: each phase's flux-linkage fundamental against the construction.
+
+    Rotor angles come from the case's rotate_group steps. Samples must cover one
+    electrical period evenly, or half of one when the declared half-wave symmetry
+    (a pole pitch negates every linkage) extends them.
+    """
+    p, sequence, group = assessor["pole_pairs"], assessor["expected_sequence"], assessor["rotor_group"]
+    windings, rotor = linkage_prediction(model, p, sequence, group)
+    period = 360 / p
+    span = period / 2 if assessor.get("half_wave_symmetry") else period
+    alpha, angles = 0.0, {}
+    for step in case["steps"]:
+        alpha += sum(c["angle"] for c in step.get("modify", []) if c["function"] == "rotate_group" and c["group"] == group)
+        angles[step["label"]] = alpha
+    samples = sorted((a, label) for label, a in angles.items() if -1e-9 <= a < span - 1e-9)
+    count = len(samples)
+    if count < 8 or any(abs(a - k * span / count) > 1e-6 * span for k, (a, _) in enumerate(samples)):
+        raise ValueError("Rotor positions must sample the declared span evenly from zero")
+    rows, phases_ok = [], True
+    predicted, measured = {}, {}
+    for name in sequence:
+        points = [(a, metrics[assessor["flux_metrics"][name] + "@" + label]) for a, label in samples]
+        if assessor.get("half_wave_symmetry"):
+            points += [(a + span, -value) for a, value in points]
+        fundamental = 2 / len(points) * sum(value * cmath.exp(1j * math.radians(p * a)) for a, value in points)
+        measured[name] = (math.degrees(cmath.phase(1j * fundamental)), abs(fundamental))
+        predicted[name] = math.degrees(cmath.phase(windings[name] / rotor))
+        error = _angle_difference(measured[name][0], predicted[name])
+        ok = error <= assessor["phase_tolerance_deg"]
+        phases_ok &= ok
+        rows.append({"phase": name, "predicted_phase_deg": predicted[name], "measured_phase_deg": measured[name][0],
+                     "phase_error_deg": error, "fundamental_Wb": measured[name][1], "passed": ok})
+    amplitudes = [measured[name][1] for name in sequence]
+    balance = (max(amplitudes) - min(amplitudes)) / (sum(amplitudes) / len(amplitudes))
+    links = [abs(windings[name]) for name in sequence]
+    winding_balance = (max(links) - min(links)) / (sum(links) / len(links))
+    step_angle = 360 / len(sequence)
+    # Counterclockwise rotation brings each phase to its peak one phase step after the previous one.
+    predicted_order = all(_angle_difference(predicted[name] - predicted[sequence[0]], k * step_angle) <= 1e-6
+                          for k, name in enumerate(sequence))
+    measured_order = all(_angle_difference(measured[name][0] - measured[sequence[0]][0], k * step_angle)
+                         <= assessor["phase_tolerance_deg"] for k, name in enumerate(sequence))
+    passed = (phases_ok and balance <= assessor["amplitude_balance_tolerance"] and winding_balance <= 1e-6
+              and predicted_order and measured_order)
+    return {"status": "passed" if passed else "failed", "assessor": "phase_linkage", "rows": rows,
+            "rotor_positions": count * (2 if assessor.get("half_wave_symmetry") else 1),
+            "amplitude_imbalance": balance, "winding_imbalance": winding_balance, "predicted_sequence_check": predicted_order,
+            "measured_sequence_check": measured_order, "expected_sequence": sequence,
+            "convention": "Phases listed in the order they peak as the rotor turns counterclockwise; angles are electrical.",
+            "target": {"used_for_acceptance": True, "kind": "analytic", "quote": assessor.get("quote")}}
+
+
+ASSESSORS = {"tube_bessel": _tube, "dipole_torque": _dipole_torque, "applied_field": _applied_field,
+             "phase_linkage": _phase_linkage}
 
 
 def run_assessor(assessor, case, raw, metrics, model):

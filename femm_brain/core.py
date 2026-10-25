@@ -126,7 +126,9 @@ def _attach_components(graph, directory):
     """Bind executable components to their method nodes and record native evidence.
 
     A component counts as numerically checked only when an article-level build
-    that used it, directly or inside another component, passed natively.
+    or a machine-component rebuild that used it, directly or inside another
+    component, passed natively. A component rebuild must also have matched the
+    official model region by region and agreed with its native results.
     """
     path = directory / "components.json"
     if not path.exists():
@@ -182,19 +184,24 @@ def _attach_components(graph, directory):
     current_bindings = _current_case_bindings(directory)
     stale = {}
     for case in cases:
-        article = case.get("levels", {}).get("article", {})
-        used = article.get("components_used") or []
         example = examples.get(case.get("example_id"))
-        for component in used:
-            if example and component in node_of:
-                graph["edges"].append({"id": f"assembly:{example['id']}:{component}", "source": example["workflow_id"],
-                                       "target": node_of[component], "relation": "reuses",
-                                       "when": "The example's article build assembles this component.",
-                                       "parameter_bindings": {}, "source_ids": example.get("source_ids", [])})
-        if article.get("status") == "passed":
-            recorded = article.get("component_digests") or {}
+        for level_name, build in (("article", "article build"), ("components", "machine-component rebuild")):
+            level = case.get("levels", {}).get(level_name, {})
+            for component in level.get("components_used") or []:
+                edge = f"assembly:{example['id']}:{component}" if example else None
+                if example and component in node_of and not any(e["id"] == edge for e in graph["edges"]):
+                    graph["edges"].append({"id": edge, "source": example["workflow_id"],
+                                           "target": node_of[component], "relation": "reuses",
+                                           "when": f"The example's {build} assembles this component.",
+                                           "parameter_bindings": {}, "source_ids": example.get("source_ids", [])})
+            passed = level.get("status") == "passed"
+            if level_name == "components":
+                passed = passed and level.get("reference") == "passed" and \
+                    (case.get("components_match_original") or {}).get("status") == "passed"
+            if not passed:
+                continue
             case_fresh = current_bindings.get(case["case_id"]) == case.get("case_binding_sha256")
-            for component, digest in recorded.items():
+            for component, digest in (level.get("component_digests") or {}).items():
                 if component not in by_id:
                     continue
                 # Evidence counts only for the implementation and case definition it ran under.
@@ -213,7 +220,7 @@ def _attach_components(graph, directory):
         index[node_of[component]]["verification"] = {
             "status": "numerically_checked", "report": sorted(reports[component])[0], "reports": sorted(reports[component]),
             "case_ids": sorted(cases),
-            "note": "Used by article-level or new-design assemblies that passed natively; applicability limits still apply."}
+            "note": "Used by article-level, machine-component or new-design assemblies that passed natively; applicability limits still apply."}
 
 
 def load_graph(data_dir=None):

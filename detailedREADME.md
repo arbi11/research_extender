@@ -101,8 +101,9 @@ Changed physical parameters cannot inherit an inapplicable published target;
 such a solve can be `solved_unassessed`.
 
 The second brain does **not** yet provide arbitrary CAD synthesis, automatic
-paper-to-geometry replication, general motor assembly, AC-loss execution or
-automatic controlled recovery. The older assistant has experimental hierarchical
+paper-to-geometry replication, motor assembly beyond slotted stators with
+tooth-coil or single-layer distributed windings and surface-magnet rotors,
+AC-loss execution or automatic controlled recovery. The older assistant has experimental hierarchical
 paper intake and recovery code, but that is a separate pipeline and its paper
 replication has not succeeded. Do not present those capabilities as integrated
 into the second brain merely because their source is in the same repository.
@@ -153,10 +154,12 @@ Important qualifications:
 ### Official-example reproduction (PR #7)
 
 `python3 -m femm_brain reproduce` checks the brain against FEMM's official
-examples at three levels sharing one measurement plan: **original** (the
+examples at four levels sharing one measurement plan: **original** (the
 unmodified official model file, opened as data), **rebuild** (compiled from the
 brain's stored model record and compared field by field with the saved native
-file) and **article** (built only from parameters quoted from the article text).
+file), **article** (built only from parameters quoted from the article text)
+and **components** (assembled from reusable machine components, then required
+to equal the official model region by region).
 Targets, verbatim quotes and the 1% policy are frozen in
 `femm_brain/data/reproductions.json`; the evidence record is
 `femm_brain/data/verification/official_reproductions.json`. See the
@@ -164,10 +167,11 @@ Targets, verbatim quotes and the 1% policy are frozen in
 
 - 27 cases from 19 examples: 22 pass every attempted level, 3 fail, 2 have
   comparators only. All 26 rebuilds reproduce their original exactly. Cases
-  declare core or partial coverage; labels use only fresh evidence.
+  declare core (14) or partial (13) coverage; labels use only fresh evidence.
 - The audit requires every case and level, the current catalog, exact rebuild
-  agreement, and reviewed failures bound to their case definition and target
-  within a 1e-6 regression bound.
+  agreement, component rebuilds identical to their official model region by
+  region and in native agreement, and reviewed failures bound to their case
+  definition and target within a 1e-6 regression bound.
 - Article-only builds pass for the magnetics tutorial, square capacitor, two
   spheres, tube eddy currents, torque benchmark and heat-flow chimney.
 - The torque benchmark (milestone 1 below) passes the whole 0–90° curve against
@@ -179,9 +183,19 @@ Targets, verbatim quotes and the 1% policy are frozen in
 - Kept failures with findings: EI inductance (mesh refinement moves it away from
   1.73 mH), coilgun ball force (not mesh-converged), rotor-motion cogging torque
   (very mesh- and angle-sensitive at the source's ~1,400-node mesh).
-- Article builds are data-only assemblies of 19 reusable components (milestone 2
-  below); five new designs built only from components pass closed-form checks,
-  including a field-direction prediction declared before running.
+- Article builds are data-only assemblies of reusable components (milestone 2
+  below); seven new designs built only from components pass closed-form or
+  construction-predicted checks, including a field-direction prediction declared
+  before running, a nonlinear library B-H curve read back natively, and the
+  phase linkage of an inner-rotor machine no example contains.
+- The LRK outrunner is rebuilt from machine components (slotted stator,
+  star-of-slots tooth-coil winding, block-magnet rotor) identically to its
+  official model region by region and passes all 183 published flux-linkage
+  targets over 61 rotor positions, as do the original and rebuild. Its cogging
+  torque is a comparator: sub-nanometre coordinate changes alone move it by up
+  to 32% of its peak at this mesh, so component agreement is bounded on flux
+  linkage (0.025% observed against 1%). See the
+  [LRK section](femm_brain/README.md#lrk-outrunner-rebuilt-from-machine-components).
 
 Maintenance in the same PR: `restore-cache` restores the source snapshot by
 digest (the original cache was not on disk); scalar-physics model records keep
@@ -399,16 +413,19 @@ resource savings, and general dependency-aware backtracking is not complete.
    domain, gap and mesh controls. The rotor-motion example's cogging torque
    remains a recorded failure; a converged-mesh study of that machine is the open
    follow-up.
-2. **Reusable construction methods.** Started in PR #7: 19 executable
-   components (open boundaries, Kelvin exterior, air-gap element, bar magnet,
-   axisymmetric winding, convection, conductors, circuits and geometry/property
-   operations) with knowledge records in `femm_brain/data/components.json`,
-   bound to the documented method nodes and marked checked only by passing
-   assemblies. Still missing: slotted stators and poles with rotate-and-repeat
-   (the teaching recipes are geometry-only), nonlinear B-H materials from a
-   library, signed multi-phase windings, and result-extraction methods as
-   graph-bound components. Measurement operations are already typed in the
-   reproduction catalog.
+2. **Reusable construction methods.** 23 executable components with knowledge
+   records in `femm_brain/data/components.json`, bound to the documented method
+   nodes and marked checked only by passing assemblies. The machine set added
+   in PR #7: a slotted stator (outward or inward parallel-sided teeth with
+   shoes, optional slot dividers), a star-of-slots winding for any odd phase
+   count (single- or double-layer tooth coils, distributed single layer;
+   unbalanced windings refused), a surface-magnet rotor (block or arc magnets,
+   radial or parallel, seat arcs), isolated nodes, and the full FEMM 5 material
+   library (513 entries, 132 B-H curves). The LRK outrunner is rebuilt from
+   them identically to its official model, region by region. Still missing:
+   interior (buried) magnets, distributed double-layer and fractional-slot
+   distributed windings, rotor bars, and result-extraction methods as
+   graph-bound components (measurements are typed in the catalog).
 3. **Natural language through the second brain.** Retrieve methods and fill typed
    parameters. Use OpenRouter only when interpretation or missing details need
    it. Unsupported combinations should state what is missing. Preserve the

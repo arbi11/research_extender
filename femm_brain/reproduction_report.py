@@ -17,7 +17,8 @@ DATA = Path(__file__).parent / "data"
 RECORD = DATA / "verification" / "official_reproductions.json"
 DESIGN_RECORD = DATA / "verification" / "component_designs.json"
 SCOPES = {"reproductions": "Official FEMM examples reproduced from the unmodified model file (original), from the brain's stored model record "
-                           "(rebuild) and from article-stated parameters (article). Comparators are reported but never used for acceptance.",
+                           "(rebuild), from article-stated parameters (article) and from reusable machine components (components). "
+                           "Comparators are reported but never used for acceptance.",
           "designs": "New designs assembled only from reusable components and checked against closed-form results at the assembly level."}
 
 
@@ -26,12 +27,14 @@ def _target_row(result):
     if "assessor" in result:
         row = {"assessor": result["assessor"], "status": result["status"], "acceptance": True}
         for key in ("rms_error_ratio", "maximum_rms_error_ratio", "published_rms_error_ratio", "applied_field_magnitude_T",
-                    "measured_applied_field_T", "absolute_tolerance_N_m", "error"):
+                    "measured_applied_field_T", "absolute_tolerance_N_m", "amplitude_imbalance", "winding_imbalance",
+                    "predicted_sequence_check", "measured_sequence_check", "expected_sequence", "rotor_positions", "error"):
             if key in result:
                 row[key] = result[key]
         if result.get("rows"):
             keep = ("step", "rotor_angle_deg", "expected_N_m", "observed_N_m", "point", "measured_T", "direction_deg",
-                    "relative_vector_error", "passed")
+                    "relative_vector_error", "phase", "predicted_phase_deg", "measured_phase_deg", "phase_error_deg",
+                    "fundamental_Wb", "passed")
             row["rows"] = [{k: r[k] for k in keep if k in r} for r in result["rows"]]
         for key in ("predicted_applied_field_T", "predicted_field_direction_deg", "measured_field_direction_deg"):
             if key in result:
@@ -67,6 +70,9 @@ def collect(results, catalog="reproductions"):
                 entry["reason"] = report["reason"]
             if report.get("checks"):
                 entry["build"] = report["checks"]["build"].get("status")
+                if "reference" in report["checks"]:
+                    entry["reference"] = report["checks"]["reference"].get("status")
+                    entry["reference_differences"] = report["checks"]["reference"].get("difference_count")
                 entry["build_differences"] = report["checks"]["build"].get("difference_count", 0)
                 entry["solve"] = report["checks"]["solve"].get("status")
                 entry["targets"] = [_target_row(r) for r in report["checks"]["targets"].get("results", [])]
@@ -91,6 +97,7 @@ def collect(results, catalog="reproductions"):
                         "status": status, "coverage": case.get("coverage"), "case_binding_sha256": case_binding_digest(case),
                         "levels_passed": passed, "levels": levels,
                         "rebuild_matches_original": summary.get("level_comparison", {}).get("rebuild"),
+                        "components_match_original": summary.get("level_comparison", {}).get("components"),
                         "article_model_vs_original": {"difference_count": summary["article_model_vs_original"]["difference_count"]}
                         if summary.get("article_model_vs_original") else None})
     return {"schema_version": 1, "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -127,7 +134,10 @@ def render_html(record):
             items = []
             for t in entry["targets"]:
                 if "assessor" in t:
-                    extra = f'RMS ratio {_format(t["rms_error_ratio"])}' if "rms_error_ratio" in t else f'|B| {_format(t.get("applied_field_magnitude_T"))} T'
+                    extra = (f'RMS ratio {_format(t["rms_error_ratio"])}' if "rms_error_ratio" in t else
+                             f'largest phase error {_format(max(r["phase_error_deg"] for r in t["rows"]))} deg, imbalance '
+                             f'{_format(t["amplitude_imbalance"])}' if "amplitude_imbalance" in t else
+                             f'|B| {_format(t.get("applied_field_magnitude_T"))} T')
                     items.append(f'<li class="s-{t["status"]}">{html.escape(t["assessor"])}: {t["status"]} ({extra})</li>')
                 else:
                     role = "" if t["acceptance"] else " <em>comparator</em>"
@@ -148,8 +158,8 @@ code{{font-size:12px;color:var(--muted)}}ul{{margin:4px 0 8px 18px;padding:0}}p{
 </style></head><body><h1>Official FEMM example reproductions</h1>
 <p>{html.escape(record["scope"])} Generated {html.escape(record["generated_at"])}; catalog {record["catalog_sha256"][:12]}; LLM calls: {record["llm_calls"]}.</p>
 <p><b>{totals["passed"]}</b> of {totals["cases"]} cases pass every attempted level; {totals["failed"]} fail; {totals.get("comparators_only", 0)} have comparators only. Level passes — original {totals["level_passes"]["original"]},
-rebuild {totals["level_passes"]["rebuild"]}, article {totals["level_passes"]["article"]}.</p>
-<div style="overflow-x:auto"><table><thead><tr><th>Case</th><th>Original</th><th>Rebuild</th><th>Article</th><th>Results</th></tr></thead>
+rebuild {totals["level_passes"]["rebuild"]}, article {totals["level_passes"]["article"]}, components {totals["level_passes"]["components"]}.</p>
+<div style="overflow-x:auto"><table><thead><tr><th>Case</th><th>Original</th><th>Rebuild</th><th>Article</th><th>Components</th><th>Results</th></tr></thead>
 <tbody>{"".join(rows)}</tbody></table></div></body></html>
 """
 
@@ -160,7 +170,8 @@ def expected_levels(case, catalog):
         return {"article": "executed"}
     native = "executed" if case.get("source_model_sha256") else "not_applicable"
     article = "executed" if "assembly" in (case.get("article") or {}) else "not_attempted"
-    return {"original": native, "rebuild": native, "article": article}
+    components = "executed" if case.get("components") else "not_attempted"
+    return {"original": native, "rebuild": native, "article": article, "components": components}
 
 
 def audit(record, registry_path, catalog="reproductions"):
@@ -223,6 +234,11 @@ def audit(record, registry_path, catalog="reproductions"):
         if all(levels.get(level, {}).get("status") in ("passed", "failed", "comparators_only") for level in ("original", "rebuild")):
             if (entry.get("rebuild_matches_original") or {}).get("status") != "passed":
                 problems.append(f"{identifier}: rebuild does not reproduce the original's native values.")
+        if levels.get("components", {}).get("status") in ("passed", "failed", "comparators_only"):
+            if (entry.get("components_match_original") or {}).get("status") != "passed":
+                problems.append(f"{identifier}: the component build does not agree with the original within its declared bound.")
+            if levels["components"].get("reference") != "passed":
+                problems.append(f"{identifier}: the component build is not the official model region by region.")
     resolved = sorted(set(reviewed) - observed_failures)
     problems += [f"{'/'.join(key)}: reviewed failure no longer fails; review and remove it." for key in resolved]
     return {"status": "passed" if not problems else "failed", "problems": problems, "accepted_reviewed_failures": accepted,

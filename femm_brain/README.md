@@ -198,7 +198,7 @@ comparison does not establish convergence or validate all documented studies.
 
 ## Reproduce the official examples
 
-`reproduce` checks the brain against FEMM's own examples at up to three
+`reproduce` checks the brain against FEMM's own examples at up to four
 independent levels, all sharing one typed measurement plan:
 
 | Level | What is built | What it shows |
@@ -206,13 +206,17 @@ independent levels, all sharing one typed measurement plan:
 | `original` | The unmodified official model file, opened as data | The published number is reproducible on this engine at all |
 | `rebuild` | A fresh model compiled from the brain's stored model record, then compared field by field with the saved native file | The brain's stored knowledge is complete for this model |
 | `article` | A model built from parameters quoted from the article text, with official library entries and FEMM defaults where the article relies on them | The brain can construct the problem from its description, without the model file |
+| `components` | A machine assembled from reusable machine components (slotted stator, star-of-slots winding, magnet rotor, library materials), with stated dimensions quoted and the rest identified from named model entities | The components rebuild a real machine: identical to the official model region by region, with native results that agree with the original's |
 
 Published targets, quotes and the 1% tolerance policy are frozen in
-`data/reproductions.json`; every quote is verbatim source text, and a test checks
-it against the restored cache. Comparators (mesh-dependent values, other models
-or measurements) are reported but never decide a pass. Diagnostic controls scale
-explicit mesh constraints, override article parameters or toggle smart meshing,
-and report each metric's change without affecting acceptance.
+`data/reproductions.json`; every quote is verbatim source text, cited by source
+page or by artifact digest, and a test checks it against the restored cache.
+Comparators (mesh-dependent values, other models or measurements) are reported
+but never decide a pass. Diagnostic controls scale explicit mesh constraints,
+override article or component parameters, toggle smart meshing, reorder the
+model's entities or move its nodes by a sub-nanometre jitter, and report each
+metric's change without affecting acceptance. Steps may modify properties or
+rotate a group (for example a rotor) between solves.
 
 ```bash
 python3 -m femm_brain restore-cache --for-reproductions   # official model files, digest-checked
@@ -223,7 +227,8 @@ python3 -m femm_brain reproduction-report --results work/reproductions --html wo
 
 At the recorded snapshot, 27 cases from 19 official examples ran: 22 pass every
 attempted level, 3 fail their frozen targets and 2 have comparators only. All 26
-rebuilds reproduce their original's native values exactly; 6 article builds pass.
+rebuilds reproduce their original's native values exactly (1,064 raw values); 6
+article builds pass, and the LRK motor passes from machine components (below).
 The failures are kept with findings rather than relabeled:
 
 - **EI inductance/energy** remains about 1.5% above the article. Mesh refinement
@@ -233,10 +238,52 @@ The failures are kept with findings rather than relabeled:
 - **Rotor-motion cogging torque** varies by tens of percent between adjacent
   6-degree samples and with smart meshing at the source's coarse mesh.
 
+### LRK outrunner rebuilt from machine components
+
+`lrkanalysis-flux-sweep` reproduces the LRK hobby motor's analysis script: with
+the phase currents set to zero, the rotor group turns through one pole pitch in
+61 positions and each position is meshed, solved and measured. The published
+flux linkage of phases A, B and C at every position is an acceptance target
+(183 targets, 1% relative or 1% of the amplitude, since the waveforms cross
+zero), and the published cogging torque is a comparator (0.2 mN*m).
+
+The `components` level rebuilds the motor from machine components alone: a
+12-tooth outward slotted stator, a single-layer tooth-coil winding laid out by
+the star of slots (12 slots, 7 pole pairs, reverse sequence) and 14 inward and
+outward block magnets. Dimensions the design worksheet states are quoted from
+it; the rest are identified from named entities of the official model. Before
+solving, the component model must equal the official model region by region:
+the same contours, the same used materials, circuits and boundaries, and the
+same material, circuit, turns, magnetization, group and mesh size in every
+region, wherever each model's labels sit (`compare_regions`). It does, with every
+node within 2e-14 mm of its official coordinate.
+
+- The original file, the stored record and the component build pass all 183
+  flux targets; the worst error is 5% of the tolerance.
+- The `phase_linkage` assessor's prediction from the construction places each
+  phase's fundamental within 0.002 electrical degrees of the solved one, peaking
+  A, C, B as the rotor turns counterclockwise; the published waveforms agree
+  with the same prediction within 0.05 degrees.
+- Native agreement with the original is bounded on the measurements behind
+  acceptance targets and assessors: flux linkage agrees within 0.025% of the
+  amplitude against a declared 1% bound.
+- Cogging torque differs by up to 28% of its 1.4 mN*m peak and is reported, not
+  bounded. The diagnosis: the mesher branches on last-bit coordinate differences
+  in this rotationally symmetric geometry. Moving the official model's own nodes
+  by at most 1e-12 mm changes its torque by 18 to 32% of the peak, reordering
+  its entities by up to 13.5%, and shrinking its mesh by a quarter by up to 40%,
+  while flux linkage moves at most 0.085%. Agreement was first declared over
+  every raw value; after this first run showed the torque difference, the bound
+  was narrowed to acceptance quantities, consistent with comparators never
+  deciding a pass, and the narrowing is recorded here and in the case findings.
+- With FEMM 5's library N40 magnet in place of the model's NdFeB 40 MGOe, flux
+  linkage falls 0.86% and every target still passes: the published table does
+  not separate the two grades.
+
 Each case declares its coverage: **core** when it checks the example's main
 published results, **partial** otherwise, with what was and was not reproduced.
 An example's workflow node becomes `numerically_checked` only through a passing
-core case and `partially_checked` through partial ones (13 core and 14 partial
+core case and `partially_checked` through partial ones (14 core and 13 partial
 cases; the transient-heat example, for instance, checks only its initial
 state). Labels use only fresh evidence: each record carries a digest of the case
 definition, so editing a case's inputs, measurements or targets makes its
@@ -246,23 +293,52 @@ others need dimensions that appear only in figures.
 `reproduction-report` audits the record before accepting it. Every catalog case
 and every applicable level must be present and fully built, solved and assessed;
 the record must come from the current catalog; every rebuild must reproduce its
-original. A failed target is accepted only if `reviewed_reproduction_failures.json`
-lists it with the same case definition and frozen target, and the observed value
-stays within a 1e-6 relative regression bound of the reviewed value (the CI and
-development images agree bit for bit). A reviewed failure that starts passing
-also fails the audit, so the registry cannot go stale.
+original; every component rebuild must match its official model region by region
+and agree with it natively within its declared bound. A failed target is
+accepted only if `reviewed_reproduction_failures.json` lists it with the same
+case definition and frozen target, and the observed value stays within a 1e-6
+relative regression bound of the reviewed value (the CI and development images
+agree bit for bit). A reviewed failure that starts passing also fails the audit,
+so the registry cannot go stale.
 
 ## Reusable components and new designs
 
 Article builds contain no per-example code. Each is a data-only **assembly** of
-19 reusable, executable **components** (`components.py`, knowledge records in
+23 reusable, executable **components** (`components.py`, knowledge records in
 `data/components.json`): geometry and property operations (segment, polyline,
-arc, circle, block label, unmeshed region, material, official library material,
-circuit, conductor, boundaries) and layer-2 methods (open boundary builder,
-mixed open boundary, convection, axisymmetric winding section, bar magnet,
-air-gap element, Kelvin exterior with an applied field). Methods bind to the
-existing documented method nodes; a component is marked numerically checked only
-when a passing native assembly used it, and the node cites the cases.
+arc, circle, isolated node, block label, unmeshed region, material, official
+library material, circuit, conductor, boundaries), layer-2 methods (open
+boundary builder, mixed open boundary, convection, axisymmetric winding section,
+bar magnet, air-gap element, Kelvin exterior with an applied field) and electric
+machine components:
+
+- **`slotted_stator`**: parallel-sided teeth with shoes repeated around the axis,
+  pointing outward (outer rotor) or inward (inner rotor), with optional slot
+  dividers for double layers and chords that close the slot openings. Teeth,
+  tips and shoes that would overlap are refused.
+- **`tooth_coil_winding`** on **`winding_layout`**: a star-of-slots layout for
+  any odd number of phases, as single- or double-layer tooth coils or a
+  distributed single layer, in either phase sequence. Each coil's phasor joins
+  the phase whose signed axis owns its half-open belt; windings whose phases get
+  unequal coil sides are refused. A positive coil carries +turns in the slot
+  clockwise of its tooth, driving flux radially inward through it.
+- **`surface_magnet_rotor`**: block or arc magnets with alternating polarity,
+  radial (position-dependent `theta` direction) or parallel magnetization, an
+  optional mesh size on the air-gap face, and seat arcs that close the rotor
+  core between arc magnets.
+- **`library_material`** draws on the whole FEMM 5 library (513 entries: 282
+  magnetic with 132 B-H curves, 95 electrostatic, 136 thermal), with a folder to
+  disambiguate repeated names and a model name of the assembly's choosing.
+  Curves are validated: B-H curves need at least three nonnegative points with B
+  and H strictly increasing; k(T) curves need increasing temperature and
+  positive conductivity (two points suffice, as in FEMM's own heat library).
+
+Every assembled model must also give each block label a closed region of its
+own (`check_regions`), which catches, for instance, a double-layer winding drawn
+into undivided slots. Methods bind to the existing documented method nodes; a
+component is marked numerically checked only when a passing native assembly used
+it (an article build, a new design, or a machine-component rebuild that matched
+its official model region by region), and the node cites the cases.
 
 Assemblies use parameter references (`$name`) and a whitelisted arithmetic
 language (`=sqrt(a**2+b**2)/2`, with `pi`, `mu0`, `eps0`) that is parsed, never
@@ -289,6 +365,8 @@ with the 1% policy fixed before running:
 | Cylindrical heat shell | fixed-temperature conductors, library brick | Q within 0.017% |
 | Dipole torque variant | Kelvin exterior, air-gap element, bar magnet at new size, field and direction | m x B within 0.1% with the predicted field |
 | Kelvin field at 70 degrees | Kelvin exterior alone, prediction declared before running | uniform 0.800 T at -70.0 degrees, as predicted |
+| Nonlinear M-19 ring | library B-H curve (33 points) around a 1000 A conductor; Ampere's law fixes H wherever the probes sit | B within 0.063% of the curve and H within 0.54% at four curve points from 1.56 to 1.84 T |
+| Inner-rotor 12-slot 10-pole SPM | inward teeth with divided slots, double-layer star-of-slots winding, radial arc magnets with seat arcs, laminated and solid nonlinear M-19, 24 rotor positions | each phase's flux-linkage fundamental within 0.005 electrical degrees of the construction's prediction, peaking A, B, C; amplitudes equal within 4e-6 |
 
 ```bash
 python3 -m femm_brain design --all --output work/designs --image research-extender-femm:dev-hierarchy-resumed-20261025
@@ -302,6 +380,26 @@ degrees minus the domain angle, and the disk's magnetization at angle alpha
 appears in the domain as a uniform field at -alpha with magnitude mu0*Hc/2.
 Torque checks compare against m x B with this predicted field and separately
 require the measured field to match it within 0.5 degrees and 1%.
+
+Winding sign and phase linkage are checked the same way, against a prediction
+from the construction (`phase_linkage` in `reference_models.py`). Each coil side
+contributes its signed turns at the angle of its region's centroid and each
+magnet its radial magnetization; magnetization continues radially across the air
+gap, so a circuit whose conductors sum to S = sum(turns e^(i p theta)) links
+Im(S e^(-i arg R)), where R is the rotor's fundamental, and turning the rotor
+counterclockwise by alpha advances arg R by p alpha. Over one electrical period
+(or half of one, extended by a declared half-wave symmetry) the assessor fits
+each phase's fundamental and requires the predicted and measured phases to agree
+within 1 electrical degree, the phases to peak in the declared counterclockwise
+order, the winding to be balanced and the amplitudes to agree within 1%. Tests
+show that swapping two phases or reversing one coil fails it.
+
+The ring's mesh was refined after its first native run, with its targets left
+as frozen: at 0.5 mm the 8 mm probe, in deep saturation (relative permeability
+about 74, where a 0.27% error in B is a 2.3% error in H), read H 2.3% low. Ring
+meshes of 0.5, 0.25 and 0.125 mm gave errors of 2.3%, 0.54% and 0.28% there, so
+the error was discretization; the design records this history beside its mesh
+parameter.
 
 ## Explore
 

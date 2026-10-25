@@ -44,7 +44,7 @@ def main(argv=None):
     reproduce = sub.add_parser("reproduce", help="Reproduce official examples from the original model, stored data and article text")
     reproduce.add_argument("case_ids", nargs="*")
     reproduce.add_argument("--all", action="store_true")
-    reproduce.add_argument("--levels", default="original,rebuild,article")
+    reproduce.add_argument("--levels", default="original,rebuild,article,components")
     reproduce.add_argument("--output", type=Path, required=True)
     reproduce.add_argument("--engine", choices=("docker", "native"), default="docker")
     reproduce.add_argument("--image")

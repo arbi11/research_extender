@@ -337,6 +337,49 @@
    "constraints": []
   },
   {
+   "id": "point",
+   "layer": 3,
+   "title": "Isolated node",
+   "description": "A node not attached to any contour; the mesher keeps it as a vertex, so it shapes the local mesh.",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "at",
+     "type": "point",
+     "description": "Node location",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group number",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "selectnode",
+    "setnodeprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": []
+  },
+  {
    "id": "block_label",
    "layer": 3,
    "title": "Block label",
@@ -402,6 +445,12 @@
      "type": "boolean",
      "description": "Member of a Kelvin external region",
      "required": false
+    },
+    {
+     "name": "magdir_function",
+     "type": "string",
+     "description": "Magnetization direction as a FEMM expression of position, e.g. theta",
+     "required": false
     }
    ],
    "femm_functions": [
@@ -457,7 +506,7 @@
    "id": "material",
    "layer": 3,
    "title": "Material property",
-   "description": "A material with explicit native property values (FEMM file keys) and an optional B-H or k(T) curve.",
+   "description": "A material with explicit native property values (FEMM file keys) and an optional B-H or k(T) curve; curves must rise monotonically.",
    "physics": [
     "magnetics",
     "electrostatics",
@@ -504,7 +553,7 @@
    "id": "library_material",
    "layer": 3,
    "title": "Official library material",
-   "description": "Copies a named entry exactly from FEMM's official material library, as tutorials instruct.",
+   "description": "Copies a named entry exactly from FEMM's official material libraries (all 513 magnetic, electrostatic and heat-flow entries are bundled), including B-H or k(T) curves.",
    "physics": [
     "magnetics",
     "electrostatics",
@@ -531,6 +580,18 @@
       "statlib.dat",
       "heatlib.dat"
      ]
+    },
+    {
+     "name": "as_name",
+     "type": "string",
+     "description": "Name to give the copied entry in the model",
+     "required": false
+    },
+    {
+     "name": "folder",
+     "type": "string",
+     "description": "Library folder, when the name is ambiguous",
+     "required": false
     }
    ],
    "femm_functions": [
@@ -545,7 +606,8 @@
    "node_id": null,
    "stage": "materials",
    "constraints": [
-    "Only entries recorded with provenance in library_materials.json are available."
+    "The library must match the problem's physics; entries whose properties the model cannot represent are refused.",
+    "Ambiguous names need their folder."
    ]
   },
   {
@@ -1257,6 +1319,485 @@
    "constraints": [
     "The applied field is uniform at the mirror angle of the exterior magnetization, -alpha, with magnitude mu0*Hc/2: FEMM's mesher orients each periodic chain with its region on the left and reverses the second chain (tangle.cpp, buildPbcTwinFromCDT), linking rim angle 180-phi to domain angle phi, so the rim current M sin(phi'-alpha) appears in the domain as M sin(phi+alpha).",
     "Both halves of each circle must be drawn counterclockwise from (+R, 0); the prediction assumes this construction."
+   ]
+  },
+  {
+   "id": "slotted_stator",
+   "layer": 2,
+   "title": "Slotted stator with shoed teeth",
+   "description": "Parallel-sided teeth with shoes repeated around the axis: slot-bottom arcs, tooth sides, shoe undersides and edges, tip arcs and optional slot-opening chords and slot dividers. Teeth point outward when the tip radius exceeds the slot-bottom radius (outer-rotor machines) and inward otherwise.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "slot_count",
+     "type": "integer",
+     "description": "Number of slots (and teeth)",
+     "required": true,
+     "minimum": 3
+    },
+    {
+     "name": "slot_bottom_radius",
+     "type": "number",
+     "description": "Radius where the slots end (yoke side)",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "tip_radius",
+     "type": "number",
+     "description": "Radius of the tooth-tip arcs (air-gap side)",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "tooth_width",
+     "type": "number",
+     "description": "Width of the parallel-sided tooth body",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "tip_arc_length",
+     "type": "number",
+     "description": "Arc length of each tooth tip along the tip radius",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "shoe_axial_distance",
+     "type": "number",
+     "description": "Distance from the axis, along the tooth axis, of the shoe underside",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "first_tooth_angle",
+     "type": "number",
+     "description": "Angle of the first tooth axis",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "close_slot_openings",
+     "type": "boolean",
+     "description": "Draw chords across the slot openings",
+     "required": false,
+     "default": true
+    },
+    {
+     "name": "slot_divider",
+     "type": "boolean",
+     "description": "Split each slot into two halves for double-layer windings",
+     "required": false,
+     "default": false
+    },
+    {
+     "name": "tip_max_segment",
+     "type": "number",
+     "description": "Tip arc discretization",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
+    },
+    {
+     "name": "slot_bottom_max_segment",
+     "type": "number",
+     "description": "Slot-bottom arc discretization",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 5
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the stator contours",
+     "required": false,
+     "default": 0
+    },
+    {
+     "name": "slot_opening_group",
+     "type": "integer",
+     "description": "Group of the slot-opening chords",
+     "required": false
+    },
+    {
+     "name": "iron_material",
+     "type": "string",
+     "description": "Stator iron material; places one label in the first tooth",
+     "required": false
+    },
+    {
+     "name": "iron_mesh",
+     "type": "number",
+     "description": "Stator iron element size",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "addarc",
+    "selectsegment",
+    "setsegmentprop",
+    "selectarcsegment",
+    "setarcsegmentprop"
+   ],
+   "uses_components": [
+    "segment",
+    "arc",
+    "block_label"
+   ],
+   "source_ids": [
+    "lrkanalysis",
+    "manual5"
+   ],
+   "node_id": "recipe:slotted_stator",
+   "stage": "geometry",
+   "constraints": [
+    "Tooth bodies are parallel-sided; the shoe corner lies on the radial line through the end of the tip arc.",
+    "Tips must not overlap (tip arc below the slot pitch) and the shoe must overhang the tooth body.",
+    "The bore or yoke circle and its boundary are separate components."
+   ]
+  },
+  {
+   "id": "tooth_coil_winding",
+   "layer": 2,
+   "title": "Multi-phase winding by the star of slots",
+   "description": "Assigns each coil (tooth coils, single or double layer) or slot (distributed single layer) to a phase and polarity from its EMF phasor using half-open phase belts, then places labels with the phase circuit and signed turns. A positive coil carries +turns in the slot clockwise of its tooth.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "slot_count",
+     "type": "integer",
+     "description": "Number of slots",
+     "required": true,
+     "minimum": 3
+    },
+    {
+     "name": "pole_pairs",
+     "type": "integer",
+     "description": "Rotor pole pairs",
+     "required": true,
+     "minimum": 1
+    },
+    {
+     "name": "turns",
+     "type": "integer",
+     "description": "Turns per coil side",
+     "required": true,
+     "minimum": 1
+    },
+    {
+     "name": "material",
+     "type": "string",
+     "description": "Winding material",
+     "required": true
+    },
+    {
+     "name": "label_radius",
+     "type": "number",
+     "description": "Radius of the slot labels",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "phases",
+     "type": "list",
+     "description": "Odd number of phase circuit names",
+     "required": false,
+     "default": [
+      "A",
+      "B",
+      "C"
+     ]
+    },
+    {
+     "name": "layers",
+     "type": "string",
+     "description": "single or double",
+     "required": false,
+     "choices": [
+      "single",
+      "double"
+     ],
+     "default": "single"
+    },
+    {
+     "name": "layout",
+     "type": "string",
+     "description": "tooth_coils or slot_star (distributed single layer)",
+     "required": false,
+     "choices": [
+      "tooth_coils",
+      "slot_star"
+     ],
+     "default": "tooth_coils"
+    },
+    {
+     "name": "phase_sequence",
+     "type": "string",
+     "description": "forward or reverse",
+     "required": false,
+     "choices": [
+      "forward",
+      "reverse"
+     ],
+     "default": "forward"
+    },
+    {
+     "name": "first_tooth_angle",
+     "type": "number",
+     "description": "Angle of the first tooth axis",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Winding element size",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the winding labels",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addblocklabel",
+    "selectlabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "block_label"
+   ],
+   "source_ids": [
+    "lrkanalysis",
+    "rapidimanalysis"
+   ],
+   "node_id": "method:machine_three_phase_winding",
+   "stage": "excitation",
+   "constraints": [
+    "Refuses windings whose phases receive unequal numbers of coil sides, and even phase counts.",
+    "Double layers need slots divided by the stator's slot divider; single-layer tooth coils need an even slot count.",
+    "Phase circuits and their currents are defined separately."
+   ]
+  },
+  {
+   "id": "surface_magnet_rotor",
+   "layer": 2,
+   "title": "Surface permanent-magnet rotor poles",
+   "description": "Block (rectangular) or arc magnets with alternating radial or parallel magnetization around the axis, with an optional mesh size on the air-gap face, seat arcs that close the rotor core between arc magnets, and a rotor angle offset.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "pole_count",
+     "type": "integer",
+     "description": "Number of poles (even)",
+     "required": true,
+     "minimum": 2
+    },
+    {
+     "name": "magnet_material",
+     "type": "string",
+     "description": "Magnet material",
+     "required": true
+    },
+    {
+     "name": "thickness",
+     "type": "number",
+     "description": "Radial magnet thickness",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "magnet_shape",
+     "type": "string",
+     "description": "block or arc",
+     "required": false,
+     "choices": [
+      "block",
+      "arc"
+     ],
+     "default": "block"
+    },
+    {
+     "name": "width",
+     "type": "number",
+     "description": "Block magnet width",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "near_face_distance",
+     "type": "number",
+     "description": "Distance of a block magnet's inner face from the axis",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "inner_radius",
+     "type": "number",
+     "description": "Inner radius of arc magnets",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "arc_angle",
+     "type": "number",
+     "description": "Angular span of arc magnets",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "air_gap_side",
+     "type": "string",
+     "description": "Which face meets the air gap: inner (outer rotor) or outer (inner rotor)",
+     "required": false,
+     "choices": [
+      "inner",
+      "outer"
+     ],
+     "default": "inner"
+    },
+    {
+     "name": "magnetization",
+     "type": "string",
+     "description": "radial or parallel",
+     "required": false,
+     "choices": [
+      "radial",
+      "parallel"
+     ],
+     "default": "radial"
+    },
+    {
+     "name": "first_pole_polarity",
+     "type": "string",
+     "description": "outward or inward for the first pole",
+     "required": false,
+     "choices": [
+      "outward",
+      "inward"
+     ],
+     "default": "outward"
+    },
+    {
+     "name": "first_pole_angle",
+     "type": "number",
+     "description": "Angle of the first pole axis",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "rotor_angle",
+     "type": "number",
+     "description": "Rotor position offset",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Magnet element size",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "air_gap_face_mesh",
+     "type": "number",
+     "description": "Element size along a block magnet's air-gap face",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "arc_max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of arc-magnet faces (sets the air-gap discretization of arc magnets)",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
+    },
+    {
+     "name": "seat_arcs",
+     "type": "boolean",
+     "description": "Draw the rotor core surface between arc magnets, on the face away from the air gap",
+     "required": false,
+     "default": false
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the rotor contours and labels",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "addarc",
+    "selectsegment",
+    "setsegmentprop",
+    "addblocklabel",
+    "selectlabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "segment",
+    "arc",
+    "block_label"
+   ],
+   "source_ids": [
+    "lrkanalysis",
+    "manual5"
+   ],
+   "node_id": "method:machine_pm_rotor",
+   "stage": "geometry",
+   "constraints": [
+    "Adjacent magnets must not overlap.",
+    "Radially magnetized arc magnets use FEMM's position-dependent direction (theta)."
    ]
   }
  ]

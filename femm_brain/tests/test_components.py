@@ -1,4 +1,6 @@
 """Reusable components: catalog/implementation agreement, safe assemblies and evidence binding."""
+import cmath
+from copy import deepcopy
 import hashlib
 import inspect
 import json
@@ -9,9 +11,12 @@ from pathlib import Path
 import unittest
 
 from femm_brain.article_recipes import build
-from femm_brain.components import IMPLEMENTATIONS, assemble, catalog, evaluate
+from femm_brain.components import DATA as COMPONENT_DATA, IMPLEMENTATIONS, _check_curve, assemble, catalog, evaluate, winding_layout
 from femm_brain.core import load_graph
-from femm_brain.reproduce import load_cases, load_designs, plan_level
+from femm_brain.geometry import arc_geometry
+from femm_brain.reference_models import linkage_prediction, run_assessor
+from femm_brain.reproduce import (_source_record, check_regions, compare_models, compare_regions, jitter_coordinates, load_cases,
+                                  load_designs, permute_entities, plan_level)
 
 # Typed-model digests of the article builds that passed natively. A change here
 # changes the solved model: update only deliberately and re-run the evidence.
@@ -159,6 +164,239 @@ class KelvinRuleTests(unittest.TestCase):
             metrics["torque_Nm@" + step] = math.sin(wrong - math.radians(angle))
         result = run_assessor(assessor, case, {}, metrics, model)
         self.assertEqual((result["status"], result["field_direction_check"]), ("failed", False))
+
+
+def _lrk():
+    return next(c for c in load_cases() if c["id"] == "lrkanalysis-flux-sweep")
+
+
+def _signs(layout):
+    return " ".join(f"{phase}{'+' if polarity > 0 else '-'}" for _, (phase, polarity) in sorted(layout.items()))
+
+
+class WindingTests(unittest.TestCase):
+    def test_star_of_slots_reproduces_reference_windings(self):
+        # LRK as the official model winds it, and the textbook concentrated windings.
+        self.assertEqual(_signs(winding_layout(12, 7, ["A", "B", "C"], phase_sequence="reverse")), "A+ B- C+ A- B+ C-")
+        self.assertEqual(_signs(winding_layout(12, 5, ["A", "B", "C"], layers="double")), "A+ A- B- B+ C+ C- A- A+ B+ B- C- C+")
+        self.assertEqual(_signs(winding_layout(12, 4, ["A", "B", "C"], layers="double")), " ".join(["A+ B+ C+"] * 4))
+
+    def test_every_accepted_winding_is_balanced_and_in_sequence(self):
+        accepted = 0
+        for slots in range(3, 49):
+            for pairs in range(1, 25):
+                for layout, layers in (("tooth_coils", "single"), ("tooth_coils", "double"), ("slot_star", "single")):
+                    for sequence, direction in (("forward", 1), ("reverse", -1)):
+                        try:
+                            winding = winding_layout(slots, pairs, ["A", "B", "C"], layout, layers, sequence)
+                        except ValueError:
+                            continue
+                        accepted += 1
+                        phasors = {name: sum(polarity * cmath.exp(1j * math.radians(k * pairs * 360 / slots))
+                                             for k, (phase, polarity) in winding.items() if phase == name) for name in "ABC"}
+                        magnitudes = [abs(value) for value in phasors.values()]
+                        self.assertGreater(min(magnitudes), 1e-9, (slots, pairs, layout, layers))
+                        self.assertAlmostEqual(max(magnitudes), min(magnitudes), places=9)
+                        for k, name in enumerate("ABC"):
+                            angle = math.degrees(cmath.phase(phasors[name] / phasors["A"]))
+                            self.assertAlmostEqual((angle - direction * k * 120 + 180) % 360 - 180, 0, places=6,
+                                                   msg=(slots, pairs, layout, layers, sequence))
+        self.assertGreater(accepted, 500)
+
+    def test_unbalanced_and_ill_posed_windings_are_refused(self):
+        with self.assertRaisesRegex(ValueError, "Unbalanced"):
+            winding_layout(12, 6, ["A", "B", "C"], layers="double")
+        with self.assertRaisesRegex(ValueError, "odd number"):
+            winding_layout(12, 5, ["A", "B"])
+        with self.assertRaisesRegex(ValueError, "even number of slots"):
+            winding_layout(9, 4, ["A", "B", "C"])
+        with self.assertRaisesRegex(ValueError, "single-layer"):
+            winding_layout(24, 2, ["A", "B", "C"], layout="slot_star", layers="double")
+        with self.assertRaisesRegex(ValueError, "forward or reverse"):
+            winding_layout(12, 5, ["A", "B", "C"], layers="double", phase_sequence="backward")
+
+
+class MachineGeometryTests(unittest.TestCase):
+    problem = {"physics": "magnetics", "units": "millimeters", "type": "planar", "frequency": 0, "depth": 1}
+    stator = {"use": "slotted_stator", "slot_count": 12, "slot_bottom_radius": 45, "tip_radius": 30, "tooth_width": 6,
+              "tip_arc_length": 13, "shoe_axial_distance": 33}
+
+    def build(self, steps):
+        return assemble({"problem": self.problem, "steps": steps}, {})[0]
+
+    def test_stator_teeth_are_symmetric_and_lie_on_their_radii(self):
+        lrk = dict(self.stator, slot_bottom_radius=8.25, tip_radius=12.8, tooth_width=2.6, tip_arc_length=5, shoe_axial_distance=11.8)
+        for step, radii in ((self.stator, (30, 45)), (lrk, (12.8, 8.25))):
+            model = self.build([step])
+            points = [(n["x"], n["y"]) for n in model["nodes"]]
+            pitch = math.radians(30)
+            for x, y in points:
+                turned = (x * math.cos(pitch) - y * math.sin(pitch), x * math.sin(pitch) + y * math.cos(pitch))
+                self.assertTrue(any(math.dist(turned, other) < 1e-9 for other in points), (x, y))
+            for arc in model["arcs"]:
+                a, b = model["nodes"][arc["n0"]], model["nodes"][arc["n1"]]
+                radius = arc_geometry((a["x"], a["y"]), (b["x"], b["y"]), arc["angle"])["radius"]
+                self.assertTrue(any(math.isclose(radius, r, rel_tol=1e-9) for r in radii), radius)
+            half = step["tooth_width"] / 2
+            self.assertEqual(sum(1 for x, y in points if math.isclose(abs(y), half) and x > 0), 4)
+
+    def test_impossible_stators_are_refused(self):
+        with self.assertRaisesRegex(ValueError, "overlap"):
+            self.build([dict(self.stator, tooth_width=40)])
+        with self.assertRaisesRegex(ValueError, "shoe"):
+            self.build([dict(self.stator, shoe_axial_distance=29)])
+        with self.assertRaisesRegex(ValueError, "divider"):
+            self.build([dict(self.stator, slot_divider=True, close_slot_openings=False)])
+
+    def test_double_layers_need_divided_slots_and_labels_need_closed_regions(self):
+        steps = [{"use": "material", "name": "Iron", "values": {"Mu_x": 1000, "Mu_y": 1000}}, {"use": "material", "name": "Cu"},
+                 *({"use": "circuit", "name": name, "current": 0} for name in "ABC"),
+                 dict(self.stator, iron_material="Iron"), {"use": "circle", "radius": 55},
+                 {"use": "tooth_coil_winding", "slot_count": 12, "pole_pairs": 5, "turns": 10, "material": "Cu",
+                  "label_radius": 39, "layers": "double"}]
+        problems = check_regions(self.build(steps))
+        self.assertEqual(len(problems), 12)
+        self.assertTrue(all("several labels" in problem for problem in problems))
+        steps[5] = dict(steps[5], slot_divider=True)
+        self.assertEqual(check_regions(self.build(steps)), [])
+        outside = check_regions(self.build(steps + [{"use": "block_label", "at": [60, 0], "material": "Cu"}]))
+        self.assertEqual(len(outside), 1)
+        self.assertIn("outside every closed contour", outside[0])
+
+    def test_surface_magnets_alternate_and_seat_arcs_close_the_core(self):
+        magnet = {"use": "material", "name": "N", "values": {"Mu_x": 1.05, "Mu_y": 1.05, "H_c": 900000}}
+        rotor = {"use": "surface_magnet_rotor", "pole_count": 10, "magnet_material": "N", "thickness": 3, "magnet_shape": "arc",
+                 "inner_radius": 25, "arc_angle": 30, "air_gap_side": "outer", "seat_arcs": True}
+        model = self.build([magnet, rotor])
+        labels = sorted(model["labels"], key=lambda label: math.atan2(label["y"], label["x"]) % (2 * math.pi))
+        self.assertEqual([label["magdir_function"] for label in labels], ["theta", "theta+180"] * 5)
+        seat = 0.0
+        for arc in model["arcs"]:
+            a, b = model["nodes"][arc["n0"]], model["nodes"][arc["n1"]]
+            if math.isclose(arc_geometry((a["x"], a["y"]), (b["x"], b["y"]), arc["angle"])["radius"], 25):
+                seat += arc["angle"]
+        self.assertAlmostEqual(seat, 360)
+        parallel = self.build([magnet, dict(rotor, magnetization="parallel", first_pole_polarity="inward")])
+        directions = sorted((math.degrees(math.atan2(l["y"], l["x"])) % 360, l["magdir"]) for l in parallel["labels"])
+        self.assertEqual([round((d - a) % 360, 9) for a, d in directions], [180.0, 0.0] * 5)
+        with self.assertRaisesRegex(ValueError, "Seat arcs"):
+            self.build([magnet, dict(rotor, magnet_shape="block", width=5, near_face_distance=25)])
+        with self.assertRaisesRegex(ValueError, "below the pole pitch"):
+            self.build([magnet, dict(rotor, arc_angle=36)])
+
+
+class LrkReconstructionTests(unittest.TestCase):
+    def test_components_rebuild_the_official_model_region_by_region(self):
+        plan = plan_level(_lrk(), "components")
+        self.assertEqual(compare_regions(deepcopy(plan["reference_model"]), deepcopy(plan["expected_model"])), [])
+        self.assertEqual(check_regions(plan["expected_model"]), [])
+
+    def test_region_comparison_sees_winding_sign_phase_and_magnet_changes(self):
+        case = _lrk()
+        reference = plan_level(case, "components")["reference_model"]
+        parameters = {name: item["value"] for name, item in case["components"]["parameters"].items()}
+
+        def differences(use, **changes):
+            assembly = deepcopy(case["components"]["assembly"])
+            for step in assembly["steps"]:
+                if step["use"] == use:
+                    step.update(changes)
+            return {d["where"] for d in compare_regions(deepcopy(reference), assemble(assembly, parameters)[0])}
+
+        self.assertIn("regions.AWG22.circuit", differences("tooth_coil_winding", phase_sequence="forward"))
+        self.assertIn("regions.AWG22.turns", differences("tooth_coil_winding", first_tooth_angle=30))
+        self.assertIn("regions.NdFeB 40 MGOe.magdir", differences("surface_magnet_rotor", first_pole_polarity="outward"))
+        self.assertTrue(differences("surface_magnet_rotor", thickness=1.0))
+
+    def test_rotor_positions_rotate_the_rotor_group_before_each_solve(self):
+        lua = plan_level(_lrk(), "components")["lua"].splitlines()
+        rotations = [i for i, line in enumerate(lua) if line.startswith("mi_moverotate(0,0,")]
+        self.assertEqual(len(rotations), 60)
+        for i in rotations:
+            self.assertEqual((lua[i - 1], lua[i + 1]), ("mi_selectgroup(2)", "mi_clearselected()"))
+            self.assertTrue(any(line == "mi_createmesh()" for line in lua[i:i + 6]))
+        self.assertIn("mo_groupselectblock(2)", lua)
+
+    def test_entity_order_control_changes_order_only(self):
+        model = _source_record(_lrk())[1]
+        permuted = permute_entities(model, 1)
+        self.assertEqual(compare_models(model, permuted), [])
+        self.assertNotEqual([n["x"] for n in model["nodes"]], [n["x"] for n in permuted["nodes"]])
+
+    def test_coordinate_jitter_control_stays_below_a_nanometre(self):
+        model = _source_record(_lrk())[1]
+        jittered = jitter_coordinates(model, 1, 1e-12)
+        self.assertEqual(compare_models(model, jittered), [])
+        self.assertNotEqual(model["nodes"], jittered["nodes"])
+        self.assertTrue(all(abs(a["x"] - b["x"]) <= 1e-12 and abs(a["y"] - b["y"]) <= 1e-12
+                            for a, b in zip(model["nodes"], jittered["nodes"])))
+        with self.assertRaisesRegex(ValueError, "at most"):
+            jitter_coordinates(model, 1, 1e-6)
+
+
+class PhaseLinkageTests(unittest.TestCase):
+    def published(self):
+        case = _lrk()
+        metrics = {t["metric"]: t["value"] for t in case["targets"] if t["metric"].startswith("flux_")}
+        return case, metrics
+
+    def test_construction_predicts_the_published_lrk_phase_linkage(self):
+        case, metrics = self.published()
+        for model in (_source_record(case)[1], plan_level(case, "components")["expected_model"]):
+            result = run_assessor(case["assessors"][0], case, {}, metrics, model)
+            self.assertEqual(result["status"], "passed", result)
+            self.assertLess(max(row["phase_error_deg"] for row in result["rows"]), 0.05)
+
+    def test_swapped_phases_or_a_reversed_coil_fail(self):
+        case, metrics = self.published()
+        model = _source_record(case)[1]
+        swapped = {name.replace("flux_B", "flux_X").replace("flux_C", "flux_B").replace("flux_X", "flux_C"): value
+                   for name, value in metrics.items()}
+        result = run_assessor(case["assessors"][0], case, {}, swapped, model)
+        self.assertEqual((result["status"], result["measured_sequence_check"]), ("failed", False))
+        reversed_coil = deepcopy(model)
+        coil = next(label for label in reversed_coil["labels"] if label.get("circuit") == "A")
+        coil["turns"] = -coil["turns"]
+        result = run_assessor(case["assessors"][0], case, {}, metrics, reversed_coil)
+        self.assertEqual(result["status"], "failed")
+        self.assertGreater(result["winding_imbalance"], 0.1)
+
+    def test_prediction_follows_rotor_polarity(self):
+        model = _source_record(_lrk())[1]
+        windings, rotor = linkage_prediction(model, 7, ["A", "B", "C"], 2)
+        flipped = deepcopy(model)
+        for label in flipped["labels"]:
+            if label.get("group") == 2 and label["material"] == "NdFeB 40 MGOe":
+                label["magdir"] = (label["magdir"] + 180) % 360
+        _, reversed_rotor = linkage_prediction(flipped, 7, ["A", "B", "C"], 2)
+        self.assertAlmostEqual(abs(cmath.phase(reversed_rotor / rotor)), math.pi)
+
+
+class LibraryTests(unittest.TestCase):
+    def test_bundled_curves_are_valid_and_bad_curves_are_refused(self):
+        physics = {"matlib.dat": "magnetics", "heatlib.dat": "heatflow", "statlib.dat": "electrostatics"}
+        entries = json.loads((COMPONENT_DATA / "library_materials.json").read_text())["materials"]
+        curves = [e for e in entries if e.get("curve")]
+        self.assertGreater(len(curves), 200)
+        for entry in curves:
+            _check_curve(entry["name"], entry["curve"], physics[entry["library"]])
+        problem = {"physics": "magnetics", "units": "millimeters", "type": "planar", "frequency": 0, "depth": 1}
+        for curve, pattern in (([[0, 0], [1, 100], [0.9, 200]], "strictly increasing"), ([[0, 0], [1, 100]], "at least 3"),
+                               ([[0, 0], [1, float("nan")], [2, 300]], "points")):
+            with self.subTest(curve=curve), self.assertRaisesRegex(ValueError, pattern):
+                assemble({"problem": problem, "steps": [{"use": "material", "name": "x", "curve": curve}]}, {})
+
+    def test_library_names_are_unambiguous_and_renamable(self):
+        heat = {"physics": "heatflow", "units": "meters", "type": "planar", "depth": 1}
+        with self.assertRaisesRegex(ValueError, "ambiguous"):
+            assemble({"problem": heat, "steps": [{"use": "library_material", "name": "Ammonia", "library": "heatlib.dat"}]}, {})
+        model, _ = assemble({"problem": heat, "steps": [{"use": "library_material", "name": "Ammonia", "library": "heatlib.dat",
+                                                         "folder": "Gases at 1 atm (stagnant only)"}]}, {})
+        self.assertAlmostEqual(model["materials"][0]["props"]["Kx"], 0.0153)
+        magnetic = {"physics": "magnetics", "units": "millimeters", "type": "planar", "frequency": 0, "depth": 1}
+        model, _ = assemble({"problem": magnetic, "steps": [{"use": "library_material", "name": "22 AWG", "library": "matlib.dat",
+                                                             "as_name": "AWG22"}]}, {})
+        self.assertEqual([m["name"] for m in model["materials"]], ["AWG22"])
 
 
 class EvidenceTests(unittest.TestCase):
