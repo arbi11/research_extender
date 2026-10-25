@@ -1,0 +1,1157 @@
+{
+ "schema_version": 1,
+ "id": "nemeth-2001-double-cage-bar",
+ "set": "development",
+ "status": "frozen",
+ "skill_version": null,
+ "title": "Finite Element Calculation of Double-Cage Skin Factors",
+ "source": {
+  "citation": "K. Nemeth, Periodica Polytechnica Electrical Engineering 45(3-4):245-252, 2001",
+  "url": "https://pp.bme.hu/ee/article/view/988",
+  "access": "openly readable on the journal site",
+  "licence": null,
+  "pdf_sha256": "e133f771bf1c72cfbebd7b462c3ca52376214517b79e57af21329308636c0818",
+  "pages": 8,
+  "accessed": "2026-10-26"
+ },
+ "machine": {
+  "family": "induction",
+  "topology": "one double-cage rotor slot: a stadium-shaped outer bar (resistive alloy) and a rectangular inner copper bar joined by a neck, in ideal iron",
+  "problem": "planar",
+  "slots": 80,
+  "poles": 4,
+  "phases": 3,
+  "symmetry": "The slot alone, per metre of length, as the paper solves it: natural boundary on the iron contour, A = 0 across the slot top."
+ },
+ "components_map": [
+  {
+   "part": "slot outline, bars, neck and opening",
+   "component": "segment, arc, block_label"
+  },
+  {
+   "part": "bars as solid conductors (current or zero net current imposed)",
+   "component": "circuit (parallel), material"
+  },
+  {
+   "part": "the two bars in parallel across one voltage",
+   "component": "parallel_branches assessor"
+  },
+  {
+   "part": "skin factors (AC over DC)",
+   "component": "metric_relation assessor"
+  }
+ ],
+ "article": {
+  "parameters": {
+   "opening_width_mm": {
+    "value": 5.0,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 247, dimension labelled 5",
+    "scale_reference": "printed dimensions in millimetres (the caption: all dimensions are in millimetres)",
+    "uncertainty": 0.05,
+    "note": "Slot opening above the outer bar."
+   },
+   "opening_height_mm": {
+    "value": 4.7,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 247, dimension labelled 4,7",
+    "scale_reference": "printed dimensions in millimetres (the caption: all dimensions are in millimetres)",
+    "uncertainty": 0.05,
+    "note": "From the slot top to the outer bar's top: the right-hand dimensions 4.7, 25.3, 3.7 and 22.3 form one chain."
+   },
+   "outer_bar_width_mm": {
+    "value": 14.4,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 247, dimension labelled 14,4",
+    "scale_reference": "printed dimensions in millimetres (the caption: all dimensions are in millimetres)",
+    "uncertainty": 0.05,
+    "note": "Width of the stadium; its ends are semicircles of R7.2."
+   },
+   "outer_bar_height_mm": {
+    "value": 25.3,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 247, dimension labelled 25,3",
+    "scale_reference": "printed dimensions in millimetres (the caption: all dimensions are in millimetres)",
+    "uncertainty": 0.05,
+    "note": "Stadium height, apex to apex."
+   },
+   "neck_width_mm": {
+    "value": 4.0,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 247, dimension labelled 4",
+    "scale_reference": "printed dimensions in millimetres (the caption: all dimensions are in millimetres)",
+    "uncertainty": 0.05
+   },
+   "neck_height_mm": {
+    "value": 3.7,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 247, dimension labelled 3,7",
+    "scale_reference": "printed dimensions in millimetres (the caption: all dimensions are in millimetres)",
+    "uncertainty": 0.05,
+    "note": "From the outer bar's bottom apex to the inner bar's top (the dimension chain)."
+   },
+   "inner_bar_width_mm": {
+    "value": 11.4,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 247, dimension labelled 11,4",
+    "scale_reference": "printed dimensions in millimetres (the caption: all dimensions are in millimetres)",
+    "uncertainty": 0.05
+   },
+   "inner_bar_height_mm": {
+    "value": 22.3,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 247, dimension labelled 22,3",
+    "scale_reference": "printed dimensions in millimetres (the caption: all dimensions are in millimetres)",
+    "uncertainty": 0.05
+   },
+   "inner_corner_radius_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 247, dimension labelled R1",
+    "scale_reference": "printed dimensions in millimetres (the caption: all dimensions are in millimetres)",
+    "uncertainty": 0.05,
+    "note": "All four corners: only then is the area Table 1's 253.3 mm^2 (geometry check 1)."
+   },
+   "outer_conductivity_MS_per_m": {
+    "value": 14.92,
+    "unit": "MS/m",
+    "provenance": "quoted",
+    "quote": "Outer bar 14.92 319.8 209.5 2.332",
+    "location": "Table 1, p. 246",
+    "note": "At 20 C; an alloy of increased resistivity."
+   },
+   "inner_conductivity_MS_per_m": {
+    "value": 57.14,
+    "unit": "MS/m",
+    "provenance": "quoted",
+    "quote": "Inner bar 57.14 253.3 69.07 6.503",
+    "location": "Table 1, p. 246",
+    "note": "At 20 C."
+   },
+   "frequency_hz": {
+    "value": 50,
+    "unit": "Hz",
+    "provenance": "quoted",
+    "quote": "frequency 50 Hz",
+    "location": "Section 1, p. 246",
+    "note": "The rotor frequency of the AC solves (standstill)."
+   },
+   "bar_current_A": {
+    "value": 1000,
+    "unit": "A",
+    "provenance": "quoted",
+    "quote": "1000 A(peak)/0°",
+    "location": "Fig. 3 caption, p. 249",
+    "note": "Peak; the problem is linear, so the value does not matter."
+   },
+   "parallel_voltage_V_per_m": {
+    "value": 0.1,
+    "unit": "V/m",
+    "provenance": "quoted",
+    "quote": "U = 0.1 V/m(50 Hz)",
+    "location": "Section 3, p. 248",
+    "note": "Peak, as all U and I in the paper (zero to peak values)."
+   },
+   "depth_mm": {
+    "value": 1000,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "the ideal length of the machine is 0.912 m",
+    "location": "Section 2, p. 246",
+    "note": "All quantities are per metre of length, as the paper's are; the machine's own 0.912 m is recorded only."
+   },
+   "bar_mesh_mm": {
+    "value": 0.3,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Bars: a third of a millimetre against skin depths of 9.4 mm (inner) and 18 mm (outer) at 50 Hz."
+   },
+   "air_mesh_mm": {
+    "value": 0.2,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Slot opening and neck, where the leakage field is strongest."
+   },
+   "arc_deg": {
+    "value": 2.0,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc discretization of the bar ends and corners."
+   },
+   "open_x": {
+    "value": 2.5,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "opening_width_mm/2",
+    "inputs": [
+     "opening_width_mm"
+    ]
+   },
+   "bar_r": {
+    "value": 7.2,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "outer_bar_width_mm/2",
+    "inputs": [
+     "outer_bar_width_mm"
+    ],
+    "note": "Radius of the outer bar's ends (R7.2)."
+   },
+   "top_cy": {
+    "value": -11.9,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "-opening_height_mm-outer_bar_width_mm/2",
+    "inputs": [
+     "opening_height_mm",
+     "outer_bar_width_mm"
+    ],
+    "note": "Centre of the outer bar's upper end."
+   },
+   "bottom_cy": {
+    "value": -22.8,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "-opening_height_mm-outer_bar_height_mm+outer_bar_width_mm/2",
+    "inputs": [
+     "opening_height_mm",
+     "outer_bar_height_mm",
+     "outer_bar_width_mm"
+    ],
+    "note": "Centre of its lower end."
+   },
+   "open_y": {
+    "value": -5.147963270242082,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "-opening_height_mm-outer_bar_width_mm/2+sqrt((outer_bar_width_mm/2)**2-(opening_width_mm/2)**2)",
+    "inputs": [
+     "opening_height_mm",
+     "opening_width_mm",
+     "outer_bar_width_mm"
+    ],
+    "note": "Where the opening's walls meet the upper end."
+   },
+   "open_deg": {
+    "value": 69.68249236516749,
+    "unit": "deg",
+    "provenance": "derived",
+    "expression": "degrees(atan2(sqrt((outer_bar_width_mm/2)**2-(opening_width_mm/2)**2),opening_width_mm/2))",
+    "inputs": [
+     "opening_width_mm",
+     "outer_bar_width_mm"
+    ]
+   },
+   "neck_x": {
+    "value": 2.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "neck_width_mm/2",
+    "inputs": [
+     "neck_width_mm"
+    ]
+   },
+   "neck_y": {
+    "value": -29.716646586316234,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "-opening_height_mm-outer_bar_height_mm+outer_bar_width_mm/2-sqrt((outer_bar_width_mm/2)**2-(neck_width_mm/2)**2)",
+    "inputs": [
+     "neck_width_mm",
+     "opening_height_mm",
+     "outer_bar_height_mm",
+     "outer_bar_width_mm"
+    ],
+    "note": "Where the neck's walls meet the lower end."
+   },
+   "neck_deg": {
+    "value": 73.87237978683925,
+    "unit": "deg",
+    "provenance": "derived",
+    "expression": "degrees(atan2(sqrt((outer_bar_width_mm/2)**2-(neck_width_mm/2)**2),neck_width_mm/2))",
+    "inputs": [
+     "neck_width_mm",
+     "outer_bar_width_mm"
+    ]
+   },
+   "inner_top": {
+    "value": -33.7,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "-opening_height_mm-outer_bar_height_mm-neck_height_mm",
+    "inputs": [
+     "neck_height_mm",
+     "opening_height_mm",
+     "outer_bar_height_mm"
+    ]
+   },
+   "inner_bottom": {
+    "value": -56.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "-opening_height_mm-outer_bar_height_mm-neck_height_mm-inner_bar_height_mm",
+    "inputs": [
+     "inner_bar_height_mm",
+     "neck_height_mm",
+     "opening_height_mm",
+     "outer_bar_height_mm"
+    ]
+   },
+   "inner_x": {
+    "value": 5.7,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "inner_bar_width_mm/2",
+    "inputs": [
+     "inner_bar_width_mm"
+    ]
+   },
+   "outer_area_mm2": {
+    "value": 319.8201631620949,
+    "unit": "mm^2",
+    "provenance": "derived",
+    "expression": "pi*(outer_bar_width_mm/2)**2+outer_bar_width_mm*(outer_bar_height_mm-outer_bar_width_mm)",
+    "inputs": [
+     "outer_bar_height_mm",
+     "outer_bar_width_mm"
+    ]
+   },
+   "inner_area_mm2": {
+    "value": 253.3615926535898,
+    "unit": "mm^2",
+    "provenance": "derived",
+    "expression": "inner_bar_width_mm*inner_bar_height_mm-(4-pi)*inner_corner_radius_mm**2",
+    "inputs": [
+     "inner_bar_height_mm",
+     "inner_bar_width_mm",
+     "inner_corner_radius_mm"
+    ]
+   }
+  },
+  "assembly": {
+   "problem": {
+    "physics": "magnetics",
+    "units": "millimeters",
+    "type": "planar",
+    "frequency": 0,
+    "depth": "$depth_mm"
+   },
+   "steps": [
+    {
+     "use": "material",
+     "name": "Air"
+    },
+    {
+     "use": "material",
+     "name": "OuterAlloy",
+     "values": {
+      "Sigma": "$outer_conductivity_MS_per_m"
+     }
+    },
+    {
+     "use": "material",
+     "name": "InnerCopper",
+     "values": {
+      "Sigma": "$inner_conductivity_MS_per_m"
+     }
+    },
+    {
+     "use": "circuit",
+     "name": "outer",
+     "current": 0,
+     "series": false
+    },
+    {
+     "use": "circuit",
+     "name": "inner",
+     "current": 0,
+     "series": false
+    },
+    {
+     "use": "fixed_potential_boundary",
+     "name": "A=0"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-open_x",
+      0
+     ],
+     "end": [
+      "$open_x",
+      0
+     ],
+     "boundary": "A=0"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "$open_x",
+      0
+     ],
+     "end": [
+      "$open_x",
+      "$open_y"
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-open_x",
+      0
+     ],
+     "end": [
+      "=-open_x",
+      "$open_y"
+     ]
+    },
+    {
+     "use": "arc",
+     "start": [
+      "$bar_r",
+      "$top_cy"
+     ],
+     "end": [
+      "$open_x",
+      "$open_y"
+     ],
+     "angle": "$open_deg",
+     "max_segment": "$arc_deg"
+    },
+    {
+     "use": "arc",
+     "start": [
+      "$open_x",
+      "$open_y"
+     ],
+     "end": [
+      "=-open_x",
+      "$open_y"
+     ],
+     "angle": "=180-2*open_deg",
+     "max_segment": "$arc_deg"
+    },
+    {
+     "use": "arc",
+     "start": [
+      "=-open_x",
+      "$open_y"
+     ],
+     "end": [
+      "=-bar_r",
+      "$top_cy"
+     ],
+     "angle": "$open_deg",
+     "max_segment": "$arc_deg"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "$bar_r",
+      "$top_cy"
+     ],
+     "end": [
+      "$bar_r",
+      "$bottom_cy"
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-bar_r",
+      "$top_cy"
+     ],
+     "end": [
+      "=-bar_r",
+      "$bottom_cy"
+     ]
+    },
+    {
+     "use": "arc",
+     "start": [
+      "=-bar_r",
+      "$bottom_cy"
+     ],
+     "end": [
+      "=-neck_x",
+      "$neck_y"
+     ],
+     "angle": "$neck_deg",
+     "max_segment": "$arc_deg"
+    },
+    {
+     "use": "arc",
+     "start": [
+      "=-neck_x",
+      "$neck_y"
+     ],
+     "end": [
+      "$neck_x",
+      "$neck_y"
+     ],
+     "angle": "=180-2*neck_deg",
+     "max_segment": "$arc_deg"
+    },
+    {
+     "use": "arc",
+     "start": [
+      "$neck_x",
+      "$neck_y"
+     ],
+     "end": [
+      "$bar_r",
+      "$bottom_cy"
+     ],
+     "angle": "$neck_deg",
+     "max_segment": "$arc_deg"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "$neck_x",
+      "$neck_y"
+     ],
+     "end": [
+      "$neck_x",
+      "$inner_top"
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-neck_x",
+      "$neck_y"
+     ],
+     "end": [
+      "=-neck_x",
+      "$inner_top"
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-inner_x+inner_corner_radius_mm",
+      "$inner_top"
+     ],
+     "end": [
+      "=-neck_x",
+      "$inner_top"
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-neck_x",
+      "$inner_top"
+     ],
+     "end": [
+      "$neck_x",
+      "$inner_top"
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "$neck_x",
+      "$inner_top"
+     ],
+     "end": [
+      "=inner_x-inner_corner_radius_mm",
+      "$inner_top"
+     ]
+    },
+    {
+     "use": "arc",
+     "start": [
+      "$inner_x",
+      "=inner_top-inner_corner_radius_mm"
+     ],
+     "end": [
+      "=inner_x-inner_corner_radius_mm",
+      "$inner_top"
+     ],
+     "angle": 90,
+     "max_segment": "$arc_deg"
+    },
+    {
+     "use": "arc",
+     "start": [
+      "=-inner_x+inner_corner_radius_mm",
+      "$inner_top"
+     ],
+     "end": [
+      "=-inner_x",
+      "=inner_top-inner_corner_radius_mm"
+     ],
+     "angle": 90,
+     "max_segment": "$arc_deg"
+    },
+    {
+     "use": "arc",
+     "start": [
+      "=-inner_x",
+      "=inner_bottom+inner_corner_radius_mm"
+     ],
+     "end": [
+      "=-inner_x+inner_corner_radius_mm",
+      "$inner_bottom"
+     ],
+     "angle": 90,
+     "max_segment": "$arc_deg"
+    },
+    {
+     "use": "arc",
+     "start": [
+      "=inner_x-inner_corner_radius_mm",
+      "$inner_bottom"
+     ],
+     "end": [
+      "$inner_x",
+      "=inner_bottom+inner_corner_radius_mm"
+     ],
+     "angle": 90,
+     "max_segment": "$arc_deg"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "$inner_x",
+      "=inner_top-inner_corner_radius_mm"
+     ],
+     "end": [
+      "$inner_x",
+      "=inner_bottom+inner_corner_radius_mm"
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-inner_x",
+      "=inner_top-inner_corner_radius_mm"
+     ],
+     "end": [
+      "=-inner_x",
+      "=inner_bottom+inner_corner_radius_mm"
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-inner_x+inner_corner_radius_mm",
+      "$inner_bottom"
+     ],
+     "end": [
+      "=inner_x-inner_corner_radius_mm",
+      "$inner_bottom"
+     ]
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      "=open_y/2"
+     ],
+     "material": "Air",
+     "mesh": "$air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      "=(top_cy+bottom_cy)/2"
+     ],
+     "material": "OuterAlloy",
+     "circuit": "outer",
+     "mesh": "$bar_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      "=(neck_y+inner_top)/2"
+     ],
+     "material": "Air",
+     "mesh": "$air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      "=(inner_top+inner_bottom)/2"
+     ],
+     "material": "InnerCopper",
+     "circuit": "inner",
+     "mesh": "$bar_mesh_mm"
+    }
+   ]
+  }
+ },
+ "gaps": [
+  {
+   "item": "which corners of the inner bar are rounded",
+   "affects": "its area and resistance, by 0.2%",
+   "decision": "resolved",
+   "note": "Fig. 1 marks R1 once; only four rounded corners give Table 1's 253.3 mm^2 (two would give 253.8)."
+  },
+  {
+   "item": "where the 4.7 and 3.7 mm heights are measured",
+   "affects": "the leakage through opening and neck",
+   "decision": "resolved",
+   "note": "The right-hand dimensions 4.7, 25.3, 3.7 and 22.3 form one chain of 56.0 mm, and 25.3 is the outer bar's full height, so 4.7 ends and 3.7 starts at its apexes."
+  },
+  {
+   "item": "the rotor iron",
+   "affects": "nothing: the paper assumes ideal iron",
+   "decision": "resolved",
+   "note": "'a Neumann boundary condition is supposed around the slot iron contour' (natural boundary in FEMM), A = 0 at the slot top."
+  }
+ ],
+ "steps": [
+  {
+   "label": "dc_outer",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "outer",
+     "property": 1,
+     "value": "$bar_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "inner",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "dc_inner",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "outer",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "inner",
+     "property": 1,
+     "value": "$bar_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ac_outer",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": "$frequency_hz"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "outer",
+     "property": 1,
+     "value": "$bar_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "inner",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "ac_inner",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "outer",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "inner",
+     "property": 1,
+     "value": "$bar_current_A"
+    }
+   ]
+  }
+ ],
+ "measurements": [
+  {
+   "id": "outer",
+   "op": "circuit",
+   "name": "outer"
+  },
+  {
+   "id": "inner",
+   "op": "circuit",
+   "name": "inner"
+  }
+ ],
+ "metrics": [
+  {
+   "name": "inductance_outer_H",
+   "value": [
+    "outer",
+    2
+   ],
+   "divide": [
+    "outer",
+    0
+   ],
+   "unit": "H",
+   "steps": [
+    "dc_outer"
+   ]
+  },
+  {
+   "name": "mutual_H",
+   "value": [
+    "inner",
+    2
+   ],
+   "divide": [
+    "outer",
+    0
+   ],
+   "unit": "H",
+   "steps": [
+    "dc_outer"
+   ]
+  },
+  {
+   "name": "inductance_inner_H",
+   "value": [
+    "inner",
+    2
+   ],
+   "divide": [
+    "inner",
+    0
+   ],
+   "unit": "H",
+   "steps": [
+    "dc_inner"
+   ]
+  },
+  {
+   "name": "mutual_H",
+   "value": [
+    "outer",
+    2
+   ],
+   "divide": [
+    "inner",
+    0
+   ],
+   "unit": "H",
+   "steps": [
+    "dc_inner"
+   ]
+  },
+  {
+   "name": "resistance_outer_ohm",
+   "value": [
+    "outer",
+    1
+   ],
+   "divide": [
+    "outer",
+    0
+   ],
+   "unit": "ohm",
+   "steps": [
+    "dc_outer",
+    "ac_outer"
+   ]
+  },
+  {
+   "name": "resistance_inner_ohm",
+   "value": [
+    "inner",
+    1
+   ],
+   "divide": [
+    "inner",
+    0
+   ],
+   "unit": "ohm",
+   "steps": [
+    "dc_inner",
+    "ac_inner"
+   ]
+  },
+  {
+   "name": "ac_inductance_outer_H",
+   "value": [
+    "outer",
+    1
+   ],
+   "divide": [
+    "outer",
+    0
+   ],
+   "part": "im",
+   "scale": 0.0031830988618379067,
+   "unit": "H",
+   "steps": [
+    "ac_outer"
+   ]
+  },
+  {
+   "name": "ac_inductance_inner_H",
+   "value": [
+    "inner",
+    1
+   ],
+   "divide": [
+    "inner",
+    0
+   ],
+   "part": "im",
+   "scale": 0.0031830988618379067,
+   "unit": "H",
+   "steps": [
+    "ac_inner"
+   ]
+  }
+ ],
+ "targets": [
+  {
+   "metric": "inductance_outer_H@dc_outer",
+   "value": 2.332e-06,
+   "unit": "H/m",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Outer bar 14.92 319.8 209.5 2.332",
+   "location": "Table 1, p. 246",
+   "note": "DC self-inductance of the outer bar per metre (QuickField, linear)."
+  },
+  {
+   "metric": "inductance_inner_H@dc_inner",
+   "value": 6.503e-06,
+   "unit": "H/m",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Inner bar 57.14 253.3 69.07 6.503",
+   "location": "Table 1, p. 246"
+  },
+  {
+   "metric": "mutual_H@dc_outer",
+   "value": 2.688e-06,
+   "unit": "H/m",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Mutual",
+   "location": "Table 1, p. 246",
+   "note": "Flux linking the inner bar per ampere in the outer bar; the converse is a comparator."
+  },
+  {
+   "metric": "mutual_H@dc_inner",
+   "value": 2.688e-06,
+   "unit": "H/m",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "Mutual",
+   "location": "Table 1, p. 246",
+   "note": "Reciprocity: flux linking the outer bar per ampere in the inner bar, a comparator."
+  },
+  {
+   "metric": "resistance_outer_ohm@dc_outer",
+   "value": 0.0002095,
+   "unit": "ohm/m",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Outer bar 14.92 319.8 209.5 2.332",
+   "location": "Table 1, p. 246",
+   "note": "DC resistance per metre, 1/(sigma S)."
+  },
+  {
+   "metric": "resistance_inner_ohm@dc_inner",
+   "value": 6.907e-05,
+   "unit": "ohm/m",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Inner bar 57.14 253.3 69.07 6.503",
+   "location": "Table 1, p. 246"
+  }
+ ],
+ "assessors": [
+  {
+   "kind": "metric_relation",
+   "name": "skin_factor_resistance_outer",
+   "pairs": [
+    {
+     "metric": "resistance_outer_ohm@ac_outer",
+     "reference": "resistance_outer_ohm@dc_outer",
+     "factor": 1.2
+    }
+   ],
+   "value": 0,
+   "absolute_tolerance": 0.041667,
+   "value_kind": "2d_fea",
+   "used_for_acceptance": true,
+   "quote": "k — 1.2,",
+   "location": "Section 5, p. 250",
+   "note": "k_ro = R_o(50 Hz)/R_o0 = 1.2: R at 50 Hz is 1.2 times the DC value. Given to one decimal, so the tolerance is the rounding, 0.05 (4.2%)."
+  },
+  {
+   "kind": "metric_relation",
+   "name": "skin_factor_inductance_outer",
+   "pairs": [
+    {
+     "metric": "ac_inductance_outer_H@ac_outer",
+     "reference": "inductance_outer_H@dc_outer",
+     "factor": 0.98
+    }
+   ],
+   "value": 0,
+   "absolute_tolerance": 0.01,
+   "value_kind": "2d_fea",
+   "used_for_acceptance": true,
+   "quote": "k — 0.98.",
+   "location": "Section 5, p. 250",
+   "note": "k_xo = L_o(50 Hz)/L_o0 = 0.98, within 1% (the rounding is 0.5%)."
+  },
+  {
+   "kind": "metric_relation",
+   "name": "skin_factor_resistance_inner",
+   "pairs": [
+    {
+     "metric": "resistance_inner_ohm@ac_inner",
+     "reference": "resistance_inner_ohm@dc_inner",
+     "factor": 2.36
+    }
+   ],
+   "value": 0,
+   "absolute_tolerance": 0.01,
+   "value_kind": "2d_fea",
+   "used_for_acceptance": true,
+   "quote": "= 2.36,",
+   "location": "Section 5, p. 250",
+   "note": "k_ri = R_i(50 Hz)/R_i0 = 2.36 with the outer bar open (its eddy currents included), within 1%."
+  },
+  {
+   "kind": "metric_relation",
+   "name": "skin_factor_inductance_inner",
+   "pairs": [
+    {
+     "metric": "ac_inductance_inner_H@ac_inner",
+     "reference": "inductance_inner_H@dc_inner",
+     "factor": 0.955
+    }
+   ],
+   "value": 0,
+   "absolute_tolerance": 0.01,
+   "value_kind": "2d_fea",
+   "used_for_acceptance": true,
+   "quote": "k — 0.955,",
+   "location": "Section 5, p. 250",
+   "note": "k_xi = L_i(50 Hz)/L_i0 = 0.955, within 1%."
+  },
+  {
+   "kind": "parallel_branches",
+   "name": "in_phase_current_A",
+   "circuits": [
+    "outer",
+    "inner"
+   ],
+   "steps": [
+    "ac_outer",
+    "ac_inner"
+   ],
+   "voltage": 0.1,
+   "part": "in_phase",
+   "value": 43.1,
+   "relative_tolerance": 0.01,
+   "value_kind": "2d_fea",
+   "used_for_acceptance": true,
+   "quote": "Current phasors calculated from the correct and the approximate equivalent circuit",
+   "location": "Fig. 9, p. 252, label 43,1 on the voltage axis",
+   "note": "Both bars in parallel at U = 0.1 V/m (peak, 50 Hz): the total current's component in phase with U. The correct circuit reproduces the paper's FE currents (Section 3); the approximate circuits' 36.7 and 32.4 A are not FE results."
+  },
+  {
+   "kind": "parallel_branches",
+   "name": "lagging_current_A",
+   "circuits": [
+    "outer",
+    "inner"
+   ],
+   "steps": [
+    "ac_outer",
+    "ac_inner"
+   ],
+   "voltage": 0.1,
+   "part": "lagging",
+   "value": 119.0,
+   "absolute_tolerance": 4.0,
+   "absolute_digitization_uncertainty": 2.0,
+   "value_kind": "digitized",
+   "used_for_acceptance": false,
+   "quote": "Current phasors calculated from the correct and the approximate equivalent circuit",
+   "location": "Fig. 9, p. 252, the resultant I on the 0-120 A axis",
+   "note": "Read at 600 dpi against the gridlines (0 A at pixel 397, 120 A at 1557): 118.8 A at the arrow tip, +-2 A for the line width. A comparator."
+  }
+ ],
+ "controls": [
+  {
+   "id": "mesh-0p5",
+   "level": "article",
+   "mesh_scale": 0.5,
+   "purpose": "Every element size and arc segment halved."
+  }
+ ],
+ "coverage": {
+  "scope": "core",
+  "reproduced": "The DC self and mutual inductances and DC resistances of both bars (Table 1), the four skin factors at 50 Hz (Section 5), and the in-phase current of the bars in parallel at 0.1 V/m (Fig. 9); the lagging current as a comparator.",
+  "not_reproduced": "The skin factors against frequency (Fig. 8, a coarse plot), the current-density profiles (Figs. 3 and 6) and the approximate equivalent circuits."
+ },
+ "geometry_checks": [
+  {
+   "quantity": "bar cross-sections (mm^2)",
+   "paper_value": [
+    319.8,
+    253.3
+   ],
+   "model_value": [
+    319.82,
+    253.36
+   ],
+   "location": "Table 1, p. 246",
+   "note": "From Fig. 1's dimensions: a stadium of 14.4 by 25.3 mm, and an 11.4 by 22.3 mm rectangle with four 1 mm corner radii."
+  },
+  {
+   "quantity": "DC resistances from the stated conductivities and areas (micro-ohm per metre)",
+   "paper_value": [
+    209.5,
+    69.07
+   ],
+   "model_value": [
+    209.57,
+    69.07
+   ],
+   "location": "Table 1, p. 246"
+  }
+ ],
+ "findings": [],
+ "retrospective": []
+}
