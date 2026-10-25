@@ -14,7 +14,7 @@ from femm_brain.article_recipes import build
 from femm_brain.components import DATA as COMPONENT_DATA, IMPLEMENTATIONS, _check_curve, assemble, catalog, evaluate, winding_layout
 from femm_brain.core import load_graph
 from femm_brain.geometry import arc_geometry
-from femm_brain.reference_models import linkage_prediction, run_assessor
+from femm_brain.reference_models import assessor_metric, linkage_prediction, run_assessor
 from femm_brain.reproduce import (_source_record, check_regions, compare_models, compare_regions, jitter_coordinates, load_cases,
                                   load_designs, permute_entities, plan_level)
 
@@ -597,6 +597,71 @@ class DrawingTests(unittest.TestCase):
             {"use": "entity_pattern", "entities": quarter, "copies": 4, "angle_step": 90, "snap": 1e-4,
              "max_segment_bands": [[9, 11, 0.25]]}]}, {})[0]
         self.assertTrue(all(arc["max_segment"] == 0.25 for arc in bands["arcs"]))
+        # A minimum piece length coarsens small arcs only: 1 mm on a 10 mm radius is 5.73 degrees.
+        coarse = assemble({"problem": problem, "steps": [
+            {"use": "entity_pattern", "entities": quarter, "copies": 1, "snap": 1e-4, "max_segment": 1, "min_segment_length": 1}]}, {})[0]
+        self.assertAlmostEqual(coarse["arcs"][0]["max_segment"], math.degrees(0.1))
+        # The default snap distance (1e-9) on a drawing of millimetres: the split search stays on occupied cells.
+        fine = assemble({"problem": problem, "steps": [{"use": "entity_pattern", "entities": quarter, "copies": 4, "angle_step": 90}]}, {})[0]
+        self.assertEqual(len(fine["arcs"]), 4)
+
+
+class AssessorMetricTests(unittest.TestCase):
+    def test_names_are_those_the_assessors_report(self):
+        self.assertEqual(assessor_metric({"kind": "waveform_statistic", "metric": "flux", "statistic": "mean"}), "flux:mean")
+        self.assertEqual(assessor_metric({"kind": "spatial_harmonic", "measurement": "line", "field": "Bx", "order": 3}), "line:Bx:h3")
+        self.assertEqual(assessor_metric({"kind": "harmonic_superposition", "sweep": "s", "speed_rad_s": 39.7935, "quantity": "voltage"}),
+                         "s@39.7935:voltage:abs")
+        self.assertEqual(assessor_metric({"kind": "harmonic_superposition", "sweep": "s", "speed_rad_s": 200, "quantity": "point_field",
+                                          "point": {"label": "x0.05"}, "part": "im"}), "s@200:point_field:x0.05:im")
+        self.assertEqual(assessor_metric({"kind": "dq_linkage", "point": "p", "quantity": "psi_d"}), "p:psi_d")
+        self.assertEqual(assessor_metric({"kind": "dq_linkage", "point": "p", "quantity": "psi_d", "average": "first"}), "p:psi_d:first_position")
+        self.assertIsNone(assessor_metric({"kind": "tube_bessel"}))
+
+
+class SectorAirGapTests(unittest.TestCase):
+    problem = {"physics": "magnetics", "units": "millimeters", "type": "planar", "frequency": 0, "depth": 1}
+
+    def sector(self, **overrides):
+        step = dict({"use": "sector_air_gap", "rotor_radius": 10, "stator_radius": 11, "start_angle": 0, "end_angle": 45,
+                     "band_inner_radius": 10.3, "band_outer_radius": 10.7, "mesh": 0.1, "rotor_group": 1}, **overrides)
+        return assemble({"problem": self.problem, "steps": [{"use": "material", "name": "Air"}, step]}, {})[0]
+
+    def test_band_ends_labels_and_hole(self):
+        model = self.sector()
+        types = {b["name"]: b["props"]["BdryType"] for b in model["boundaries"]}
+        self.assertEqual(types, {"AGE": 7, "AGE_rotor_ends": 5, "AGE_stator_ends": 5})
+        radius = lambda n: math.hypot(model["nodes"][n]["x"], model["nodes"][n]["y"])
+        band = [a for a in model["arcs"] if a["boundary"] == "AGE"]
+        self.assertEqual(sorted(round(radius(a["n0"]), 9) for a in band), [10.3, 10.7])
+        self.assertTrue(all(a["angle"] == 45 for a in band))
+        # Each end: rotor side (in the rotor's group), the band's own end, stator side.
+        ends = {s["boundary"]: s for s in model["segments"]}
+        self.assertEqual(sum(s["boundary"] == "AGE_rotor_ends" for s in model["segments"]), 2)
+        self.assertEqual(ends["AGE_rotor_ends"]["group"], 1)
+        self.assertEqual(sum(s["boundary"] is None for s in model["segments"]), 2)
+        labels = sorted((math.hypot(l["x"], l["y"]), l["group"]) for l in model["labels"])
+        self.assertEqual([(round(r, 9), g) for r, g in labels], [(10.15, 1), (10.85, 0)])
+        hole = model["holes"][0]
+        self.assertAlmostEqual(math.hypot(hole["x"], hole["y"]), 10.5)
+        self.assertAlmostEqual(math.degrees(math.atan2(hole["y"], hole["x"])), 22.5)
+
+    def test_periodic_and_invalid_sectors(self):
+        types = {b["name"]: b["props"]["BdryType"] for b in self.sector(antiperiodic=False)["boundaries"]}
+        self.assertEqual(types, {"AGE": 6, "AGE_rotor_ends": 4, "AGE_stator_ends": 4})
+        for bad in ({"band_inner_radius": 9.9}, {"band_outer_radius": 11.2}, {"end_angle": 200}, {"end_angle": 0}):
+            with self.assertRaises(ValueError):
+                self.sector(**bad)
+
+    def test_arc_boundary_picks_one_arc(self):
+        steps = [{"use": "fixed_potential_boundary", "name": "A=0"},
+                 {"use": "entity_pattern", "entities": [["arc", 10, 0, 0, 10, 90], ["arc", 0, 10, -10, 0, 90]], "snap": 1e-6}]
+        on_second = [[10 * math.cos(math.radians(135)), 10 * math.sin(math.radians(135))]]
+        model = assemble({"problem": self.problem, "steps": steps + [{"use": "arc_boundary", "name": "A=0", "at": on_second}]}, {})[0]
+        self.assertEqual([a["boundary"] for a in model["arcs"]], [None, "A=0"])
+        for at, name in (([[10, 10]], "A=0"), ([[0, 10]], "A=0"), (on_second, "undefined")):
+            with self.assertRaises(ValueError):
+                assemble({"problem": self.problem, "steps": steps + [{"use": "arc_boundary", "name": name, "at": at}]}, {})
 
 
 class LinearMachineTests(unittest.TestCase):

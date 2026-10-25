@@ -372,6 +372,62 @@ def air_gap_element(m, rotor_radius, stator_radius, max_segment=0.5, name="AGE",
     m.hole(0, (rotor_radius + stator_radius) / 2)
 
 
+def sector_air_gap(m, rotor_radius, stator_radius, start_angle, end_angle, band_inner_radius, band_outer_radius, name="AGE",
+                   antiperiodic=True, max_segment=0.5, air_material="Air", mesh=None, rotor_group=0, group=0):
+    """A sliding-band air-gap element across a sector of a machine, for models of some poles with (anti)periodic ends.
+
+    The rotor surface and the stator bore are drawn by other components, with
+    nodes where they meet the sector's ends. This draws the band's two arcs
+    (inside the gap, between ``band_inner_radius`` and ``band_outer_radius``)
+    with FEMM's sliding-band boundary, the band's ends, the radial ends of the
+    thin gap regions on either side with one (anti)periodic boundary pair each
+    (``<name>_rotor_ends`` and ``<name>_stator_ends``), an air label in each thin
+    region and a hole in the band, which is not meshed. FEMM turns the rotor side
+    through the band's inner angle (boundary property 10), so rotor positions need
+    no remeshing.
+    """
+    if m.physics != "magnetics" or not 0 < rotor_radius < band_inner_radius < band_outer_radius < stator_radius:
+        raise ValueError("A sector air gap needs rotor radius < band inner radius < band outer radius < stator radius")
+    span = (end_angle - start_angle) % 360
+    if not 0 < span <= 180:
+        raise ValueError("The sector spans more than zero and at most 180 degrees")
+    edge_type = 5 if antiperiodic else 4
+    m.property("boundaries", name, BdryType=7 if antiperiodic else 6)
+    m.property("boundaries", name + "_rotor_ends", BdryType=edge_type)
+    m.property("boundaries", name + "_stator_ends", BdryType=edge_type)
+    point = lambda r, angle: (r * math.cos(math.radians(angle)), r * math.sin(math.radians(angle)))
+    for radius in (band_inner_radius, band_outer_radius):
+        m.arc(point(radius, start_angle), point(radius, end_angle), span, max_segment, boundary=name, group=group)
+    for angle in (start_angle, end_angle):
+        m.segment(point(rotor_radius, angle), point(band_inner_radius, angle), boundary=name + "_rotor_ends", group=rotor_group)
+        m.segment(point(band_inner_radius, angle), point(band_outer_radius, angle), group=group)
+        m.segment(point(band_outer_radius, angle), point(stator_radius, angle), boundary=name + "_stator_ends", group=group)
+    middle = start_angle + span / 2
+    m.label(*point((rotor_radius + band_inner_radius) / 2, middle), air_material, mesh=mesh, group=rotor_group)
+    m.label(*point((band_outer_radius + stator_radius) / 2, middle), air_material, mesh=mesh, group=group)
+    m.hole(*point((band_inner_radius + band_outer_radius) / 2, middle))
+
+
+def arc_boundary(m, name, at):
+    """Give the boundary ``name`` to existing arcs, each picked by a point lying on it."""
+    if name not in {record["name"] for record in m.collections["boundaries"]}:
+        raise ValueError(f"Define the boundary {name} before assigning it")
+    if not at or not all(isinstance(p, (list, tuple)) and len(p) == 2 and all(_finite(v) for v in p) for p in at):
+        raise ValueError("Give one finite point per arc")
+    for x, y in at:
+        hits = []
+        for index, arc in enumerate(m.arcs):
+            a, b = m.nodes[arc["n0"]], m.nodes[arc["n1"]]
+            info = arc_geometry((a["x"], a["y"]), (b["x"], b["y"]), arc["angle"])
+            (cx, cy), radius = info["center"], info["radius"]
+            along = (math.degrees(math.atan2(y - cy, x - cx)) - info["start_angle"]) % 360
+            if abs(math.hypot(x - cx, y - cy) - radius) <= 1e-9 * max(1.0, radius) and 0 < along < arc["angle"]:
+                hits.append(index)
+        if len(hits) != 1:
+            raise ValueError(f"The point ({x}, {y}) must lie inside exactly one arc; it lies on {len(hits)}")
+        m.arcs[hits[0]]["boundary"] = name
+
+
 def kelvin_periodic_exterior(m, domain_radius, exterior_center, applied_field, field_direction=0, max_segment=1,
                              exterior_mesh=None, material="Ext", boundaries=("pbc1", "pbc2")):
     """Unbounded planar space with a uniform applied field, via a periodically linked Kelvin disk."""
@@ -902,7 +958,7 @@ def belt_winding(m, inner_radius, outer_radius, belts, material, gap_material, m
 
 
 def entity_pattern(m, entities, copies=1, angle_step=0, first_angle=0, snap=1e-9, max_segment=1, max_segment_bands=None,
-                   group=0):
+                   min_segment_length=0, group=0):
     """Contours given as data (from a drawing a paper supplies), repeated around the axis as a polar array.
 
     ``entities`` holds ["segment", x0, y0, x1, y1] and ["arc", x0, y0, x1, y1,
@@ -914,7 +970,9 @@ def entity_pattern(m, entities, copies=1, angle_step=0, first_angle=0, snap=1e-9
     another contour's endpoint lies on it (a T-junction, as a magnet corner
     resting on a pocket edge), as FEMM itself would split it. ``max_segment_bands``
     lists [r_min, r_max, max_segment]: arcs whose radius lies in a band take that
-    angular discretization (finer near an air gap) instead of ``max_segment``.
+    angular discretization (finer near an air gap) instead of ``max_segment``, and
+    no arc is cut into pieces shorter than ``min_segment_length`` (a 0.2 mm
+    fillet at one degree would otherwise force micrometre elements).
     """
     if copies < 1 or not snap > 0:
         raise ValueError("A pattern needs at least one copy and a positive snap distance")
@@ -952,8 +1010,15 @@ def entity_pattern(m, entities, copies=1, angle_step=0, first_angle=0, snap=1e-9
         grid.setdefault((math.floor(p[0] / size), math.floor(p[1] / size)), []).append(p)
 
     def near(xmin, ymin, xmax, ymax):
-        for i in range(math.floor(xmin / size), math.floor(xmax / size) + 1):
-            for j in range(math.floor(ymin / size), math.floor(ymax / size) + 1):
+        i0, i1, j0, j1 = math.floor(xmin / size), math.floor(xmax / size), math.floor(ymin / size), math.floor(ymax / size)
+        if (i1 - i0 + 1) * (j1 - j0 + 1) > len(grid):
+            # A box wider than the occupied cells (a small snap distance): scan the occupied cells instead.
+            for (i, j), bucket in grid.items():
+                if i0 <= i <= i1 and j0 <= j <= j1:
+                    yield from bucket
+            return
+        for i in range(i0, i1 + 1):
+            for j in range(j0, j1 + 1):
                 yield from grid.get((i, j), [])
 
     for kind, a, b, angle in pieces:
@@ -980,6 +1045,7 @@ def entity_pattern(m, entities, copies=1, angle_step=0, first_angle=0, snap=1e-9
                     inner.append((along, p))
             chain = [(0.0, a)] + sorted(inner) + [(angle, b)]
             discretization = next((band[2] for band in max_segment_bands or [] if band[0] <= radius <= band[1]), max_segment)
+            discretization = max(discretization, math.degrees(min_segment_length / radius))
             for (u_angle, u), (v_angle, v) in zip(chain, chain[1:]):
                 m.arc(u, v, v_angle - u_angle, discretization, group=group)
 
@@ -989,7 +1055,7 @@ IMPLEMENTATIONS = {function.__name__: function for function in (
     fixed_potential_boundary, mixed_boundary, convection_boundary, iabc_open_boundary, axisymmetric_coil_section,
     bar_magnet, air_gap_element, kelvin_periodic_exterior, segment_boundary, fixed_point_potential, magnet_array,
     slotted_stator, trapezoidal_slot_stator, tooth_coil_winding, surface_magnet_rotor, salient_poles, salient_pole_winding,
-    belt_winding, entity_pattern)}
+    belt_winding, entity_pattern, sector_air_gap, arc_boundary)}
 
 
 def _finite(value):

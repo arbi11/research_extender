@@ -2627,6 +2627,15 @@
      "description": "Bands [r_min, r_max, max_segment]: arcs whose radius lies in a band take that angular discretization (degrees)"
     },
     {
+     "name": "min_segment_length",
+     "type": "number",
+     "required": false,
+     "unit": "model length",
+     "minimum": 0,
+     "default": 0,
+     "description": "No arc is cut into pieces shorter than this (small fillets would otherwise force tiny elements)"
+    },
+    {
      "name": "group",
      "type": "integer",
      "description": "Group of the contours",
@@ -2651,6 +2660,184 @@
    "constraints": [
     "Arcs are counterclockwise and no wider than 180 degrees (femm_brain.dxf splits wider ones).",
     "Labels, materials and boundaries are assigned by other components; the drawing gives contours only."
+   ]
+  },
+  {
+   "id": "sector_air_gap",
+   "layer": 2,
+   "title": "Sliding-band air gap across a sector",
+   "description": "FEMM's sliding-band (air-gap element) boundary across a sector of a machine with periodic or antiperiodic ends: the band's two arcs inside the gap with the sliding-band boundary, the band's ends, the radial ends of the thin gap regions on either side with one (anti)periodic boundary pair each, an air label in each thin region and a hole in the unmeshed band. The rotor side turns through the band's inner angle (boundary property 10), so rotor positions need no remeshing.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "rotor_radius",
+     "type": "number",
+     "description": "Radius of the rotor surface (drawn by another component, with nodes at the sector ends)",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "stator_radius",
+     "type": "number",
+     "description": "Radius of the stator bore (drawn by another component)",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "start_angle",
+     "type": "number",
+     "description": "Angle of the sector's first end",
+     "required": true,
+     "unit": "degrees"
+    },
+    {
+     "name": "end_angle",
+     "type": "number",
+     "description": "Angle of the sector's second end",
+     "required": true,
+     "unit": "degrees"
+    },
+    {
+     "name": "band_inner_radius",
+     "type": "number",
+     "description": "Inner radius of the sliding band",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "band_outer_radius",
+     "type": "number",
+     "description": "Outer radius of the sliding band",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "description": "Name of the band's boundary; the end pairs are <name>_rotor_ends and <name>_stator_ends",
+     "required": false,
+     "default": "AGE"
+    },
+    {
+     "name": "antiperiodic",
+     "type": "boolean",
+     "description": "Antiperiodic (an odd number of poles in the sector) or periodic",
+     "required": false,
+     "default": true
+    },
+    {
+     "name": "max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of the band arcs",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 0.5
+    },
+    {
+     "name": "air_material",
+     "type": "string",
+     "description": "Material of the thin gap regions",
+     "required": false,
+     "default": "Air"
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Element size of the thin gap regions",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "rotor_group",
+     "type": "integer",
+     "description": "Group of the rotor-side gap region and its ends",
+     "required": false,
+     "default": 0
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the band and the stator-side gap region",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addboundprop",
+    "addnode",
+    "addsegment",
+    "addarc",
+    "selectarcsegment",
+    "setarcsegmentprop",
+    "addblocklabel"
+   ],
+   "uses_components": [
+    "segment",
+    "arc",
+    "block_label",
+    "hole"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "boundaries",
+   "constraints": [
+    "rotor radius < band inner radius < band outer radius < stator radius; the sector spans at most 180 degrees.",
+    "The rotor surface and stator bore must have nodes at the sector ends; the rest of each sector end needs its own (anti)periodic pairs (segment_boundary)."
+   ]
+  },
+  {
+   "id": "arc_boundary",
+   "layer": 3,
+   "title": "Boundary on drawn arcs",
+   "description": "Assigns a defined boundary to existing arcs, each picked by a point lying on it (for example A = 0 on the outer rim of a sector drawn from a vector file).",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "name",
+     "type": "string",
+     "description": "Boundary name (defined beforehand)",
+     "required": true
+    },
+    {
+     "name": "at",
+     "type": "list",
+     "description": "One point [x, y] on each arc",
+     "required": true
+    }
+   ],
+   "femm_functions": [
+    "selectarcsegment",
+    "setarcsegmentprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "boundaries",
+   "constraints": [
+    "Each point must lie inside exactly one arc."
    ]
   }
  ]

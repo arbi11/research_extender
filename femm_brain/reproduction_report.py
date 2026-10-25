@@ -11,6 +11,7 @@ import html
 import json
 from pathlib import Path
 
+from .reference_models import assessor_metric
 from .reproduce import LEVELS, case_binding_digest, catalog_digest, load_cases, load_designs, load_papers
 
 DATA = Path(__file__).parent / "data"
@@ -215,6 +216,9 @@ def audit(record, registry_path, catalog="reproductions"):
         if entry.get("case_binding_sha256") != case_binding_digest(case):
             problems.append(f"{identifier}: recorded under a different case definition.")
         targets = {t["metric"]: t for t in case.get("targets", []) if t.get("used_for_acceptance", True)}
+        # Assessors are frozen targets too: a reviewed failure of one binds to the assessor's value and tolerances.
+        targets.update({assessor_metric(a): a for a in case.get("assessors", [])
+                        if a.get("used_for_acceptance", True) and assessor_metric(a) is not None})
         for level, expectation in expected_levels(case, catalog).items():
             result = entry.get("levels", {}).get(level)
             if result is None:
@@ -241,7 +245,7 @@ def audit(record, registry_path, catalog="reproductions"):
                 frozen = targets.get(name)
                 if failure.get("case_binding_sha256") != case_binding_digest(case):
                     problems.append(f"{identifier}: reviewed failure is bound to a different case definition.")
-                elif frozen is None or frozen["value"] != metric["target"] or any(
+                elif frozen is None or frozen.get("value") != metric["target"] or any(
                         frozen.get(key) != metric.get(key) for key in ("relative_tolerance", "absolute_tolerance")):
                     problems.append(f"{identifier}/{name}: the frozen target differs from the reviewed one.")
                 elif target.get("observed") is None or abs(target["observed"] - metric["observed"]) > \
