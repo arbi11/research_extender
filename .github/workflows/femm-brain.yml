@@ -129,9 +129,11 @@ jobs:
             -v "$PWD/femm_brain:/repo/femm_brain:ro" -v "$PWD/reproductions:/reports" -w /repo \
             -e HOME=/tmp -e PYTHONDONTWRITEBYTECODE=1 -e FEMM_LUA=/opt/femm/bin/femm-lua \
             -e FEMM_DIR=/opt/femm/bin -e QT_QPA_PLATFORM=offscreen -e FEMM_MESH_EXPORT=1 \
-            femm-brain-native:ci python3 -m femm_brain replicate --all --engine native --output /reports/papers
+            femm-brain-native:ci python3 -m femm_brain replicate --all --max-solves 60 --engine native --output /reports/papers
+      # Cases of more than 60 native solves (TEAM 30, the Prius, the magnetic gear, the SynRM) take hours on this
+      # runner; their committed evidence is audited by the host tests, and this record names them as excluded.
       - name: Audit paper replications against the reviewed registry
-        run: python3 -m femm_brain reproduction-report --catalog papers --results reproductions/papers --output reproductions/paper_replications.json --html reproductions/papers.html
+        run: python3 -m femm_brain reproduction-report --catalog papers --max-solves 60 --results reproductions/papers --output reproductions/paper_replications.json --html reproductions/papers.html
       - name: Audit component designs (every design must pass)
         run: python3 -m femm_brain reproduction-report --catalog designs --results reproductions/designs --output reproductions/component_designs.json --html reproductions/designs.html
       - name: Audit reproduction failures against the reviewed registry

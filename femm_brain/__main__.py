@@ -55,6 +55,7 @@ def main(argv=None):
     report.add_argument("--output", type=Path)
     report.add_argument("--html", type=Path)
     report.add_argument("--catalog", choices=("reproductions", "designs", "papers"), default="reproductions")
+    report.add_argument("--max-solves", type=int, help="Papers only: cover the cases of at most this many native solves (a CI budget)")
     design = sub.add_parser("design", help="Build, solve and check new designs assembled from reusable components")
     design.add_argument("design_ids", nargs="*")
     design.add_argument("--all", action="store_true")
@@ -75,6 +76,7 @@ def main(argv=None):
     replicate.add_argument("--image")
     replicate.add_argument("--timeout", type=int, default=900)
     replicate.add_argument("--controls", action="store_true", help="Also run each case's diagnostic controls")
+    replicate.add_argument("--max-solves", type=int, help="With --all, skip cases whose acceptance levels take more native solves (a CI budget)")
     sub.add_parser("studies", help="List executable, source-backed studies")
     plan = sub.add_parser("plan", help="Select a known study locally, without an LLM")
     plan.add_argument("request", nargs="*")
@@ -177,7 +179,9 @@ def main(argv=None):
     if args.command == "replicate":
         from .reproduce import load_papers, reproduce as run_reproduction
         cases = load_papers()
-        identifiers = [c["id"] for c in cases if c["status"] != "candidate"] if args.all else args.paper_ids
+        from .reproduce import case_solves
+        identifiers = [c["id"] for c in cases if c["status"] != "candidate"
+                       and (args.max_solves is None or case_solves(c) <= args.max_solves)] if args.all else args.paper_ids
         if not identifiers:
             parser.error("Name paper ids or --all")
         summaries = [run_reproduction(i, args.output / i, levels=("article",), engine=args.engine, image=args.image,
@@ -188,7 +192,7 @@ def main(argv=None):
         return 0 if all(r["status"] == "passed" for s in summaries for r in s["levels"].values()) else 1
     if args.command == "reproduction-report":
         from .reproduction_report import write
-        record = write(args.results, args.output, args.html, args.catalog)
+        record = write(args.results, args.output, args.html, args.catalog, args.max_solves)
         print(json.dumps({"totals": record["totals"], "audit": record["audit"]}, indent=2))
         return 0 if record["audit"]["status"] == "passed" else 1
     graph = load_graph()

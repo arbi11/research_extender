@@ -81,6 +81,11 @@ POINT_FIELDS = {"magnetics": ("A", "B1", "B2", "Sig", "E", "H1", "H2", "Je", "Js
 LEVELS = ("original", "rebuild", "article", "components")
 
 
+def case_solves(case):
+    """Native solves one run of a case's acceptance levels takes: its steps, once for the base and once per variant."""
+    return len(case.get("steps") or [None]) * (1 + len(case.get("variants", [])))
+
+
 def case_levels(case):
     """The case's levels and one more per variant: an article build with its own parameters and acceptance targets."""
     return LEVELS + tuple("variant-" + variant["id"] for variant in case.get("variants", []))

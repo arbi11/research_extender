@@ -217,3 +217,25 @@ class RenderTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SolveBudgetTests(unittest.TestCase):
+    def test_a_budget_limits_the_record_to_cheap_cases_and_names_the_rest(self):
+        from femm_brain.reproduce import case_solves, load_papers
+        from femm_brain.reproduction_report import catalog_cases
+        everything = catalog_cases("papers")
+        cheap = catalog_cases("papers", max_solves=60)
+        self.assertTrue(0 < len(cheap) < len(everything))
+        self.assertTrue(all(case_solves(case) <= 60 for case in cheap))
+        gear = next(case for case in load_papers() if case["id"] == "zhang-2014-coaxial-magnetic-gear")
+        self.assertEqual(case_solves(gear), 24 * 11)
+
+    def test_a_budgeted_audit_passes_on_the_cheap_cases_of_the_committed_record(self):
+        from femm_brain.reproduction_report import DATA, audit, catalog_cases
+        record = json.loads((DATA / "verification" / "paper_replications.json").read_text())
+        cheap = {case["id"] for case in catalog_cases("papers", max_solves=60)}
+        from femm_brain.reproduce import catalog_digest
+        # The budget's logic alone: the committed record's own currency is the full audit's concern.
+        record = dict(record, cases=[c for c in record["cases"] if c["case_id"] in cheap], catalog_sha256=catalog_digest("papers"))
+        result = audit(record, DATA / "verification" / "reviewed_paper_failures.json", "papers", max_solves=60)
+        self.assertEqual(result["problems"], [])

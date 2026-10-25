@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 
 from .reference_models import assessor_metric
-from .reproduce import LEVELS, case_binding_digest, case_levels, catalog_digest, load_cases, load_designs, load_papers
+from .reproduce import LEVELS, case_binding_digest, case_levels, case_solves, catalog_digest, load_cases, load_designs, load_papers
 
 DATA = Path(__file__).parent / "data"
 RECORD = DATA / "verification" / "official_reproductions.json"
@@ -31,10 +31,15 @@ SCOPES = {"reproductions": "Official FEMM examples reproduced from the unmodifie
                     "against targets frozen before solving. Comparators are reported but never used for acceptance."}
 
 
-def catalog_cases(catalog):
-    """Cases a record must cover: every reproduction and design, and every paper case past extraction."""
+def catalog_cases(catalog, max_solves=None):
+    """Cases a record must cover: every reproduction and design, and every paper case past extraction.
+
+    ``max_solves`` limits a paper record to cases whose acceptance levels take at most that many native
+    solves (a CI budget); the committed record covers them all and the host tests audit it.
+    """
     if catalog == "papers":
-        return [case for case in load_papers() if case.get("status") not in ("candidate", "extracting")]
+        return [case for case in load_papers() if case.get("status") not in ("candidate", "extracting")
+                and (max_solves is None or case_solves(case) <= max_solves)]
     return load_cases() if catalog == "reproductions" else load_designs()
 
 
@@ -66,9 +71,9 @@ def _target_row(result):
             "quote": target.get("quote")}
 
 
-def collect(results, catalog="reproductions"):
+def collect(results, catalog="reproductions", max_solves=None):
     results = Path(results)
-    cases = {c["id"]: c for c in catalog_cases(catalog)}
+    cases = {c["id"]: c for c in catalog_cases(catalog, max_solves)}
     entries = []
     for identifier, case in cases.items():
         summary_path = results / identifier / "summary.json"
@@ -194,11 +199,11 @@ def expected_levels(case, catalog):
     return {"original": native, "rebuild": native, "article": article, "components": components}
 
 
-def audit(record, registry_path, catalog="reproductions"):
+def audit(record, registry_path, catalog="reproductions", max_solves=None):
     """Complete, bound and bounded: the record must cover every expected case and level,
     agree with the current catalog, keep rebuilds identical to originals, and fail only
     where a reviewed failure stays within its frozen regression bound."""
-    cases = catalog_cases(catalog)
+    cases = catalog_cases(catalog, max_solves)
     problems = []
     current_catalog = catalog_digest(catalog)
     if record.get("catalog_sha256") != current_catalog:
@@ -264,16 +269,20 @@ def audit(record, registry_path, catalog="reproductions"):
                 problems.append(f"{identifier}: the component build does not agree with the original within its declared bound.")
             if levels["components"].get("reference") != "passed":
                 problems.append(f"{identifier}: the component build is not the official model region by region.")
-    resolved = sorted(set(reviewed) - observed_failures)
+    in_scope = {case["id"] for case in cases}
+    resolved = sorted(key for key in set(reviewed) - observed_failures if key[0] in in_scope)
     problems += [f"{'/'.join(key)}: reviewed failure no longer fails; review and remove it." for key in resolved]
     return {"status": "passed" if not problems else "failed", "problems": problems, "accepted_reviewed_failures": accepted,
             "note": "A passing audit means the record is complete and current and every failure is a reviewed finding within its "
                     "regression bound, not that all published targets passed."}
 
 
-def write(results, output=None, html_output=None, catalog="reproductions"):
-    record = collect(results, catalog)
-    record["audit"] = audit(record, DATA / "verification" / REGISTRIES[catalog], catalog)
+def write(results, output=None, html_output=None, catalog="reproductions", max_solves=None):
+    record = collect(results, catalog, max_solves)
+    if max_solves is not None:
+        record["solve_budget"] = {"max_solves": max_solves, "excluded": sorted(
+            case["id"] for case in catalog_cases(catalog) if case not in catalog_cases(catalog, max_solves))}
+    record["audit"] = audit(record, DATA / "verification" / REGISTRIES[catalog], catalog, max_solves)
     output = output or RECORDS[catalog]
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
