@@ -1,0 +1,5003 @@
+{
+ "schema_version": 1,
+ "id": "ibrahim-2016-synrm",
+ "set": "development",
+ "status": "frozen",
+ "skill_version": null,
+ "title": "Simple Design Approach for Low Torque Ripple and High Output Torque Synchronous Reluctance Motors",
+ "source": {
+  "citation": "M. N. Ibrahim, P. Sergeant, E. M. Rashad, Energies 9(11):942, 2016",
+  "doi": "10.3390/en9110942",
+  "url": "https://www.mdpi.com/1996-1073/9/11/942",
+  "access": "open access",
+  "licence": "CC BY 4.0",
+  "pdf_sha256": "a4df01dd9690a36876fe61ecdc44635afc595ed1e02ad04b878a178e870e5960",
+  "pages": 14,
+  "accessed": "2026-10-26"
+ },
+ "machine": {
+  "family": "synrm",
+  "topology": "inner rotor with three flux barriers per pole, 36 slots with a distributed single-layer winding",
+  "problem": "planar",
+  "slots": 36,
+  "poles": 4,
+  "phases": 3,
+  "symmetry": "Full cross-section; a sliding band in the gap turns the rotor. dq currents from the winding's phase-A axis and the rotor's d-axis at zero."
+ },
+ "components_map": [
+  {
+   "part": "stator: parallel teeth with shoes, closed slot openings",
+   "component": "slotted_stator"
+  },
+  {
+   "part": "distributed single-layer winding, two parallel paths",
+   "component": "tooth_coil_winding (slot_star)"
+  },
+  {
+   "part": "rotor flux barriers",
+   "component": "flux_barrier_rotor"
+  },
+  {
+   "part": "air gap and rotation",
+   "component": "air_gap_element"
+  },
+  {
+   "part": "average torque over rotor position",
+   "component": "dq_linkage assessor (stress torque from the band)"
+  }
+ ],
+ "article": {
+  "parameters": {
+   "slots": {
+    "value": 36,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Number of stator slots/poles 36/4",
+    "location": "Table A1, p. 13"
+   },
+   "pole_pairs": {
+    "value": 2,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Number of stator slots/poles 36/4",
+    "location": "Table A1, p. 13",
+    "note": "Four poles."
+   },
+   "stator_outer_radius_mm": {
+    "value": 90,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Stator outer /inner diameter 180/ 110 mm",
+    "location": "Table A1, p. 13",
+    "note": "Half of 180 mm."
+   },
+   "stator_inner_radius_mm": {
+    "value": 55,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Stator outer /inner diameter 180/ 110 mm",
+    "location": "Table A1, p. 13",
+    "note": "Half of 110 mm."
+   },
+   "rotor_radius_mm": {
+    "value": 54.7,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Rotor outer diameter 109.4 mm",
+    "location": "Table A1, p. 13",
+    "note": "Half of 109.4 mm; with the 110 mm bore this is Table A1's 0.3 mm air gap."
+   },
+   "shaft_radius_mm": {
+    "value": 17.5,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Rotor shaft diameter 35 mm",
+    "location": "Table A1, p. 13"
+   },
+   "stack_length_mm": {
+    "value": 140,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Axial length 140 mm",
+    "location": "Table A1, p. 13",
+    "note": "The 2D model's depth."
+   },
+   "tooth_width_mm": {
+    "value": 5.15,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. A1, p. 13, dimension labelled 5,15",
+    "scale_reference": "printed dimensions in millimetres (the caption: stator slot and teeth dimensions in mm)",
+    "uncertainty": 0.005,
+    "note": "Parallel-sided teeth."
+   },
+   "tip_arc_mm": {
+    "value": 6.8,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. A1, p. 13, dimension labelled 6,80",
+    "scale_reference": "printed dimensions in millimetres (the caption: stator slot and teeth dimensions in mm)",
+    "uncertainty": 0.005,
+    "note": "Tooth tip along the bore: the 9.60 mm slot pitch at the bore less the 2.80 mm opening."
+   },
+   "slot_area_mm2": {
+    "value": 100,
+    "unit": "mm^2",
+    "provenance": "quoted",
+    "quote": "The stator slot area is 100 mm2",
+    "location": "Section 3, p. 5",
+    "note": "Sets the slot depth (slot_bottom_radius_mm)."
+   },
+   "shoe_depth_mm": {
+    "value": 0.8,
+    "unit": "mm",
+    "provenance": "assumed",
+    "reason": "Fig. A1 does not dimension the tooth tip's depth below the bore; it draws a short opening wall and a rounded shoulder, about 0.8 mm deep at the drawing's scale.",
+    "sensitivity_control": "shoe-depth-1p2"
+   },
+   "turns_per_slot": {
+    "value": 15,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "with 15 turns/slot connected in two parallel groups",
+    "location": "Section 3, p. 5",
+    "note": "An odd count per slot: a single-layer winding, full pitch for 36 slots and 4 poles."
+   },
+   "parallel_paths": {
+    "value": 2,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "with 15 turns/slot connected in two parallel groups",
+    "location": "Section 3, p. 5",
+    "note": "Each conductor carries half the phase current."
+   },
+   "rated_current_A": {
+    "value": 22,
+    "unit": "A",
+    "provenance": "quoted",
+    "quote": "Rated current 22 A",
+    "location": "Table A1, p. 13"
+   },
+   "current_peak_factor": {
+    "value": 1.4142135623730951,
+    "unit": "ratio",
+    "provenance": "assumed",
+    "reason": "Whether 22 A is rms or the amplitude is not stated; rated currents are usually rms.",
+    "sensitivity_control": "current-amplitude-22"
+   },
+   "current_angle_deg": {
+    "value": 56.5,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "at rated current and current angle « = 56.5°.",
+    "location": "Fig. 3 caption, p. 6 (OCR)",
+    "note": "From the d-axis."
+   },
+   "fig11_current_fraction": {
+    "value": 0.6666666666666666,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "at 2000 rpm and (2/3) of rated current",
+    "location": "Section 4, p. 11"
+   },
+   "barrier_p1_mm": {
+    "value": 23.5,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "23.5, 36 and 46 mm",
+    "location": "Table A1, p. 13",
+    "note": "p_b: from the axis along the q-axis to the middle section's near edge (Fig. 2)."
+   },
+   "barrier_p2_mm": {
+    "value": 36,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "23.5, 36 and 46 mm",
+    "location": "Table A1, p. 13"
+   },
+   "barrier_p3_mm": {
+    "value": 46,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "23.5, 36 and 46 mm",
+    "location": "Table A1, p. 13"
+   },
+   "barrier_l1_mm": {
+    "value": 25,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "25, 19 and 12 mm",
+    "location": "Table A1, p. 13",
+    "note": "L_b: the middle section's length, taken on its centre line."
+   },
+   "barrier_l2_mm": {
+    "value": 19,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "25, 19 and 12 mm",
+    "location": "Table A1, p. 13"
+   },
+   "barrier_l3_mm": {
+    "value": 12,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "25, 19 and 12 mm",
+    "location": "Table A1, p. 13"
+   },
+   "barrier_w1_mm": {
+    "value": 6,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "6,4and3 mm",
+    "location": "Table A1, p. 13"
+   },
+   "barrier_w2_mm": {
+    "value": 4,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "6,4and3 mm",
+    "location": "Table A1, p. 13"
+   },
+   "barrier_w3_mm": {
+    "value": 3,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "6,4and3 mm",
+    "location": "Table A1, p. 13"
+   },
+   "barrier_angle1_deg": {
+    "value": 7.5,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "O51 7.5° 6.43° 5.62° 3.75°",
+    "location": "Table 3, p. 8",
+    "note": "The proposed method's angles; from the d-axis to the centre of the barrier end."
+   },
+   "barrier_angle2_deg": {
+    "value": 17.5,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "O52 17.5° 19.28° 16.87° 11.25°",
+    "location": "Table 3, p. 8"
+   },
+   "barrier_angle3_deg": {
+    "value": 27.5,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "043 27.5° 32.14° 28.12° 18.75°",
+    "location": "Table 3, p. 8"
+   },
+   "barrier_end1_mm": {
+    "value": 2.8,
+    "unit": "mm",
+    "provenance": "assumed",
+    "reason": "'the flux-barrier end arc is equal to the slot opening' for Table 3: read as each end's width at the rotor surface (the rotor's 'slot opening'), 2.8 mm like the stator's; the legs taper to it.",
+    "sensitivity_control": "barrier-ends-full-width"
+   },
+   "barrier_end2_mm": {
+    "value": 2.8,
+    "unit": "mm",
+    "provenance": "assumed",
+    "reason": "As barrier_end1_mm.",
+    "sensitivity_control": "barrier-ends-full-width"
+   },
+   "barrier_end3_mm": {
+    "value": 2.8,
+    "unit": "mm",
+    "provenance": "assumed",
+    "reason": "As barrier_end1_mm.",
+    "sensitivity_control": "barrier-ends-full-width"
+   },
+   "rib_mm": {
+    "value": 0.5,
+    "unit": "mm",
+    "provenance": "assumed",
+    "reason": "The tangential rib between each barrier end and the rotor surface is not given (Fig. 2 marks it only).",
+    "sensitivity_control": "rib-0p8"
+   },
+   "steel_grade": {
+    "value": "M-43 18 mil",
+    "unit": "material",
+    "provenance": "assumed",
+    "reason": "M400-50A is not in FEMM's library; M-43 (0.46 mm silicon steel) is its usual AISI counterpart.",
+    "sensitivity_control": "steel-m45",
+    "note": "Table A1: 'Material type M400-50 A'."
+   },
+   "shaft_material": {
+    "value": "Air",
+    "unit": "material",
+    "provenance": "assumed",
+    "reason": "The shaft's material is not stated; Fig. 3 shows no flux in it, as for a non-magnetic shaft.",
+    "sensitivity_control": "shaft-steel"
+   },
+   "band_margin_mm": {
+    "value": 0.075,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "The sliding band lies 0.075 mm inside each face of the 0.3 mm gap."
+   },
+   "gap_arc_deg": {
+    "value": 0.25,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arcs at the rotor surface, band and tips (0.24 mm at 55 mm)."
+   },
+   "thin_air_mesh_mm": {
+    "value": 0.1,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Air between the rotor surface or tips and the band."
+   },
+   "rotor_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Rotor iron (the ribs are meshed finer by the mesher)."
+   },
+   "barrier_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Barriers."
+   },
+   "stator_mesh_mm": {
+    "value": 1.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Stator iron."
+   },
+   "coil_mesh_mm": {
+    "value": 1.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Slots."
+   },
+   "shaft_mesh_mm": {
+    "value": 3.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Shaft."
+   },
+   "shoe_axial_mm": {
+    "value": 55.8,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "stator_inner_radius_mm+shoe_depth_mm",
+    "inputs": [
+     "shoe_depth_mm",
+     "stator_inner_radius_mm"
+    ]
+   },
+   "slot_bottom_radius_mm": {
+    "value": 72.37013401837149,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "(tooth_width_mm+sqrt(tooth_width_mm**2+4*pi/slots*(slot_area_mm2+pi/slots*(stator_inner_radius_mm+shoe_depth_mm)**2-tooth_width_mm*(stator_inner_radius_mm+shoe_depth_mm))))/(2*pi/slots)",
+    "inputs": [
+     "shoe_depth_mm",
+     "slot_area_mm2",
+     "slots",
+     "stator_inner_radius_mm",
+     "tooth_width_mm"
+    ],
+    "note": "Parallel teeth make the slot width 2 pi r / Q - tooth width; integrated from the shoe underside it holds the stated slot area (fillets neglected)."
+   },
+   "coil_label_radius_mm": {
+    "value": 64.08506700918574,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "(stator_inner_radius_mm+shoe_depth_mm+(tooth_width_mm+sqrt(tooth_width_mm**2+4*pi/slots*(slot_area_mm2+pi/slots*(stator_inner_radius_mm+shoe_depth_mm)**2-tooth_width_mm*(stator_inner_radius_mm+shoe_depth_mm))))/(2*pi/slots))/2",
+    "inputs": [
+     "shoe_depth_mm",
+     "slot_area_mm2",
+     "slots",
+     "stator_inner_radius_mm",
+     "tooth_width_mm"
+    ]
+   }
+  },
+  "assembly": {
+   "problem": {
+    "physics": "magnetics",
+    "units": "millimeters",
+    "type": "planar",
+    "frequency": 0,
+    "depth": "$stack_length_mm"
+   },
+   "steps": [
+    {
+     "use": "material",
+     "name": "Air"
+    },
+    {
+     "use": "library_material",
+     "name": "Copper",
+     "library": "matlib.dat"
+    },
+    {
+     "use": "library_material",
+     "name": "$steel_grade",
+     "library": "matlib.dat",
+     "folder": "Soft Magnetic Materials/Silicon Iron",
+     "as_name": "Steel"
+    },
+    {
+     "use": "circuit",
+     "name": "A",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "B",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "C",
+     "current": 0
+    },
+    {
+     "use": "fixed_potential_boundary",
+     "name": "A=0"
+    },
+    {
+     "use": "slotted_stator",
+     "slot_count": "$slots",
+     "slot_bottom_radius": "$slot_bottom_radius_mm",
+     "tip_radius": "$stator_inner_radius_mm",
+     "tooth_width": "$tooth_width_mm",
+     "tip_arc_length": "$tip_arc_mm",
+     "shoe_axial_distance": "$shoe_axial_mm",
+     "tip_max_segment": "$gap_arc_deg",
+     "iron_material": "Steel",
+     "iron_mesh": "$stator_mesh_mm"
+    },
+    {
+     "use": "circle",
+     "radius": "$stator_outer_radius_mm",
+     "max_segment": 2,
+     "boundary": "A=0"
+    },
+    {
+     "use": "tooth_coil_winding",
+     "slot_count": "$slots",
+     "pole_pairs": "$pole_pairs",
+     "turns": "$turns_per_slot",
+     "material": "Copper",
+     "label_radius": "$coil_label_radius_mm",
+     "layout": "slot_star",
+     "layers": "single",
+     "mesh": "$coil_mesh_mm"
+    },
+    {
+     "use": "air_gap_element",
+     "rotor_radius": "=rotor_radius_mm+band_margin_mm",
+     "stator_radius": "=stator_inner_radius_mm-band_margin_mm",
+     "max_segment": "$gap_arc_deg",
+     "name": "AGE"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_inner_radius_mm-band_margin_mm/2",
+      0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=rotor_radius_mm+band_margin_mm/2",
+      0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm",
+     "group": 1
+    },
+    {
+     "use": "circle",
+     "radius": "$rotor_radius_mm",
+     "max_segment": "$gap_arc_deg",
+     "group": 1
+    },
+    {
+     "use": "flux_barrier_rotor",
+     "pole_count": "=2*pole_pairs",
+     "outer_radius": "$rotor_radius_mm",
+     "barriers": [
+      [
+       "$barrier_p1_mm",
+       "$barrier_l1_mm",
+       "$barrier_w1_mm",
+       "$barrier_angle1_deg",
+       "$barrier_end1_mm"
+      ],
+      [
+       "$barrier_p2_mm",
+       "$barrier_l2_mm",
+       "$barrier_w2_mm",
+       "$barrier_angle2_deg",
+       "$barrier_end2_mm"
+      ],
+      [
+       "$barrier_p3_mm",
+       "$barrier_l3_mm",
+       "$barrier_w3_mm",
+       "$barrier_angle3_deg",
+       "$barrier_end3_mm"
+      ]
+     ],
+     "rib": "$rib_mm",
+     "max_segment": 5,
+     "mesh": "$barrier_mesh_mm",
+     "group": 1
+    },
+    {
+     "use": "circle",
+     "radius": "$shaft_radius_mm",
+     "max_segment": 3,
+     "group": 1
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(shaft_radius_mm+barrier_p1_mm)/2",
+      0
+     ],
+     "material": "Steel",
+     "mesh": "$rotor_mesh_mm",
+     "group": 1
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      0
+     ],
+     "material": "$shaft_material",
+     "mesh": "$shaft_mesh_mm",
+     "group": 1
+    }
+   ]
+  }
+ },
+ "gaps": [
+  {
+   "item": "the barrier geometry's references",
+   "affects": "every torque",
+   "decision": "assumed",
+   "note": "From Fig. 2: p_b runs from the axis along the q-axis to the middle section's near edge, L_b is the middle section's length (taken on its centre line), theta_b runs from the d-axis to the end's centre, and the legs run straight from the bends to the ends; reconstructed this way Table A1's barriers slope as Fig. 2 draws them. The length reference has no control."
+  },
+  {
+   "item": "the barrier ends ('end arc')",
+   "affects": "q-axis flux through the ends, hence every torque",
+   "decision": "assumed",
+   "note": "Table 3's designs use an end arc 'equal to the slot opening', the prototype one 'equal to half of the flux barrier width' (p. 7): read as the end's width at the surface, 2.8 mm and half of each width. Control barrier-ends-full-width."
+  },
+  {
+   "item": "the tangential rib",
+   "affects": "q-axis saturation, hence every torque",
+   "decision": "assumed",
+   "note": "0.5 mm; control rib-0p8."
+  },
+  {
+   "item": "the steel",
+   "affects": "saturated torque",
+   "decision": "assumed",
+   "note": "M-43 for M400-50A; control steel-m45."
+  },
+  {
+   "item": "rms or amplitude of 22 A",
+   "affects": "every torque, roughly with the square of the current",
+   "decision": "assumed",
+   "note": "rms; control current-amplitude-22."
+  },
+  {
+   "item": "the winding",
+   "affects": "the fundamental MMF",
+   "decision": "resolved",
+   "note": "15 turns per slot is a single layer; 36 slots and 4 poles give q = 3 full-pitch belts."
+  },
+  {
+   "item": "slot depth",
+   "affects": "yoke and slot leakage, slightly",
+   "decision": "resolved",
+   "note": "From the stated 100 mm2 slot area with parallel teeth (slot_bottom_radius_mm)."
+  },
+  {
+   "item": "the shaft",
+   "affects": "little",
+   "decision": "assumed",
+   "note": "Non-magnetic; control shaft-steel."
+  }
+ ],
+ "steps": [
+  {
+   "label": "rated_00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(80.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-40.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-160.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 80.0
+   }
+  },
+  {
+   "label": "rated_01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 1.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(82.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-38.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-158.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 82.0
+   }
+  },
+  {
+   "label": "rated_02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(84.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-36.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-156.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 84.0
+   }
+  },
+  {
+   "label": "rated_03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(86.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-34.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-154.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 86.0
+   }
+  },
+  {
+   "label": "rated_04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 4.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(88.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-32.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-152.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 88.0
+   }
+  },
+  {
+   "label": "rated_05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(90.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-30.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-150.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 90.0
+   }
+  },
+  {
+   "label": "rated_06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(92.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-28.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-148.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 92.0
+   }
+  },
+  {
+   "label": "rated_07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(94.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-26.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-146.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 94.0
+   }
+  },
+  {
+   "label": "rated_08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 8.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(96.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-24.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-144.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 96.0
+   }
+  },
+  {
+   "label": "rated_09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 9.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(98.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-22.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-142.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 98.0
+   }
+  },
+  {
+   "label": "rated_10",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(100.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-20.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-140.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 100.0
+   }
+  },
+  {
+   "label": "rated_11",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 11.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(102.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-18.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-138.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 102.0
+   }
+  },
+  {
+   "label": "rated_12",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(104.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-16.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-136.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 104.0
+   }
+  },
+  {
+   "label": "rated_13",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 13.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(106.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-14.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-134.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 106.0
+   }
+  },
+  {
+   "label": "rated_14",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 14.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(108.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-12.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-132.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 108.0
+   }
+  },
+  {
+   "label": "rated_15",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 15.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(110.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-10.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-130.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 110.0
+   }
+  },
+  {
+   "label": "rated_16",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 16.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(112.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-8.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-128.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 112.0
+   }
+  },
+  {
+   "label": "rated_17",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 17.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(114.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-6.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-126.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 114.0
+   }
+  },
+  {
+   "label": "rated_18",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 18.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(116.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-4.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-124.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 116.0
+   }
+  },
+  {
+   "label": "rated_19",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 19.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(118.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-2.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-122.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 118.0
+   }
+  },
+  {
+   "label": "rated_20",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 20.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(120.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(0.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-120.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 120.0
+   }
+  },
+  {
+   "label": "rated_21",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 21.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(122.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(2.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-118.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 122.0
+   }
+  },
+  {
+   "label": "rated_22",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 22.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(124.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(4.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-116.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 124.0
+   }
+  },
+  {
+   "label": "rated_23",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 23.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(126.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(6.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-114.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 126.0
+   }
+  },
+  {
+   "label": "rated_24",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 24.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(128.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(8.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-112.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 128.0
+   }
+  },
+  {
+   "label": "rated_25",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 25.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(130.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(10.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-110.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 130.0
+   }
+  },
+  {
+   "label": "rated_26",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 26.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(132.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(12.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-108.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 132.0
+   }
+  },
+  {
+   "label": "rated_27",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 27.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(134.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(14.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-106.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 134.0
+   }
+  },
+  {
+   "label": "rated_28",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 28.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(136.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(16.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-104.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 136.0
+   }
+  },
+  {
+   "label": "rated_29",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 29.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(138.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(18.0+current_angle_deg))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*cos(radians(-102.0+current_angle_deg))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 8.58612447224,
+    "iq": 12.972219029418,
+    "electrical_angle_deg": 138.0
+   }
+  },
+  {
+   "label": "fig11_0_00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(80.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-40.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-160.0+25.85))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_0",
+    "id": 9.333172923555155,
+    "iq": 4.521884422956038,
+    "electrical_angle_deg": 80.0
+   }
+  },
+  {
+   "label": "fig11_0_01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(86.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-34.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-154.0+25.85))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_0",
+    "id": 9.333172923555155,
+    "iq": 4.521884422956038,
+    "electrical_angle_deg": 86.0
+   }
+  },
+  {
+   "label": "fig11_0_02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(92.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-28.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-148.0+25.85))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_0",
+    "id": 9.333172923555155,
+    "iq": 4.521884422956038,
+    "electrical_angle_deg": 92.0
+   }
+  },
+  {
+   "label": "fig11_0_03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 9.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(98.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-22.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-142.0+25.85))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_0",
+    "id": 9.333172923555155,
+    "iq": 4.521884422956038,
+    "electrical_angle_deg": 98.0
+   }
+  },
+  {
+   "label": "fig11_0_04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(104.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-16.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-136.0+25.85))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_0",
+    "id": 9.333172923555155,
+    "iq": 4.521884422956038,
+    "electrical_angle_deg": 104.0
+   }
+  },
+  {
+   "label": "fig11_0_05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 15.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(110.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-10.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-130.0+25.85))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_0",
+    "id": 9.333172923555155,
+    "iq": 4.521884422956038,
+    "electrical_angle_deg": 110.0
+   }
+  },
+  {
+   "label": "fig11_0_06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 18.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(116.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-4.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-124.0+25.85))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_0",
+    "id": 9.333172923555155,
+    "iq": 4.521884422956038,
+    "electrical_angle_deg": 116.0
+   }
+  },
+  {
+   "label": "fig11_0_07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 21.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(122.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(2.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-118.0+25.85))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_0",
+    "id": 9.333172923555155,
+    "iq": 4.521884422956038,
+    "electrical_angle_deg": 122.0
+   }
+  },
+  {
+   "label": "fig11_0_08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 24.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(128.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(8.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-112.0+25.85))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_0",
+    "id": 9.333172923555155,
+    "iq": 4.521884422956038,
+    "electrical_angle_deg": 128.0
+   }
+  },
+  {
+   "label": "fig11_0_09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 27.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(134.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(14.0+25.85))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-106.0+25.85))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_0",
+    "id": 9.333172923555155,
+    "iq": 4.521884422956038,
+    "electrical_angle_deg": 134.0
+   }
+  },
+  {
+   "label": "fig11_1_00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(80.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-40.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-160.0+32.22))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_1",
+    "id": 8.773854633129451,
+    "iq": 5.529469272205826,
+    "electrical_angle_deg": 80.0
+   }
+  },
+  {
+   "label": "fig11_1_01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(86.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-34.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-154.0+32.22))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_1",
+    "id": 8.773854633129451,
+    "iq": 5.529469272205826,
+    "electrical_angle_deg": 86.0
+   }
+  },
+  {
+   "label": "fig11_1_02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(92.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-28.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-148.0+32.22))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_1",
+    "id": 8.773854633129451,
+    "iq": 5.529469272205826,
+    "electrical_angle_deg": 92.0
+   }
+  },
+  {
+   "label": "fig11_1_03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 9.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(98.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-22.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-142.0+32.22))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_1",
+    "id": 8.773854633129451,
+    "iq": 5.529469272205826,
+    "electrical_angle_deg": 98.0
+   }
+  },
+  {
+   "label": "fig11_1_04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(104.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-16.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-136.0+32.22))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_1",
+    "id": 8.773854633129451,
+    "iq": 5.529469272205826,
+    "electrical_angle_deg": 104.0
+   }
+  },
+  {
+   "label": "fig11_1_05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 15.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(110.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-10.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-130.0+32.22))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_1",
+    "id": 8.773854633129451,
+    "iq": 5.529469272205826,
+    "electrical_angle_deg": 110.0
+   }
+  },
+  {
+   "label": "fig11_1_06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 18.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(116.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-4.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-124.0+32.22))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_1",
+    "id": 8.773854633129451,
+    "iq": 5.529469272205826,
+    "electrical_angle_deg": 116.0
+   }
+  },
+  {
+   "label": "fig11_1_07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 21.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(122.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(2.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-118.0+32.22))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_1",
+    "id": 8.773854633129451,
+    "iq": 5.529469272205826,
+    "electrical_angle_deg": 122.0
+   }
+  },
+  {
+   "label": "fig11_1_08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 24.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(128.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(8.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-112.0+32.22))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_1",
+    "id": 8.773854633129451,
+    "iq": 5.529469272205826,
+    "electrical_angle_deg": 128.0
+   }
+  },
+  {
+   "label": "fig11_1_09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 27.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(134.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(14.0+32.22))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-106.0+32.22))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_1",
+    "id": 8.773854633129451,
+    "iq": 5.529469272205826,
+    "electrical_angle_deg": 134.0
+   }
+  },
+  {
+   "label": "fig11_2_00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(80.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-40.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-160.0+38.45))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_2",
+    "id": 8.121981372926175,
+    "iq": 6.448951397971285,
+    "electrical_angle_deg": 80.0
+   }
+  },
+  {
+   "label": "fig11_2_01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(86.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-34.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-154.0+38.45))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_2",
+    "id": 8.121981372926175,
+    "iq": 6.448951397971285,
+    "electrical_angle_deg": 86.0
+   }
+  },
+  {
+   "label": "fig11_2_02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(92.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-28.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-148.0+38.45))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_2",
+    "id": 8.121981372926175,
+    "iq": 6.448951397971285,
+    "electrical_angle_deg": 92.0
+   }
+  },
+  {
+   "label": "fig11_2_03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 9.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(98.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-22.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-142.0+38.45))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_2",
+    "id": 8.121981372926175,
+    "iq": 6.448951397971285,
+    "electrical_angle_deg": 98.0
+   }
+  },
+  {
+   "label": "fig11_2_04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(104.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-16.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-136.0+38.45))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_2",
+    "id": 8.121981372926175,
+    "iq": 6.448951397971285,
+    "electrical_angle_deg": 104.0
+   }
+  },
+  {
+   "label": "fig11_2_05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 15.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(110.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-10.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-130.0+38.45))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_2",
+    "id": 8.121981372926175,
+    "iq": 6.448951397971285,
+    "electrical_angle_deg": 110.0
+   }
+  },
+  {
+   "label": "fig11_2_06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 18.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(116.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-4.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-124.0+38.45))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_2",
+    "id": 8.121981372926175,
+    "iq": 6.448951397971285,
+    "electrical_angle_deg": 116.0
+   }
+  },
+  {
+   "label": "fig11_2_07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 21.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(122.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(2.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-118.0+38.45))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_2",
+    "id": 8.121981372926175,
+    "iq": 6.448951397971285,
+    "electrical_angle_deg": 122.0
+   }
+  },
+  {
+   "label": "fig11_2_08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 24.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(128.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(8.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-112.0+38.45))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_2",
+    "id": 8.121981372926175,
+    "iq": 6.448951397971285,
+    "electrical_angle_deg": 128.0
+   }
+  },
+  {
+   "label": "fig11_2_09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 27.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(134.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(14.0+38.45))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-106.0+38.45))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_2",
+    "id": 8.121981372926175,
+    "iq": 6.448951397971285,
+    "electrical_angle_deg": 134.0
+   }
+  },
+  {
+   "label": "fig11_3_00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(80.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-40.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-160.0+44.81))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_3",
+    "id": 7.35761122185225,
+    "iq": 7.308974802503385,
+    "electrical_angle_deg": 80.0
+   }
+  },
+  {
+   "label": "fig11_3_01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(86.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-34.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-154.0+44.81))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_3",
+    "id": 7.35761122185225,
+    "iq": 7.308974802503385,
+    "electrical_angle_deg": 86.0
+   }
+  },
+  {
+   "label": "fig11_3_02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(92.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-28.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-148.0+44.81))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_3",
+    "id": 7.35761122185225,
+    "iq": 7.308974802503385,
+    "electrical_angle_deg": 92.0
+   }
+  },
+  {
+   "label": "fig11_3_03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 9.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(98.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-22.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-142.0+44.81))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_3",
+    "id": 7.35761122185225,
+    "iq": 7.308974802503385,
+    "electrical_angle_deg": 98.0
+   }
+  },
+  {
+   "label": "fig11_3_04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(104.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-16.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-136.0+44.81))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_3",
+    "id": 7.35761122185225,
+    "iq": 7.308974802503385,
+    "electrical_angle_deg": 104.0
+   }
+  },
+  {
+   "label": "fig11_3_05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 15.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(110.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-10.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-130.0+44.81))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_3",
+    "id": 7.35761122185225,
+    "iq": 7.308974802503385,
+    "electrical_angle_deg": 110.0
+   }
+  },
+  {
+   "label": "fig11_3_06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 18.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(116.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-4.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-124.0+44.81))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_3",
+    "id": 7.35761122185225,
+    "iq": 7.308974802503385,
+    "electrical_angle_deg": 116.0
+   }
+  },
+  {
+   "label": "fig11_3_07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 21.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(122.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(2.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-118.0+44.81))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_3",
+    "id": 7.35761122185225,
+    "iq": 7.308974802503385,
+    "electrical_angle_deg": 122.0
+   }
+  },
+  {
+   "label": "fig11_3_08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 24.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(128.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(8.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-112.0+44.81))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_3",
+    "id": 7.35761122185225,
+    "iq": 7.308974802503385,
+    "electrical_angle_deg": 128.0
+   }
+  },
+  {
+   "label": "fig11_3_09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 27.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(134.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(14.0+44.81))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-106.0+44.81))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_3",
+    "id": 7.35761122185225,
+    "iq": 7.308974802503385,
+    "electrical_angle_deg": 134.0
+   }
+  },
+  {
+   "label": "fig11_4_00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(80.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-40.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-160.0+51.06))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_4",
+    "id": 6.5181748241375965,
+    "iq": 8.066532868434514,
+    "electrical_angle_deg": 80.0
+   }
+  },
+  {
+   "label": "fig11_4_01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(86.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-34.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-154.0+51.06))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_4",
+    "id": 6.5181748241375965,
+    "iq": 8.066532868434514,
+    "electrical_angle_deg": 86.0
+   }
+  },
+  {
+   "label": "fig11_4_02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(92.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-28.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-148.0+51.06))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_4",
+    "id": 6.5181748241375965,
+    "iq": 8.066532868434514,
+    "electrical_angle_deg": 92.0
+   }
+  },
+  {
+   "label": "fig11_4_03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 9.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(98.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-22.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-142.0+51.06))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_4",
+    "id": 6.5181748241375965,
+    "iq": 8.066532868434514,
+    "electrical_angle_deg": 98.0
+   }
+  },
+  {
+   "label": "fig11_4_04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(104.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-16.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-136.0+51.06))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_4",
+    "id": 6.5181748241375965,
+    "iq": 8.066532868434514,
+    "electrical_angle_deg": 104.0
+   }
+  },
+  {
+   "label": "fig11_4_05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 15.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(110.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-10.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-130.0+51.06))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_4",
+    "id": 6.5181748241375965,
+    "iq": 8.066532868434514,
+    "electrical_angle_deg": 110.0
+   }
+  },
+  {
+   "label": "fig11_4_06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 18.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(116.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-4.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-124.0+51.06))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_4",
+    "id": 6.5181748241375965,
+    "iq": 8.066532868434514,
+    "electrical_angle_deg": 116.0
+   }
+  },
+  {
+   "label": "fig11_4_07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 21.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(122.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(2.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-118.0+51.06))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_4",
+    "id": 6.5181748241375965,
+    "iq": 8.066532868434514,
+    "electrical_angle_deg": 122.0
+   }
+  },
+  {
+   "label": "fig11_4_08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 24.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(128.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(8.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-112.0+51.06))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_4",
+    "id": 6.5181748241375965,
+    "iq": 8.066532868434514,
+    "electrical_angle_deg": 128.0
+   }
+  },
+  {
+   "label": "fig11_4_09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 27.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(134.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(14.0+51.06))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-106.0+51.06))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_4",
+    "id": 6.5181748241375965,
+    "iq": 8.066532868434514,
+    "electrical_angle_deg": 134.0
+   }
+  },
+  {
+   "label": "fig11_5_00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(80.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-40.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-160.0+57.42))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_5",
+    "id": 5.584487517009215,
+    "iq": 8.738938993260211,
+    "electrical_angle_deg": 80.0
+   }
+  },
+  {
+   "label": "fig11_5_01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(86.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-34.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-154.0+57.42))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_5",
+    "id": 5.584487517009215,
+    "iq": 8.738938993260211,
+    "electrical_angle_deg": 86.0
+   }
+  },
+  {
+   "label": "fig11_5_02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(92.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-28.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-148.0+57.42))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_5",
+    "id": 5.584487517009215,
+    "iq": 8.738938993260211,
+    "electrical_angle_deg": 92.0
+   }
+  },
+  {
+   "label": "fig11_5_03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 9.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(98.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-22.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-142.0+57.42))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_5",
+    "id": 5.584487517009215,
+    "iq": 8.738938993260211,
+    "electrical_angle_deg": 98.0
+   }
+  },
+  {
+   "label": "fig11_5_04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(104.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-16.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-136.0+57.42))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_5",
+    "id": 5.584487517009215,
+    "iq": 8.738938993260211,
+    "electrical_angle_deg": 104.0
+   }
+  },
+  {
+   "label": "fig11_5_05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 15.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(110.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-10.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-130.0+57.42))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_5",
+    "id": 5.584487517009215,
+    "iq": 8.738938993260211,
+    "electrical_angle_deg": 110.0
+   }
+  },
+  {
+   "label": "fig11_5_06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 18.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(116.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-4.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-124.0+57.42))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_5",
+    "id": 5.584487517009215,
+    "iq": 8.738938993260211,
+    "electrical_angle_deg": 116.0
+   }
+  },
+  {
+   "label": "fig11_5_07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 21.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(122.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(2.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-118.0+57.42))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_5",
+    "id": 5.584487517009215,
+    "iq": 8.738938993260211,
+    "electrical_angle_deg": 122.0
+   }
+  },
+  {
+   "label": "fig11_5_08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 24.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(128.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(8.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-112.0+57.42))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_5",
+    "id": 5.584487517009215,
+    "iq": 8.738938993260211,
+    "electrical_angle_deg": 128.0
+   }
+  },
+  {
+   "label": "fig11_5_09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 27.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(134.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(14.0+57.42))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-106.0+57.42))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_5",
+    "id": 5.584487517009215,
+    "iq": 8.738938993260211,
+    "electrical_angle_deg": 134.0
+   }
+  },
+  {
+   "label": "fig11_6_00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(80.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-40.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-160.0+63.65))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_6",
+    "id": 4.603158508282908,
+    "iq": 9.293357159992196,
+    "electrical_angle_deg": 80.0
+   }
+  },
+  {
+   "label": "fig11_6_01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(86.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-34.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-154.0+63.65))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_6",
+    "id": 4.603158508282908,
+    "iq": 9.293357159992196,
+    "electrical_angle_deg": 86.0
+   }
+  },
+  {
+   "label": "fig11_6_02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(92.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-28.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-148.0+63.65))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_6",
+    "id": 4.603158508282908,
+    "iq": 9.293357159992196,
+    "electrical_angle_deg": 92.0
+   }
+  },
+  {
+   "label": "fig11_6_03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 9.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(98.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-22.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-142.0+63.65))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_6",
+    "id": 4.603158508282908,
+    "iq": 9.293357159992196,
+    "electrical_angle_deg": 98.0
+   }
+  },
+  {
+   "label": "fig11_6_04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(104.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-16.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-136.0+63.65))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_6",
+    "id": 4.603158508282908,
+    "iq": 9.293357159992196,
+    "electrical_angle_deg": 104.0
+   }
+  },
+  {
+   "label": "fig11_6_05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 15.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(110.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-10.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-130.0+63.65))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_6",
+    "id": 4.603158508282908,
+    "iq": 9.293357159992196,
+    "electrical_angle_deg": 110.0
+   }
+  },
+  {
+   "label": "fig11_6_06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 18.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(116.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-4.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-124.0+63.65))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_6",
+    "id": 4.603158508282908,
+    "iq": 9.293357159992196,
+    "electrical_angle_deg": 116.0
+   }
+  },
+  {
+   "label": "fig11_6_07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 21.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(122.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(2.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-118.0+63.65))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_6",
+    "id": 4.603158508282908,
+    "iq": 9.293357159992196,
+    "electrical_angle_deg": 122.0
+   }
+  },
+  {
+   "label": "fig11_6_08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 24.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(128.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(8.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-112.0+63.65))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_6",
+    "id": 4.603158508282908,
+    "iq": 9.293357159992196,
+    "electrical_angle_deg": 128.0
+   }
+  },
+  {
+   "label": "fig11_6_09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 27.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(134.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(14.0+63.65))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-106.0+63.65))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_6",
+    "id": 4.603158508282908,
+    "iq": 9.293357159992196,
+    "electrical_angle_deg": 134.0
+   }
+  },
+  {
+   "label": "fig11_7_00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(80.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-40.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-160.0+70.02))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_7",
+    "id": 3.543654496330569,
+    "iq": 9.746695253581683,
+    "electrical_angle_deg": 80.0
+   }
+  },
+  {
+   "label": "fig11_7_01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(86.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-34.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-154.0+70.02))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_7",
+    "id": 3.543654496330569,
+    "iq": 9.746695253581683,
+    "electrical_angle_deg": 86.0
+   }
+  },
+  {
+   "label": "fig11_7_02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(92.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-28.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-148.0+70.02))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_7",
+    "id": 3.543654496330569,
+    "iq": 9.746695253581683,
+    "electrical_angle_deg": 92.0
+   }
+  },
+  {
+   "label": "fig11_7_03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 9.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(98.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-22.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-142.0+70.02))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_7",
+    "id": 3.543654496330569,
+    "iq": 9.746695253581683,
+    "electrical_angle_deg": 98.0
+   }
+  },
+  {
+   "label": "fig11_7_04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(104.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-16.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-136.0+70.02))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_7",
+    "id": 3.543654496330569,
+    "iq": 9.746695253581683,
+    "electrical_angle_deg": 104.0
+   }
+  },
+  {
+   "label": "fig11_7_05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 15.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(110.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-10.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-130.0+70.02))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_7",
+    "id": 3.543654496330569,
+    "iq": 9.746695253581683,
+    "electrical_angle_deg": 110.0
+   }
+  },
+  {
+   "label": "fig11_7_06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 18.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(116.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-4.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-124.0+70.02))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_7",
+    "id": 3.543654496330569,
+    "iq": 9.746695253581683,
+    "electrical_angle_deg": 116.0
+   }
+  },
+  {
+   "label": "fig11_7_07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 21.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(122.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(2.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-118.0+70.02))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_7",
+    "id": 3.543654496330569,
+    "iq": 9.746695253581683,
+    "electrical_angle_deg": 122.0
+   }
+  },
+  {
+   "label": "fig11_7_08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 24.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(128.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(8.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-112.0+70.02))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_7",
+    "id": 3.543654496330569,
+    "iq": 9.746695253581683,
+    "electrical_angle_deg": 128.0
+   }
+  },
+  {
+   "label": "fig11_7_09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 27.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(134.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(14.0+70.02))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=rated_current_A*current_peak_factor/parallel_paths*fig11_current_fraction*cos(radians(-106.0+70.02))"
+    }
+   ],
+   "dq": {
+    "point": "fig11_7",
+    "id": 3.543654496330569,
+    "iq": 9.746695253581683,
+    "electrical_angle_deg": 134.0
+   }
+  }
+ ],
+ "variants": [
+  {
+   "id": "method-1",
+   "parameters": {
+    "barrier_angle1_deg": 6.43,
+    "barrier_angle2_deg": 19.28,
+    "barrier_angle3_deg": 32.14
+   },
+   "purpose": "Table 3, method 1 (equally spaced rotor slots, Equation (1)): only the barrier angles differ."
+  },
+  {
+   "id": "method-2",
+   "parameters": {
+    "barrier_angle1_deg": 5.62,
+    "barrier_angle2_deg": 16.87,
+    "barrier_angle3_deg": 28.12
+   },
+   "purpose": "Table 3, method 2 (Equation (2))."
+  },
+  {
+   "id": "method-3",
+   "parameters": {
+    "barrier_angle1_deg": 3.75,
+    "barrier_angle2_deg": 11.25,
+    "barrier_angle3_deg": 18.75
+   },
+   "purpose": "Table 3, method 3 (Equation (3))."
+  },
+  {
+   "id": "prototype",
+   "parameters": {
+    "barrier_angle1_deg": 7.5,
+    "barrier_angle2_deg": 20.5,
+    "barrier_angle3_deg": 33.5,
+    "barrier_end1_mm": 3.0,
+    "barrier_end2_mm": 2.0,
+    "barrier_end3_mm": 1.5
+   },
+   "purpose": "The prototype of Table A1 (angles 7.5, 20.5 and 33.5 degrees); its barrier ends 'equal to half of the flux barrier width' (p. 7), read as half as wide as each barrier."
+  }
+ ],
+ "measurements": [
+  {
+   "id": "phA",
+   "op": "circuit",
+   "name": "A"
+  },
+  {
+   "id": "phB",
+   "op": "circuit",
+   "name": "B"
+  },
+  {
+   "id": "phC",
+   "op": "circuit",
+   "name": "C"
+  },
+  {
+   "id": "gaptorque",
+   "op": "gap_integral",
+   "boundary": "AGE",
+   "type": 0
+  }
+ ],
+ "metrics": [
+  {
+   "name": "flux_A_Wb",
+   "value": [
+    "phA",
+    2
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "flux_B_Wb",
+   "value": [
+    "phB",
+    2
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "flux_C_Wb",
+   "value": [
+    "phC",
+    2
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "torque_Nm",
+   "value": [
+    "gaptorque",
+    0
+   ],
+   "unit": "N*m"
+  }
+ ],
+ "targets": [],
+ "assessors": [
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "rated",
+   "quantity": "stress_torque",
+   "value": 15.63,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Torque, N.m 15.63",
+   "location": "Table 3, p. 8",
+   "note": "Average torque at 22 A and 56.5 degrees over 30 rotor positions spanning 30 mechanical degrees, from the sliding band."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "rated",
+   "quantity": "torque",
+   "value": 15.63,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "Torque, N.m 15.63",
+   "location": "Table 3, p. 8",
+   "note": "The same from the phase flux linkages, 3/2 p (psi_d iq - psi_q id), a comparator."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "rated",
+   "quantity": "stress_torque",
+   "value": 15.04,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Torque, N.m 15.63 15.04",
+   "location": "Table 3, p. 8",
+   "note": "Average torque at 22 A and 56.5 degrees over 30 rotor positions spanning 30 mechanical degrees, from the sliding band.",
+   "variant": "method-1"
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "rated",
+   "quantity": "torque",
+   "value": 15.04,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "Torque, N.m 15.63 15.04",
+   "location": "Table 3, p. 8",
+   "note": "The same from the phase flux linkages, 3/2 p (psi_d iq - psi_q id), a comparator.",
+   "variant": "method-1"
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "rated",
+   "quantity": "stress_torque",
+   "value": 15.41,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Torque, N.m 15.63 15.04 15.41",
+   "location": "Table 3, p. 8",
+   "note": "Average torque at 22 A and 56.5 degrees over 30 rotor positions spanning 30 mechanical degrees, from the sliding band.",
+   "variant": "method-2"
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "rated",
+   "quantity": "torque",
+   "value": 15.41,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "Torque, N.m 15.63 15.04 15.41",
+   "location": "Table 3, p. 8",
+   "note": "The same from the phase flux linkages, 3/2 p (psi_d iq - psi_q id), a comparator.",
+   "variant": "method-2"
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "rated",
+   "quantity": "stress_torque",
+   "value": 14.5,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Torque, N.m 15.63 15.04 15.41 14.50",
+   "location": "Table 3, p. 8",
+   "note": "Average torque at 22 A and 56.5 degrees over 30 rotor positions spanning 30 mechanical degrees, from the sliding band.",
+   "variant": "method-3"
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "rated",
+   "quantity": "torque",
+   "value": 14.5,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "Torque, N.m 15.63 15.04 15.41 14.50",
+   "location": "Table 3, p. 8",
+   "note": "The same from the phase flux linkages, 3/2 p (psi_d iq - psi_q id), a comparator.",
+   "variant": "method-3"
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "fig11_0",
+   "quantity": "stress_torque",
+   "value": 5.54,
+   "value_kind": "digitized",
+   "absolute_tolerance": 0.15,
+   "absolute_digitization_uncertainty": 0.06,
+   "used_for_acceptance": true,
+   "variant": "prototype",
+   "quote": "Computed and measured output torque of SynRM for different current angles.",
+   "location": "Fig. 11, p. 12, simulated point at 25.85 degrees",
+   "note": "Simulated (red) marker centroid, frame-calibrated at 600 dpi (25.4 px per degree, 116.3 px per N m): +-0.03 N m from the marker, +-0.04 N m from the current angle's +-0.2 degrees; tolerance 0.15 N m. Average over 10 positions across 30 mechanical degrees at 2/3 of 22 A."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "fig11_1",
+   "quantity": "stress_torque",
+   "value": 6.75,
+   "value_kind": "digitized",
+   "absolute_tolerance": 0.15,
+   "absolute_digitization_uncertainty": 0.06,
+   "used_for_acceptance": true,
+   "variant": "prototype",
+   "quote": "Computed and measured output torque of SynRM for different current angles.",
+   "location": "Fig. 11, p. 12, simulated point at 32.22 degrees",
+   "note": "Simulated (red) marker centroid, frame-calibrated at 600 dpi (25.4 px per degree, 116.3 px per N m): +-0.03 N m from the marker, +-0.04 N m from the current angle's +-0.2 degrees; tolerance 0.15 N m. Average over 10 positions across 30 mechanical degrees at 2/3 of 22 A."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "fig11_2",
+   "quantity": "stress_torque",
+   "value": 7.72,
+   "value_kind": "digitized",
+   "absolute_tolerance": 0.15,
+   "absolute_digitization_uncertainty": 0.06,
+   "used_for_acceptance": true,
+   "variant": "prototype",
+   "quote": "Computed and measured output torque of SynRM for different current angles.",
+   "location": "Fig. 11, p. 12, simulated point at 38.45 degrees",
+   "note": "Simulated (red) marker centroid, frame-calibrated at 600 dpi (25.4 px per degree, 116.3 px per N m): +-0.03 N m from the marker, +-0.04 N m from the current angle's +-0.2 degrees; tolerance 0.15 N m. Average over 10 positions across 30 mechanical degrees at 2/3 of 22 A."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "fig11_3",
+   "quantity": "stress_torque",
+   "value": 8.35,
+   "value_kind": "digitized",
+   "absolute_tolerance": 0.15,
+   "absolute_digitization_uncertainty": 0.06,
+   "used_for_acceptance": true,
+   "variant": "prototype",
+   "quote": "Computed and measured output torque of SynRM for different current angles.",
+   "location": "Fig. 11, p. 12, simulated point at 44.81 degrees",
+   "note": "Simulated (red) marker centroid, frame-calibrated at 600 dpi (25.4 px per degree, 116.3 px per N m): +-0.03 N m from the marker, +-0.04 N m from the current angle's +-0.2 degrees; tolerance 0.15 N m. Average over 10 positions across 30 mechanical degrees at 2/3 of 22 A."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "fig11_4",
+   "quantity": "stress_torque",
+   "value": 8.52,
+   "value_kind": "digitized",
+   "absolute_tolerance": 0.15,
+   "absolute_digitization_uncertainty": 0.06,
+   "used_for_acceptance": true,
+   "variant": "prototype",
+   "quote": "Computed and measured output torque of SynRM for different current angles.",
+   "location": "Fig. 11, p. 12, simulated point at 51.06 degrees",
+   "note": "Simulated (red) marker centroid, frame-calibrated at 600 dpi (25.4 px per degree, 116.3 px per N m): +-0.03 N m from the marker, +-0.04 N m from the current angle's +-0.2 degrees; tolerance 0.15 N m. Average over 10 positions across 30 mechanical degrees at 2/3 of 22 A."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "fig11_5",
+   "quantity": "stress_torque",
+   "value": 8.14,
+   "value_kind": "digitized",
+   "absolute_tolerance": 0.15,
+   "absolute_digitization_uncertainty": 0.06,
+   "used_for_acceptance": true,
+   "variant": "prototype",
+   "quote": "Computed and measured output torque of SynRM for different current angles.",
+   "location": "Fig. 11, p. 12, simulated point at 57.42 degrees",
+   "note": "Simulated (red) marker centroid, frame-calibrated at 600 dpi (25.4 px per degree, 116.3 px per N m): +-0.03 N m from the marker, +-0.04 N m from the current angle's +-0.2 degrees; tolerance 0.15 N m. Average over 10 positions across 30 mechanical degrees at 2/3 of 22 A."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "fig11_6",
+   "quantity": "stress_torque",
+   "value": 7.25,
+   "value_kind": "digitized",
+   "absolute_tolerance": 0.15,
+   "absolute_digitization_uncertainty": 0.06,
+   "used_for_acceptance": true,
+   "variant": "prototype",
+   "quote": "Computed and measured output torque of SynRM for different current angles.",
+   "location": "Fig. 11, p. 12, simulated point at 63.65 degrees",
+   "note": "Simulated (red) marker centroid, frame-calibrated at 600 dpi (25.4 px per degree, 116.3 px per N m): +-0.03 N m from the marker, +-0.04 N m from the current angle's +-0.2 degrees; tolerance 0.15 N m. Average over 10 positions across 30 mechanical degrees at 2/3 of 22 A."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 2,
+   "torque_measurement": "gaptorque",
+   "sequence_direction": 1,
+   "point": "fig11_7",
+   "quantity": "stress_torque",
+   "value": 5.89,
+   "value_kind": "digitized",
+   "absolute_tolerance": 0.15,
+   "absolute_digitization_uncertainty": 0.06,
+   "used_for_acceptance": true,
+   "variant": "prototype",
+   "quote": "Computed and measured output torque of SynRM for different current angles.",
+   "location": "Fig. 11, p. 12, simulated point at 70.02 degrees",
+   "note": "Simulated (red) marker centroid, frame-calibrated at 600 dpi (25.4 px per degree, 116.3 px per N m): +-0.03 N m from the marker, +-0.04 N m from the current angle's +-0.2 degrees; tolerance 0.15 N m. Average over 10 positions across 30 mechanical degrees at 2/3 of 22 A."
+  }
+ ],
+ "engine": {
+  "solves_per_process": 40
+ },
+ "controls": [
+  {
+   "id": "mesh-0p7",
+   "level": "article",
+   "mesh_scale": 0.7,
+   "purpose": "Every element size and arc segment at 0.7 times."
+  },
+  {
+   "id": "shoe-depth-1p2",
+   "level": "article",
+   "parameters": {
+    "shoe_depth_mm": 1.2
+   },
+   "purpose": "Deeper tooth tips."
+  },
+  {
+   "id": "current-amplitude-22",
+   "level": "article",
+   "parameters": {
+    "current_peak_factor": 1.0
+   },
+   "purpose": "22 A read as the amplitude."
+  },
+  {
+   "id": "barrier-ends-full-width",
+   "level": "article",
+   "parameters": {
+    "barrier_end1_mm": 6,
+    "barrier_end2_mm": 4,
+    "barrier_end3_mm": 3
+   },
+   "purpose": "Barrier ends as wide as their barriers (no taper), as Fig. 2 draws them."
+  },
+  {
+   "id": "rib-0p8",
+   "level": "article",
+   "parameters": {
+    "rib_mm": 0.8
+   },
+   "purpose": "Thicker tangential ribs."
+  },
+  {
+   "id": "steel-m45",
+   "level": "article",
+   "parameters": {
+    "steel_grade": "M-45 18 mil"
+   },
+   "purpose": "A lower silicon-steel grade."
+  },
+  {
+   "id": "shaft-steel",
+   "level": "article",
+   "parameters": {
+    "shaft_material": "Steel"
+   },
+   "purpose": "A magnetic shaft of the rotor steel."
+  }
+ ],
+ "coverage": {
+  "scope": "core",
+  "reproduced": "The average torque at rated current of the three-barrier rotors of Table 3 (the proposed and three literature methods) and the prototype's simulated torque against current angle at 2/3 of rated current (Fig. 11).",
+  "not_reproduced": "Torque ripple (mesh-noise dominated; the findings report the model's), the sensitivity maps (Figs. 4-7), the four- and five-barrier rotors (Tables 4-5, whose barrier widths and positions are not given), the inductances (Fig. 10, which include end-winding inductance), the optimized rotor and the efficiencies."
+ },
+ "geometry_checks": [
+  {
+   "quantity": "air gap from the diameters (mm)",
+   "paper_value": 0.3,
+   "model_value": 0.3,
+   "location": "Table A1, p. 13"
+  },
+  {
+   "quantity": "slot bottom radius from the slot area (mm)",
+   "paper_value": null,
+   "model_value": 72.37,
+   "location": "Section 3, p. 5",
+   "note": "The slot is then 7.47 mm wide at its bottom; Fig. A1's 7.17 mm is measured near the bottom's rounded corners."
+  },
+  {
+   "quantity": "phase-A axis, sequence and the electrical angle at the first rotor position",
+   "paper_value": null,
+   "model_value": {
+    "phase_A_axis_deg": 140.0,
+    "sequence": 1,
+    "electrical_angle_deg": 80.0
+   },
+   "location": "the model's winding and the rotor's d-axis at zero"
+  }
+ ],
+ "findings": [],
+ "retrospective": []
+}

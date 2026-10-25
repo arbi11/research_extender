@@ -748,6 +748,42 @@ class RingSectorTests(unittest.TestCase):
                 self.ring(sectors, **extra)
 
 
+class FluxBarrierRotorTests(unittest.TestCase):
+    problem = {"physics": "magnetics", "units": "millimeters", "type": "planar", "frequency": 0, "depth": 1}
+    barriers = [[23.5, 25, 6, 7.5, 3], [36, 19, 4, 20.5, 2], [46, 12, 3, 33.5, 1.5]]
+
+    def rotor(self, **overrides):
+        step = dict({"use": "flux_barrier_rotor", "pole_count": 4, "outer_radius": 54.7, "rib": 0.5, "barriers": self.barriers}, **overrides)
+        steps = [{"use": "material", "name": "Air"}, {"use": "material", "name": "Iron"}, step,
+                 {"use": "circle", "radius": 54.7}, {"use": "circle", "radius": 17.5},
+                 {"use": "block_label", "at": [20, 0], "material": "Iron"}, {"use": "block_label", "at": [0, 0], "material": "Air"}]
+        return assemble({"problem": self.problem, "steps": steps}, {})[0]
+
+    def test_barriers_close_clear_the_surface_by_the_rib_and_mirror_about_the_q_axis(self):
+        model = self.rotor()
+        self.assertEqual((len(model["segments"]), len(model["arcs"]), len(model["labels"])), (72, 28, 14))
+        self.assertEqual(check_regions(model), [])
+        barrier_nodes = [n for n in model["nodes"] if 17.6 < math.hypot(n["x"], n["y"]) < 54.6]
+        # The rounded ends reach exactly rib below the surface; nothing else comes closer.
+        ends = []
+        for arc in model["arcs"]:
+            if arc["angle"] == 180 and arc["n0"] != arc["n1"]:
+                a, b = model["nodes"][arc["n0"]], model["nodes"][arc["n1"]]
+                info = arc_geometry((a["x"], a["y"]), (b["x"], b["y"]), 180)
+                ends.append(math.hypot(*info["center"]) + info["radius"] if math.hypot(*info["center"]) > 30 else 0)
+        self.assertAlmostEqual(max(ends), 54.2, places=9)
+        # Mirror symmetry of the first pole about its q-axis (45 degrees): (x, y) -> (y, x).
+        first = {(round(n["x"], 9), round(n["y"], 9)) for n in barrier_nodes if n["x"] > 0 and n["y"] > 0}
+        self.assertEqual(first, {(y, x) for x, y in first})
+
+    def test_one_pole_and_refusals(self):
+        self.assertEqual(len([l for l in self.rotor(poles=1)["labels"] if l["material"] == "Air"]), 4)
+        for overrides in ({"barriers": [[23.5, 25, 6, 50, 3]]}, {"barriers": [[23.5, 25, 6, 7.5, 3], [25, 19, 4, 20.5, 2]]},
+                          {"rib": 0}, {"pole_count": 3}, {"barriers": [[23.5, 25, 6, 7.5]]}):
+            with self.assertRaises(ValueError):
+                self.rotor(**overrides)
+
+
 class AssessorMetricTests(unittest.TestCase):
     def test_names_are_those_the_assessors_report(self):
         self.assertEqual(assessor_metric({"kind": "waveform_statistic", "metric": "flux", "statistic": "mean"}), "flux:mean")

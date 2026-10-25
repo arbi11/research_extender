@@ -1027,6 +1027,80 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0,
             m.label(*point(middle, centre), owner[2], mesh=mesh, magdir=(owner[3] or 0) % 360, group=group)
 
 
+def flux_barrier_rotor(m, pole_count, outer_radius, barriers, rib, first_q_angle=None, poles=None, max_segment=1, material="Air",
+                       mesh=None, group=0):
+    """Flux barriers of a synchronous reluctance rotor, each symmetric about its pole's q-axis.
+
+    Each barrier is [p, length, width, end_angle, end_width]: a middle section
+    perpendicular to the q-axis whose edge nearer the axis lies ``p`` from it,
+    ``length`` long on its centre line and ``width`` wide, and two legs from the
+    middle section's ends to end points ``end_angle`` degrees from the pole's two
+    d-axes. The legs taper from ``width`` at the bends to ``end_width`` at the
+    ends, which are semicircles of that diameter clearing the rotor surface by
+    ``rib`` (the tangential rib). The q-axis of the first pole is at
+    ``first_q_angle`` (half a pole pitch by default, with a d-axis at zero); the
+    barriers are drawn for ``poles`` poles (all by default) and labelled with
+    ``material``. The rotor surface, core and shaft are drawn by other components.
+    """
+    if pole_count < 2 or pole_count % 2 or not 0 < rib < outer_radius:
+        raise ValueError("A barrier rotor needs an even pole count and a rib thinner than the rotor")
+    span = 360 / pole_count
+    first = span / 2 if first_q_angle is None else first_q_angle
+    count = pole_count if poles is None else poles
+    if not (_finite(count) and float(count).is_integer() and 1 <= count <= pole_count):
+        raise ValueError("Draw between one and all poles")
+    shapes = []
+    previous_outer = 0
+    for barrier in barriers:
+        if len(barrier) != 5 or not all(_finite(v) and v > 0 for v in barrier):
+            raise ValueError("Each barrier is [p, length, width, end_angle, end_width], all positive")
+        p, length, width, end_angle, end_width = barrier
+        if p < previous_outer or end_angle >= span / 2 or end_width > 2 * width:
+            raise ValueError("Barriers must lie outside one another, end inside the pole and taper sensibly")
+        previous_outer = p + width
+        half = math.radians(span / 2 - end_angle)
+        reach = outer_radius - rib - end_width / 2
+        outline = []
+        for side in (-1, 1):
+            # Local frame: the q-axis along +x, this leg on the side of y = side.
+            bend = (p + width / 2, side * length / 2)
+            end = (reach * math.cos(half), side * reach * math.sin(half))
+            dx, dy = end[0] - bend[0], end[1] - bend[1]
+            size = math.hypot(dx, dy)
+            if size <= 0 or end[0] <= bend[0] - width:
+                raise ValueError("A barrier's end must lie beyond its bend")
+            d = (dx / size, dy / size)
+            n = (-d[1], d[0])
+            corners = {}
+            for s in (-1, 1):
+                a = (bend[0] + s * n[0] * width / 2, bend[1] + s * n[1] * width / 2)
+                b = (end[0] + s * n[0] * end_width / 2, end[1] + s * n[1] * end_width / 2)
+                # Where this edge of the leg meets the middle section's near (x = p) or far (x = p + width) edge.
+                line_x = p if a[0] < bend[0] else p + width
+                if abs(b[0] - a[0]) < 1e-12:
+                    raise ValueError("A barrier leg runs parallel to its middle section")
+                t = (line_x - a[0]) / (b[0] - a[0])
+                corners[s] = ((line_x, a[1] + t * (b[1] - a[1])), b, line_x == p)
+            outline.append((side, end, n, corners))
+        shapes.append((p, width, end_width, outline))
+    for k in range(int(count)):
+        q = first + k * span
+        place = lambda point: _rotated(point, q)
+        for p, width, end_width, outline in shapes:
+            near, far = {}, {}
+            for side, end, n, corners in outline:
+                for s, (corner, tip, is_near) in corners.items():
+                    (near if is_near else far)[side] = (corner, tip)
+                    m.segment(place(corner), place(tip), group=group)
+                # The rounded end: counterclockwise from the edge at -n to the edge at +n passes outward.
+                minus = (end[0] - n[0] * end_width / 2, end[1] - n[1] * end_width / 2)
+                plus = (end[0] + n[0] * end_width / 2, end[1] + n[1] * end_width / 2)
+                m.arc(place(minus), place(plus), 180, max_segment, group=group)
+            m.segment(place(near[-1][0]), place(near[1][0]), group=group)
+            m.segment(place(far[-1][0]), place(far[1][0]), group=group)
+            m.label(*place((p + width / 2, 0)), material, mesh=mesh, group=group)
+
+
 def entity_pattern(m, entities, copies=1, angle_step=0, first_angle=0, snap=1e-9, max_segment=1, max_segment_bands=None,
                    min_segment_length=0, group=0):
     """Contours given as data (from a drawing a paper supplies), repeated around the axis as a polar array.
@@ -1125,7 +1199,7 @@ IMPLEMENTATIONS = {function.__name__: function for function in (
     fixed_potential_boundary, mixed_boundary, convection_boundary, iabc_open_boundary, axisymmetric_coil_section,
     bar_magnet, air_gap_element, kelvin_periodic_exterior, segment_boundary, fixed_point_potential, magnet_array,
     slotted_stator, trapezoidal_slot_stator, tooth_coil_winding, surface_magnet_rotor, salient_poles, salient_pole_winding,
-    belt_winding, entity_pattern, sector_air_gap, arc_boundary, ring_sectors)}
+    belt_winding, entity_pattern, sector_air_gap, arc_boundary, ring_sectors, flux_barrier_rotor)}
 
 
 def _finite(value):

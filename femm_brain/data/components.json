@@ -2951,6 +2951,115 @@
     "The annulus circles are drawn by the component; do not draw circles at its radii as well.",
     "Radial magnetization uses FEMM's theta and theta+180 direction functions, so it follows each element's angle."
    ]
+  },
+  {
+   "id": "flux_barrier_rotor",
+   "layer": 2,
+   "title": "Synchronous reluctance flux barriers",
+   "description": "Flux barriers of a synchronous reluctance (or PM-assisted) rotor, each symmetric about its pole's q-axis: a middle section perpendicular to the q-axis and two legs to rounded ends near the rotor surface, set by position along the q-axis, middle length, width, end angle from the d-axis, end width (the leg tapers to it) and the tangential rib between the end and the rotor surface. One label per barrier.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "pole_count",
+     "type": "integer",
+     "description": "Rotor poles",
+     "required": true,
+     "minimum": 2
+    },
+    {
+     "name": "outer_radius",
+     "type": "number",
+     "description": "Rotor outer radius",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "barriers",
+     "type": "list",
+     "description": "Barriers as [p, length, width, end_angle, end_width]: distance from the axis along the q-axis to the middle section's near edge, the middle section's centre-line length, the width, the end point's angle from the d-axis in degrees and the end width; innermost first",
+     "required": true
+    },
+    {
+     "name": "rib",
+     "type": "number",
+     "description": "Tangential rib between each barrier end and the rotor surface",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "first_q_angle",
+     "type": "number",
+     "description": "Angle of the first pole's q-axis",
+     "required": false,
+     "unit": "degrees"
+    },
+    {
+     "name": "poles",
+     "type": "integer",
+     "description": "How many poles to draw from the first (all by default)",
+     "required": false,
+     "minimum": 1
+    },
+    {
+     "name": "max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of the rounded ends",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
+    },
+    {
+     "name": "material",
+     "type": "string",
+     "description": "Material of the barriers",
+     "required": false,
+     "default": "Air"
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Element size in the barriers",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the barrier contours and labels (the rotor's)",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "addarc",
+    "addblocklabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "segment",
+    "arc",
+    "block_label"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": [
+    "Barriers lie outside one another (each p at least the previous p plus width), end inside their pole and keep their ends beyond their bends.",
+    "The rotor surface, core label and shaft are drawn separately; the rib must leave the barrier ends inside the rotor."
+   ]
   }
  ]
 }
