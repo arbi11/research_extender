@@ -142,8 +142,30 @@ rebuild {totals["level_passes"]["rebuild"]}, article {totals["level_passes"]["ar
 """
 
 
+def audit(record, registry_path=DATA / "verification" / "reviewed_reproduction_failures.json"):
+    """Accept only reviewed failures; flag new failures and reviewed ones that now pass."""
+    registry = json.loads(Path(registry_path).read_text())["failures"]
+    reviewed = {(f["case_id"], level, metric) for f in registry for level in f["levels"] for metric in f["metrics"]}
+    observed = set()
+    for case in record["cases"]:
+        for level, entry in case.get("levels", {}).items():
+            if entry["status"] != "failed":
+                continue
+            failed = [t["metric"] or t.get("assessor") for t in entry.get("targets", []) if t["acceptance"] and t["status"] != "passed"]
+            if entry.get("build") == "failed" or entry.get("errors") or not failed:
+                failed.append("build-or-execution")
+            observed |= {(case["case_id"], level, metric) for metric in failed}
+    unreviewed = sorted(observed - reviewed)
+    resolved = sorted(reviewed - observed)
+    return {"status": "passed" if not unreviewed and not resolved else "failed",
+            "accepted_reviewed_failures": sorted(observed & reviewed), "unreviewed_failures": unreviewed,
+            "reviewed_failures_now_passing": resolved,
+            "note": "A passing audit means every failure is a reviewed, recorded finding, not that all published targets passed."}
+
+
 def write(results, output=RECORD, html_output=None):
     record = collect(results)
+    record["audit"] = audit(record)
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(record, indent=1) + "\n")

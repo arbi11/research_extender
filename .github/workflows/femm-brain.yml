@@ -100,7 +100,10 @@ jobs:
       # container that opens them has no network and a read-only cache mount.
       - name: Restore the official model files that reproduction cases open
         run: python3 -m femm_brain restore-cache --for-reproductions --cache "$PWD/femm-cache"
+      # The strict command keeps a nonzero exit for any failed frozen target. The
+      # mandatory audit below accepts only reviewed, recorded failures.
       - name: Reproduce official examples from original files, stored data and article text
+        continue-on-error: true
         run: |
           mkdir -p reproductions
           docker run --rm --network none --read-only --memory=2g --cpus=2 \
@@ -109,8 +112,7 @@ jobs:
             -e HOME=/tmp -e PYTHONDONTWRITEBYTECODE=1 -e FEMM_BRAIN_CACHE=/cache -e FEMM_LUA=/opt/femm/bin/femm-lua \
             -e FEMM_DIR=/opt/femm/bin -e QT_QPA_PLATFORM=offscreen -e FEMM_MESH_EXPORT=1 \
             femm-brain-native:ci python3 -m femm_brain reproduce --all --engine native --output /reports/cases
-      - name: Record reproduction evidence and audit page
-        if: always()
+      - name: Audit reproduction failures against the reviewed registry
         run: python3 -m femm_brain reproduction-report --results reproductions/cases --output reproductions/official_reproductions.json --html reproductions/index.html
       - uses: actions/upload-artifact@v4
         if: always()

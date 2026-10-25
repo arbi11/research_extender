@@ -206,6 +206,24 @@ class ReferenceModelTests(unittest.TestCase):
             self.assertEqual(run_assessor(assessor, case, {}, dict(metrics), model)["status"], "failed")
 
 
+class AuditTests(unittest.TestCase):
+    def record(self, case_id, metric, status):
+        return {"cases": [{"case_id": case_id, "levels": {"original": {"status": status, "build": "passed", "errors": {},
+                "targets": [{"metric": metric, "status": status, "acceptance": True}]}}}]}
+
+    def test_only_reviewed_failures_pass_and_resolved_ones_must_be_removed(self):
+        from femm_brain.reproduction_report import audit
+        with tempfile.TemporaryDirectory() as temp:
+            registry = Path(temp) / "registry.json"
+            registry.write_text(json.dumps({"failures": [{"case_id": "a", "levels": ["original"], "metrics": ["x"]}]}))
+            self.assertEqual(audit(self.record("a", "x", "failed"), registry)["status"], "passed")
+            new = audit(self.record("b", "y", "failed"), registry)
+            self.assertEqual(new["unreviewed_failures"], [("b", "original", "y")])
+            self.assertEqual(new["status"], "failed")
+            fixed = audit(self.record("a", "x", "passed"), registry)
+            self.assertEqual((fixed["status"], fixed["reviewed_failures_now_passing"]), ("failed", [("a", "original", "x")]))
+
+
 class SourceChangeTests(unittest.TestCase):
     def test_refreshed_markup_is_not_a_change_but_edited_text_is(self):
         import shutil

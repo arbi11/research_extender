@@ -118,8 +118,8 @@ def main(argv=None):
     if args.command == "reproduction-report":
         from .reproduction_report import RECORD, write
         record = write(args.results, args.output or RECORD, args.html)
-        print(json.dumps(record["totals"], indent=2))
-        return 0
+        print(json.dumps({"totals": record["totals"], "audit": record["audit"]}, indent=2))
+        return 0 if record["audit"]["status"] == "passed" else 1
     graph = load_graph()
     if args.command == "validate":
         print(json.dumps(graph["validation"], indent=2))
