@@ -37,15 +37,29 @@ def load_index():
     return json.loads((DATA / "papers.json").read_text())
 
 
-def source_text(case, cache=PAPER_CACHE):
-    """The cached text of the case's source PDF (extracted text plus OCR of its pages, where tables
-    are images), or None when it is not on this machine."""
-    sha = (case.get("source") or {}).get("pdf_sha256")
+def _cached_text(sha, cache):
     if not sha:
         return None
     parts = [(cache / sha / name) for name in ("text.txt", "ocr.txt")]
     texts = [path.read_text(errors="replace") for path in parts if path.is_file()]
     return "\n".join(texts) if texts else None
+
+
+def source_text(case, cache=PAPER_CACHE):
+    """The cached text of the case's source PDF (extracted text plus OCR of its pages, where tables
+    are images), or None when it is not on this machine."""
+    return _cached_text((case.get("source") or {}).get("pdf_sha256"), cache)
+
+
+def source_texts(case, cache=PAPER_CACHE):
+    """{source id: squashed cached text or None}: the main source as "main", and each related source
+    that records an id and a cached PDF, so a quote can name the source it comes from."""
+    source = case.get("source") or {}
+    texts = {"main": source_text(case, cache)}
+    for related in source.get("related", []):
+        if related.get("id"):
+            texts[related["id"]] = _cached_text(related.get("pdf_sha256"), cache)
+    return {key: (_squash(text) if text else None) for key, text in texts.items()}
 
 
 def _squash(text):
@@ -76,10 +90,19 @@ def check(case, cache=PAPER_CACHE, build=True):
     frozen = case["status"] in FROZEN
     if case["set"] == "held_out" and frozen and not case.get("skill_version"):
         problems.append("a held-out case records the skill_version it ran with")
-    text = source_text(case, cache)
-    text = _squash(text) if text else None
+    texts = source_texts(case, cache)
+    text = texts["main"]
     if text is None and frozen:
         notes.append("source text not cached here; quotes were not checked")
+
+    def quote_problem(item):
+        """Why a quote cannot be confirmed, or None. A quote names its source with "source" (default: the main one)."""
+        name = item.get("source", "main")
+        if name not in texts:
+            return f"names an unknown source {name}"
+        if texts[name] is not None and not _found(item["quote"], texts[name]):
+            return "quote not found verbatim in the source text" + ("" if name == "main" else f" ({name})")
+        return None
 
     parameters = (case.get("article") or {}).get("parameters", {})
     values = {name: item.get("value") for name, item in parameters.items()}
@@ -113,8 +136,8 @@ def check(case, cache=PAPER_CACHE, build=True):
             problems.append(f"parameter {name}: a numerical choice needs a mesh control in the case")
         elif kind == "figure" and not (item.get("discrete") or item["uncertainty"] > 0):
             problems.append(f"parameter {name}: a figure reading needs a positive uncertainty, unless it is discrete (a direction or a count)")
-        elif kind == "quoted" and text is not None and not _found(item["quote"], text):
-            problems.append(f"parameter {name}: quote not found verbatim in the source text")
+        elif kind == "quoted" and quote_problem(item):
+            problems.append(f"parameter {name}: {quote_problem(item)}")
     for control in controls.values():
         if control.get("level") != "article":
             problems.append(f"control {control['id']}: paper controls vary the article level")
@@ -155,8 +178,8 @@ def check(case, cache=PAPER_CACHE, build=True):
                     problems.append(f"{where}: a digitized acceptance target needs a stated uncertainty and a tolerance of at least twice it")
             if target["kind"] in ("measured", "3d_fea") and not target.get("allowance"):
                 problems.append(f"{where}: a {target['kind']} acceptance target needs an argued allowance")
-        if text is not None and not _found(target["quote"], text):
-            problems.append(f"{where}: quote not found verbatim in the source text")
+        if quote_problem(target):
+            problems.append(f"{where}: {quote_problem(target)}")
     if frozen:
         if not (acceptance or any(a.get("kind") == "phase_linkage" for a in case.get("assessors", []))):
             problems.append("a frozen case needs at least one acceptance target or assessor")

@@ -119,6 +119,16 @@ def _lua(value):
     return format(_number(value), ".17g")
 
 
+def _refers(value):
+    if isinstance(value, str):
+        return value.startswith(("=", "$"))
+    return isinstance(value, list) and any(_refers(item) for item in value)
+
+
+def _finite_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
 def _call(function, *values):
     return function + "(" + ",".join(_lua(v) for v in values) + ")"
 
@@ -582,11 +592,45 @@ def _selection_lines(case, physics, selection, labels):
     return [_call(post + "_selectblock", x, y) for x, y in points]
 
 
+def circle_points(m):
+    """The points of a circle_values measurement: ``count`` points evenly spaced counterclockwise from ``start_angle``."""
+    count, radius = int(m["count"]), m["radius"]
+    if count < 3 or not radius > 0:
+        raise ValueError("A circle measurement needs at least three points and a positive radius")
+    cx, cy = m.get("center", (0, 0))
+    start = math.radians(m.get("start_angle", 0))
+    return [(cx + radius * math.cos(start + 2 * math.pi * k / count), cy + radius * math.sin(start + 2 * math.pi * k / count))
+            for k in range(count)]
+
+
+def _point_fields(physics, m):
+    fields = POINT_FIELDS[physics]
+    unknown = set(m["fields"]) - set(fields)
+    if unknown:
+        raise ValueError("Unknown point fields: " + ", ".join(sorted(unknown)))
+    return fields
+
+
+def circle_tables(case, physics):
+    """Lua tables holding each circle measurement's coordinates, defined once before the steps."""
+    lines = []
+    for index, m in enumerate(case.get("measurements", [])):
+        if m["op"] == "circle_values":
+            _point_fields(physics, m)
+            points = circle_points(m)
+            lines.append(f"circle_x_{index}={{" + ",".join(_lua(x) for x, _ in points) + "}")
+            lines.append(f"circle_y_{index}={{" + ",".join(_lua(y) for _, y in points) + "}")
+    return lines
+
+
 def measurement_lines(case, physics, labels, step):
     post = PHYSICS[physics]["post"]
     lines = []
-    for m in case["measurements"]:
+    for position, m in enumerate(case["measurements"]):
         ident, op = m["id"], m["op"]
+        # A measurement may be limited to some steps (a field table wanted at one operating point only).
+        if m.get("steps") is not None and step not in m["steps"]:
+            continue
         results = "v1,v2,v3"
         if op == "circuit":
             lines.append(results + "=" + _call("mo_getcircuitproperties", m["name"]))
@@ -601,14 +645,19 @@ def measurement_lines(case, physics, labels, step):
         elif op == "gap_integral":
             lines.append(results + "=" + _call("mo_gapintegral", m["boundary"], m["type"]))
         elif op == "point_values":
-            fields = POINT_FIELDS[physics]
-            unknown = set(m["fields"]) - set(fields)
-            if unknown:
-                raise ValueError("Unknown point fields: " + ", ".join(sorted(unknown)))
+            fields = _point_fields(physics, m)
             names = ",".join("p" + str(i) for i in range(len(fields)))
             for index, (x, y) in enumerate(m["points"]):
                 lines.append(names + "=" + _call(post + "_getpointvalues", x, y))
                 lines += [f'emit("{step}","{ident}:{field}",{index},p{fields.index(field)})' for field in m["fields"]]
+            continue
+        elif op == "circle_values":
+            # Evenly spaced samples on a circle, read in a loop over coordinate tables defined before the steps.
+            fields = _point_fields(physics, m)
+            names = ",".join("p" + str(i) for i in range(len(fields)))
+            emits = " ".join(f'emit("{step}","{ident}:{field}",k-1,p{fields.index(field)})' for field in m["fields"])
+            lines.append(f"for k=1,{int(m['count'])} do {names}={post}_getpointvalues(circle_x_{position}[k],circle_y_{position}[k]) "
+                         f"{emits} end")
             continue
         else:
             raise ValueError("Unknown measurement operation: " + op)
@@ -617,10 +666,13 @@ def measurement_lines(case, physics, labels, step):
     return lines
 
 
-def solve_lines(case, physics, labels):
+def solve_lines(case, physics, labels, values=None):
+    """Steps and measurements as Lua. A step value written as "=expression" or "$name" (or a list of them)
+    is resolved against the level's parameter values, so a control that varies a parameter reaches the steps."""
     pre, post = PHYSICS[physics]["pre"], PHYSICS[physics]["post"]
     lines = ['out=openfile("raw.csv","w")', 'write(out,"step,id,index,re,im\\n")',
              'function emit(step,id,index,v) if v then write(out,step,",",id,",",index,",",re(v),",",im(v),"\\n") end end']
+    lines += circle_tables(case, physics)
     steps = case.get("steps") or [{"label": "base", "modify": []}]
     for step in steps:
         label = step["label"]
@@ -632,9 +684,26 @@ def solve_lines(case, physics, labels):
                 lines += [_call(pre + "_selectgroup", change["group"]), _call(pre + "_moverotate", 0, 0, change["angle"]),
                           pre + "_clearselected()"]
                 continue
+            value = change.get("value")
+            if _refers(value):
+                if values is None:
+                    raise ValueError("Step values that refer to parameters need the level's parameter values")
+                from .components import resolve
+                value = resolve(value, values)
+            if change["function"] == "set_frequency":
+                # A new solution frequency keeps every other problem setting (mi_probdef with one argument).
+                if physics != "magnetics" or not (_finite_number(value) and value >= 0):
+                    raise ValueError("Frequency steps apply to magnetics, with a nonnegative frequency")
+                lines.append(_call("mi_probdef", value))
+                continue
             if change["function"] not in ("modifyboundprop", "modifymaterial", "modifycircprop", "modifyconductorprop"):
                 raise ValueError("Unsupported step modification")
-            lines.append(_call(pre + "_" + change["function"], change["name"], change["property"], change["value"]))
+            # A two-number list is a complex value (a phasor current, for example), written as re+I*im.
+            if isinstance(value, list):
+                if len(value) != 2 or not all(_finite_number(v) for v in value):
+                    raise ValueError("A complex step value is [real, imaginary]")
+                value = complex(*value)
+            lines.append(_call(pre + "_" + change["function"], change["name"], change["property"], value))
         lines += [pre + "_createmesh()", pre + "_analyze(1)", pre + "_loadsolution()"]
         lines += measurement_lines(case, physics, labels, label)
         lines.append(post + "_close()")
@@ -863,7 +932,8 @@ def plan_level(case, level, control=None):
     # The engine re-saves its document before every analysis, so the built
     # snapshot is kept separately from the file that later steps modify.
     construction.append(_call(PHYSICS[physics]["pre"] + "_saveas", "model" + extension))
-    lua = "\n".join(construction + solve_lines(case, physics, model["labels"])) + "\n"
+    values = built.get("values") if level == "article" else None
+    lua = "\n".join(construction + solve_lines(case, physics, model["labels"], values)) + "\n"
     targets = [t for t in case["targets"] if level in t.get("levels", LEVELS)]
     plan = {"schema_version": 1, "case_id": case["id"], "example_id": case.get("example_id"), "level": level,
             "physics": physics, "source_ids": case.get("source_ids", []),

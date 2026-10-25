@@ -851,11 +851,61 @@ def salient_pole_winding(m, pole_count, phases, turns, material, label_axial, la
                     turns=int(-side * polarity * turns), group=group)
 
 
+def belt_winding(m, inner_radius, outer_radius, belts, material, gap_material, max_segment=1, mesh=None, gap_mesh=None, group=0):
+    """A slotless winding: an annulus divided into belts, each a block in a circuit with signed turns, and gaps of another material.
+
+    ``belts`` lists [start, end, circuit, turns] with angles in degrees,
+    counterclockwise from start to end. The component draws the annulus itself:
+    its arcs are split at every belt edge (and wherever an arc would exceed 180
+    degrees), radial edges are drawn once where neighbours meet, and every
+    sector between edges that no belt covers gets a ``gap_material`` label.
+    """
+    if not 0 < inner_radius < outer_radius:
+        raise ValueError("A belt winding needs 0 < inner radius < outer radius")
+    spans = []
+    for belt in belts:
+        if len(belt) != 4 or not (_finite(belt[0]) and _finite(belt[1])) or not isinstance(belt[2], str):
+            raise ValueError("Each belt is [start degrees, end degrees, circuit, turns]")
+        start, end = belt[0] % 360, belt[1] % 360
+        width = (end - start) % 360
+        if not 0 < width < 360:
+            raise ValueError("A belt spans more than zero and less than 360 degrees")
+        spans.append((start, width, belt[2], belt[3]))
+    # Belts may not overlap: walk them in order of their starts around the circle.
+    ordered = sorted(spans)
+    for (s0, w0, _, _), (s1, _, _, _) in zip(ordered, ordered[1:] + ordered[:1]):
+        if len(ordered) > 1 and (s1 - s0) % 360 < w0 - 1e-9:
+            raise ValueError("Belts overlap")
+    # One list of edge angles serves arcs, radial edges and labels, so shared nodes are computed once.
+    radial = sorted({round(s % 360, 12) for s, _, _, _ in spans} | {round((s + w) % 360, 12) for s, w, _, _ in spans})
+    edges = []
+    for a, b in zip(radial, radial[1:] + [radial[0] + 360]):
+        pieces = max(1, math.ceil((b - a) / 180 - 1e-12))  # split stretches over 180 degrees so every arc is drawable
+        edges += [round((a + (b - a) * k / pieces) % 360, 12) for k in range(pieces)]
+    edges.sort()
+    point = lambda r, angle: (r * math.cos(math.radians(angle)), r * math.sin(math.radians(angle)))
+    for a, b in zip(edges, edges[1:] + [edges[0]]):
+        for r in (inner_radius, outer_radius):
+            m.arc(point(r, a), point(r, b), (b - a) % 360 or 360, max_segment, group=group)
+    for angle in radial:
+        m.segment(point(inner_radius, angle), point(outer_radius, angle), group=group)
+    # One label per region between radial edges: a belt's circuit and turns, or the gap material.
+    middle = (inner_radius + outer_radius) / 2
+    for a, b in zip(radial, radial[1:] + [radial[0] + 360]):
+        centre = (a + b) / 2
+        owner = next((belt for belt in spans if (centre - belt[0]) % 360 < belt[1]), None)
+        if owner is None:
+            m.label(*point(middle, centre), gap_material, mesh=gap_mesh, group=group)
+        else:
+            m.label(*point(middle, centre), material, mesh=mesh, circuit=owner[2], turns=owner[3], group=group)
+
+
 IMPLEMENTATIONS = {function.__name__: function for function in (
     segment, polyline, arc, circle, point, block_label, hole, material, library_material, circuit, conductor, boundary,
     fixed_potential_boundary, mixed_boundary, convection_boundary, iabc_open_boundary, axisymmetric_coil_section,
     bar_magnet, air_gap_element, kelvin_periodic_exterior, segment_boundary, fixed_point_potential, magnet_array,
-    slotted_stator, trapezoidal_slot_stator, tooth_coil_winding, surface_magnet_rotor, salient_poles, salient_pole_winding)}
+    slotted_stator, trapezoidal_slot_stator, tooth_coil_winding, surface_magnet_rotor, salient_poles, salient_pole_winding,
+    belt_winding)}
 
 
 def _finite(value):

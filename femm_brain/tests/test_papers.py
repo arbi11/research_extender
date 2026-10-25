@@ -107,6 +107,22 @@ class CaseRuleTests(unittest.TestCase):
         self.assertEqual(self.problems(minimal_case(targets=[dict(absolute, absolute_tolerance=0.04)])), [])
         self.assertEqual(self.problems(minimal_case(targets=[dict(absolute, relative_tolerance=0.04)])), [])
 
+    def test_quotes_may_come_from_a_cached_related_source(self):
+        with tempfile.TemporaryDirectory() as folder:
+            cache = Path(folder)
+            for sha, text in (("a" * 64, "a 1 in disk and B = 1 T"), ("b" * 64, "the companion says mu is 1.05")):
+                (cache / sha).mkdir()
+                (cache / sha / "text.txt").write_text(text)
+            case = minimal_case()
+            case["source"].update(pdf_sha256="a" * 64, related=[{"id": "companion", "pdf_sha256": "b" * 64}])
+            case["article"]["parameters"]["mu_quoted"] = {"value": 1.05, "unit": "ratio", "provenance": "quoted",
+                                                          "quote": "mu is 1.05", "location": "p. 2", "source": "companion"}
+            self.assertEqual(papers.check(case, cache=cache, build=False)["problems"], [])
+            case["article"]["parameters"]["mu_quoted"]["source"] = "main"
+            self.assertTrue(any("not found" in p for p in papers.check(case, cache=cache, build=False)["problems"]))
+            case["article"]["parameters"]["mu_quoted"]["source"] = "elsewhere"
+            self.assertTrue(any("unknown source elsewhere" in p for p in papers.check(case, cache=cache, build=False)["problems"]))
+
     def test_open_questions_block_freezing_and_regions_are_checked(self):
         case = minimal_case(gaps=[{"item": "turns", "affects": "flux", "decision": "ask"}])
         self.assertTrue(any("resolve the question" in p for p in self.problems(case)))

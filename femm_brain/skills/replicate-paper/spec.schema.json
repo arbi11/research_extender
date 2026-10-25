@@ -24,7 +24,9 @@
     "pdf_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
     "pages": {"type": ["integer", "null"]},
     "accessed": {"type": ["string", "null"], "format": "date"},
-    "related": {"type": "array", "items": {"type": "object"}}
+    "related": {"type": "array", "description": "Companion sources. One with an id and a cached pdf_sha256 can be quoted: a quote names it with source.",
+                "items": {"type": "object", "properties": {"id": {"type": "string"}, "citation": {"type": "string"}, "url": {"type": "string"},
+                                                           "pdf_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "use": {"type": "string"}}}}
    }
   },
   "machine": {
@@ -70,6 +72,7 @@
    "properties": {
     "provenance": {"enum": ["quoted", "derived", "figure", "assumed", "numerical"]},
     "quote": {"type": "string"},
+    "source": {"type": "string", "description": "The related source a quote comes from; the main source by default."},
     "location": {"type": "string"},
     "expression": {"type": "string"},
     "inputs": {"type": "array", "items": {"type": "string"}},

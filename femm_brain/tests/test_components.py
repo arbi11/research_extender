@@ -418,6 +418,100 @@ class SalientPoleTests(unittest.TestCase):
             self.build(self.machine(winding={"label_offset": 40}))
 
 
+class BeltWindingTests(unittest.TestCase):
+    problem = {"physics": "magnetics", "units": "meters", "type": "planar", "frequency": 60, "depth": 1}
+
+    def build(self, belts):
+        steps = [{"use": "material", "name": "Air"}, *({"use": "circuit", "name": n, "current": 0} for n in "ABC"),
+                 {"use": "belt_winding", "inner_radius": 0.032, "outer_radius": 0.052, "belts": belts, "material": "Air",
+                  "gap_material": "Air"}]
+        return assemble({"problem": self.problem, "steps": steps}, {})[0]
+
+    def test_belts_and_gaps_get_one_closed_region_each(self):
+        three = [[-22.5 + 60 * k, 22.5 + 60 * k, "ACB"[k % 3], 1 if k % 2 == 0 else -1] for k in range(6)]
+        model = self.build(three)
+        self.assertEqual(check_regions(model), [])
+        self.assertEqual((len(model["arcs"]), len(model["segments"]), len(model["labels"])), (24, 12, 12))
+        signed = sorted((round(math.degrees(math.atan2(l["y"], l["x"])) % 360, 6) % 360, l["circuit"], l["turns"]) for l in model["labels"])
+        self.assertEqual([item for item in signed if item[1]], [(0.0, "A", 1), (60.0, "C", -1), (120.0, "B", 1),
+                                                                (180.0, "A", -1), (240.0, "C", 1), (300.0, "B", -1)])
+        # Two belts leave stretches of 135 degrees: arcs stay below 180 degrees and each gap has one label.
+        single = self.build([[-22.5, 22.5, "A", 1], [157.5, 202.5, "A", -1]])
+        self.assertEqual(check_regions(single), [])
+        self.assertEqual(len(single["labels"]), 4)
+        self.assertTrue(all(arc["angle"] <= 180 for arc in single["arcs"]))
+        lone = self.build([[0, 45, "A", 1]])
+        self.assertEqual(check_regions(lone), [])
+        self.assertTrue(all(arc["angle"] <= 180 for arc in lone["arcs"]))
+
+    def test_overlapping_or_empty_belts_are_refused(self):
+        with self.assertRaisesRegex(ValueError, "overlap"):
+            self.build([[0, 50, "A", 1], [40, 90, "B", 1]])
+        with self.assertRaisesRegex(ValueError, "more than zero"):
+            self.build([[10, 10, "A", 1]])
+
+
+class HarmonicSuperpositionTests(unittest.TestCase):
+    """Synthetic fields with known answers: one order extracted from a mixture, solved directly or conjugated."""
+    model = {"problem": {"units": "meters", "depth": 1}}
+
+    def case(self, conjugate):
+        rings = [{"id": f"gap{k}", "op": "circle_values", "radius": r, "count": 64, "fields": ["A"]} for k, r in enumerate((0.0305, 0.0315))]
+        rings += [{"id": "wind", "op": "circle_values", "radius": 0.042, "count": 64, "fields": ["A"]},
+                  {"id": "core", "op": "circle_values", "radius": 0.01, "count": 64, "fields": ["Je"]}]
+        return {"measurements": rings, "steps": [{"label": "s", "conjugate": conjugate,
+                                                  "harmonics": [{"sweep": "t", "speed_rad_s": 100, "order": -5}]}]}
+
+    def raw(self, case, conjugate):
+        """Order -5 in a Laplace gap plus an unrelated order 3; a conjugated solve stores conj(a) exp(+j m theta)."""
+        alpha, beta, order = 0.3 + 0.1j, 2e-9 - 1e-9j, -5
+        a = lambda r: alpha * r ** 5 + beta * r ** -5
+        raw = {}
+        for m in case["measurements"]:
+            for k in range(64):
+                theta = 2 * math.pi * k / 64
+                value = {"wind": 0.002 - 0.001j, "core": 0.5 + 0.25j}.get(m["id"], a(m["radius"]))
+                field = "Je" if m["id"] == "core" else "A"
+                wave = value * cmath.exp(-1j * order * theta)
+                if conjugate:
+                    wave = (value * cmath.exp(-1j * order * theta)).conjugate()
+                raw[("s", f"{m['id']}:{field}", k)] = wave + 0.7 * cmath.exp(-3j * theta)
+        return raw, alpha, beta
+
+    def test_torque_loss_and_voltage_of_one_order(self):
+        for conjugate in (False, True):
+            case = self.case(conjugate)
+            raw, alpha, beta = self.raw(case, conjugate)
+            base = {"kind": "harmonic_superposition", "sweep": "t", "speed_rad_s": 100, "supply_frequency_hz": 60, "value": 0,
+                    "absolute_tolerance": 1e30}
+            r, n = 0.0305, 5
+            a = alpha * r ** n + beta * r ** -n
+            da = n * (alpha * r ** (n - 1) - beta * r ** (-n - 1))
+            expected = math.pi * r ** 2 / (4e-7 * math.pi) * ((5j * a / r) * (-da).conjugate()).real
+            torque = run_assessor(dict(base, quantity="torque", gap_circles=["gap0", "gap1"]), case, raw, {}, self.model)
+            # The gap fit spans r^5 to r^-5, so agreement is limited to about 1e-8 by rounding.
+            self.assertAlmostEqual(torque["observed"] / expected, 1, places=7)
+            loss = run_assessor(dict(base, quantity="moving_loss", gap_circles=["gap0", "gap1"]), case, raw, {}, self.model)
+            slip = 2 * math.pi * 60 + 5 * 100
+            self.assertAlmostEqual(loss["observed"] / (expected * slip / -5), 1, places=7)
+            ring = run_assessor(dict(base, quantity="conductor_loss", rings=[{"measurement": "core", "weight": 2e-4}],
+                                     conductivity_S_per_m=1e6), case, raw, {}, self.model)
+            self.assertAlmostEqual(ring["observed"] / (math.pi / 1e6 * 2e-4 * abs((0.5 + 0.25j) * 1e6) ** 2), 1, places=9)
+            winding = {"rings": [{"measurement": "wind", "weight": (0.052 ** 2 - 0.032 ** 2) / 2}], "inner_radius": 0.032,
+                       "outer_radius": 0.052, "belts": [[-22.5, 22.5, 1], [157.5, 202.5, -1]]}
+            voltage = run_assessor(dict(base, quantity="voltage", winding=winding), case, raw, {}, self.model)
+            belt = lambda a0, a1: (cmath.exp(5j * math.radians(a1)) - cmath.exp(5j * math.radians(a0))) / (5j)
+            flux = (0.002 - 0.001j) * (belt(-22.5, 22.5) - belt(157.5, 202.5)) / math.radians(45)
+            self.assertAlmostEqual(voltage["observed"] / (2 * math.pi * 60 * abs(flux)), 1, places=9)
+
+    def test_missing_orders_are_reported(self):
+        case = self.case(False)
+        result = run_assessor({"kind": "harmonic_superposition", "sweep": "t", "speed_rad_s": 200, "supply_frequency_hz": 60,
+                               "quantity": "torque", "gap_circles": ["gap0", "gap1"], "value": 1}, case, {}, {}, self.model)
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("No steps serve", result["error"])
+
+
 class LinearMachineTests(unittest.TestCase):
     problem = {"physics": "magnetics", "units": "millimeters", "type": "axisymmetric", "frequency": 0, "depth": 1}
     array = {"use": "magnet_array", "start": 0, "inner": 19.5, "outer": 24.5, "magnet_material": "M",

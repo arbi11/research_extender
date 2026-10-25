@@ -148,6 +148,39 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(assess({"metric": "charge_C@open", "value": 2.0, "relative_tolerance": .01}, metrics)["status"], "passed")
         self.assertEqual(assess({"metric": "charge_C@open", "value": 3.0, "relative_tolerance": .01}, metrics)["status"], "failed")
 
+    def test_frequency_steps_complex_values_and_circle_samples(self):
+        case = {"id": "toy", "steps": [
+                    {"label": "a", "modify": [{"function": "modifycircprop", "name": "C", "property": 1, "value": [3, -4]}]},
+                    {"label": "b", "modify": [{"function": "set_frequency", "value": 120}]}],
+                "measurements": [{"id": "ring", "op": "circle_values", "radius": 2, "count": 4, "fields": ["A", "B1"]},
+                                 {"id": "core", "op": "circle_values", "radius": 1, "count": 3, "fields": ["Je"], "steps": ["b"]}]}
+        lines = solve_lines(case, "magnetics", [])
+        self.assertIn('mi_modifycircprop("C",1,(3+I*(-4)))', lines)
+        self.assertIn("mi_probdef(120)", lines)
+        tables = [line for line in lines if line.startswith("circle_x_0=")]
+        self.assertEqual(len(tables), 1)
+        self.assertEqual([float(v) for v in tables[0][len("circle_x_0={"):-1].split(",")][:2], [2.0, 1.2246467991473532e-16])
+        loops = [line for line in lines if line.startswith("for k=1,")]
+        # The ring is read at both steps, the core only at the step it names.
+        self.assertEqual(len(loops), 3)
+        self.assertTrue(any('emit("b","core:Je",k-1,p7)' in line for line in loops))
+        self.assertFalse(any('"a","core:Je"' in line for line in loops))
+        for bad in ([{"function": "set_frequency", "value": -1}], [{"function": "modifycircprop", "name": "C", "property": 1, "value": [1]}]):
+            with self.assertRaises(ValueError):
+                solve_lines(dict(case, steps=[{"label": "x", "modify": bad}]), "magnetics", [])
+        with self.assertRaises(ValueError):
+            solve_lines(dict(case, steps=[{"label": "x", "modify": [{"function": "set_frequency", "value": 5}]}]), "electrostatics", [])
+
+    def test_step_values_can_follow_the_level_parameters(self):
+        case = {"id": "toy", "measurements": [], "steps": [{"label": "a", "modify": [
+            {"function": "set_frequency", "value": "=abs(f-3*w/(2*pi))"},
+            {"function": "modifycircprop", "name": "C", "property": 1, "value": ["=i0*cos(radians(-120))", "=i0*sin(radians(-120))"]}]}]}
+        lines = solve_lines(case, "magnetics", [], {"f": 60, "w": 2 * math.pi * 10, "i0": 2})
+        self.assertTrue(any(line.startswith("mi_probdef(30.0000000000000") for line in lines))
+        self.assertTrue(any(line.startswith('mi_modifycircprop("C",1,(-0.99999999999999') and "I*(-1.73205080756887" in line for line in lines))
+        with self.assertRaisesRegex(ValueError, "parameter values"):
+            solve_lines(case, "magnetics", [])
+
     def test_rebuild_comparison_covers_every_raw_value(self):
         case = load_cases()[0]
         original = {"status": "passed", "metrics": {"x": 1.0}, "raw": {"base|a|0": [1.0, 0.0], "base|a|1": [1e-9, 0.0]}}

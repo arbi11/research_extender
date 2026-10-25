@@ -361,8 +361,138 @@ def _phase_linkage(assessor, case, raw, metrics, model):
             "target": {"used_for_acceptance": True, "kind": "analytic", "quote": assessor.get("quote")}}
 
 
+def _harmonic_steps(case, sweep, speed):
+    """{order: (step label, conjugate)} for one operating point of a harmonic-superposition sweep."""
+    found = {}
+    for step in case.get("steps") or []:
+        for item in step.get("harmonics", []):
+            if item["sweep"] == sweep and math.isclose(item["speed_rad_s"], speed, rel_tol=1e-12, abs_tol=1e-9):
+                if item["order"] in found:
+                    raise ValueError(f"Order {item['order']} of {sweep} at {speed} rad/s is solved twice")
+                found[item["order"]] = (step["label"], bool(step.get("conjugate")))
+    if not found:
+        raise ValueError(f"No steps serve {sweep} at {speed} rad/s")
+    return found
+
+
+def _circle(case, identifier):
+    from .reproduce import circle_points
+    measurement = next(m for m in case["measurements"] if m["id"] == identifier)
+    if measurement["op"] != "circle_values":
+        raise ValueError(f"{identifier} is not a circle_values measurement")
+    points = circle_points(measurement)
+    return measurement, [math.atan2(y - measurement.get("center", (0, 0))[1], x - measurement.get("center", (0, 0))[0])
+                         for x, y in points]
+
+
+def _circle_coefficient(raw, case, identifier, field, step, conjugate, order):
+    """The stator-frame coefficient of exp(-j m theta) of a field sampled on a circle.
+
+    A step solved with conjugated excitation (its rotor-frame frequency was
+    negative) carries the order's response as the conjugate of its -m component.
+    Br and Btheta are formed from B1 and B2 before the transform.
+    """
+    measurement, angles = _circle(case, identifier)
+    def sample(k, theta):
+        if field in ("Br", "Btheta"):
+            b1, b2 = raw[(step, f"{identifier}:B1", k)], raw[(step, f"{identifier}:B2", k)]
+            return b1 * math.cos(theta) + b2 * math.sin(theta) if field == "Br" else -b1 * math.sin(theta) + b2 * math.cos(theta)
+        return raw[(step, f"{identifier}:{field}", k)]
+    k_order = -order if conjugate else order
+    value = sum(sample(k, t) * cmath.exp(1j * k_order * t) for k, t in enumerate(angles)) / len(angles)
+    return value.conjugate() if conjugate else value
+
+
+def _gap_torque(order, a_in, r_in, a_out, r_out, depth):
+    """Time-average torque of one order from the potential on two circles of a current-free gap.
+
+    In the gap a(r) = alpha r^n + beta r^-n; B_r = -j m a / r and B_theta = -a'(r),
+    and the stress tensor gives pi r^2 depth Re(B_r conj(B_theta)) / mu0.
+    """
+    n = abs(order)
+    det = r_in ** n * r_out ** -n - r_in ** -n * r_out ** n
+    alpha = (a_in * r_out ** -n - a_out * r_in ** -n) / det
+    beta = (r_in ** n * a_out - r_out ** n * a_in) / det
+    radial = -1j * order * a_in / r_in
+    tangential = -n * (alpha * r_in ** (n - 1) - beta * r_in ** (-n - 1))
+    return math.pi * r_in ** 2 * depth / MU0 * (radial * tangential.conjugate()).real
+
+
+def _harmonic_superposition(assessor, case, raw, metrics, model):
+    """A quantity of a linear problem with a rotationally uniform moving part, summed over spatial orders.
+
+    Each spatial order m of the excitation reaches the moving part at its own
+    frequency, omega - m Omega; the frozen steps solve each order at that
+    frequency (conjugated when it is negative) and record circle samples. This
+    sums one quantity over the orders of one operating point: the torque from
+    the potential on two gap circles, the moving part's loss from each order's
+    slip power, a conductor's loss from eddy-current samples on rings, a
+    winding's voltage per turn from potential samples on rings, or a field
+    component at a point.
+    """
+    from .reproduce import UNITS
+    problem = model["problem"]
+    scale = UNITS[problem["units"]]
+    depth = problem.get("depth", 1) * scale
+    omega = 2 * math.pi * assessor["supply_frequency_hz"]
+    speed = assessor["speed_rad_s"]
+    steps = _harmonic_steps(case, assessor["sweep"], speed)
+    quantity = assessor["quantity"]
+    rows, total = [], 0j
+    for order in sorted(steps, key=lambda m: (abs(m), m)):
+        step, conjugate = steps[order]
+        coefficient = lambda identifier, field: _circle_coefficient(raw, case, identifier, field, step, conjugate, order)
+        if quantity in ("torque", "moving_loss"):
+            (inner, outer) = assessor["gap_circles"]
+            r_in, r_out = (_circle(case, i)[0]["radius"] * scale for i in (inner, outer))
+            torque = _gap_torque(order, coefficient(inner, "A"), r_in, coefficient(outer, "A"), r_out, depth)
+            value = torque if quantity == "torque" else torque * (omega - order * speed) / order
+        elif quantity == "conductor_loss":
+            # Rings carry radial quadrature weights for the integral of f(r) r dr, in square metres, and may carry
+            # their own conductivity (a rotor of two conductors); FEMM reports eddy-current density in MA/m^2.
+            value = math.pi * depth * sum(
+                ring["weight"] * abs(coefficient(ring["measurement"], "Je") * 1e6) ** 2
+                / ring.get("conductivity_S_per_m", assessor.get("conductivity_S_per_m")) for ring in assessor["rings"])
+        elif quantity == "voltage":
+            winding = assessor["winding"]
+            radial = sum(ring["weight"] * coefficient(ring["measurement"], "A") for ring in winding["rings"])
+            inner, outer = winding["inner_radius"] * scale, winding["outer_radius"] * scale
+            flux = 0j
+            for start, end, sign in winding["belts"]:
+                a, b = math.radians(start), math.radians(end)
+                area = (b - a) / 2 * (outer ** 2 - inner ** 2)
+                angular = (cmath.exp(-1j * order * b) - cmath.exp(-1j * order * a)) / (-1j * order)
+                flux += sign * radial * angular / area
+            value = 1j * omega * flux * depth
+        elif quantity == "point_field":
+            point = assessor["point"]
+            component = coefficient(point["measurement"], point["component"] if point["component"] != "Htheta" else "Btheta")
+            if point["component"] == "Htheta":
+                component /= MU0 * point.get("relative_permeability", 1)
+            value = component * cmath.exp(-1j * order * math.radians(point.get("angle_deg", 0)))
+        else:
+            raise ValueError("Unknown superposition quantity: " + str(quantity))
+        total += value
+        rows.append({"order": order, "step": step, "conjugate": conjugate,
+                     "rotor_frame_frequency_hz": (omega - order * speed) / (2 * math.pi), "re": value.real, "im": value.imag})
+    part = assessor.get("part", "abs" if quantity == "voltage" else "re")
+    observed = {"re": total.real, "im": total.imag, "abs": abs(total)}[part]
+    metric = f"{assessor['sweep']}@{speed:g}:{quantity}" + (f":{assessor['point']['label']}" if quantity == "point_field" else "") + f":{part}"
+    target = {key: assessor[key] for key in ("value", "relative_tolerance", "absolute_tolerance", "quote", "location",
+                                              "used_for_acceptance", "allowance") if key in assessor}
+    target.update(kind=assessor.get("value_kind"), metric=metric)
+    target.setdefault("used_for_acceptance", True)
+    error = abs(observed - assessor["value"])
+    tolerance = max(abs(assessor["value"]) * assessor.get("relative_tolerance", 0), assessor.get("absolute_tolerance", 0))
+    return {"status": "passed" if error <= tolerance else "failed", "assessor": "harmonic_superposition", "metric": metric,
+            "statistic": f"sum over {len(rows)} orders", "observed": observed, "expected": assessor["value"],
+            "absolute_error": error, "relative_error": error / abs(assessor["value"]) if assessor["value"] else None,
+            "absolute_tolerance": tolerance, "samples": len(rows), "rows": rows, "target": target}
+
+
 ASSESSORS = {"tube_bessel": _tube, "dipole_torque": _dipole_torque, "applied_field": _applied_field,
-             "phase_linkage": _phase_linkage, "waveform_statistic": _waveform_statistic, "spatial_harmonic": _spatial_harmonic}
+             "phase_linkage": _phase_linkage, "waveform_statistic": _waveform_statistic, "spatial_harmonic": _spatial_harmonic,
+             "harmonic_superposition": _harmonic_superposition}
 
 
 def run_assessor(assessor, case, raw, metrics, model):

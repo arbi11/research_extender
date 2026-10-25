@@ -25,4 +25,4 @@ def build(case):
             parameters[name] = evaluate(item["expression"], {n: parameters[n] for n in item["inputs"]})
     model, used = assemble(article["assembly"], parameters)
     return {"status": "built", "model": model, "parameters": article["parameters"], "components": used,
-            "assumptions": article.get("assumptions", [])}
+            "assumptions": article.get("assumptions", []), "values": parameters}

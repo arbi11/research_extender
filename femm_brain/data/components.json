@@ -2454,6 +2454,108 @@
     "Each label must lie between its pole axis and the middle of the gap to the next pole; the coil outlines come from salient_poles.",
     "Phase circuits and their currents are defined separately."
    ]
+  },
+  {
+   "id": "belt_winding",
+   "layer": 2,
+   "title": "Slotless belt winding",
+   "description": "An annulus divided into winding belts, each a block in a circuit with signed turns, with gaps of another material between them: exposed or air-gap windings of slotless machines and benchmark induction motors. The component draws the annulus arcs split at every belt edge, the radial edges once, and one label per region.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "inner_radius",
+     "type": "number",
+     "description": "Inner radius of the winding annulus",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "outer_radius",
+     "type": "number",
+     "description": "Outer radius of the winding annulus",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "belts",
+     "type": "list",
+     "description": "Belts as [start degrees, end degrees, circuit, turns], counterclockwise from start to end; belts may not overlap",
+     "required": true
+    },
+    {
+     "name": "material",
+     "type": "string",
+     "description": "Material of the belts",
+     "required": true
+    },
+    {
+     "name": "gap_material",
+     "type": "string",
+     "description": "Material of the regions between belts",
+     "required": true
+    },
+    {
+     "name": "max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of the annulus arcs",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Element size in the belts",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "gap_mesh",
+     "type": "number",
+     "description": "Element size between the belts",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the winding contours and labels",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "addarc",
+    "addblocklabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "segment",
+    "arc",
+    "block_label"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "excitation",
+   "constraints": [
+    "Belts span more than zero and less than 360 degrees and may not overlap.",
+    "The annulus circles are drawn by the component; do not draw circles at its radii as well.",
+    "Phase circuits and their currents are defined separately."
+   ]
   }
  ]
 }
