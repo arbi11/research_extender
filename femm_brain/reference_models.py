@@ -12,11 +12,11 @@ MU0 = 4e-7 * math.pi
 
 
 def bessel_i(order, z, terms=80):
-    """Modified Bessel function of the first kind for order 0 or 1, complex z."""
-    if order not in (0, 1):
-        raise ValueError("Only orders 0 and 1 are implemented")
+    """Modified Bessel function of the first kind for a nonnegative integer order, complex z (power series)."""
+    if not isinstance(order, int) or order < 0:
+        raise ValueError("The order must be a nonnegative integer")
     quarter = z * z / 4
-    term = (z / 2) ** order
+    term = (z / 2) ** order / math.factorial(order)
     total = term
     for k in range(1, terms):
         term *= quarter / (k * (k + order))
@@ -44,6 +44,33 @@ def bessel_k(order, z, terms=80):
             total += (digamma(k + 1) + digamma(k + 2)) * term
         return 1 / z + log_half * bessel_i(1, z, terms) - z / 4 * total
     raise ValueError("Only orders 0 and 1 are implemented")
+
+
+def rotating_cylinder_torque(order, current_density, inner_radius, outer_radius, radius, conductivity, slip, depth):
+    """Torque on a non-magnetic conducting cylinder from one travelling wave of an annular winding in free space.
+
+    The winding's current density Re[J e^(j(omega t - order theta))] (complex J,
+    order nonzero) fills inner_radius < r < outer_radius. Alone, it gives the
+    potential alpha r^n inside the winding (n = |order|), with alpha =
+    mu0 J G / (2n) and G the integral of rho^(1-n) over the winding. A cylinder of
+    the given radius and conductivity, seeing the wave at slip angular frequency
+    s = omega - order Omega, holds A = E I_n(k r) with k^2 = j mu0 sigma s and
+    reflects D r^-n, D = alpha R^2n (n - f)/(n + f), f = kR I_n'(kR)/I_n(kR).
+    The gap's Maxwell stress then gives T = -2 pi L order n |alpha|^2 Im(D/alpha) / mu0,
+    the same at every radius between the cylinder and the winding, positive
+    counterclockwise. SI units; depth is the axial length.
+    """
+    n = abs(order)
+    if not n or not 0 < radius < inner_radius < outer_radius:
+        raise ValueError("Need a nonzero order and radius < inner radius < outer radius")
+    if slip == 0:
+        return 0.0
+    spread = math.log(outer_radius / inner_radius) if n == 2 else (outer_radius ** (2 - n) - inner_radius ** (2 - n)) / (2 - n)
+    alpha = MU0 * current_density * spread / (2 * n)
+    z = cmath.sqrt(1j * MU0 * conductivity * slip) * radius
+    f = n + z * bessel_i(n + 1, z) / bessel_i(n, z)
+    reflection = radius ** (2 * n) * (n - f) / (n + f)
+    return -2 * math.pi * depth * order * n * abs(alpha) ** 2 * reflection.imag / MU0
 
 
 def tube_solution(inner_radius, outer_radius, relative_permeability, conductivity, frequency, current):
@@ -231,16 +258,23 @@ def linkage_prediction(model, pole_pairs, circuits, rotor_group):
 def _rotor_samples(assessor, case):
     """Rotor angle of each step from the case's rotate_group steps, keeping one even sweep of the declared span.
 
+    With ``rotor_band`` the angle is instead the named sliding band's inner angle
+    (boundary property 10), which turns the rotor side without remeshing.
+
     The span is one electrical period, or half of one when the assessor declares
     half-wave symmetry (a pole pitch negates every linkage). ``step_prefix``
     keeps only the sweep's steps when others (an inductance step) follow it.
     """
-    group = assessor["rotor_group"]
+    group, band = assessor["rotor_group"], assessor.get("rotor_band")
     period = 360 / assessor["pole_pairs"]
     span = period / 2 if assessor.get("half_wave_symmetry") else period
     alpha, angles = 0.0, {}
     for step in case["steps"]:
-        alpha += sum(c["angle"] for c in step.get("modify", []) if c["function"] == "rotate_group" and c["group"] == group)
+        for change in step.get("modify", []):
+            if band is None and change["function"] == "rotate_group" and change["group"] == group:
+                alpha += change["angle"]
+            elif band is not None and change["function"] == "modifyboundprop" and change["name"] == band and change["property"] == 10:
+                alpha = change["value"]  # a sliding band's inner angle is absolute
         if step["label"].startswith(assessor.get("step_prefix", "")):
             angles.setdefault(step["label"], alpha)
     samples = sorted((a, label) for label, a in angles.items() if -1e-9 <= a < span - 1e-9)
@@ -319,7 +353,8 @@ def _spatial_harmonic(assessor, case, raw, metrics, model):
 def _phase_linkage(assessor, case, raw, metrics, model):
     """Winding sign and phase linkage: each phase's flux-linkage fundamental against the construction.
 
-    Rotor angles come from the case's rotate_group steps. Samples must cover one
+    Rotor angles come from the case's rotate_group steps, or from a sliding band's
+    inner angle when the assessor names ``rotor_band``. Samples must cover one
     electrical period evenly, or half of one when the declared half-wave symmetry
     (a pole pitch negates every linkage) extends them.
     """
@@ -545,6 +580,36 @@ def _dq_linkage(assessor, case, raw, metrics, model):
             "absolute_tolerance": tolerance, "samples": len(rows), "position_spread": spread, "rows": rows, "target": target}
 
 
+def _metric_relation(assessor, case, raw, metrics, model):
+    """Values that a symmetry of the construction makes equal: metric@step = factor * reference@step for each pair.
+
+    The observed value is the largest deviation, |value - factor * reference|,
+    relative to the largest |factor * reference|; the frozen value is zero.
+    """
+    pairs = assessor["pairs"]
+    if not pairs:
+        raise ValueError("A metric relation needs at least one pair")
+    rows = []
+    for pair in pairs:
+        value, reference = metrics[pair["metric"]], metrics[pair["reference"]]
+        rows.append({"metric": pair["metric"], "reference": pair["reference"], "factor": pair.get("factor", 1),
+                     "value": value, "expected_value": pair.get("factor", 1) * reference})
+    scale = max(abs(r["expected_value"]) for r in rows)
+    if not scale:
+        raise ValueError("Every reference value is zero")
+    for r in rows:
+        r["deviation"] = abs(r["value"] - r["expected_value"]) / scale
+    observed = max(r["deviation"] for r in rows)
+    target = {key: assessor[key] for key in ("value", "absolute_tolerance", "quote", "location", "used_for_acceptance") if key in assessor}
+    target.update(kind=assessor.get("value_kind"), metric=assessor_metric(assessor))
+    target.setdefault("used_for_acceptance", True)
+    tolerance = assessor["absolute_tolerance"]
+    return {"status": "passed" if abs(observed - assessor.get("value", 0)) <= tolerance else "failed", "assessor": "metric_relation",
+            "metric": assessor_metric(assessor), "statistic": f"largest relative deviation over {len(rows)} pairs",
+            "observed": observed, "expected": assessor.get("value", 0), "absolute_error": observed, "relative_error": None,
+            "absolute_tolerance": tolerance, "samples": len(rows), "rows": rows, "target": target}
+
+
 def assessor_metric(assessor):
     """The metric name an assessor reports its result under, or None for kinds that report only their kind."""
     kind = assessor.get("kind")
@@ -557,6 +622,8 @@ def assessor_metric(assessor):
         part = assessor.get("part", "abs" if quantity == "voltage" else "re")
         label = f":{assessor['point']['label']}" if quantity == "point_field" else ""
         return f"{assessor['sweep']}@{assessor['speed_rad_s']:g}:{quantity}{label}:{part}"
+    if kind == "metric_relation":
+        return assessor["name"]
     if kind == "dq_linkage":
         return f"{assessor['point']}:{assessor['quantity']}" + (":first_position" if assessor.get("average") == "first" else "")
     return None
@@ -564,7 +631,8 @@ def assessor_metric(assessor):
 
 ASSESSORS = {"tube_bessel": _tube, "dipole_torque": _dipole_torque, "applied_field": _applied_field,
              "phase_linkage": _phase_linkage, "waveform_statistic": _waveform_statistic, "spatial_harmonic": _spatial_harmonic,
-             "harmonic_superposition": _harmonic_superposition, "dq_linkage": _dq_linkage}
+             "harmonic_superposition": _harmonic_superposition, "dq_linkage": _dq_linkage,
+             "metric_relation": _metric_relation}
 
 
 def run_assessor(assessor, case, raw, metrics, model):

@@ -536,6 +536,74 @@ class DqLinkageTests(unittest.TestCase):
         self.assertIn("No steps carry", missing["error"])
 
 
+class PartialModelAndSymmetryTests(unittest.TestCase):
+    def test_dq_scales_take_a_sector_to_the_machine(self):
+        steps = [{"label": "s0", "dq": {"point": "P", "id": 0, "iq": 10, "electrical_angle_deg": 0}}]
+        raw = {("s0", "phA", 2): 0.01 + 0j, ("s0", "phB", 2): -0.005 + 0j, ("s0", "phC", 2): -0.005 + 0j, ("s0", "gap", 0): 7 + 0j}
+        base = {"kind": "dq_linkage", "point": "P", "phases": ["phA", "phB", "phC"], "pole_pairs": 4, "value": 0, "absolute_tolerance": 1e9}
+        whole = run_assessor(dict(base, quantity="psi_d"), {"steps": steps}, raw, {}, {})["observed"]
+        self.assertAlmostEqual(run_assessor(dict(base, quantity="psi_d", flux_scale=8), {"steps": steps}, raw, {}, {})["observed"], 8 * whole)
+        stress = dict(base, quantity="stress_torque", torque_measurement="gap", sequence_direction=1)
+        self.assertAlmostEqual(run_assessor(dict(stress, torque_scale=1), {"steps": steps}, raw, {}, {})["observed"], 7)
+
+    def test_rotor_angles_from_a_sliding_band_are_absolute(self):
+        from femm_brain.reference_models import _rotor_samples
+        band = lambda angle: {"function": "modifyboundprop", "name": "AGE", "property": 10, "value": angle}
+        steps = [{"label": f"p{k:02d}", "modify": [band(7.5 * k)]} for k in range(24)]
+        steps.append({"label": "other", "modify": [{"function": "modifycircprop", "name": "A", "property": 1, "value": 1}]})
+        samples, span = _rotor_samples({"rotor_group": 1, "rotor_band": "AGE", "pole_pairs": 2, "step_prefix": "p"}, {"steps": steps})
+        self.assertEqual(span, 180)
+        self.assertEqual([a for a, _ in samples], [7.5 * k for k in range(24)])
+        # rotate_group increments are ignored when a band is named, and summed when not.
+        turned = [{"label": f"p{k:02d}", "modify": [{"function": "rotate_group", "group": 1, "angle": 7.5 if k else 0}]} for k in range(24)]
+        self.assertEqual([a for a, _ in _rotor_samples({"rotor_group": 1, "pole_pairs": 2}, {"steps": turned})[0]], [7.5 * k for k in range(24)])
+        with self.assertRaises(ValueError):
+            _rotor_samples({"rotor_group": 1, "rotor_band": "AGE", "pole_pairs": 2}, {"steps": turned})
+
+    def test_metric_relation_reports_the_largest_relative_deviation(self):
+        metrics = {"a@0": 2.0, "b@1": 2.002, "a@1": -1.0, "b@2": 1.0}
+        assessor = {"kind": "metric_relation", "name": "shift", "value": 0, "absolute_tolerance": 0.002,
+                    "pairs": [{"metric": "b@1", "reference": "a@0"}, {"metric": "b@2", "reference": "a@1", "factor": -1}]}
+        result = run_assessor(assessor, {}, {}, metrics, {})
+        self.assertEqual(result["metric"], "shift")
+        self.assertAlmostEqual(result["observed"], 0.001)
+        self.assertEqual(result["status"], "passed")
+        self.assertEqual(run_assessor(dict(assessor, absolute_tolerance=0.0005), {}, {}, metrics, {})["status"], "failed")
+        wrong_sign = dict(assessor, pairs=[{"metric": "b@2", "reference": "a@1"}])
+        self.assertAlmostEqual(run_assessor(wrong_sign, {}, {}, metrics, {})["observed"], 2.0)
+
+    def test_bessel_series_satisfies_its_recurrence_at_high_order(self):
+        from femm_brain.reference_models import bessel_i
+        for z in (0.7, 4 * cmath.exp(0.25j * math.pi), 18 * cmath.exp(-0.25j * math.pi)):
+            for n in (1, 5, 13):
+                lhs = bessel_i(n - 1, z) - bessel_i(n + 1, z)
+                self.assertLess(abs(lhs - 2 * n / z * bessel_i(n, z)), 1e-12 * abs(lhs))
+        with self.assertRaises(ValueError):
+            bessel_i(-1, 1.0)
+
+    def test_rotating_cylinder_torque_balances_slip_power_and_ohmic_loss(self):
+        from femm_brain.reference_models import MU0, bessel_i, rotating_cylinder_torque
+        J, a, b, R, sigma, depth = 3.1e6 * cmath.exp(0.3j), 0.032, 0.052, 0.030, 3.72e7, 0.5
+        for order in (1, -5, 2):
+            n = abs(order)
+            spread = math.log(b / a) if n == 2 else (b ** (2 - n) - a ** (2 - n)) / (2 - n)
+            alpha = MU0 * J * spread / (2 * n)
+            # Low slip: the induced current is -j sigma s alpha r^n, so T = pi L order |alpha|^2 sigma s R^(2n+2) / (2(n+1)).
+            low = math.pi * depth * order * abs(alpha) ** 2 * sigma * 1e-3 * R ** (2 * n + 2) / (2 * (n + 1))
+            self.assertAlmostEqual(rotating_cylinder_torque(order, J, a, b, R, sigma, 1e-3, depth) / low, 1, places=8)
+            for slip in (377.0, -1023.0):
+                torque = rotating_cylinder_torque(order, J, a, b, R, sigma, slip, depth)
+                self.assertAlmostEqual(rotating_cylinder_torque(order, J, a, b, R, sigma, -slip, depth), -torque, places=12)
+                k = cmath.sqrt(1j * MU0 * sigma * slip)
+                f = n + k * R * bessel_i(n + 1, k * R) / bessel_i(n, k * R)
+                inside = 2 * n * alpha * R ** n / ((n + f) * bessel_i(n, k * R))
+                count = 2000
+                loss = depth * sum(math.pi / sigma * abs(sigma * slip * inside * bessel_i(n, k * r)) ** 2 * r * R / count
+                                   for r in ((i + 0.5) * R / count for i in range(count)))
+                self.assertAlmostEqual(torque * slip / order / loss, 1, places=5)
+        self.assertEqual(rotating_cylinder_torque(1, J, a, b, R, sigma, 0, depth), 0)
+
+
 def _dxf(*entities, blocks=()):
     """A minimal ASCII DXF: BLOCKS then ENTITIES, each entity as group-code pairs."""
     lines = ["0", "SECTION", "2", "BLOCKS"]
