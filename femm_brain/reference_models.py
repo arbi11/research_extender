@@ -289,7 +289,9 @@ def _waveform_statistic(assessor, case, raw, metrics, model):
 
     ``fundamental_rms`` and ``fundamental_peak`` take the component at
     pole_pairs times the rotor angle (extending a half period by the declared
-    half-wave symmetry); ``peak_to_peak`` and ``mean`` use the samples as they are.
+    half-wave symmetry); ``peak_to_peak``, ``mean`` and ``maximum`` (the largest
+    sample, as a paper's "maximum of the curve") use the samples as they are, so
+    a maximum needs the peak on a sample or dense samples near it.
     """
     statistic = assessor["statistic"]
     samples, span = _rotor_samples(assessor, case)
@@ -303,6 +305,8 @@ def _waveform_statistic(assessor, case, raw, metrics, model):
         observed = max(v for _, v in values) - min(v for _, v in values)
     elif statistic == "mean":
         observed = sum(v for _, v in values) / len(values)
+    elif statistic == "maximum":
+        observed = max(v for _, v in values)
     else:
         raise ValueError("Unknown waveform statistic: " + statistic)
     target = {key: assessor[key] for key in ("value", "relative_tolerance", "absolute_tolerance", "quote", "location",
@@ -610,6 +614,49 @@ def _metric_relation(assessor, case, raw, metrics, model):
             "absolute_tolerance": tolerance, "samples": len(rows), "rows": rows, "target": target}
 
 
+def _parallel_branches(assessor, case, raw, metrics, model):
+    """Coupled conductors connected in parallel across one voltage, from solves that drive one branch each.
+
+    Step k carries current only in branch k (the others open, eddy currents
+    allowed); the circuit measurements give Z[j][k] = V_j / I_k. A common voltage
+    U then drives I = U Z^-1 1, and the total current's part in phase with U, or
+    lagging it, is compared with the frozen value. In a linear problem this is
+    the parallel connection exactly (double-cage bars, parallel strands).
+    """
+    circuits, steps = assessor["circuits"], assessor["steps"]
+    n = len(circuits)
+    if n < 2 or len(steps) != n:
+        raise ValueError("Give two or more circuits and one driving step per circuit")
+    z = [[raw[(steps[k], circuits[j], 1)] / raw[(steps[k], circuits[k], 0)] for k in range(n)] for j in range(n)]
+    # Gaussian elimination with partial pivoting on [Z | U 1].
+    voltage = assessor["voltage"]
+    rows = [z[j][:] + [complex(voltage)] for j in range(n)]
+    for col in range(n):
+        pivot = max(range(col, n), key=lambda r: abs(rows[r][col]))
+        if not abs(rows[pivot][col]):
+            raise ValueError("The impedance matrix is singular")
+        rows[col], rows[pivot] = rows[pivot], rows[col]
+        for r in range(n):
+            if r != col:
+                factor = rows[r][col] / rows[col][col]
+                rows[r] = [a - factor * b for a, b in zip(rows[r], rows[col])]
+    currents = [rows[j][n] / rows[j][j] for j in range(n)]
+    total = sum(currents)
+    part = assessor.get("part", "in_phase")
+    observed = {"in_phase": total.real, "lagging": -total.imag, "abs": abs(total)}[part]
+    target = {key: assessor[key] for key in ("value", "relative_tolerance", "absolute_tolerance", "quote", "location",
+                                              "used_for_acceptance") if key in assessor}
+    target.update(kind=assessor.get("value_kind"), metric=assessor_metric(assessor))
+    target.setdefault("used_for_acceptance", True)
+    error = abs(observed - assessor["value"])
+    tolerance = max(abs(assessor["value"]) * assessor.get("relative_tolerance", 0), assessor.get("absolute_tolerance", 0))
+    return {"status": "passed" if error <= tolerance else "failed", "assessor": "parallel_branches", "metric": assessor_metric(assessor),
+            "statistic": f"{part} part of the total current at {voltage} V", "observed": observed, "expected": assessor["value"],
+            "absolute_error": error, "relative_error": error / abs(assessor["value"]) if assessor["value"] else None,
+            "absolute_tolerance": tolerance, "samples": n,
+            "rows": [{"circuit": c, "current_re": i.real, "current_im": i.imag} for c, i in zip(circuits, currents)], "target": target}
+
+
 def assessor_metric(assessor):
     """The metric name an assessor reports its result under, or None for kinds that report only their kind."""
     kind = assessor.get("kind")
@@ -622,7 +669,7 @@ def assessor_metric(assessor):
         part = assessor.get("part", "abs" if quantity == "voltage" else "re")
         label = f":{assessor['point']['label']}" if quantity == "point_field" else ""
         return f"{assessor['sweep']}@{assessor['speed_rad_s']:g}:{quantity}{label}:{part}"
-    if kind == "metric_relation":
+    if kind in ("metric_relation", "parallel_branches"):
         return assessor["name"]
     if kind == "dq_linkage":
         return f"{assessor['point']}:{assessor['quantity']}" + (":first_position" if assessor.get("average") == "first" else "")
@@ -632,7 +679,7 @@ def assessor_metric(assessor):
 ASSESSORS = {"tube_bessel": _tube, "dipole_torque": _dipole_torque, "applied_field": _applied_field,
              "phase_linkage": _phase_linkage, "waveform_statistic": _waveform_statistic, "spatial_harmonic": _spatial_harmonic,
              "harmonic_superposition": _harmonic_superposition, "dq_linkage": _dq_linkage,
-             "metric_relation": _metric_relation}
+             "metric_relation": _metric_relation, "parallel_branches": _parallel_branches}
 
 
 def run_assessor(assessor, case, raw, metrics, model):

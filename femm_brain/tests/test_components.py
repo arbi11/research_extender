@@ -572,6 +572,31 @@ class PartialModelAndSymmetryTests(unittest.TestCase):
         wrong_sign = dict(assessor, pairs=[{"metric": "b@2", "reference": "a@1"}])
         self.assertAlmostEqual(run_assessor(wrong_sign, {}, {}, metrics, {})["observed"], 2.0)
 
+    def test_parallel_branches_solve_the_coupled_impedances(self):
+        zo, zi, zm = complex(2e-4, 3e-4), complex(1e-4, 9e-4), complex(1e-5, 4e-4)
+        raw = {}
+        for step, driven, (vo, vi) in (("a", "outer", (zo, zm)), ("b", "inner", (zm, zi))):
+            raw[(step, "outer", 0)], raw[(step, "inner", 0)] = (1000 if driven == "outer" else 0), (1000 if driven == "inner" else 0)
+            raw[(step, "outer", 1)], raw[(step, "inner", 1)] = 1000 * vo, 1000 * vi
+        det = zo * zi - zm * zm
+        expected = 0.1 * ((zi - zm) + (zo - zm)) / det
+        assessor = {"kind": "parallel_branches", "name": "current", "circuits": ["outer", "inner"], "steps": ["a", "b"],
+                    "voltage": 0.1, "value": expected.real, "relative_tolerance": 1e-9}
+        result = run_assessor(assessor, {}, raw, {}, {})
+        self.assertEqual(result["status"], "passed")
+        self.assertAlmostEqual(run_assessor(dict(assessor, part="lagging", value=-expected.imag), {}, raw, {}, {})["observed"], -expected.imag)
+        self.assertIn("error", run_assessor(dict(assessor, steps=["a"]), {}, raw, {}, {}))
+
+    def test_waveform_maximum_is_the_largest_sample(self):
+        band = lambda angle: {"function": "modifyboundprop", "name": "AGE", "property": 10, "value": angle}
+        steps = [{"label": f"p{k:02d}", "modify": [band(15 * k / 4)]} for k in range(24)]
+        curve = lambda k: 846.5 * math.sin(math.radians(15 * k)) - 25.3 * math.sin(math.radians(45 * k))
+        metrics = {f"t@p{k:02d}": curve(k) for k in range(24)}
+        assessor = {"kind": "waveform_statistic", "metric": "t", "pole_pairs": 4, "rotor_group": 1, "rotor_band": "AGE",
+                    "half_wave_symmetry": False, "value": 871.8, "relative_tolerance": 1e-6}
+        self.assertAlmostEqual(run_assessor(dict(assessor, statistic="maximum"), {"steps": steps}, {}, metrics, {})["observed"], 871.8)
+        self.assertAlmostEqual(run_assessor(dict(assessor, statistic="fundamental_peak"), {"steps": steps}, {}, metrics, {})["observed"], 846.5)
+
     def test_bessel_series_satisfies_its_recurrence_at_high_order(self):
         from femm_brain.reference_models import bessel_i
         for z in (0.7, 4 * cmath.exp(0.25j * math.pi), 18 * cmath.exp(-0.25j * math.pi)):
