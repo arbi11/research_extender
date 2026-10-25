@@ -97,6 +97,22 @@ class CatalogTests(unittest.TestCase):
             for parameter in (case.get("article") or {}).get("parameters", {}).values():
                 self.assertTrue(parameter["quote"], case["id"])
 
+    @unittest.skipUnless((collect.DEFAULT_CACHE / "texts").is_dir(), "requires a restored source cache")
+    def test_every_quote_is_verbatim_in_the_cited_official_text(self):
+        squash = lambda text: " ".join(text.replace(" ", " ").split()).lower()
+        for case in load_cases():
+            texts = []
+            for source in case["source_ids"]:
+                path = collect.DEFAULT_CACHE / "texts" / (source + ".txt")
+                if path.is_file():
+                    texts.append(squash(path.read_text(errors="replace")))
+            quoted = [t for t in case["targets"] if t.get("kind") != "analytic" and not t.get("quote_file")]
+            quoted += [p for p in (case.get("article") or {}).get("parameters", {}).values() if not p["quote"].startswith(("Not stated", "FEMM "))]
+            for item in quoted:
+                quote = item["quote"].replace("...", "…")
+                parts = [squash(part) for part in quote.split("…") if part.strip()]
+                self.assertTrue(any(all(part in text for part in parts) for text in texts), (case["id"], item["quote"]))
+
     def test_every_level_plans_without_execution(self):
         for case in load_cases():
             for level in LEVELS:
