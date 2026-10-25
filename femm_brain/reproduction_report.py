@@ -71,8 +71,11 @@ def collect(results):
             levels[level] = entry
         passed = [level for level, entry in levels.items() if entry["status"] == "passed"]
         attempted = [level for level, entry in levels.items() if entry["status"] in ("passed", "failed")]
+        comparators = [level for level, entry in levels.items() if entry["status"] == "comparators_only"]
+        status = ("passed" if attempted and len(passed) == len(attempted) else "failed" if attempted else
+                  "comparators_only" if comparators else "not_attempted")
         entries.append({"case_id": identifier, "example_id": case["example_id"], "title": case["title"], "source_url": case["source_url"],
-                        "status": "passed" if attempted and len(passed) == len(attempted) else "failed" if attempted else "not_attempted",
+                        "status": status,
                         "levels_passed": passed, "levels": levels,
                         "rebuild_matches_original": summary.get("level_comparison", {}).get("rebuild"),
                         "article_model_vs_original": {"difference_count": summary["article_model_vs_original"]["difference_count"]}
@@ -84,6 +87,7 @@ def collect(results):
             "llm_calls": 0, "cases": entries,
             "totals": {"cases": len(entries), "passed": sum(e["status"] == "passed" for e in entries),
                        "failed": sum(e["status"] == "failed" for e in entries),
+                       "comparators_only": sum(e["status"] == "comparators_only" for e in entries),
                        "level_passes": {level: sum(level in e.get("levels_passed", []) for e in entries) for level in LEVELS}}}
 
 
@@ -131,7 +135,7 @@ table{{border-collapse:collapse;width:100%}}td,th{{border-bottom:1px solid var(-
 code{{font-size:12px;color:var(--muted)}}ul{{margin:4px 0 8px 18px;padding:0}}p{{color:var(--muted)}}
 </style></head><body><h1>Official FEMM example reproductions</h1>
 <p>{html.escape(record["scope"])} Generated {html.escape(record["generated_at"])}; catalog {record["catalog_sha256"][:12]}; LLM calls: {record["llm_calls"]}.</p>
-<p><b>{totals["passed"]}</b> of {totals["cases"]} cases pass every attempted level; level passes — original {totals["level_passes"]["original"]},
+<p><b>{totals["passed"]}</b> of {totals["cases"]} cases pass every attempted level; {totals["failed"]} fail; {totals.get("comparators_only", 0)} have comparators only. Level passes — original {totals["level_passes"]["original"]},
 rebuild {totals["level_passes"]["rebuild"]}, article {totals["level_passes"]["article"]}.</p>
 <div style="overflow-x:auto"><table><thead><tr><th>Case</th><th>Original</th><th>Rebuild</th><th>Article</th><th>Results</th></tr></thead>
 <tbody>{"".join(rows)}</tbody></table></div></body></html>

@@ -16,6 +16,7 @@ catalog before execution, and every comparison is reported, including failures.
 from __future__ import annotations
 
 import cmath
+from copy import deepcopy
 import csv
 from datetime import datetime, timezone
 import hashlib
@@ -352,6 +353,9 @@ def compare_models(expected, actual):
     if expected["physics"] != actual["physics"]:
         return [{"where": "physics", "expected": expected["physics"], "observed": actual["physics"]}]
     for key, value in expected["problem"].items():
+        # Axisymmetric problems ignore depth, and the engine re-saves it as one.
+        if key == "depth" and expected["problem"].get("type") == "axisymmetric":
+            continue
         compare("problem." + key, value, actual["problem"].get(key))
     for collection in COLLECTIONS[expected["physics"]]:
         wanted = {item["name"]: item for item in expected.get(collection, [])}
@@ -490,7 +494,8 @@ def compute_metrics(case, raw):
     metrics = {}
     steps = [s["label"] for s in case.get("steps") or [{"label": "base"}]]
     for step in steps:
-        suffix = "" if len(steps) == 1 else "@" + step
+        # Cases that declare steps name their metrics per step, even a single one.
+        suffix = "@" + step if case.get("steps") else ""
         for metric in case["metrics"]:
             value = raw[(step, metric["value"][0], metric["value"][1])]
             if metric.get("divide"):
@@ -533,10 +538,41 @@ def _source_record(case):
     return record, normalize(record)
 
 
-def plan_level(case, level):
-    """Freeze construction, measurement Lua and targets for one level of one case."""
+def scale_mesh(model, factor):
+    """Scale every explicit mesh constraint; regions left to the mesher stay automatic."""
+    if not 0.05 <= factor <= 20:
+        raise ValueError("Mesh scale must be between 0.05 and 20")
+    scaled = deepcopy(model)
+    for item in scaled["labels"] + scaled["segments"]:
+        if item["mesh"]:
+            item["mesh"] *= factor
+    for arc in scaled["arcs"]:
+        arc["max_segment"] = max(arc["max_segment"] * factor, 0.1)
+    return scaled, {"explicit_labels": sum(bool(l["mesh"]) for l in model["labels"]),
+                    "automatic_labels": sum(not l["mesh"] for l in model["labels"]),
+                    "explicit_segments": sum(bool(x["mesh"]) for x in model["segments"]), "arcs": len(model["arcs"])}
+
+
+def plan_level(case, level, control=None):
+    """Freeze construction, measurement Lua and targets for one level of one case.
+
+    A control is a diagnostic variant (scaled explicit mesh, or overridden
+    article parameters). It is reported beside the level and never changes
+    the level's acceptance.
+    """
     if level not in LEVELS:
         raise ValueError("Unknown reproduction level: " + str(level))
+    if control:
+        if control.get("level") != level or level == "original":
+            raise ValueError("Controls vary the rebuild or article level they name")
+        if control.get("parameters"):
+            if level != "article":
+                raise ValueError("Only article-level controls may override article parameters")
+            case = deepcopy(case)
+            for name, value in control["parameters"].items():
+                if name not in case["article"]["parameters"]:
+                    raise ValueError("Unknown article parameter in control: " + name)
+                case["article"]["parameters"][name]["value"] = value
     record, model = _source_record(case)
     if level in ("original", "rebuild") and model is None:
         return {"case_id": case["id"], "level": level, "status": "not_applicable",
@@ -547,6 +583,15 @@ def plan_level(case, level):
         if built.get("status") == "not_attempted":
             return {"case_id": case["id"], "level": level, "status": "not_attempted", "reason": built["reason"]}
         model = built["model"]
+    mesh_scaling = None
+    if control and control.get("mesh_scale", 1) != 1:
+        model, mesh_scaling = scale_mesh(model, control["mesh_scale"])
+    if control and control.get("problem"):
+        unknown = set(control["problem"]) - {"smart_mesh", "precision", "min_angle"}
+        if unknown:
+            raise ValueError("Controls may only override mesher and solver settings: " + ", ".join(sorted(unknown)))
+        model = deepcopy(model)
+        model["problem"].update(control["problem"])
     physics = model["physics"]
     extension = PHYSICS[physics]["extension"]
     if level == "original":
@@ -565,6 +610,7 @@ def plan_level(case, level):
             "article_parameters": built.get("parameters") if level == "article" else None,
             "article_assumptions": built.get("assumptions") if level == "article" else None,
             "targets": targets, "assessors": case.get("assessors", []), "lua": lua,
+            "control": control, "mesh_scaling": mesh_scaling,
             "module_sha256": _sha(__file__), "catalog_sha256": _sha(DATA / "reproductions.json"),
             "requires_ai": False}
     if level == "article":
@@ -604,9 +650,9 @@ def _run_engine(folder, *, engine, image, timeout):
     return {"engine": "docker", "image": image, "image_id": image_id, "network": "none", "read_only_container": True}
 
 
-def run_level(case, level, output, *, engine="docker", image=None, timeout=900):
+def run_level(case, level, output, *, engine="docker", image=None, timeout=900, control=None):
     """Execute one frozen level in an empty directory and retain all evidence."""
-    plan = plan_level(case, level)
+    plan = plan_level(case, level, control)
     folder = Path(output).resolve()
     folder.mkdir(parents=True, exist_ok=True)
     if any(folder.iterdir()):
@@ -627,7 +673,8 @@ def run_level(case, level, output, *, engine="docker", image=None, timeout=900):
     report = {"schema_version": 1, "case_id": case["id"], "example_id": case["example_id"], "level": level,
               "physics": physics, "plan_sha256": plan["plan_sha256"], "started_at": datetime.now(timezone.utc).isoformat(),
               "checks": {name: {"status": "not_run"} for name in ("build", "solve", "targets")},
-              "requires_ai": False, "status": "failed", "metrics": {}}
+              "requires_ai": False, "status": "failed", "metrics": {}, "control": control,
+              "mesh_scaling": plan.get("mesh_scaling")}
     started = time.monotonic()
     try:
         report["execution"] = _run_engine(folder, engine=engine, image=image or os.getenv("FEMM_BRAIN_IMAGE", ""), timeout=timeout)
@@ -662,10 +709,12 @@ def run_level(case, level, output, *, engine="docker", image=None, timeout=900):
                 results.append(run_assessor(assessor, case, raw, report["metrics"],
                                             plan["expected_model"] or _source_record(case)[1]))
         acceptance = [r for r in results if r.get("target", {}).get("used_for_acceptance", True)]
-        report["checks"]["targets"] = {"status": "passed" if all(r["status"] == "passed" for r in acceptance) else "failed",
-                                       "results": results}
+        # A level with only comparators has nothing to pass; it is reported as such.
+        target_status = ("comparators_only" if not acceptance else
+                         "passed" if all(r["status"] == "passed" for r in acceptance) else "failed")
+        report["checks"]["targets"] = {"status": target_status, "acceptance_count": len(acceptance), "results": results}
         build_ok = report["checks"]["build"]["status"] == "passed"
-        report["status"] = "passed" if build_ok and report["checks"]["targets"]["status"] == "passed" else "failed"
+        report["status"] = target_status if build_ok and target_status != "failed" else "failed"
     except (ValueError, OSError, KeyError, IndexError, csv.Error) as exc:
         report["checks"][stage] = {"status": "failed", "error": str(exc)}
     if report.get("execution_error"):
@@ -711,16 +760,38 @@ def compare_levels(case, reports):
     return result
 
 
-def reproduce(case_id, output, *, levels=LEVELS, engine="docker", image=None, timeout=900):
+def run_controls(case, reports, output, **options):
+    """Run each catalog control and report metric changes against its base level."""
+    results = {}
+    for control in case.get("controls", []):
+        base = reports.get(control["level"])
+        report = run_level(case, control["level"], output / ("control-" + control["id"]), control=control, **options)
+        changes = {}
+        if base and base.get("metrics") and report.get("metrics"):
+            for name, value in base["metrics"].items():
+                if name in report["metrics"]:
+                    observed = report["metrics"][name]
+                    changes[name] = {"base": value, "control": observed,
+                                     "relative_change": abs(observed - value) / max(abs(value), abs(observed), 1e-300)}
+        results[control["id"]] = {"level": control["level"], "purpose": control.get("purpose"),
+                                  "mesh_scale": control.get("mesh_scale", 1), "parameters": control.get("parameters"),
+                                  "status": report["status"], "metric_changes": changes,
+                                  "targets": [{k: r.get(k) for k in ("metric", "assessor", "status", "observed", "expected", "relative_error", "rms_error_ratio")}
+                                              for r in report.get("checks", {}).get("targets", {}).get("results", [])]}
+    return results
+
+
+def reproduce(case_id, output, *, levels=LEVELS, engine="docker", image=None, timeout=900, controls=False):
     cases = {case["id"]: case for case in load_cases()}
     if case_id not in cases:
         raise ValueError("Unknown reproduction case: " + str(case_id))
     case = cases[case_id]
     output = Path(output)
     reports = {level: run_level(case, level, output / level, engine=engine, image=image, timeout=timeout) for level in levels}
+    control_results = run_controls(case, reports, output, engine=engine, image=image, timeout=timeout) if controls else {}
     summary = {"schema_version": 1, "case_id": case_id, "example_id": case["example_id"], "title": case["title"],
                "levels": {level: {"status": r["status"], **({"reason": r["reason"]} if r.get("reason") else {})} for level, r in reports.items()},
-               "level_comparison": compare_levels(case, reports), "llm_calls": 0,
+               "level_comparison": compare_levels(case, reports), "controls": control_results, "llm_calls": 0,
                "completed_at": datetime.now(timezone.utc).isoformat()}
     article = reports.get("article", {})
     original = _source_record(case)[1]

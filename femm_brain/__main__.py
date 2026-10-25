@@ -49,6 +49,7 @@ def main(argv=None):
     reproduce.add_argument("--engine", choices=("docker", "native"), default="docker")
     reproduce.add_argument("--image")
     reproduce.add_argument("--timeout", type=int, default=900)
+    reproduce.add_argument("--controls", action="store_true", help="Also run each case's diagnostic mesh and parameter controls")
     report = sub.add_parser("reproduction-report", help="Record reproduction evidence and render its audit page")
     report.add_argument("--results", type=Path, required=True)
     report.add_argument("--output", type=Path)
@@ -110,10 +111,10 @@ def main(argv=None):
         if not identifiers or set(levels) - set(LEVELS):
             parser.error("Name case IDs or --all, and levels from: " + ",".join(LEVELS))
         summaries = [run_reproduction(i, args.output / i, levels=levels, engine=args.engine, image=args.image,
-                                      timeout=args.timeout) for i in identifiers]
+                                      timeout=args.timeout, controls=args.controls) for i in identifiers]
         print(json.dumps([{"case_id": s["case_id"], "levels": s["levels"],
                            "level_comparison": {k: v["status"] for k, v in s["level_comparison"].items()}} for s in summaries], indent=2))
-        return 0 if all(v["status"] in ("passed", "not_applicable", "not_attempted") for s in summaries for v in s["levels"].values()) else 1
+        return 0 if all(v["status"] in ("passed", "comparators_only", "not_applicable", "not_attempted") for s in summaries for v in s["levels"].values()) else 1
     if args.command == "reproduction-report":
         from .reproduction_report import RECORD, write
         record = write(args.results, args.output or RECORD, args.html)

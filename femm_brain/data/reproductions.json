@@ -560,7 +560,23 @@
       "quote": "Not stated; chosen discretization rule, not tuned to the result"
      }
     }
-   }
+   },
+   "controls": [
+    {
+     "id": "mesh-0p5",
+     "level": "rebuild",
+     "mesh_scale": 0.5,
+     "purpose": "Halve explicit mesh sizes and arc segment angles."
+    },
+    {
+     "id": "article-12-per-skin-depth",
+     "level": "article",
+     "parameters": {
+      "elements_per_skin_depth": 12
+     },
+     "purpose": "Double the pipe's elements per skin depth."
+    }
+   ]
   },
   {
    "id": "torque-benchmark",
@@ -1204,7 +1220,39 @@
       "quote": "Not stated; chosen"
      }
     }
-   }
+   },
+   "controls": [
+    {
+     "id": "article-domain-large",
+     "level": "article",
+     "parameters": {
+      "domain_radius_cm": 2.0,
+      "exterior_center_x_cm": 5.0
+     },
+     "purpose": "The Kelvin-linked exterior is exact for any domain radius; torque should not depend on it."
+    },
+    {
+     "id": "article-gap-wide",
+     "level": "article",
+     "parameters": {
+      "rotor_radius_cm": 0.7,
+      "stator_radius_cm": 0.9
+     },
+     "purpose": "Air-gap element radii are a modeling choice; torque should not depend on them."
+    },
+    {
+     "id": "article-mesh-half",
+     "level": "article",
+     "mesh_scale": 0.5,
+     "purpose": "Halve every element size and arc segment angle."
+    },
+    {
+     "id": "mesh-0p5",
+     "level": "rebuild",
+     "mesh_scale": 0.5,
+     "purpose": "Halve the original model's explicit mesh sizes and arc segment angles."
+    }
+   ]
   },
   {
    "id": "team28-asymptotic",
@@ -1405,7 +1453,21 @@
    "article": {
     "status": "not_attempted",
     "reason": "The article gives the TEAM 28 dimensions only in a figure image (Figure 2); its text states no coil, plate or gap dimensions."
-   }
+   },
+   "controls": [
+    {
+     "id": "mesh-0p5",
+     "level": "rebuild",
+     "mesh_scale": 0.5,
+     "purpose": "The article's Table 1 shows force rising toward ~1.007 N with mesh density; halve explicit sizes."
+    },
+    {
+     "id": "mesh-0p25",
+     "level": "rebuild",
+     "mesh_scale": 0.25,
+     "purpose": "Quarter explicit sizes."
+    }
+   ]
   },
   {
    "id": "team28-kelvin",
@@ -1606,7 +1668,21 @@
    "article": {
     "status": "not_attempted",
     "reason": "The article gives the TEAM 28 dimensions only in a figure image (Figure 2); its text states no coil, plate or gap dimensions."
-   }
+   },
+   "controls": [
+    {
+     "id": "mesh-0p5",
+     "level": "rebuild",
+     "mesh_scale": 0.5,
+     "purpose": "The article's Table 1 shows force rising toward ~1.007 N with mesh density; halve explicit sizes."
+    },
+    {
+     "id": "mesh-0p25",
+     "level": "rebuild",
+     "mesh_scale": 0.25,
+     "purpose": "Quarter explicit sizes."
+    }
+   ]
   },
   {
    "id": "heatflow-chimney",
@@ -1723,6 +1799,2311 @@
       "quote": "heat transfer coefficient of 5 W/m*K"
      }
     }
+   }
+  },
+  {
+   "id": "inductanceexample-dc",
+   "example_id": "inductanceexample",
+   "title": "Gapped EI inductor, DC 1 A: inductance from flux linkage and from total field energy",
+   "source_ids": [
+    "inductanceexample"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=inductanceexample",
+   "measurements": [
+    {
+     "id": "coil",
+     "op": "circuit",
+     "name": "icoil"
+    },
+    {
+     "id": "energy",
+     "op": "block_integral",
+     "select": {
+      "all": true
+     },
+     "type": 2
+    }
+   ],
+   "metrics": [
+    {
+     "name": "inductance_H",
+     "value": [
+      "coil",
+      2
+     ],
+     "divide": [
+      "coil",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "H"
+    },
+    {
+     "name": "energy_J",
+     "value": [
+      "energy",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "J"
+    },
+    {
+     "name": "inductance_from_energy_H",
+     "value": [
+      "energy",
+      0
+     ],
+     "scale": 2,
+     "part": "re",
+     "unit": "H"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "inductance_H",
+     "value": 0.00173,
+     "kind": "published_femm_result",
+     "quote": "L = 1.73 mH",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    },
+    {
+     "metric": "energy_J",
+     "value": 0.000865042,
+     "kind": "published_femm_result",
+     "quote": "W = 0.000865042 Joules",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    },
+    {
+     "metric": "inductance_from_energy_H",
+     "value": 0.00173,
+     "kind": "published_femm_result",
+     "quote": "L = 1.73 mH",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false
+    },
+    {
+     "metric": "inductance_H",
+     "value": 0.00139,
+     "kind": "analytic",
+     "quote": "L = 1.39 mH",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false
+    }
+   ],
+   "source_model_sha256": "cea7acd3ed0296ea4531f7d8b6693adfa87683dd5c6857f4d76231042963cabb",
+   "article": {
+    "status": "not_attempted",
+    "reason": "The text gives pole widths, gap, turns, wire gauge, depth, mu_r, box size, boundary condition, current and mesh size, but not the coil-window (slot) width/height, the E-core back-iron thickness, the I-bar thickness/length or the core's exact position in the box. Those only appear in Figure 1, and the FEM inductance depends on them through leakage and fringing."
+   },
+   "controls": [
+    {
+     "id": "mesh-0p5",
+     "level": "rebuild",
+     "mesh_scale": 0.5,
+     "purpose": "Independent repeat of the EI mesh study: does refinement move results toward the published values?"
+    },
+    {
+     "id": "mesh-0p25",
+     "level": "rebuild",
+     "mesh_scale": 0.25,
+     "purpose": "Quarter explicit sizes."
+    }
+   ],
+   "findings": [
+    "Mesh refinement moves inductance further from the published 1.73 mH (1.7561, 1.7577, 1.7607 mH), confirming the earlier source-control result that discretization does not explain the 1.5% gap.",
+    "The original source file solved directly in FEMM 5 gives the same values; see reference_discrepancies.json."
+   ]
+  },
+  {
+   "id": "acforceexample-dc",
+   "example_id": "acforceexample",
+   "title": "DC (1 A) force on the I-section: WST block integral and MST line integral",
+   "source_ids": [
+    "acforceexample"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=acforceexample",
+   "measurements": [
+    {
+     "id": "wst_I",
+     "op": "block_integral",
+     "select": {
+      "labels": [
+       [
+        0.0,
+        -0.125
+       ]
+      ]
+     },
+     "type": 19
+    },
+    {
+     "id": "mst_I",
+     "op": "line_integral",
+     "points": [
+      [
+       -1.0,
+       -0.0125
+      ],
+      [
+       1.0,
+       -0.0125
+      ],
+      [
+       1.0,
+       -0.5
+      ],
+      [
+       -1.0,
+       -0.5
+      ],
+      [
+       -1.0,
+       -0.0125
+      ]
+     ],
+     "type": 3
+    }
+   ],
+   "metrics": [
+    {
+     "name": "wst_force_y_N",
+     "value": [
+      "wst_I",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "N"
+    },
+    {
+     "name": "mst_force_y_N",
+     "value": [
+      "mst_I",
+      1
+     ],
+     "scale": 1,
+     "part": "abs",
+     "unit": "N"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "wst_force_y_N",
+     "value": 1.11347,
+     "kind": "published_femm_result",
+     "quote": "1.11347 N for WST and 1.11289 N for MST",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    },
+    {
+     "metric": "mst_force_y_N",
+     "value": 1.11289,
+     "kind": "published_femm_result",
+     "quote": "1.11347 N for WST and 1.11289 N for MST",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false
+    },
+    {
+     "metric": "wst_force_y_N",
+     "value": 1.09478,
+     "kind": "analytic",
+     "quote": "reasonable match to the circuit theory prediction of 1.09478 N",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false
+    }
+   ],
+   "source_model_sha256": "cea7acd3ed0296ea4531f7d8b6693adfa87683dd5c6857f4d76231042963cabb",
+   "article": {
+    "status": "not_attempted",
+    "reason": "Same geometry as inductanceexample: the text gives pole widths, gap, depth, turns, mu_r and current but not the slot/window dimensions, back-iron and I-bar thicknesses, the outer domain or the mesh (all only in figures/the inductance example's file)."
+   },
+   "controls": [
+    {
+     "id": "mesh-0p5",
+     "level": "rebuild",
+     "mesh_scale": 0.5,
+     "purpose": "Independent repeat of the EI mesh study: does refinement move results toward the published values?"
+    },
+    {
+     "id": "mesh-0p25",
+     "level": "rebuild",
+     "mesh_scale": 0.25,
+     "purpose": "Quarter explicit sizes."
+    }
+   ]
+  },
+  {
+   "id": "coilgun-z1p5",
+   "example_id": "coilgun",
+   "title": "Ball at its initial position 1.5 in from the coil center: WST axial force and coil ampere-turns",
+   "source_ids": [
+    "coilgun"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=coilgun",
+   "measurements": [
+    {
+     "id": "ball",
+     "op": "block_integral",
+     "select": {
+      "labels": [
+       [
+        0.06,
+        -1.51375
+       ]
+      ]
+     },
+     "type": 19
+    },
+    {
+     "id": "coil",
+     "op": "block_integral",
+     "select": {
+      "labels": [
+       [
+        0.75,
+        0.0
+       ]
+      ]
+     },
+     "type": 7
+    }
+   ],
+   "metrics": [
+    {
+     "name": "ball_force_z_N",
+     "value": [
+      "ball",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "N"
+    },
+    {
+     "name": "coil_ampere_turns_A",
+     "value": [
+      "coil",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "A"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "ball_force_z_N",
+     "value": 0.0532421,
+     "kind": "published_femm_result",
+     "quote": "88- 1.5, 0.0532421<",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8d31948187feb67a42495f1154d4633e5d52d4cdb4c5f99f4f341f960dc7d660.txt"
+    },
+    {
+     "metric": "coil_ampere_turns_A",
+     "value": 9677.4,
+     "kind": "analytic",
+     "quote": "Multiplying by the cross-section of the coil would yield 9677.4",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    }
+   ],
+   "source_model_sha256": "5d376b69a3337c69aceef643b6631d0a47a64403cedde60b12030c9ed44ddfe1",
+   "article": {
+    "status": "not_attempted",
+    "reason": "The page text gives the current density, the 1.5 in initial ball position and the Kelvin-transformation approach, and the companion Mathematica PDF gives the coil radii/length and ball radius, but the ball's material (permeability) is only called 'Iron' (not a named library material; the file uses linear mu_r=2500), and the Kelvin exterior-region dimensions and the mesh sizes are not stated. The far-field WST force is mesh-sensitive."
+   },
+   "controls": [
+    {
+     "id": "mesh-0p5",
+     "level": "rebuild",
+     "mesh_scale": 0.5,
+     "purpose": "Is the 2.5% ball-force gap a discretization effect? Halve explicit mesh sizes."
+    },
+    {
+     "id": "mesh-0p25",
+     "level": "rebuild",
+     "mesh_scale": 0.25,
+     "purpose": "Quarter explicit mesh sizes."
+    }
+   ],
+   "findings": [
+    "Halving and quartering the explicit mesh sizes moves the ball force from -2.5% to +0.06% to +8.3% of the published value: the small-ball weighted-stress force is not mesh-converged at these sizes.",
+    "The published value was computed with FEMM 4.2's mesher in 2013; FEMM 5 uses a different mesher with the same size constraints."
+   ]
+  },
+  {
+   "id": "uniformfield-planar-base",
+   "example_id": "uniformfield-planar",
+   "title": "Flux density inside the interior region of uniform_field_2d.FEM",
+   "source_ids": [
+    "uniformfield"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=uniformfield",
+   "measurements": [
+    {
+     "id": "pt",
+     "op": "point_values",
+     "points": [
+      [
+       4.625,
+       4.575
+      ],
+      [
+       5.125,
+       4.875
+      ]
+     ],
+     "fields": [
+      "B1",
+      "B2"
+     ]
+    }
+   ],
+   "metrics": [
+    {
+     "name": "B_interior_center_T",
+     "value": [
+      "pt:B1",
+      0
+     ],
+     "scale": 1,
+     "part": "abs",
+     "unit": "T"
+    },
+    {
+     "name": "B_interior_offcenter_T",
+     "value": [
+      "pt:B1",
+      1
+     ],
+     "scale": 1,
+     "part": "abs",
+     "unit": "T"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "B_interior_center_T",
+     "value": 0.499966,
+     "kind": "published_femm_result",
+     "quote": "The field inside the interior region is a uniform value of 0.499966 Tesla",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    },
+    {
+     "metric": "B_interior_offcenter_T",
+     "value": 0.499966,
+     "kind": "published_femm_result",
+     "quote": "The field inside the interior region is a uniform value of 0.499966 Tesla",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    },
+    {
+     "metric": "B_interior_center_T",
+     "value": 0.5,
+     "kind": "analytic",
+     "quote": "very close to the theoretical solution of 1/2 Tesla",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false
+    }
+   ],
+   "source_model_sha256": "706bab3594cc87a9898d6530114aff0777b35bb20472f5400b93991f510159be",
+   "article": {
+    "status": "not_attempted",
+    "reason": "The published quantity depends only on the exterior-layer coercivity (Hc = 1/mu0, stated) and the IABC construction (Open Boundary Builder defaults, described in the text and the OpenBoundaryExample page); theory (B = mu0*Hc/2) makes it independent of domain radius, center and mesh, and the interior contains no objects. Radius/center are not stated and can be chosen freely; the edge type should be the wizard default.",
+    "candidate_parameters": {
+     "exterior_layer_coercivity": {
+      "value": 795774.7154594767,
+      "unit": "A/m",
+      "quote": "Again, A value of \\(H_c = \\frac{1}{\\mu_o}\\) was specified for each external material.",
+      "expression": "1/mu0"
+     },
+     "demagnetization_factor_circle": {
+      "value": 0.5,
+      "unit": "1",
+      "quote": "the demagnetization factor of a circle in a 2D domain is 1/2"
+     },
+     "iabc_layers": {
+      "value": 7,
+      "unit": "layers",
+      "quote": "FEMM open boundary builder default (femm_makeabc.cpp: n defaults to 7)",
+      "quote_file": "/home/akhan/.cache/femm-brain/texts/openboundaryexample.txt",
+      "quote_kind": "femm_default"
+     }
+    },
+    "construction_notes": "Planar, any length unit. Draw an empty circular interior region (any radius R and center), assign Air to it, and run the Open Boundary Builder (mi_makeABC) with default settings (7 layers, default edge type; the supplied file uses a Dirichlet A=0 outer edge, R=1.1351 in centred at (4.625, 4.575) in - file-derived, not text). Edit each generated exterior material u1..u7 to Hc = 1/mu0 = 795774.7 A/m and give every exterior-layer block label the same magnetization direction (the file uses 0 deg, i.e. +x; the text only gives 90/-90 deg for the axisymmetric case). Solve and query B at any interior point: |B| should be 0.5 T along the magnetization axis."
+   }
+  },
+  {
+   "id": "uniformfield-axisymmetric-base",
+   "example_id": "uniformfield-axisymmetric",
+   "title": "Flux density inside the spherical interior region of uniform_field_axi.FEM",
+   "source_ids": [
+    "uniformfield"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=uniformfield",
+   "measurements": [
+    {
+     "id": "pt",
+     "op": "point_values",
+     "points": [
+      [
+       0.5,
+       5.76
+      ],
+      [
+       1.5,
+       6.5
+      ]
+     ],
+     "fields": [
+      "B1",
+      "B2"
+     ]
+    }
+   ],
+   "metrics": [
+    {
+     "name": "Bz_interior_near_center_T",
+     "value": [
+      "pt:B2",
+      0
+     ],
+     "scale": 1,
+     "part": "abs",
+     "unit": "T"
+    },
+    {
+     "name": "Bz_interior_offcenter_T",
+     "value": [
+      "pt:B2",
+      1
+     ],
+     "scale": 1,
+     "part": "abs",
+     "unit": "T"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "Bz_interior_near_center_T",
+     "value": 0.666609,
+     "kind": "published_femm_result",
+     "quote": "querying any point in the interior region yields a field of 0.666609 Tesla",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    },
+    {
+     "metric": "Bz_interior_offcenter_T",
+     "value": 0.666609,
+     "kind": "published_femm_result",
+     "quote": "querying any point in the interior region yields a field of 0.666609 Tesla",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    },
+    {
+     "metric": "Bz_interior_near_center_T",
+     "value": 0.6666666667,
+     "kind": "analytic",
+     "quote": "very close to the theoretical value of 2/3 Tesla",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false
+    }
+   ],
+   "source_model_sha256": "9a36d1659912ab1af8474209ea6a10b8874550d0c029d0e56bbca661f461feea",
+   "article": {
+    "status": "not_attempted",
+    "reason": "The result depends only on the exterior-layer coercivity (Hc = 1/mu0) and magnetization direction (90 or -90 deg), both stated, plus the default IABC built by the Open Boundary Builder; theory (B = 2/3 mu0 Hc) makes it independent of the sphere radius, center and mesh, and the interior has no objects. Radius/center are free choices; the edge type should be the wizard default.",
+    "candidate_parameters": {
+     "exterior_layer_coercivity": {
+      "value": 795774.7154594767,
+      "unit": "A/m",
+      "quote": "A value of \\(H_c = \\frac{1}{\\mu_o}\\) was specified for each external material.",
+      "expression": "1/mu0"
+     },
+     "exterior_layer_magnetization_direction": {
+      "value": 90,
+      "unit": "deg",
+      "quote": "should be set to either 90o or -90o"
+     },
+     "demagnetization_factor_sphere": {
+      "value": 0.3333333333,
+      "unit": "1",
+      "quote": "the demagnetization factor for a sphere is 1/3"
+     },
+     "iabc_layers": {
+      "value": 7,
+      "unit": "layers",
+      "quote": "FEMM open boundary builder default (femm_makeabc.cpp: n defaults to 7)",
+      "quote_file": "/home/akhan/.cache/femm-brain/texts/openboundaryexample.txt",
+      "quote_kind": "femm_default"
+     }
+    },
+    "construction_notes": "Axisymmetric, any length unit. Draw an empty semicircular (spherical) interior region on the r=0 axis (any radius R, any z center), assign Air, and run the Open Boundary Builder (mi_makeABC) with defaults (7 layers, default edge type; the supplied file uses a Dirichlet A=0 outer edge, R=2.71765 in centred at z=5.76 in - file-derived, not text). Set Hc = 1/mu0 = 795774.7 A/m on every exterior material u1..u7 and magnetization direction 90 deg on every exterior-layer block label. Solve and query B anywhere inside: Bz should be 2/3 T (0.666609 T published)."
+   }
+  },
+  {
+   "id": "woofer-kelvin-centered",
+   "example_id": "woofer",
+   "title": "Woofer.fem (Kelvin-transformation open boundary), coil centred: BL, flux linkages at 1 A / 0 A, DC resistance",
+   "source_ids": [
+    "woofer"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=woofer",
+   "measurements": [
+    {
+     "id": "coil",
+     "op": "circuit",
+     "name": "icoil"
+    },
+    {
+     "id": "fz",
+     "op": "block_integral",
+     "select": {
+      "labels": [
+       [
+        16.0,
+        17.86
+       ]
+      ]
+     },
+     "type": 12
+    }
+   ],
+   "metrics": [
+    {
+     "name": "lorentz_force_z_N",
+     "value": [
+      "fz",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "N"
+    },
+    {
+     "name": "flux_linkage_Wb",
+     "value": [
+      "coil",
+      2
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "Wb"
+    },
+    {
+     "name": "coil_voltage_V",
+     "value": [
+      "coil",
+      1
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "V"
+    },
+    {
+     "name": "coil_current_A",
+     "value": [
+      "coil",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "A"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "lorentz_force_z_N@i1A",
+     "value": 6.75502,
+     "kind": "published_femm_result",
+     "quote": "z-component: 6.75502 N",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    },
+    {
+     "metric": "flux_linkage_Wb@i1A",
+     "value": -0.0461614,
+     "kind": "published_femm_result",
+     "quote": "with a 1A coil current is -0.0461614 Webers",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    },
+    {
+     "metric": "flux_linkage_Wb@i0A",
+     "value": -0.0474315,
+     "kind": "published_femm_result",
+     "quote": "flux linkage with a current of 0A is -0.0474315 Webers",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    },
+    {
+     "metric": "coil_voltage_V@i1A",
+     "value": 5.40812,
+     "kind": "published_femm_result",
+     "quote": "reported as 5.40812Ω for the present model",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    }
+   ],
+   "source_model_sha256": "485fed58efba321acf03c5b9c6fd1d35ca0710e20df6971ab5cac1f3a9aa9f0d",
+   "steps": [
+    {
+     "label": "i1A",
+     "modify": [
+      {
+       "function": "modifycircprop",
+       "name": "icoil",
+       "property": 1,
+       "value": 1
+      }
+     ]
+    },
+    {
+     "label": "i0A",
+     "modify": [
+      {
+       "function": "modifycircprop",
+       "name": "icoil",
+       "property": 1,
+       "value": 0
+      }
+     ]
+    }
+   ],
+   "article": {
+    "status": "not_attempted",
+    "reason": "The motor dimensions are given only in Figure 1 (an image). The text names Ceramic 5 and states the coil centre (r=16, z=17.15) and 11 mm coil length, but gives no pole-piece, plate, magnet or coil-radial dimensions, coil turn count or wire gauge."
+   }
+  },
+  {
+   "id": "woofer-simple-boundary-centered",
+   "example_id": "woofer",
+   "title": "Woofer-simple-boundary.fem (distant square boundary, Figure 3): same quantities, comparator only",
+   "source_ids": [
+    "woofer"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=woofer",
+   "measurements": [
+    {
+     "id": "coil",
+     "op": "circuit",
+     "name": "icoil"
+    },
+    {
+     "id": "fz",
+     "op": "block_integral",
+     "select": {
+      "labels": [
+       [
+        16.0,
+        17.86
+       ]
+      ]
+     },
+     "type": 12
+    }
+   ],
+   "metrics": [
+    {
+     "name": "lorentz_force_z_N",
+     "value": [
+      "fz",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "N"
+    },
+    {
+     "name": "flux_linkage_Wb",
+     "value": [
+      "coil",
+      2
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "Wb"
+    },
+    {
+     "name": "coil_voltage_V",
+     "value": [
+      "coil",
+      1
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "V"
+    },
+    {
+     "name": "coil_current_A",
+     "value": [
+      "coil",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "A"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "lorentz_force_z_N@i1A",
+     "value": 6.75502,
+     "kind": "published_femm_result",
+     "quote": "z-component: 6.75502 N",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false
+    },
+    {
+     "metric": "flux_linkage_Wb@i1A",
+     "value": -0.0461614,
+     "kind": "published_femm_result",
+     "quote": "with a 1A coil current is -0.0461614 Webers",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false
+    },
+    {
+     "metric": "flux_linkage_Wb@i0A",
+     "value": -0.0474315,
+     "kind": "published_femm_result",
+     "quote": "flux linkage with a current of 0A is -0.0474315 Webers",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false
+    },
+    {
+     "metric": "coil_voltage_V@i1A",
+     "value": 5.40812,
+     "kind": "published_femm_result",
+     "quote": "reported as 5.40812Ω for the present model",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false
+    }
+   ],
+   "source_model_sha256": "8b1f70fae9a8dfc5c4593a341186f65e67dea7a3383b40c4d9cf7a34b0e8d3e5",
+   "steps": [
+    {
+     "label": "i1A",
+     "modify": [
+      {
+       "function": "modifycircprop",
+       "name": "icoil",
+       "property": 1,
+       "value": 1
+      }
+     ]
+    },
+    {
+     "label": "i0A",
+     "modify": [
+      {
+       "function": "modifycircprop",
+       "name": "icoil",
+       "property": 1,
+       "value": 0
+      }
+     ]
+    }
+   ],
+   "article": {
+    "status": "not_attempted",
+    "reason": "The motor dimensions are given only in Figure 1 (an image). The text names Ceramic 5 and states the coil centre (r=16, z=17.15) and 11 mm coil length, but gives no pole-piece, plate, magnet or coil-radial dimensions, coil turn count or wire gauge."
+   }
+  },
+  {
+   "id": "blockedimpedance-dc-bl-comparator",
+   "example_id": "blockedimpedance",
+   "title": "ssf-082.fem at x=0: Bl from a DC solve at a small coil current (comparator for the incremental-AC Bl at 1 Hz)",
+   "source_ids": [
+    "blockedimpedance"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=blockedimpedance",
+   "measurements": [
+    {
+     "id": "coil",
+     "op": "circuit",
+     "name": "Icoil"
+    },
+    {
+     "id": "fz",
+     "op": "block_integral",
+     "select": {
+      "labels": [
+       [
+        27.3,
+        46.7
+       ]
+      ]
+     },
+     "type": 12
+    }
+   ],
+   "metrics": [
+    {
+     "name": "bl_N_per_A",
+     "value": [
+      "fz",
+      0
+     ],
+     "divide": [
+      "coil",
+      0
+     ],
+     "scale": 1,
+     "part": "abs",
+     "unit": "N/A"
+    },
+    {
+     "name": "dc_resistance_ohm",
+     "value": [
+      "coil",
+      1
+     ],
+     "divide": [
+      "coil",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "ohm"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "bl_N_per_A@i10mA",
+     "value": 15.9827,
+     "kind": "published_femm_result",
+     "quote": "80, 15.9827<",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/2984d6dca3e9cfd41842955eaa82bea6ae85bacae38569799cb2a63fa5444b8c.txt",
+     "note": "Published Bl at x=0 is abs(mo_blockintegral(29)), the 1x Lorentz force, from the incremental AC solve at 1 Hz about the 0 A DC solution. Here it is approximated by F_z/I from a DC nonlinear solve at I = 0.01 A, where the coil self-force (about 0.5*I^2*dL/dx) is negligible. This is a different formulation, so the target is a comparator only."
+    }
+   ],
+   "source_model_sha256": "92f2fe586c4a3284aec2c51b9d81159674b95d5ef03cadfedc3852a2495ef234",
+   "steps": [
+    {
+     "label": "i10mA",
+     "modify": [
+      {
+       "function": "modifycircprop",
+       "name": "Icoil",
+       "property": 1,
+       "value": 0.01
+      }
+     ]
+    }
+   ],
+   "article": {
+    "status": "not_attempted",
+    "reason": "The geometry comes from Figures 1-2 (taken from the Bortot thesis). The text gives only materials (Ceramic 5, 1018 steel at 5.8 MS/m, 25 AWG 15% CCA at 38.5265 MS/m) and mesh guidance, not the dimensions."
+   }
+  },
+  {
+   "id": "transientloudspeaker-r0-dc",
+   "example_id": "transientloudspeaker",
+   "title": "DC voice-coil resistance R0 of the SSF-082 model (no shorting ring) from circuit voltage/current",
+   "source_ids": [
+    "transientloudspeaker"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=transientloudspeaker",
+   "measurements": [
+    {
+     "id": "coil",
+     "op": "circuit",
+     "name": "Icoil"
+    }
+   ],
+   "metrics": [
+    {
+     "name": "dc_resistance_ohm",
+     "value": [
+      "coil",
+      1
+     ],
+     "divide": [
+      "coil",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "ohm"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "dc_resistance_ohm@i1A",
+     "value": 5.76602,
+     "kind": "published_femm_result",
+     "quote": "R0 = 5.76602;",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true,
+     "note": "Page code comment: 'DC resistance at 20degC from FEMM'. An analytic check gives the same value: 213 x 2*pi*26.95 mm / (38.5265 MS/m x pi*(0.22733 mm)^2) = 5.766 ohm, which is mesh-insensitive. The coil uses LamType 8 (15% CCA), which needs a FEMM 4.2 build from late 2015 or later."
+    }
+   ],
+   "source_model_sha256": "92f2fe586c4a3284aec2c51b9d81159674b95d5ef03cadfedc3852a2495ef234",
+   "steps": [
+    {
+     "label": "i1A",
+     "modify": [
+      {
+       "function": "modifycircprop",
+       "name": "Icoil",
+       "property": 1,
+       "value": 1
+      }
+     ]
+    }
+   ],
+   "article": {
+    "status": "not_attempted",
+    "reason": "The page gives no geometry. It refers to the SSF-082 geometry of BlockedImpedance / Bortot, whose dimensions appear only in figures."
+   }
+  },
+  {
+   "id": "proximityloss-continuum-ff-0p8mm",
+   "example_id": "proximityloss",
+   "title": "proximityapprox2.fem (continuum coil, 0.8 mm wire, file frequency 50 kHz): winding fill factor of the 114-turn coil region",
+   "source_ids": [
+    "proximityloss"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=proximityloss",
+   "measurements": [
+    {
+     "id": "p",
+     "op": "point_values",
+     "points": [
+      [
+       9.09,
+       2.18
+      ]
+     ],
+     "fields": [
+      "ff"
+     ]
+    },
+    {
+     "id": "coil",
+     "op": "circuit",
+     "name": "icoil"
+    }
+   ],
+   "metrics": [
+    {
+     "name": "fill_factor_pct",
+     "value": [
+      "p:ff",
+      0
+     ],
+     "scale": 100,
+     "part": "re",
+     "unit": "%"
+    },
+    {
+     "name": "impedance_re_ohm",
+     "value": [
+      "coil",
+      1
+     ],
+     "divide": [
+      "coil",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "ohm"
+    },
+    {
+     "name": "impedance_im_ohm",
+     "value": [
+      "coil",
+      1
+     ],
+     "divide": [
+      "coil",
+      0
+     ],
+     "scale": 1,
+     "part": "im",
+     "unit": "ohm"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "fill_factor_pct@base",
+     "value": 39.05,
+     "kind": "analytic",
+     "quote": "representing 39.05%, 61.04%, and",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt",
+     "note": "Geometric copper fill of the continuum region: 114*pi*(d/2)^2 / (12.43153533*11.8 mm^2). FEMM's 'ff' point value for a magnet-wire block should equal this ratio. It is independent of frequency and mesh."
+    }
+   ],
+   "source_model_sha256": "53e64d015a825dd4e4f83492c83a10299696f9c20a2cfcb02a6888711d198f58",
+   "article": {
+    "status": "not_attempted",
+    "reason": "The paper text (notes.pdf, linked as 'Full Paper') states the domain, boundary condition, coil-region bounding box, turn count, conductivity, wire diameters and mesh size for the continuum model. The fill-factor target depends only on the coil block, wire diameter and turns.",
+    "candidate_parameters": {
+     "domain_radius": {
+      "value": 20,
+      "unit": "mm",
+      "quote": "a semicircular region with a radius of 20 mm. A first-order",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "outer_bc": {
+      "value": 1,
+      "unit": "asymptotic BC order (first-order; c0 = 1/(mu0*r))",
+      "quote": "asymptotic boundary condition [6] is used on the outer radius",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "coil_inner_radius": {
+      "value": 5.1,
+      "unit": "mm",
+      "quote": "an inner radius of 5.1mm, an outer radius of 17.5315mm, and",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "coil_outer_radius": {
+      "value": 17.5315,
+      "unit": "mm",
+      "quote": "an inner radius of 5.1mm, an outer radius of 17.5315mm, and",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "coil_axial_length": {
+      "value": 11.8,
+      "unit": "mm",
+      "quote": "an axial length of 11.8 mm. Wire diameters of 0.8mm, 1mm,",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "top_inner_turn_center_z": {
+      "value": 5.4,
+      "unit": "mm",
+      "quote": "is centered at r = 5.6, z = 5.4. Referring to the dimensions",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "turns": {
+      "value": 114,
+      "unit": "turns",
+      "quote": "coil consists of 114 turns of copper with a conductivity of",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "copper_conductivity": {
+      "value": 58,
+      "unit": "MS/m",
+      "quote": "58 MS/m wound in alternating layers of 10 and 9 turns. For",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "mesh_size": {
+      "value": 0.5,
+      "unit": "mm",
+      "quote": "coil also has a characteristic mesh size of 0.5mm, resulting",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "wire_diameter": {
+      "value": 0.8,
+      "unit": "mm",
+      "quote": "an axial length of 11.8 mm. Wire diameters of 0.8mm, 1mm,",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     }
+    },
+    "construction_notes": "Axisymmetric magnetics, units mm. Draw a semicircular air domain of radius 20 mm centred on the origin (arc from (0,-20) to (0,20) plus the axis segment) and apply a first-order asymptotic (mixed, c0 = 1/(mu0*0.020 m), c1 = 0) boundary on the arc. Coil region: rectangle r = 5.1-17.5315 mm, z = -5.9 to +5.9 mm (top inner turn centre z = 5.4 plus 0.5 mm wire radius gives the top at 5.9; length 11.8). Material: copper 58 MS/m, LamType 'magnet wire' (3), 1 strand, wire diameter 0.8 mm. Block label in the coil with circuit 'icoil' (series, 1 A) and 114 turns. Air elsewhere. Mesh size 0.5 mm in the coil and air. Frequency: the shipped file uses 50 kHz (the paper sweeps 1 kHz-1 MHz). Measure ff at a point inside the coil, e.g. (9.09, 2.18)."
+   },
+   "steps": [
+    {
+     "label": "base",
+     "modify": []
+    }
+   ]
+  },
+  {
+   "id": "proximityloss-continuum-ff-1p0mm",
+   "example_id": "proximityloss",
+   "title": "ProximityApprox.fem (continuum coil, 1.0 mm wire, file frequency 100 kHz): winding fill factor of the 114-turn coil region",
+   "source_ids": [
+    "proximityloss"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=proximityloss",
+   "measurements": [
+    {
+     "id": "p",
+     "op": "point_values",
+     "points": [
+      [
+       9.09,
+       2.18
+      ]
+     ],
+     "fields": [
+      "ff"
+     ]
+    },
+    {
+     "id": "coil",
+     "op": "circuit",
+     "name": "icoil"
+    }
+   ],
+   "metrics": [
+    {
+     "name": "fill_factor_pct",
+     "value": [
+      "p:ff",
+      0
+     ],
+     "scale": 100,
+     "part": "re",
+     "unit": "%"
+    },
+    {
+     "name": "impedance_re_ohm",
+     "value": [
+      "coil",
+      1
+     ],
+     "divide": [
+      "coil",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "ohm"
+    },
+    {
+     "name": "impedance_im_ohm",
+     "value": [
+      "coil",
+      1
+     ],
+     "divide": [
+      "coil",
+      0
+     ],
+     "scale": 1,
+     "part": "im",
+     "unit": "ohm"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "fill_factor_pct@base",
+     "value": 61.04,
+     "kind": "analytic",
+     "quote": "representing 39.05%, 61.04%, and",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt",
+     "note": "Geometric copper fill of the continuum region: 114*pi*(d/2)^2 / (12.43153533*11.8 mm^2). FEMM's 'ff' point value for a magnet-wire block should equal this ratio. It is independent of frequency and mesh."
+    }
+   ],
+   "source_model_sha256": "6f900d9190e779ec2fc8cc5ac48680ce0c2293c16f51b8fa758022f1ead6f78b",
+   "article": {
+    "status": "not_attempted",
+    "reason": "The paper text (notes.pdf, linked as 'Full Paper') states the domain, boundary condition, coil-region bounding box, turn count, conductivity, wire diameters and mesh size for the continuum model. The fill-factor target depends only on the coil block, wire diameter and turns.",
+    "candidate_parameters": {
+     "domain_radius": {
+      "value": 20,
+      "unit": "mm",
+      "quote": "a semicircular region with a radius of 20 mm. A first-order",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "outer_bc": {
+      "value": 1,
+      "unit": "asymptotic BC order (first-order; c0 = 1/(mu0*r))",
+      "quote": "asymptotic boundary condition [6] is used on the outer radius",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "coil_inner_radius": {
+      "value": 5.1,
+      "unit": "mm",
+      "quote": "an inner radius of 5.1mm, an outer radius of 17.5315mm, and",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "coil_outer_radius": {
+      "value": 17.5315,
+      "unit": "mm",
+      "quote": "an inner radius of 5.1mm, an outer radius of 17.5315mm, and",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "coil_axial_length": {
+      "value": 11.8,
+      "unit": "mm",
+      "quote": "an axial length of 11.8 mm. Wire diameters of 0.8mm, 1mm,",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "top_inner_turn_center_z": {
+      "value": 5.4,
+      "unit": "mm",
+      "quote": "is centered at r = 5.6, z = 5.4. Referring to the dimensions",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "turns": {
+      "value": 114,
+      "unit": "turns",
+      "quote": "coil consists of 114 turns of copper with a conductivity of",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "copper_conductivity": {
+      "value": 58,
+      "unit": "MS/m",
+      "quote": "58 MS/m wound in alternating layers of 10 and 9 turns. For",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "mesh_size": {
+      "value": 0.5,
+      "unit": "mm",
+      "quote": "coil also has a characteristic mesh size of 0.5mm, resulting",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "wire_diameter": {
+      "value": 1.0,
+      "unit": "mm",
+      "quote": "an axial length of 11.8 mm. Wire diameters of 0.8mm, 1mm,",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     }
+    },
+    "construction_notes": "Axisymmetric magnetics, units mm. Draw a semicircular air domain of radius 20 mm centred on the origin (arc from (0,-20) to (0,20) plus the axis segment) and apply a first-order asymptotic (mixed, c0 = 1/(mu0*0.020 m), c1 = 0) boundary on the arc. Coil region: rectangle r = 5.1-17.5315 mm, z = -5.9 to +5.9 mm (top inner turn centre z = 5.4 plus 0.5 mm wire radius gives the top at 5.9; length 11.8). Material: copper 58 MS/m, LamType 'magnet wire' (3), 1 strand, wire diameter 1.0 mm. Block label in the coil with circuit 'icoil' (series, 1 A) and 114 turns. Air elsewhere. Mesh size 0.5 mm in the coil and air. Frequency: the shipped file uses 100 kHz (the paper sweeps 1 kHz-1 MHz). Measure ff at a point inside the coil, e.g. (9.09, 2.18)."
+   },
+   "steps": [
+    {
+     "label": "base",
+     "modify": []
+    }
+   ]
+  },
+  {
+   "id": "proximityloss-continuum-ff-1p1mm",
+   "example_id": "proximityloss",
+   "title": "ProximityApprox3.fem (continuum coil, 1.1 mm wire, file frequency 50 kHz): winding fill factor of the 114-turn coil region",
+   "source_ids": [
+    "proximityloss"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=proximityloss",
+   "measurements": [
+    {
+     "id": "p",
+     "op": "point_values",
+     "points": [
+      [
+       9.09,
+       2.18
+      ]
+     ],
+     "fields": [
+      "ff"
+     ]
+    },
+    {
+     "id": "coil",
+     "op": "circuit",
+     "name": "icoil"
+    }
+   ],
+   "metrics": [
+    {
+     "name": "fill_factor_pct",
+     "value": [
+      "p:ff",
+      0
+     ],
+     "scale": 100,
+     "part": "re",
+     "unit": "%"
+    },
+    {
+     "name": "impedance_re_ohm",
+     "value": [
+      "coil",
+      1
+     ],
+     "divide": [
+      "coil",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "ohm"
+    },
+    {
+     "name": "impedance_im_ohm",
+     "value": [
+      "coil",
+      1
+     ],
+     "divide": [
+      "coil",
+      0
+     ],
+     "scale": 1,
+     "part": "im",
+     "unit": "ohm"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "fill_factor_pct@base",
+     "value": 73.85,
+     "kind": "analytic",
+     "quote": "73.85% copper fills of the continuum coil region, respectively.",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt",
+     "note": "Geometric copper fill of the continuum region: 114*pi*(d/2)^2 / (12.43153533*11.8 mm^2). FEMM's 'ff' point value for a magnet-wire block should equal this ratio. It is independent of frequency and mesh."
+    }
+   ],
+   "source_model_sha256": "28f45beec358f729837ea4d09aef51432911f12a7b41eba66b1623f67e108dc2",
+   "article": {
+    "status": "not_attempted",
+    "reason": "The paper text (notes.pdf, linked as 'Full Paper') states the domain, boundary condition, coil-region bounding box, turn count, conductivity, wire diameters and mesh size for the continuum model. The fill-factor target depends only on the coil block, wire diameter and turns.",
+    "candidate_parameters": {
+     "domain_radius": {
+      "value": 20,
+      "unit": "mm",
+      "quote": "a semicircular region with a radius of 20 mm. A first-order",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "outer_bc": {
+      "value": 1,
+      "unit": "asymptotic BC order (first-order; c0 = 1/(mu0*r))",
+      "quote": "asymptotic boundary condition [6] is used on the outer radius",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "coil_inner_radius": {
+      "value": 5.1,
+      "unit": "mm",
+      "quote": "an inner radius of 5.1mm, an outer radius of 17.5315mm, and",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "coil_outer_radius": {
+      "value": 17.5315,
+      "unit": "mm",
+      "quote": "an inner radius of 5.1mm, an outer radius of 17.5315mm, and",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "coil_axial_length": {
+      "value": 11.8,
+      "unit": "mm",
+      "quote": "an axial length of 11.8 mm. Wire diameters of 0.8mm, 1mm,",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "top_inner_turn_center_z": {
+      "value": 5.4,
+      "unit": "mm",
+      "quote": "is centered at r = 5.6, z = 5.4. Referring to the dimensions",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "turns": {
+      "value": 114,
+      "unit": "turns",
+      "quote": "coil consists of 114 turns of copper with a conductivity of",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "copper_conductivity": {
+      "value": 58,
+      "unit": "MS/m",
+      "quote": "58 MS/m wound in alternating layers of 10 and 9 turns. For",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "mesh_size": {
+      "value": 0.5,
+      "unit": "mm",
+      "quote": "coil also has a characteristic mesh size of 0.5mm, resulting",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     },
+     "wire_diameter": {
+      "value": 1.1,
+      "unit": "mm",
+      "quote": "and 1.1mm are considered, representing 39.05%, 61.04%, and",
+      "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/8f5013b86193147d8f54d2cdd89c4c175e2b84d77062f21455b13aad47637ed1.txt"
+     }
+    },
+    "construction_notes": "Axisymmetric magnetics, units mm. Draw a semicircular air domain of radius 20 mm centred on the origin (arc from (0,-20) to (0,20) plus the axis segment) and apply a first-order asymptotic (mixed, c0 = 1/(mu0*0.020 m), c1 = 0) boundary on the arc. Coil region: rectangle r = 5.1-17.5315 mm, z = -5.9 to +5.9 mm (top inner turn centre z = 5.4 plus 0.5 mm wire radius gives the top at 5.9; length 11.8). Material: copper 58 MS/m, LamType 'magnet wire' (3), 1 strand, wire diameter 1.1 mm. Block label in the coil with circuit 'icoil' (series, 1 A) and 114 turns. Air elsewhere. Mesh size 0.5 mm in the coil and air. Frequency: the shipped file uses 50 kHz (the paper sweeps 1 kHz-1 MHz). Measure ff at a point inside the coil, e.g. (9.09, 2.18)."
+   },
+   "steps": [
+    {
+     "label": "base",
+     "modify": []
+    }
+   ]
+  },
+  {
+   "id": "transientheat-T0-steady-initial",
+   "example_id": "transientheat",
+   "title": "T0.feh steady initial-condition solve: uniform 300 K",
+   "source_ids": [
+    "transientheat"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=transientheat",
+   "measurements": [
+    {
+     "id": "p",
+     "op": "point_values",
+     "points": [
+      [
+       1.0,
+       2.0
+      ],
+      [
+       0.93,
+       1.89
+      ]
+     ],
+     "fields": [
+      "T"
+     ]
+    },
+    {
+     "id": "avg",
+     "op": "block_integral",
+     "select": {
+      "all": true
+     },
+     "type": 0
+    }
+   ],
+   "metrics": [
+    {
+     "name": "T_center_K",
+     "value": [
+      "p:T",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "K"
+    },
+    {
+     "name": "T_label_K",
+     "value": [
+      "p:T",
+      1
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "K"
+    },
+    {
+     "name": "T_avg_K",
+     "value": [
+      "avg",
+      0
+     ],
+     "scale": 1,
+     "part": "re",
+     "unit": "K"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "T_center_K@base",
+     "value": 300,
+     "kind": "analytic",
+     "quote": "the entire cylinder is at a steady temperature of 300K",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    },
+    {
+     "metric": "T_avg_K@base",
+     "value": 300,
+     "kind": "analytic",
+     "quote": "the entire cylinder is at a steady temperature of 300K",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    }
+   ],
+   "source_model_sha256": "d72902800b22141f3f0cde0e120c4018bccb60ec221a841705f2cf1a305a9227",
+   "article": {
+    "status": "not_attempted",
+    "reason": "The text gives the cylinder size, the library material and the 300 K boundary on all external edges. The steady T0 answer (uniform 300 K) does not depend on the material or mesh.",
+    "candidate_parameters": {
+     "cylinder_diameter": {
+      "value": 4,
+      "unit": "inch",
+      "quote": "The problem domain is a 4 inch X 4 inch cylinder"
+     },
+     "cylinder_length": {
+      "value": 4,
+      "unit": "inch",
+      "quote": "The problem domain is a 4 inch X 4 inch cylinder"
+     },
+     "boundary_temperature_T0": {
+      "value": 300,
+      "unit": "K",
+      "quote": "modeled with a 300K boundary condition applied on all external edges"
+     },
+     "boundary_temperature_T1": {
+      "value": 400,
+      "unit": "K",
+      "quote": "a 400K boundary condition is applied to all external boundaries"
+     },
+     "time_step": {
+      "value": 1,
+      "unit": "s",
+      "quote": "a 1 second time step can be used"
+     }
+    },
+    "construction_notes": "Axisymmetric heat flow, units inches. Rectangle r = 0-2 in, z = 0-4 in (4 in diameter x 4 in long, consistent with the model file). Material 'Aluminum, 2024-T6' from the FEMM heat-flow library (the file uses k = 171 W/mK rising to 186 at 473 K, and Kt = 3). A fixed-temperature boundary of 300 K on the outer radius, top and bottom. No condition on the axis r=0. Steady solve (no previous solution). Expected T = 300 K everywhere."
+   },
+   "steps": [
+    {
+     "label": "base",
+     "modify": []
+    }
+   ]
+  },
+  {
+   "id": "improvedconvergence-sparkgap-energy",
+   "example_id": "improvedconvergence",
+   "title": "sparkgap.fee default mesh: total electrostatic stored energy",
+   "source_ids": [
+    "improvedconvergence"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=improvedconvergence",
+   "measurements": [
+    {
+     "id": "W",
+     "op": "block_integral",
+     "select": {
+      "all": true
+     },
+     "type": 0
+    }
+   ],
+   "metrics": [
+    {
+     "name": "energy_uJ",
+     "value": [
+      "W",
+      0
+     ],
+     "scale": 1000000.0,
+     "part": "re",
+     "unit": "uJ"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "energy_uJ@base",
+     "value": 7.92563,
+     "kind": "published_femm_result",
+     "quote": "35757.92563",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true,
+     "note": "Table 1, first row: 3575 nodes, 7.92563 uJ (the extraction merges the columns: '3575' + '7.92563'). All Table 1 values lie within 0.56% of each other, and the article says even the coarsest allowable mesh is within 1% of the high-density result, so a 1% tolerance is robust to build-to-build default-mesh differences in FEMM 4.2 builds from 01Oct2011 onward."
+    },
+    {
+     "metric": "energy_uJ@base",
+     "value": 7.88152,
+     "kind": "published_femm_result",
+     "quote": "614205 7.88152",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false,
+     "note": "Finest mesh (614205 nodes, obtained by four F3 halvings). That mesh cannot be produced by steps, so this is a comparator."
+    }
+   ],
+   "source_model_sha256": "5e1df11f46b16bf21a66360fea40a9b6c647df651de6ba6d89932431bbf2c002",
+   "article": {
+    "status": "not_attempted",
+    "reason": "The cone and sphere dimensions and positions are given only in Figure 1. The text states only that the cone is at 1 kV, the sphere is grounded, and the problem is axisymmetric."
+   },
+   "steps": [
+    {
+     "label": "base",
+     "modify": []
+    }
+   ]
+  },
+  {
+   "id": "inductionmotorexample-L025hz",
+   "example_id": "inductionmotorexample",
+   "title": "Phase-A complex inductance at 0.25 Hz slip frequency (1 A balanced 3-phase excitation, quarter model x4)",
+   "source_ids": [
+    "inductionmotorexample"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=inductionmotorexample",
+   "measurements": [
+    {
+     "id": "phA",
+     "op": "circuit",
+     "name": "A"
+    }
+   ],
+   "metrics": [
+    {
+     "name": "L_real_H",
+     "value": [
+      "phA",
+      2
+     ],
+     "scale": 4,
+     "part": "re",
+     "unit": "H"
+    },
+    {
+     "name": "L_imag_H",
+     "value": [
+      "phA",
+      2
+     ],
+     "scale": 4,
+     "part": "im",
+     "unit": "H"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "L_real_H",
+     "value": 0.3113897,
+     "kind": "published_femm_result",
+     "quote": "0.3113897",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    },
+    {
+     "metric": "L_imag_H",
+     "value": -0.078562,
+     "kind": "published_femm_result",
+     "quote": "-0.078562",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    }
+   ],
+   "source_model_sha256": "6ed334f876e90e955098e37b60fdee952e686d2f4f4a4f5c7c91bb80515f4ff9",
+   "article": {
+    "status": "not_attempted",
+    "reason": "The text gives slot counts, turns per slot, rotor diameter, gap, stack length, pole count and bar conductivity. It explicitly defers the remaining dimensions (slot shapes, stator OD, bar shapes, winding layout per slot) to the CAD file 2horse.dxf. The iron permeability (mu_r 7000 in the model) is also not stated."
+   }
+  },
+  {
+   "id": "lrkanalysis-pmflux0",
+   "example_id": "lrkanalysis",
+   "title": "PM-only flux linkage of phases A, B, C (all currents zeroed) at the as-drawn rotor angle 0 deg",
+   "source_ids": [
+    "lrkanalysis"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=lrkanalysis",
+   "measurements": [
+    {
+     "id": "phA",
+     "op": "circuit",
+     "name": "A"
+    },
+    {
+     "id": "phB",
+     "op": "circuit",
+     "name": "B"
+    },
+    {
+     "id": "phC",
+     "op": "circuit",
+     "name": "C"
+    },
+    {
+     "id": "cog",
+     "op": "block_integral",
+     "select": {
+      "labels": [
+       [
+        -3.0983242401170887,
+        14.473437287082254
+       ],
+       [
+        -2.80904702597388,
+        13.206031001245883
+       ],
+       [
+        -8.260746028599298,
+        10.67942297369015
+       ],
+       [
+        -12.076302968859146,
+        6.03762425166752
+       ],
+       [
+        -13.500000000000002,
+        0.20000000000000018
+       ],
+       [
+        -12.249856464506172,
+        -5.67723670450655
+       ],
+       [
+        -8.57347862158651,
+        -10.430027052946656
+       ],
+       [
+        -3.1990181908466115,
+        -13.117022627663355
+       ],
+       [
+        2.809047025973879,
+        -13.206031001245883
+       ],
+       [
+        8.260746028599296,
+        -10.67942297369015
+       ],
+       [
+        12.076302968859146,
+        -6.03762425166752
+       ],
+       [
+        13.5,
+        -0.19999999999999085
+       ],
+       [
+        12.249856464506166,
+        5.67723670450656
+       ],
+       [
+        8.57347862158651,
+        10.430027052946654
+       ],
+       [
+        3.19901819084661,
+        13.117022627663356
+       ]
+      ]
+     },
+     "type": 22
+    }
+   ],
+   "metrics": [
+    {
+     "name": "flux_A_Wb",
+     "value": [
+      "phA",
+      2
+     ],
+     "part": "re",
+     "unit": "Wb"
+    },
+    {
+     "name": "flux_B_Wb",
+     "value": [
+      "phB",
+      2
+     ],
+     "part": "re",
+     "unit": "Wb"
+    },
+    {
+     "name": "flux_C_Wb",
+     "value": [
+      "phC",
+      2
+     ],
+     "part": "re",
+     "unit": "Wb"
+    },
+    {
+     "name": "cogging_torque_Nm",
+     "value": [
+      "cog",
+      0
+     ],
+     "unit": "N*m"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "flux_A_Wb@base",
+     "value": 0.0005693656992759291,
+     "kind": "published_femm_result",
+     "quote": "0.0005693656992759291",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/e60be87412a07e77ed745004c8b47e5d4fd5089bab7b8de45d152fd88589772a.txt"
+    },
+    {
+     "metric": "flux_B_Wb@base",
+     "value": -0.0002523915481285549,
+     "kind": "published_femm_result",
+     "quote": "-0.0002523915481285549",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/e60be87412a07e77ed745004c8b47e5d4fd5089bab7b8de45d152fd88589772a.txt"
+    },
+    {
+     "metric": "flux_C_Wb@base",
+     "value": -0.0002523759610416171,
+     "kind": "published_femm_result",
+     "quote": "-0.0002523759610416171",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/e60be87412a07e77ed745004c8b47e5d4fd5089bab7b8de45d152fd88589772a.txt"
+    },
+    {
+     "metric": "cogging_torque_Nm@base",
+     "value": 2.386222123332942e-05,
+     "kind": "published_femm_result",
+     "quote": "2.386222123332942e-005",
+     "relative_tolerance": 0.01,
+     "absolute_tolerance": 0.0002,
+     "used_for_acceptance": false,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/e60be87412a07e77ed745004c8b47e5d4fd5089bab7b8de45d152fd88589772a.txt"
+    }
+   ],
+   "source_model_sha256": "e8344c7739152132eeeecacfba5fdd5471f3b14b11aeb705b59f54e082252718",
+   "steps": [
+    {
+     "label": "base",
+     "modify": [
+      {
+       "function": "modifycircprop",
+       "name": "A",
+       "property": 1,
+       "value": 0
+      },
+      {
+       "function": "modifycircprop",
+       "name": "B",
+       "property": 1,
+       "value": 0
+      },
+      {
+       "function": "modifycircprop",
+       "name": "C",
+       "property": 1,
+       "value": 0
+      }
+     ]
+    }
+   ],
+   "article": {
+    "status": "not_attempted",
+    "reason": "The page text has no dimensions. The Mathcad worksheet (lrk-bldc.pdf) gives the stator outer radius, rotor inner radius, magnet thickness/width, turns, pole pairs and stack length. It gives no tooth/slot shape (only slot dimensions for a leakage estimate), no stator inner radius and no rotor back-iron outer radius. Back-iron/leg widths are only 'suggested' sizing values, not the drawn geometry."
+   }
+  },
+  {
+   "id": "rotormotion-cogging",
+   "example_id": "rotormotion",
+   "title": "No-load cogging torque (air-gap boundary torque integral) at rotor angles 0, 6, 12, 18, 24 and 30 deg",
+   "source_ids": [
+    "rotormotion"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=rotormotion",
+   "measurements": [
+    {
+     "id": "tq",
+     "op": "gap_integral",
+     "boundary": "mySlidingBand",
+     "type": 0
+    },
+    {
+     "id": "phA",
+     "op": "circuit",
+     "name": "A"
+    },
+    {
+     "id": "phB",
+     "op": "circuit",
+     "name": "B"
+    },
+    {
+     "id": "phC",
+     "op": "circuit",
+     "name": "C"
+    }
+   ],
+   "metrics": [
+    {
+     "name": "cogging_torque_Nm",
+     "value": [
+      "tq",
+      0
+     ],
+     "unit": "N*m"
+    },
+    {
+     "name": "flux_A_Wb",
+     "value": [
+      "phA",
+      2
+     ],
+     "part": "re",
+     "unit": "Wb"
+    },
+    {
+     "name": "flux_B_Wb",
+     "value": [
+      "phB",
+      2
+     ],
+     "part": "re",
+     "unit": "Wb"
+    },
+    {
+     "name": "flux_C_Wb",
+     "value": [
+      "phC",
+      2
+     ],
+     "part": "re",
+     "unit": "Wb"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "cogging_torque_Nm@deg0",
+     "value": 0.000319675,
+     "kind": "published_femm_result",
+     "quote": "80, 0.000319675<",
+     "relative_tolerance": 0.01,
+     "absolute_tolerance": 0.001,
+     "used_for_acceptance": false,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/516b9d24e221a80ab4c36ce0230b73e6d9915b97374e39ca782c693be76ddfee.txt"
+    },
+    {
+     "metric": "cogging_torque_Nm@deg6",
+     "value": -0.0168116,
+     "kind": "published_femm_result",
+     "quote": "80.0005, - 0.0168116<",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/516b9d24e221a80ab4c36ce0230b73e6d9915b97374e39ca782c693be76ddfee.txt"
+    },
+    {
+     "metric": "cogging_torque_Nm@deg12",
+     "value": -0.101065,
+     "kind": "published_femm_result",
+     "quote": "80.001, - 0.101065<",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/516b9d24e221a80ab4c36ce0230b73e6d9915b97374e39ca782c693be76ddfee.txt"
+    },
+    {
+     "metric": "cogging_torque_Nm@deg18",
+     "value": 0.102224,
+     "kind": "published_femm_result",
+     "quote": "80.0015, 0.102224<",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/516b9d24e221a80ab4c36ce0230b73e6d9915b97374e39ca782c693be76ddfee.txt"
+    },
+    {
+     "metric": "cogging_torque_Nm@deg24",
+     "value": 0.01559,
+     "kind": "published_femm_result",
+     "quote": "80.002, 0.01559<",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/516b9d24e221a80ab4c36ce0230b73e6d9915b97374e39ca782c693be76ddfee.txt"
+    },
+    {
+     "metric": "cogging_torque_Nm@deg30",
+     "value": -4.51556e-06,
+     "kind": "published_femm_result",
+     "quote": "90.0025, - 4.51556",
+     "relative_tolerance": 0.01,
+     "absolute_tolerance": 0.001,
+     "used_for_acceptance": false,
+     "quote_file": "/home/akhan/.cache/femm-brain/artifact_texts/516b9d24e221a80ab4c36ce0230b73e6d9915b97374e39ca782c693be76ddfee.txt"
+    }
+   ],
+   "source_model_sha256": "5f63fca9687a335be7e6e0e81a97b3d30ffed39fe08316cbb42da4efdaf143c9",
+   "steps": [
+    {
+     "label": "deg0",
+     "modify": [
+      {
+       "function": "modifycircprop",
+       "name": "A",
+       "property": 1,
+       "value": 0
+      },
+      {
+       "function": "modifycircprop",
+       "name": "B",
+       "property": 1,
+       "value": 0
+      },
+      {
+       "function": "modifycircprop",
+       "name": "C",
+       "property": 1,
+       "value": 0
+      },
+      {
+       "function": "modifyboundprop",
+       "name": "mySlidingBand",
+       "property": 10,
+       "value": 0
+      }
+     ]
+    },
+    {
+     "label": "deg6",
+     "modify": [
+      {
+       "function": "modifyboundprop",
+       "name": "mySlidingBand",
+       "property": 10,
+       "value": 6
+      }
+     ]
+    },
+    {
+     "label": "deg12",
+     "modify": [
+      {
+       "function": "modifyboundprop",
+       "name": "mySlidingBand",
+       "property": 10,
+       "value": 12
+      }
+     ]
+    },
+    {
+     "label": "deg18",
+     "modify": [
+      {
+       "function": "modifyboundprop",
+       "name": "mySlidingBand",
+       "property": 10,
+       "value": 18
+      }
+     ]
+    },
+    {
+     "label": "deg24",
+     "modify": [
+      {
+       "function": "modifyboundprop",
+       "name": "mySlidingBand",
+       "property": 10,
+       "value": 24
+      }
+     ]
+    },
+    {
+     "label": "deg30",
+     "modify": [
+      {
+       "function": "modifyboundprop",
+       "name": "mySlidingBand",
+       "property": 10,
+       "value": 30
+      }
+     ]
+    }
+   ],
+   "article": {
+    "status": "not_attempted",
+    "reason": "Table 1 gives the main diameters, gap, tooth width/span, turns, wire, materials and axial length. The text does not state the slot count, pole count, winding (phase) layout, tooth-tip/slot-opening shape or magnet shape. Those come from the digitized figure. The published cogging values also depend on the specific coarse mesh (1977 nodes, smart mesh off, 0.6 deg gap elements), which cannot be recreated from text."
+   },
+   "findings": [
+    "A 3-degree sweep of the original model in FEMM 5 swings between about +/-0.1 N*m between adjacent samples and repeats every 45 degrees, so the published 6-degree samples sit on steep parts of the waveform.",
+    "The original model meshes to about 1,400 nodes with smart meshing off; enabling smart meshing changes the peak cogging torque by about 25%.",
+    "The published values come from the 25 Feb 2018 FEMM test build that introduced the sliding band; the targets remain frozen at 1%."
+   ],
+   "controls": [
+    {
+     "id": "smart-mesh-on",
+     "level": "rebuild",
+     "problem": {
+      "smart_mesh": 1
+     },
+     "purpose": "Is the cogging mismatch a coarse-mesh effect? Enable the mesher's smart refinement."
+    },
+    {
+     "id": "smart-mesh-on-half",
+     "level": "rebuild",
+     "problem": {
+      "smart_mesh": 1
+     },
+     "mesh_scale": 0.5,
+     "purpose": "Smart refinement plus halved explicit sizes and arc segments."
+    }
+   ]
+  },
+  {
+   "id": "corelosscalculation-resistance",
+   "example_id": "corelosscalculation",
+   "title": "2D DC coil resistance reported in Circuit Properties (winding conductivity already derated for the temperature rise)",
+   "source_ids": [
+    "corelosscalculation"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=corelosscalculation",
+   "measurements": [
+    {
+     "id": "coil",
+     "op": "circuit",
+     "name": "icoil"
+    }
+   ],
+   "metrics": [
+    {
+     "name": "coil_resistance_ohm",
+     "value": [
+      "coil",
+      1
+     ],
+     "divide": [
+      "coil",
+      0
+     ],
+     "part": "re",
+     "unit": "ohm"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "coil_resistance_ohm",
+     "value": 0.0601774,
+     "kind": "published_femm_result",
+     "quote": "to be 0.0601774Ω, a result that does not account for end turns",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    }
+   ],
+   "source_model_sha256": "eabec7da6fb1da7062e1e61e031527d717d690f1e665e581784cc95b815e710c",
+   "article": {
+    "status": "not_attempted",
+    "reason": "Table 2 gives the axial length, lamination grade/thickness/stacking, magnet grade, turns and wire. All machine dimensions are only in Figure 4 ('All dimensions shown are in units of millimeters'), which is an image."
+   }
+  },
+  {
+   "id": "radialmagneticbearing-maxforce",
+   "example_id": "radialmagneticbearing",
+   "title": "Maximum upward design force (i1=i3=6 A bias, i2=12 A imax, i4=0 A): weighted-stress-tensor force on the rotor",
+   "source_ids": [
+    "radialmagneticbearing"
+   ],
+   "source_url": "https://femm.info/doku/doku.php?id=radialmagneticbearing",
+   "measurements": [
+    {
+     "id": "rotor_fy",
+     "op": "block_integral",
+     "select": {
+      "labels": [
+       [
+        0.287013,
+        0.69291
+       ]
+      ]
+     },
+     "type": 19
+    },
+    {
+     "id": "rotor_fx",
+     "op": "block_integral",
+     "select": {
+      "labels": [
+       [
+        0.287013,
+        0.69291
+       ]
+      ]
+     },
+     "type": 18
+    },
+    {
+     "id": "pts",
+     "op": "point_values",
+     "points": [
+      [
+       0.58168,
+       1.4043
+      ],
+      [
+       -0.58168,
+       1.4043
+      ],
+      [
+       0.39034,
+       0.94236
+      ],
+      [
+       -0.39034,
+       0.94236
+      ]
+     ],
+     "fields": [
+      "B1",
+      "B2",
+      "Mu1",
+      "Mu2"
+     ]
+    }
+   ],
+   "metrics": [
+    {
+     "name": "rotor_force_y_N",
+     "value": [
+      "rotor_fy",
+      0
+     ],
+     "unit": "N"
+    },
+    {
+     "name": "rotor_force_x_N",
+     "value": [
+      "rotor_fx",
+      0
+     ],
+     "unit": "N"
+    },
+    {
+     "name": "mu_r_upper_right_leg_mid",
+     "value": [
+      "pts:Mu1",
+      0
+     ],
+     "unit": "1"
+    },
+    {
+     "name": "mu_r_upper_left_leg_mid",
+     "value": [
+      "pts:Mu1",
+      1
+     ],
+     "unit": "1"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "rotor_force_y_N",
+     "value": 400,
+     "kind": "published_femm_result",
+     "quote": "integral reports a force of 400N.",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": true
+    },
+    {
+     "metric": "rotor_force_y_N",
+     "value": 460,
+     "kind": "analytic",
+     "quote": "460",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false
+    },
+    {
+     "metric": "mu_r_upper_right_leg_mid",
+     "value": 350,
+     "kind": "published_femm_result",
+     "quote": "relative permeability of the iron is only about 350",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false
+    },
+    {
+     "metric": "mu_r_upper_left_leg_mid",
+     "value": 350,
+     "kind": "published_femm_result",
+     "quote": "relative permeability of the iron is only about 350",
+     "relative_tolerance": 0.01,
+     "used_for_acceptance": false
+    }
+   ],
+   "source_model_sha256": "85069a0505f8e430f345ea74271def0f8f322f78db8dd9fa8d11a46c3413851e",
+   "article": {
+    "status": "not_attempted",
+    "reason": "The text gives the gap, pole width, axial length, turns, lamination grade, shaft diameter and coil size. It does not give the rotor outer diameter, the stator inner/outer diameters, the leg length or the slot shape. Those are only in Figure 5 ('dimensions in inches'). The text says only that the legs and back iron are 'approximately the same thickness'."
    }
   }
  ]
