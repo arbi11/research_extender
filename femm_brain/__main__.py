@@ -34,6 +34,27 @@ def main(argv=None):
     ingest.add_argument("--workers", type=int, default=4)
     ingest.add_argument("--max-pages", type=int, default=100)
     ingest.add_argument("--max-attachments", type=int, default=200)
+    sub.add_parser("studies", help="List executable, source-backed studies")
+    plan = sub.add_parser("plan", help="Select a known study locally, without an LLM")
+    plan.add_argument("request", nargs="*")
+    plan.add_argument("--case")
+    plan.add_argument("--parameters", default="{}")
+    plan.add_argument("--output", type=Path)
+    for name in ("solve", "verify-solves"):
+        cmd = sub.add_parser(name, help="Run registered native studies with frozen references")
+        if name == "solve":
+            cmd.add_argument("case_id")
+            cmd.add_argument("--parameters", default="{}")
+        cmd.add_argument("--output", type=Path, required=True)
+        cmd.add_argument("--engine", choices=("docker", "native"), default="docker")
+        cmd.add_argument("--image")
+        cmd.add_argument("--command", dest="native_command")
+        cmd.add_argument("--timeout", type=int, default=180)
+    # Browsing remains standard-library-only; execution is an explicit option.
+    serve_cmd = sub.choices["serve"]
+    serve_cmd.add_argument("--enable-solver", action="store_true")
+    serve_cmd.add_argument("--image")
+    serve_cmd.add_argument("--jobs", type=Path, default=database_default().parent / "jobs")
     args = parser.parse_args(argv)
     if args.command == "ingest":
         from . import collect
@@ -57,6 +78,54 @@ def main(argv=None):
     if graph["validation"]["status"] != "passed":
         print(json.dumps(graph["validation"], indent=2), file=sys.stderr)
         return 1
+    if args.command in {"studies", "plan", "solve", "verify-solves"}:
+        from .simulation import simulation_catalog, plan_simulation
+        if args.command == "studies":
+            print(json.dumps({"cases": simulation_catalog(graph), "llm_calls": 0}, indent=2))
+            return 0
+        if args.command == "plan":
+            from .planner import plan_request
+            if args.case and args.request:
+                parser.error("Choose --case with typed parameters or a natural-language request; do not combine them")
+            parameters = json.loads(args.parameters)
+            if args.case:
+                result = {"selection": {"status": "ready", "selected_case_id": args.case,
+                                         "parameters": parameters, "llm_calls": 0},
+                          "plan": plan_simulation(args.case, parameters, graph)}
+            else:
+                selection = plan_request(" ".join(args.request), graph)
+                if parameters:
+                    parser.error("--parameters requires --case; natural-language values are parsed explicitly")
+                result = {"selection": selection}
+                if selection["status"] == "ready":
+                    result["plan"] = plan_simulation(selection["selected_case_id"], selection["parameters"], graph)
+            if args.output:
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    with args.output.open("x") as stream:
+                        stream.write(json.dumps(result, indent=2) + "\n")
+                except FileExistsError:
+                    parser.error("Refusing to overwrite an existing frozen plan; choose a new --output path")
+                print(args.output)
+            else:
+                print(json.dumps(result, indent=2))
+            return 0 if result["selection"]["status"] == "ready" else 2
+        from .execution import run_case
+        if args.timeout < 1 or args.timeout > 1800:
+            parser.error("--timeout must be between 1 and 1800 seconds")
+        identifiers = [args.case_id] if args.command == "solve" else [c["id"] for c in simulation_catalog(graph)]
+        reports = []
+        for identifier in identifiers:
+            destination = args.output if args.command == "solve" else args.output / identifier
+            reports.append(run_case(identifier, destination,
+                                    json.loads(args.parameters) if args.command == "solve" else {},
+                                    engine=args.engine, image=args.image, command=args.native_command,
+                                    timeout=args.timeout))
+        value = reports[0] if args.command == "solve" else {"status": "passed" if all(r["status"] == "passed" for r in reports) else "failed", "cases": reports, "llm_calls": 0}
+        if args.command == "verify-solves":
+            (args.output / "summary.json").write_text(json.dumps(value, indent=2) + "\n")
+        print(json.dumps(value, indent=2))
+        return 0 if all(r["status"] in {"passed", "solved_unassessed"} for r in reports) else 1
     if args.command == "stats":
         print(json.dumps(graph["stats"], indent=2))
         return 0
@@ -66,7 +135,9 @@ def main(argv=None):
         print(json.dumps({"database": str(args.db), **graph["stats"]}, indent=2))
     elif args.command == "serve":
         from .server import serve
-        serve(graph, store, args.host, args.port)
+        from .execution import SimulationJobs
+        jobs = SimulationJobs(args.jobs, args.image) if args.enable_solver else None
+        serve(graph, store, args.host, args.port, jobs)
     elif args.command == "search":
         print(json.dumps(store.search(" ".join(args.query), args.limit), indent=2))
     elif args.command == "export":

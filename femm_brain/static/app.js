@@ -75,9 +75,10 @@
   }
   function graphEdges() {
     const mode = $("view-mode").value;
-    if (mode === "execution") return state.graph.edges.filter(edge => ["depends_on", "precedes", "implemented_by"].includes(edge.relation));
-    if (mode === "reuse") return state.graph.edges.filter(edge => edge.relation !== "precedes");
-    return state.graph.edges.filter(edge => hierarchyRelations.has(edge.relation) || $("relations").checked);
+    const edges = state.scopeEdgeIds ? state.graph.edges.filter(e => state.scopeEdgeIds.has(e.id)) : state.graph.edges;
+    if (mode === "execution") return edges.filter(edge => ["depends_on", "precedes", "implemented_by"].includes(edge.relation));
+    if (mode === "reuse") return edges.filter(edge => edge.relation !== "precedes");
+    return edges.filter(edge => hierarchyRelations.has(edge.relation) || $("relations").checked);
   }
   function neighbors(id, both = false) {
     const ids = new Set();
@@ -236,6 +237,7 @@
     if (recipeId && !options.noRecipe && state.recipes.some(recipe => recipe.id === recipeId)) chooseRecipe(recipeId);
   }
   function overview() {
+    state.exampleRequest = (state.exampleRequest || 0) + 1; state.scopeIds = null; state.scopeEdgeIds = null;
     state.example = null;
     state.root = state.nodes.has("workflow:magnetics") ? "workflow:magnetics" : state.graph.nodes.find(node => node.layer === 1)?.id || state.graph.nodes[0]?.id;
     state.visible = new Set(state.root ? [state.root, ...neighbors(state.root)] : []);
@@ -243,7 +245,14 @@
     renderCases(); renderArtifacts(); drawGraph();
     if (state.root) selectNode(state.root, {noRecipe: true});
   }
-  function selectExample(example) {
+  async function selectExample(example) {
+    const request = state.exampleRequest = (state.exampleRequest || 0) + 1;
+    let scoped;
+    try { scoped = await api("/api/examples/" + encodeURIComponent(example.id)); }
+    catch (error) { status(error.message, true); return; }
+    if (request !== state.exampleRequest) return;
+    state.scopeIds = new Set(scoped.nodes.map(node => node.id));
+    state.scopeEdgeIds = new Set(scoped.edges.map(edge => edge.id));
     state.example = example;
     state.root = state.nodes.has(example.workflow_id) ? example.workflow_id : "workflow:magnetics";
     state.visible = new Set([state.root, ...array(example.node_ids)].filter(id => state.nodes.has(id)));
@@ -447,5 +456,12 @@
   $("recipe-form").addEventListener("submit", event => { event.preventDefault(); if ($("recipe-form").reportValidity()) generateRecipe(); });
   $("artifact-select").addEventListener("change", () => loadArtifact($("artifact-select").value));
   $("graph").addEventListener("keydown", event => { if (event.key === "Enter" || event.key === "ArrowRight") { event.preventDefault(); expandSelected(); } else if (event.key === "ArrowLeft") { event.preventDefault(); collapseSelected(); } });
+  window.addEventListener("brain:select-node", event => {
+    const id = event.detail?.id;
+    if (state.nodes.has(id)) {
+      if (state.scopeIds && !state.scopeIds.has(id)) { state.scopeIds = null; state.scopeEdgeIds = null; state.example = null; state.visible = new Set(); }
+      state.visible.add(id); drawGraph(); selectNode(id, {noRecipe: true});
+    }
+  });
   start();
 })();

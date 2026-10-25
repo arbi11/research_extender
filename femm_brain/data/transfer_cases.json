@@ -1,0 +1,942 @@
+{
+  "schema_version": 1,
+  "examples": [
+    {
+      "id": "comsol-parallel-wires",
+      "title": "Parallel-wire force: COMSOL documentation transferred to FEMM",
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ],
+      "family": "method_transfer",
+      "physics": [
+        "planar_dc_magnetostatics",
+        "linear_materials",
+        "prescribed_uniform_current",
+        "force_postprocessing"
+      ],
+      "summary": "Generate and solve the source circular-wire physical problem in FEMM, retaining an explicit boundary-method replacement and analytic force, balance, mesh and domain checks.",
+      "workflow_id": "workflow:comsol-parallel-wires",
+      "node_ids": [
+        "workflow:comsol-parallel-wires",
+        "stage:geometry",
+        "stage:materials",
+        "stage:excitation",
+        "stage:boundaries",
+        "stage:mesh_solve",
+        "stage:solution",
+        "method:parallel_wire_cross_sections",
+        "method:parallel_wire_uniform_current",
+        "method:parallel_wire_exterior_transfer",
+        "method:parallel_wire_force_reference",
+        "method:methods_linear_permeability",
+        "method:methods_signed_turn_circuit",
+        "method:methods_finite_zero_potential",
+        "method:methods_magnetic_solve_snapshot",
+        "method:methods_weighted_stress_force",
+        "operation:parallel_wires:lorentz_x",
+        "operation:parallel_wires:lorentz_y",
+        "operation:parallel_wires:weighted_x",
+        "operation:parallel_wires:weighted_y",
+        "primitive:mi_probdef",
+        "primitive:mi_addnode",
+        "primitive:mi_addarc",
+        "primitive:mi_addblocklabel",
+        "primitive:mi_addmaterial",
+        "primitive:mi_addcircprop",
+        "primitive:mi_selectlabel",
+        "primitive:mi_setblockprop",
+        "primitive:mi_addboundprop",
+        "primitive:mi_selectarcsegment",
+        "primitive:mi_setarcsegmentprop",
+        "primitive:mi_clearselected",
+        "primitive:mi_saveas",
+        "primitive:mi_createmesh",
+        "primitive:mi_analyze",
+        "primitive:mi_loadsolution",
+        "primitive:mo_selectblock",
+        "primitive:mo_blockintegral",
+        "primitive:mo_clearblock",
+        "primitive:mo_getpointvalues"
+      ],
+      "assumptions": [
+        "Baseline wire radius 0.2 m; centers (-0.5,0) m and (+0.5,0) m; left current +1 A and right current -1 A.",
+        "Relative permeability is one and the prescribed static current density is uniform. Planar depth is one meter.",
+        "The FEMM domain and mesh are declared numerical transfer settings, not a copy of COMSOL infinite elements."
+      ],
+      "limitations": [
+        "This is a vendor-documentation method transfer, not execution or certification of a COMSOL model.",
+        "The opening historical ampere-definition narrative is not used as a statement of the current SI definition.",
+        "The source reports Maxwell surface-stress and Lorentz methods; the FEMM weighted-stress result retains its different method identity."
+      ],
+      "source_url": "https://doc.comsol.com/6.4/doc/com.comsol.help.models.acdc.parallel_wires/parallel_wires.html"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "workflow:comsol-parallel-wires",
+      "layer": 1,
+      "kind": "workflow",
+      "title": "Parallel circular wires: COMSOL-to-FEMM force transfer",
+      "description": "Reconstruct the two-wire physical problem, use an explicit FEMM exterior approximation, and compare independently computed forces with the analytic mutual-force law.",
+      "parameters": [],
+      "inputs": [
+        "Two circular wire sections, signed DC currents and unit permeability"
+      ],
+      "outputs": [
+        "Native FEMM geometry, mesh, solution and separately assessed force checks"
+      ],
+      "constraints": [
+        "This is a method transfer; COMSOL infinite elements are replaced explicitly, and the solvers are not treated as interchangeable implementations."
+      ],
+      "capabilities": [],
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Reviewed source-to-FEMM method transfer. Native construction, solve and numerical evidence are recorded per run; this record makes no blanket numerical verification claim."
+      },
+      "tags": [
+        "method_transfer",
+        "parallel_wires"
+      ]
+    },
+    {
+      "id": "method:parallel_wire_cross_sections",
+      "layer": 2,
+      "kind": "component",
+      "title": "Two nonintersecting circular wire cross-sections",
+      "description": "Place equal circular sections at x=-center_distance/2 and x=+center_distance/2, with y=0. The documented baseline uses radius 0.2 m and center distance 1 m.",
+      "parameters": [
+        {
+          "name": "wire_radius",
+          "unit": "m",
+          "description": "Radius of each circular cross-section."
+        },
+        {
+          "name": "center_distance",
+          "unit": "m",
+          "description": "Distance between the two wire centers."
+        }
+      ],
+      "inputs": [
+        "Wire radius and center distance"
+      ],
+      "outputs": [
+        "Closed circular contours and separate labels"
+      ],
+      "constraints": [
+        "Require 2*wire_radius < center_distance.",
+        "The planar model represents straight wires with one meter of out-of-plane depth; it does not model finite wire ends."
+      ],
+      "capabilities": [
+        "planar_magnetics"
+      ],
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Reviewed source-to-FEMM method transfer. Native construction, solve and numerical evidence are recorded per run; this record makes no blanket numerical verification claim."
+      },
+      "tags": [
+        "method_transfer",
+        "parallel_wires"
+      ],
+      "construction_steps": [
+        "Set the left and right centers to (-d/2,0) and (+d/2,0).",
+        "Draw each circle with four exact quarter-circle arcs and place a label at each center."
+      ]
+    },
+    {
+      "id": "method:parallel_wire_uniform_current",
+      "layer": 2,
+      "kind": "method",
+      "title": "Equal and opposite uniform wire currents",
+      "description": "Preserve the source currents +I in the left wire and -I in the right wire. In FEMM, separate one-turn circuits in zero-conductivity, unit-permeability regions implement the prescribed uniform static current distribution.",
+      "parameters": [
+        {
+          "name": "current",
+          "unit": "A",
+          "description": "Positive magnitude; circuit signs encode opposite directions."
+        }
+      ],
+      "inputs": [
+        "Separate wire labels and current magnitude"
+      ],
+      "outputs": [
+        "Signed current-driven regions"
+      ],
+      "constraints": [
+        "The source defines J=I/(pi*r^2); current and current density must retain their distinct units.",
+        "No skin effect, Hall effect, resistive voltage drop or wire-end effects are included."
+      ],
+      "capabilities": [
+        "current_driven_circuits",
+        "linear_materials"
+      ],
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Reviewed source-to-FEMM method transfer. Native construction, solve and numerical evidence are recorded per run; this record makes no blanket numerical verification claim."
+      },
+      "tags": [
+        "method_transfer",
+        "parallel_wires"
+      ]
+    },
+    {
+      "id": "method:parallel_wire_exterior_transfer",
+      "layer": 2,
+      "kind": "method",
+      "title": "Finite exterior boundary with explicit sensitivity checks",
+      "description": "Replace the source cylindrical infinite-element layer with a remote circular FEMM A=0 boundary. Domain radii 10 m and 20 m are declared transfer settings; they are not dimensions prescribed by COMSOL.",
+      "parameters": [
+        {
+          "name": "domain_radius",
+          "unit": "m",
+          "description": "Radius of the finite FEMM exterior boundary."
+        },
+        {
+          "name": "mesh_scale",
+          "unit": "ratio",
+          "description": "Multiplier on the declared FEMM mesh sizes."
+        }
+      ],
+      "inputs": [
+        "Physical wire bounds, exterior radius and mesh settings"
+      ],
+      "outputs": [
+        "Finite native exterior and recorded mesh/domain sensitivity"
+      ],
+      "constraints": [
+        "COMSOL uses outer radius 1.5 m including a 0.5 m infinite-element layer. The FEMM replacement changes the numerical boundary method.",
+        "Compare mesh scales 1 and 0.5 and domain radii 10 m and 20 m; do not tune the geometry to a measured force."
+      ],
+      "capabilities": [
+        "dirichlet_magnetic_boundary"
+      ],
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Reviewed source-to-FEMM method transfer. Native construction, solve and numerical evidence are recorded per run; this record makes no blanket numerical verification claim."
+      },
+      "tags": [
+        "method_transfer",
+        "parallel_wires"
+      ],
+      "assumptions": [
+        {
+          "name": "boundary_replacement",
+          "origin": "numerical_adaptation",
+          "source_method": "COMSOL cylindrical infinite elements",
+          "femm_method": "Remote finite circular A=0 boundary",
+          "baseline_domain_radius_m": 10,
+          "comparison_domain_radius_m": 20
+        }
+      ]
+    },
+    {
+      "id": "method:parallel_wire_force_reference",
+      "layer": 2,
+      "kind": "method",
+      "title": "Repulsive mutual force and independent native integrals",
+      "description": "For nonintersecting circular wires with uniform opposite currents and unit permeability, compare force per unit length against mu0*I^2/(2*pi*d). Keep left/right direction and transverse residuals. FEMM weighted stress and Lorentz force are reported as separate calculations.",
+      "parameters": [
+        {
+          "name": "current",
+          "unit": "A",
+          "description": "Equal and opposite current magnitude."
+        },
+        {
+          "name": "center_distance",
+          "unit": "m",
+          "description": "Wire center spacing."
+        }
+      ],
+      "inputs": [
+        "Solved wire regions, current, spacing and planar depth"
+      ],
+      "outputs": [
+        "Force vectors, balance residuals and analytic force comparison"
+      ],
+      "constraints": [
+        "The analytic baseline is 2e-7 N/m at I=1 A and d=1 m.",
+        "COMSOL reports surface Maxwell stress and volumetric Lorentz integrals. FEMM weighted stress is an explicitly transferred postprocessing method.",
+        "Solver completion and a passing force comparison do not establish universal convergence."
+      ],
+      "capabilities": [
+        "weighted_stress_tensor",
+        "block_integrals"
+      ],
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Reviewed source-to-FEMM method transfer. Native construction, solve and numerical evidence are recorded per run; this record makes no blanket numerical verification claim."
+      },
+      "tags": [
+        "method_transfer",
+        "parallel_wires"
+      ],
+      "reference": {
+        "kind": "analytic_mutual_force",
+        "expression": "mu0*current^2/(2*pi*center_distance)",
+        "baseline_value": 2e-07,
+        "unit": "N/m",
+        "source_locator": "Introduction; Results and Discussion; Model Definition"
+      }
+    },
+    {
+      "id": "operation:parallel_wires:lorentz_x",
+      "layer": 3,
+      "kind": "operation",
+      "title": "DC Lorentz force, x",
+      "description": "Evaluate the selected wire region with the documented magnetic block-integral type; retain the model depth and selection identity.",
+      "parameters": [],
+      "inputs": [
+        "Matching native magnetic solution and one selected wire"
+      ],
+      "outputs": [
+        "Force component in N for the explicit model depth"
+      ],
+      "constraints": [
+        "Clear the previous block selection and select the intended wire before evaluating."
+      ],
+      "capabilities": [
+        "block_integrals"
+      ],
+      "source_ids": [
+        "manual5"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Reviewed source-to-FEMM method transfer. Native construction, solve and numerical evidence are recorded per run; this record makes no blanket numerical verification claim."
+      },
+      "tags": [
+        "method_transfer",
+        "parallel_wires"
+      ],
+      "function": "mo_blockintegral",
+      "arguments": [
+        11
+      ]
+    },
+    {
+      "id": "operation:parallel_wires:lorentz_y",
+      "layer": 3,
+      "kind": "operation",
+      "title": "DC Lorentz force, y",
+      "description": "Evaluate the selected wire region with the documented magnetic block-integral type; retain the model depth and selection identity.",
+      "parameters": [],
+      "inputs": [
+        "Matching native magnetic solution and one selected wire"
+      ],
+      "outputs": [
+        "Force component in N for the explicit model depth"
+      ],
+      "constraints": [
+        "Clear the previous block selection and select the intended wire before evaluating."
+      ],
+      "capabilities": [
+        "block_integrals"
+      ],
+      "source_ids": [
+        "manual5"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Reviewed source-to-FEMM method transfer. Native construction, solve and numerical evidence are recorded per run; this record makes no blanket numerical verification claim."
+      },
+      "tags": [
+        "method_transfer",
+        "parallel_wires"
+      ],
+      "function": "mo_blockintegral",
+      "arguments": [
+        12
+      ]
+    },
+    {
+      "id": "operation:parallel_wires:weighted_x",
+      "layer": 3,
+      "kind": "operation",
+      "title": "DC weighted-stress force, x",
+      "description": "Evaluate the selected wire region with the documented magnetic block-integral type; retain the model depth and selection identity.",
+      "parameters": [],
+      "inputs": [
+        "Matching native magnetic solution and one selected wire"
+      ],
+      "outputs": [
+        "Force component in N for the explicit model depth"
+      ],
+      "constraints": [
+        "Clear the previous block selection and select the intended wire before evaluating."
+      ],
+      "capabilities": [
+        "block_integrals"
+      ],
+      "source_ids": [
+        "manual5"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Reviewed source-to-FEMM method transfer. Native construction, solve and numerical evidence are recorded per run; this record makes no blanket numerical verification claim."
+      },
+      "tags": [
+        "method_transfer",
+        "parallel_wires"
+      ],
+      "function": "mo_blockintegral",
+      "arguments": [
+        18
+      ]
+    },
+    {
+      "id": "operation:parallel_wires:weighted_y",
+      "layer": 3,
+      "kind": "operation",
+      "title": "DC weighted-stress force, y",
+      "description": "Evaluate the selected wire region with the documented magnetic block-integral type; retain the model depth and selection identity.",
+      "parameters": [],
+      "inputs": [
+        "Matching native magnetic solution and one selected wire"
+      ],
+      "outputs": [
+        "Force component in N for the explicit model depth"
+      ],
+      "constraints": [
+        "Clear the previous block selection and select the intended wire before evaluating."
+      ],
+      "capabilities": [
+        "block_integrals"
+      ],
+      "source_ids": [
+        "manual5"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Reviewed source-to-FEMM method transfer. Native construction, solve and numerical evidence are recorded per run; this record makes no blanket numerical verification claim."
+      },
+      "tags": [
+        "method_transfer",
+        "parallel_wires"
+      ],
+      "function": "mo_blockintegral",
+      "arguments": [
+        19
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:decomposes_into:stage:geometry",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "stage:geometry",
+      "relation": "decomposes_into",
+      "when": "Apply this stage while preserving the transfer assumptions.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:decomposes_into:stage:materials",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "stage:materials",
+      "relation": "decomposes_into",
+      "when": "Apply this stage while preserving the transfer assumptions.",
+      "order": 1,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:decomposes_into:stage:excitation",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "stage:excitation",
+      "relation": "decomposes_into",
+      "when": "Apply this stage while preserving the transfer assumptions.",
+      "order": 2,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:decomposes_into:stage:boundaries",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "stage:boundaries",
+      "relation": "decomposes_into",
+      "when": "Apply this stage while preserving the transfer assumptions.",
+      "order": 3,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:decomposes_into:stage:mesh_solve",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "stage:mesh_solve",
+      "relation": "decomposes_into",
+      "when": "Apply this stage while preserving the transfer assumptions.",
+      "order": 4,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:decomposes_into:stage:solution",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "stage:solution",
+      "relation": "decomposes_into",
+      "when": "Apply this stage while preserving the transfer assumptions.",
+      "order": 5,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:reuses:method:parallel_wire_cross_sections",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "method:parallel_wire_cross_sections",
+      "relation": "reuses",
+      "when": "Apply only in the documented planar DC, uniform-current, unit-permeability two-wire regime.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:reuses:method:parallel_wire_uniform_current",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "method:parallel_wire_uniform_current",
+      "relation": "reuses",
+      "when": "Apply only in the documented planar DC, uniform-current, unit-permeability two-wire regime.",
+      "order": 1,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:reuses:method:parallel_wire_exterior_transfer",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "method:parallel_wire_exterior_transfer",
+      "relation": "reuses",
+      "when": "Apply only in the documented planar DC, uniform-current, unit-permeability two-wire regime.",
+      "order": 2,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:reuses:method:parallel_wire_force_reference",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "method:parallel_wire_force_reference",
+      "relation": "reuses",
+      "when": "Apply only in the documented planar DC, uniform-current, unit-permeability two-wire regime.",
+      "order": 3,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:reuses:method:methods_linear_permeability",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "method:methods_linear_permeability",
+      "relation": "reuses",
+      "when": "Apply only in the documented planar DC, uniform-current, unit-permeability two-wire regime.",
+      "order": 4,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:reuses:method:methods_signed_turn_circuit",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "method:methods_signed_turn_circuit",
+      "relation": "reuses",
+      "when": "Apply only in the documented planar DC, uniform-current, unit-permeability two-wire regime.",
+      "order": 5,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:reuses:method:methods_finite_zero_potential",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "method:methods_finite_zero_potential",
+      "relation": "reuses",
+      "when": "Apply only in the documented planar DC, uniform-current, unit-permeability two-wire regime.",
+      "order": 6,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:reuses:method:methods_magnetic_solve_snapshot",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "method:methods_magnetic_solve_snapshot",
+      "relation": "reuses",
+      "when": "Apply only in the documented planar DC, uniform-current, unit-permeability two-wire regime.",
+      "order": 7,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:workflow:comsol-parallel-wires:reuses:method:methods_weighted_stress_force",
+      "source": "workflow:comsol-parallel-wires",
+      "target": "method:methods_weighted_stress_force",
+      "relation": "reuses",
+      "when": "Apply only in the documented planar DC, uniform-current, unit-permeability two-wire regime.",
+      "order": 8,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_cross_sections:implemented_by:primitive:mi_probdef",
+      "source": "method:parallel_wire_cross_sections",
+      "target": "primitive:mi_probdef",
+      "relation": "implemented_by",
+      "when": "Construct exact circles using the declared centers and radii.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_cross_sections:implemented_by:primitive:mi_addnode",
+      "source": "method:parallel_wire_cross_sections",
+      "target": "primitive:mi_addnode",
+      "relation": "implemented_by",
+      "when": "Construct exact circles using the declared centers and radii.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_cross_sections:implemented_by:primitive:mi_addarc",
+      "source": "method:parallel_wire_cross_sections",
+      "target": "primitive:mi_addarc",
+      "relation": "implemented_by",
+      "when": "Construct exact circles using the declared centers and radii.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_cross_sections:implemented_by:primitive:mi_addblocklabel",
+      "source": "method:parallel_wire_cross_sections",
+      "target": "primitive:mi_addblocklabel",
+      "relation": "implemented_by",
+      "when": "Construct exact circles using the declared centers and radii.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_uniform_current:implemented_by:primitive:mi_addmaterial",
+      "source": "method:parallel_wire_uniform_current",
+      "target": "primitive:mi_addmaterial",
+      "relation": "implemented_by",
+      "when": "Bind the signed one-turn circuits to the intended wire labels.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_uniform_current:implemented_by:primitive:mi_addcircprop",
+      "source": "method:parallel_wire_uniform_current",
+      "target": "primitive:mi_addcircprop",
+      "relation": "implemented_by",
+      "when": "Bind the signed one-turn circuits to the intended wire labels.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_uniform_current:implemented_by:primitive:mi_selectlabel",
+      "source": "method:parallel_wire_uniform_current",
+      "target": "primitive:mi_selectlabel",
+      "relation": "implemented_by",
+      "when": "Bind the signed one-turn circuits to the intended wire labels.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_uniform_current:implemented_by:primitive:mi_setblockprop",
+      "source": "method:parallel_wire_uniform_current",
+      "target": "primitive:mi_setblockprop",
+      "relation": "implemented_by",
+      "when": "Bind the signed one-turn circuits to the intended wire labels.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_uniform_current:implemented_by:primitive:mi_clearselected",
+      "source": "method:parallel_wire_uniform_current",
+      "target": "primitive:mi_clearselected",
+      "relation": "implemented_by",
+      "when": "Bind the signed one-turn circuits to the intended wire labels.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_exterior_transfer:implemented_by:primitive:mi_addboundprop",
+      "source": "method:parallel_wire_exterior_transfer",
+      "target": "primitive:mi_addboundprop",
+      "relation": "implemented_by",
+      "when": "Apply A=0 only to the remote outer contour; this is the recorded boundary replacement.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_exterior_transfer:implemented_by:primitive:mi_selectarcsegment",
+      "source": "method:parallel_wire_exterior_transfer",
+      "target": "primitive:mi_selectarcsegment",
+      "relation": "implemented_by",
+      "when": "Apply A=0 only to the remote outer contour; this is the recorded boundary replacement.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_exterior_transfer:implemented_by:primitive:mi_setarcsegmentprop",
+      "source": "method:parallel_wire_exterior_transfer",
+      "target": "primitive:mi_setarcsegmentprop",
+      "relation": "implemented_by",
+      "when": "Apply A=0 only to the remote outer contour; this is the recorded boundary replacement.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_force_reference:implemented_by:operation:parallel_wires:lorentz_x",
+      "source": "method:parallel_wire_force_reference",
+      "target": "operation:parallel_wires:lorentz_x",
+      "relation": "implemented_by",
+      "when": "Evaluate this force definition separately on each wire.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:operation:parallel_wires:lorentz_x:implemented_by:primitive:mo_blockintegral",
+      "source": "operation:parallel_wires:lorentz_x",
+      "target": "primitive:mo_blockintegral",
+      "relation": "implemented_by",
+      "when": "Use the exact documented DC block integral type.",
+      "order": 0,
+      "parameter_bindings": {
+        "type": 11
+      },
+      "source_ids": [
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_force_reference:implemented_by:operation:parallel_wires:lorentz_y",
+      "source": "method:parallel_wire_force_reference",
+      "target": "operation:parallel_wires:lorentz_y",
+      "relation": "implemented_by",
+      "when": "Evaluate this force definition separately on each wire.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:operation:parallel_wires:lorentz_y:implemented_by:primitive:mo_blockintegral",
+      "source": "operation:parallel_wires:lorentz_y",
+      "target": "primitive:mo_blockintegral",
+      "relation": "implemented_by",
+      "when": "Use the exact documented DC block integral type.",
+      "order": 0,
+      "parameter_bindings": {
+        "type": 12
+      },
+      "source_ids": [
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_force_reference:implemented_by:operation:parallel_wires:weighted_x",
+      "source": "method:parallel_wire_force_reference",
+      "target": "operation:parallel_wires:weighted_x",
+      "relation": "implemented_by",
+      "when": "Evaluate this force definition separately on each wire.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:operation:parallel_wires:weighted_x:implemented_by:primitive:mo_blockintegral",
+      "source": "operation:parallel_wires:weighted_x",
+      "target": "primitive:mo_blockintegral",
+      "relation": "implemented_by",
+      "when": "Use the exact documented DC block integral type.",
+      "order": 0,
+      "parameter_bindings": {
+        "type": 18
+      },
+      "source_ids": [
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_force_reference:implemented_by:operation:parallel_wires:weighted_y",
+      "source": "method:parallel_wire_force_reference",
+      "target": "operation:parallel_wires:weighted_y",
+      "relation": "implemented_by",
+      "when": "Evaluate this force definition separately on each wire.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:operation:parallel_wires:weighted_y:implemented_by:primitive:mo_blockintegral",
+      "source": "operation:parallel_wires:weighted_y",
+      "target": "primitive:mo_blockintegral",
+      "relation": "implemented_by",
+      "when": "Use the exact documented DC block integral type.",
+      "order": 0,
+      "parameter_bindings": {
+        "type": 19
+      },
+      "source_ids": [
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_force_reference:implemented_by:primitive:mo_selectblock",
+      "source": "method:parallel_wire_force_reference",
+      "target": "primitive:mo_selectblock",
+      "relation": "implemented_by",
+      "when": "Select each wire separately and retain both signed force vectors.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_force_reference:implemented_by:primitive:mo_clearblock",
+      "source": "method:parallel_wire_force_reference",
+      "target": "primitive:mo_clearblock",
+      "relation": "implemented_by",
+      "when": "Select each wire separately and retain both signed force vectors.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "transfer:method:parallel_wire_force_reference:depends_on:method:methods_magnetic_solve_snapshot",
+      "source": "method:parallel_wire_force_reference",
+      "target": "method:methods_magnetic_solve_snapshot",
+      "relation": "depends_on",
+      "when": "Use the native solution matching the frozen geometry and operating point.",
+      "order": 0,
+      "parameter_bindings": {},
+      "source_ids": [
+        "comsol-parallel-wires",
+        "manual5"
+      ]
+    }
+  ]
+}

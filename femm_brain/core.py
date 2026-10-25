@@ -116,9 +116,22 @@ def load_graph(data_dir=None):
     directory = Path(data_dir) if data_dir else DATA
     manifest_file = directory / "source_manifest.json"
     manifest = json.loads(manifest_file.read_text()) if manifest_file.exists() else {"sources": [], "artifacts": [], "crawl": {}}
+    # Manually reviewed vendor sources are separate from the FEMM-only crawler.
+    # Refreshing official FEMM pages must not erase an external method transfer.
+    external_file = directory / "external_sources.json"
+    external = json.loads(external_file.read_text()) if external_file.exists() else {}
+    source_conflicts = []
+    for collection in ("sources", "artifacts"):
+        values = {item["id"]: item for item in manifest.get(collection, [])}
+        for item in external.get(collection, []):
+            if item["id"] in values and values[item["id"]] != item:
+                source_conflicts.append({"id": item["id"], "code": "external_source_conflict", "message": "Crawler and external source identities conflict."})
+            else:
+                values[item["id"]] = item
+        manifest[collection] = list(values.values())
     nodes, edges = _common()
     examples = []
-    for name in ("functions.json", "machines.json", "methods.json", "recipes.json"):
+    for name in ("functions.json", "machines.json", "methods.json", "recipes.json", "transfer_cases.json"):
         path = directory / name
         if not path.exists():
             continue
@@ -128,7 +141,7 @@ def load_graph(data_dir=None):
         examples.extend(data.get("examples", []))
     # Identical shared concepts are consolidated with an evidence union. Layer
     # and title conflicts remain visible rather than being silently overwritten.
-    merged, conflicts = {}, []
+    merged, conflicts = {}, source_conflicts
     for node in nodes:
         node = deepcopy(node)
         identifier = node["id"]
@@ -176,6 +189,7 @@ def load_graph(data_dir=None):
              "artifacts": artifacts, "crawl": manifest.get("crawl", {}), "consolidation_conflicts": conflicts}
     baseline_path = directory / "curation_manifest.json"
     baseline = json.loads(baseline_path.read_text()) if baseline_path.exists() else {}
+    baseline["source_hashes"] = {**external.get("curated_source_hashes", {}), **baseline.get("source_hashes", {})}
     observed_sources = {s["id"]: s.get("sha256") for s in graph["sources"]}
     changed_sources = {identifier for identifier, digest in baseline.get("source_hashes", {}).items()
                        if observed_sources.get(identifier) != digest}
@@ -205,18 +219,54 @@ def example_subgraph(graph, example_id):
     example = next((e for e in graph["examples"] if e["id"] == example_id), None)
     if example is None:
         return None
-    selected = set(example.get("node_ids", [])) | {example["workflow_id"]}
+    explicit = set(example.get("node_ids", [])) | {example["workflow_id"]}
+    selected = set(explicit)
+    source_ids = set(example.get("source_ids", []))
+    index = {node["id"]: node for node in graph["nodes"]}
+    attached_recipes = set()
     outgoing = defaultdict(list)
     for edge in graph["edges"]:
         if edge["relation"] in {"decomposes_into", "implemented_by", "reuses"}:
-            outgoing[edge["source"]].append(edge["target"])
+            outgoing[edge["source"]].append(edge)
+
+    def applicable(edge):
+        source, target = index.get(edge["source"], {}), index.get(edge["target"], {})
+        source_scope = bool(source_ids.intersection(edge.get("source_ids", [])))
+        if source.get("kind") == "stage":
+            # Shared stages organize the whole library. Their other children
+            # are alternatives, not part of every example that uses the stage.
+            return edge["target"] in explicit or (
+                edge["source"].startswith("stage:" + example_id + ":") and source_scope)
+        if edge["target"] in attached_recipes:
+            return True
+        if edge["relation"] == "implemented_by" and target.get("layer") == 3:
+            return True
+        return source_scope
+
     pending = list(selected)
     while pending:
-        for child in outgoing[pending.pop()]:
+        parent = pending.pop()
+        recipe_id = index.get(parent, {}).get("recipe_id")
+        recipe = "recipe:" + recipe_id if recipe_id else None
+        if recipe in index:
+            attached_recipes.add(recipe)
+            if recipe not in selected:
+                selected.add(recipe)
+                pending.append(recipe)
+        for edge in outgoing[parent]:
+            if not applicable(edge):
+                continue
+            child = edge["target"]
             if child not in selected:
                 selected.add(child)
                 pending.append(child)
-    source_ids = set(example.get("source_ids", []))
+    def retained_edge(edge):
+        if edge["source"] not in selected or edge["target"] not in selected:
+            return False
+        if edge["relation"] in {"decomposes_into", "implemented_by", "reuses"}:
+            return applicable(edge) or edge["target"] in attached_recipes
+        return bool(source_ids.intersection(edge.get("source_ids", []))) or (
+            edge["relation"] == "precedes" and edge["source"].startswith("stage:") and edge["target"].startswith("stage:"))
     return {**deepcopy(example), "nodes": [n for n in graph["nodes"] if n["id"] in selected],
-            "edges": [e for e in graph["edges"] if e["source"] in selected and e["target"] in selected],
+            "edges": [e for e in graph["edges"] if retained_edge(e)],
             "artifacts": [a for a in graph["artifacts"] if source_ids.intersection(a.get("source_ids", []))]}

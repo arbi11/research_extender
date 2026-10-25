@@ -23,6 +23,7 @@ jobs:
       - run: python -m femm_brain validate
       - run: python -m unittest discover -s femm_brain/tests -v
       - run: node --check femm_brain/static/app.js
+      - run: node --check femm_brain/static/simulation.js
       - run: pip install playwright
       - run: python -m playwright install --with-deps chromium
       - run: python femm_brain/tests/browser_smoke.py
@@ -66,14 +67,28 @@ jobs:
       - name: Reconstruct and inspect actual native geometry and meshes
         run: |
           mkdir -p native-reports
-          docker run --rm --memory=2g --cpus=2 \
+          docker run --rm --network none --read-only --memory=2g --cpus=2 \
+            --pids-limit 256 --tmpfs /tmp:rw,size=512m \
             -v "$PWD:/repo:ro" -v "$PWD/native-reports:/reports" -w /repo \
-            -e FEMM_DIR=/opt/femm/bin -e QT_QPA_PLATFORM=offscreen \
+            -e HOME=/tmp -e PYTHONDONTWRITEBYTECODE=1 \
+            -e FEMM_DIR=/opt/femm/bin -e QT_QPA_PLATFORM=offscreen -e FEMM_MESH_EXPORT=1 \
             femm-brain-native:ci python3 -m femm_brain.native_check \
             --command /opt/femm/bin/femm-lua --output /reports
+      - name: Generate, mesh and solve all six registered source studies without network access
+        run: |
+          mkdir -p native-solves
+          docker run --rm --network none --read-only --memory=2g --cpus=2 \
+            --pids-limit 256 --tmpfs /tmp:rw,size=512m \
+            -v "$PWD:/repo:ro" -v "$PWD/native-solves:/reports" -w /repo \
+            -e HOME=/tmp -e PYTHONDONTWRITEBYTECODE=1 \
+            -e FEMM_DIR=/opt/femm/bin -e QT_QPA_PLATFORM=offscreen -e FEMM_MESH_EXPORT=1 \
+            femm-brain-native:ci python3 -m femm_brain verify-solves \
+            --engine native --command /opt/femm/bin/femm-lua --output /reports
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: femm-brain-native-evidence
-          path: native-reports
+          path: |
+            native-reports
+            native-solves
           if-no-files-found: ignore

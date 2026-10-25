@@ -18,12 +18,12 @@ current or analysis assumptions.
 
 ## Bundled source snapshot
 
-The current bundle contains **44 curated study profiles**, **1,142 knowledge
-nodes**, and **1,893 relationships**, including **654 documented API functions**
+The current bundle contains **45 curated study profiles**, **1,151 knowledge
+nodes**, and **1,931 relationships**, including **654 documented API functions**
 and **eight parameterized construction recipes**. These profiles describe
-source-backed methods; they do not mean 44 numerical studies were reproduced.
+source-backed methods; they do not mean 45 numerical studies were reproduced.
 
-The inventory retains **70 source records: 67 fetched and three unavailable**.
+The inventory retains **71 source records: 68 fetched and three unavailable**.
 There are **315 attachment records: 311 downloaded and four failed**. Collection
 failures remain visible in the manifest rather than disappearing from coverage
 counts. The offline viewer includes **67 native model previews**: 59 magnetics,
@@ -55,6 +55,94 @@ python3 -m femm_brain serve --port 8010 --db /tmp/femm-brain.sqlite3
 
 This application is independent of the existing FEMM assistant. It does not
 change that assistant's settings, jobs, development instance or deployment.
+
+## Generate and solve from the knowledge base
+
+Six registered studies now generate fresh geometry, assign physics, mesh and
+solve with native FEMM. Selection, parameter conversion, construction and
+assessment use local code and cited knowledge records. **No AI credential or
+external model call is used.** The eight teaching construction recipes and these
+six executable studies have separate catalogs and verification evidence.
+
+| Case ID | Physical problem | Frozen comparison |
+|---|---|---|
+| `aircore-short` | Axisymmetric winding: 100 turns, radii 1–2 in, length 1 in | Published FEMM inductance 0.64707 mH |
+| `aircore-long` | Axisymmetric winding: 100 turns, radii 1–1.25 in, length 4 in | Published FEMM inductance 0.23081 mH |
+| `aircore-flat` | Axisymmetric winding: 100 turns, radii 0.25–2 in, length 0.25 in | Published FEMM inductance 0.40955 mH |
+| `uniform-planar` | Magnetized IABC shells around a circular planar region | Analytic interior field magnitude 0.5 T |
+| `uniform-axisymmetric` | Magnetized IABC shells around a spherical region | Analytic interior field magnitude 2/3 T |
+| `parallel-wires` | Opposite 1 A currents in two circular wires, radius 0.2 m, centers 1 m apart | Analytic repulsive force 2×10⁻⁷ N/m |
+
+The five FEMM cases follow [AirCore](https://www.femm.info/wiki/AirCore) and
+[UniformField](https://www.femm.info/wiki/UniformField). Uniform-field shell
+permeabilities come from the cited source-model data; the circular construction
+is recentered and scaled. Signed native field components are retained separately
+from the source magnitude target.
+
+The sixth case transfers the physical problem from [COMSOL's public parallel-wire
+tutorial](https://doc.comsol.com/6.4/doc/com.comsol.help.models.acdc.parallel_wires/parallel_wires.html).
+It replaces COMSOL's infinite-element exterior with a finite circular FEMM A=0
+boundary. The baseline domain radius is 10 m; the recorded comparison uses 20 m
+and two mesh scales. Changing domain radius also changes the global air mesh, so
+this is **combined domain/mesh sensitivity**, not proof of infinite-domain or
+monotone convergence. FEMM weighted stress and volumetric Lorentz force are
+reported separately. The planar depth is exactly 1 m, so native force in N equals
+force per length in N/m numerically. This is an independently implemented method
+transfer, not execution or certification of a COMSOL model.
+
+List studies and prepare a reviewable plan without installing FEMM or Docker:
+
+```bash
+python3 -m femm_brain studies
+python3 -m femm_brain plan 'aircore short with current 2 A'
+python3 -m femm_brain plan --case parallel-wires --parameters '{"domain_radius":20}'
+```
+
+The local language parser selects a **known catalog profile**, handles named
+parameters with explicit units, and reports ambiguity or unsupported details. It
+does not generate arbitrary CAD, infer missing motor dimensions, interpret a
+journal PDF or silently discard unfamiliar instructions. Use explicit case IDs
+and the typed parameter editor when a request needs clarification. Numeric JSON
+parameters use the units shown in `studies`.
+
+For Docker solving, build the native engine from a full repository checkout:
+
+```bash
+docker build --target femm-build -t femm-brain-native:local -f femm_assistant/Dockerfile femm_assistant
+python3 -m femm_brain solve aircore-short --output work/brain-runs/aircore-short
+python3 -m femm_brain solve parallel-wires --parameters '{"mesh_scale":0.5}' --output work/brain-runs/parallel-wires-fine
+python3 -m femm_brain verify-solves --output work/brain-runs/all-baselines
+```
+
+Docker image creation downloads/builds the pinned native engine. Subsequent
+solves run with networking disabled, a read-only container filesystem, a
+read-only source mount and a separate writable results directory. No provider
+credentials are passed. Supply `--image <tag>` or `FEMM_BRAIN_IMAGE` to use another
+prepared engine image. Each result directory must be new and empty; previous
+evidence is never overwritten. The portable offline package can browse and plan
+with Python alone; building the Docker image requires the full checkout or an
+already prepared image.
+
+Enable the web solver explicitly after preparing the image:
+
+```bash
+python3 -m femm_brain serve --port 8010 --enable-solver --jobs work/brain-runs/web
+```
+
+Open the executable-study panel to select a profile, edit parameters, inspect
+the generated geometry and frozen target, then run it. Ordinary `serve` keeps
+native execution disabled. The results include actual geometry, triangular mesh,
+field samples, signed metrics, native FEMM files, a report and content hashes.
+Geometry, mesh, solver completion and target assessment have separate statuses.
+
+Published AirCore numbers apply to the original dimensions and turn count.
+Changing those values produces `solved_unassessed` rather than inheriting a
+baseline pass. Changing current retains the inductance comparison because this
+model is linear. Uniform-field analytic references scale with excitation and
+remain valid under geometric similarity; parallel-wire force is recomputed from
+the declared current and spacing. The 1% FEMM and 5% transfer acceptance bands
+are declared test tolerances, not accuracies certified by either source. A passing
+comparison does not establish convergence or validate all documented studies.
 
 ## Explore
 
@@ -100,9 +188,17 @@ The HTTP API includes:
 | `/api/geometry?recipe=...` | Regenerated recipe SVG and ordered operations |
 | `/api/geometry?artifact=...` | An available source-model geometry preview |
 | `/api/download?recipe=...&format=python` | Portable construction export |
+| `/api/simulations` | Executable studies and solver-enabled state |
+| `/api/simulation-request?q=...` | Local catalog selection and explicit parameter parsing |
+| `/api/simulation-plan?case=...` | Frozen generated study, source bindings and reference |
+| `/api/simulation-download?case=...&format=lua` | Study plan, Lua or SVG export |
+| `POST /api/simulations` | Queue a registered native study when solving is enabled |
+| `/api/simulation-jobs/<id>` | Per-stage native results and target status |
+| `/api/simulation-artifacts/<id>/<filename>` | Retained native artifacts and reports |
 
-The geometry and download endpoints accept a URL-encoded JSON `parameters`
-object. Download formats are `python`, `lua`, `fem` and `svg`.
+The geometry, study-plan and download endpoints accept a URL-encoded JSON
+`parameters` object. Teaching recipe downloads support `python`, `lua`, `fem`
+and `svg`; executable-study plan exports support `json`, `lua` and `svg`.
 
 ## Refresh source evidence
 
@@ -152,14 +248,23 @@ reconstructed recipe exports. Three geometry-only cases were also meshed:
 circle (7,293 elements), rectangle (7,384 elements), and circular air gap
 (8,769 elements). **No field solves were performed in this report.** It records
 the pinned upstream source identity and implementation hashes. These construction
-and mesh checks are separate from the 44 documented study profiles and do not
+and mesh checks are separate from the documented study profiles and do not
 establish their numerical reproduction or convergence.
+
+The registered solve layer records additional field-solve evidence per run;
+the historical construction-only report is not retroactively relabeled as a
+solve report. Run `verify-solves` to generate current native evidence for all
+six executable studies. External vendor documentation retains its own publisher,
+version, source hash and redistribution status in `data/external_sources.json`;
+it does not become an official FEMM source or an open-licensed document merely
+because a method transfer is indexed here.
 
 ## Tests
 
 ```bash
 python3 -m unittest discover -s femm_brain/tests -v
 node --check femm_brain/static/app.js
+node --check femm_brain/static/simulation.js
 ```
 
 The standalone browser test additionally requires Playwright and Chromium:
@@ -172,4 +277,6 @@ python3 femm_brain/tests/browser_smoke.py
 Graph/API/browser tests verify navigation, provenance, consolidation,
 construction and exports. They do not imply a successful native FEMM solve for
 every documented source example. Use the actual validation report and its
-coverage counts when reporting what has been checked.
+coverage counts when reporting what has been checked. The native CI job performs
+the construction checks and all six actual field solves in Docker with networking
+disabled, and uploads their separate reports and native artifacts.

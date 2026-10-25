@@ -139,6 +139,78 @@ def exercise_browser(url, graph, folder):
             assert page.locator("#source-list a").evaluate_all("nodes => nodes.map(node => node.href)") == inspector_sources, \
                 "Loading geometry changed a knowledge card's sources without changing its identity"
 
+        # The executable studies are separate from construction-only recipes.
+        expect(page.locator("#study-preview img")).to_be_visible()
+        expect(page.locator("#study-select option")).to_have_count(6)
+        expect(page.locator("#study-solve")).to_be_disabled()
+        expect(page.locator("#study-engine")).to_contain_text("--enable-solver")
+        page.locator("#study-request").fill("AirCore short solenoid at 2 A")
+        page.locator("#study-search-form button").click()
+        expect(page.locator('#study-parameters input[data-parameter="current"]')).to_have_value("2")
+        expect(page.locator("#study-message")).to_contain_text("Model ready")
+        with page.expect_download() as downloaded:
+            page.locator("#study-json").click()
+        frozen = folder / downloaded.value.suggested_filename
+        downloaded.value.save_as(str(frozen))
+        plan = json.loads(frozen.read_text())
+        assert plan["parameters"]["current"] == 2
+        assert plan["knowledge_node_ids"] and plan["knowledge_sources"]
+        assert "mi_analyze" in plan["lua"] and plan["frozen_reference"]["applicable"]
+        turns = page.locator('#study-parameters input[data-parameter="turns"]')
+        turns.fill("200")
+        expect(page.locator("#study-json")).to_be_hidden()
+        page.locator("#study-plan").click()
+        expect(page.locator("#study-reference")).to_contain_text("unassessed")
+        page.locator("#study-request").fill("uniform field")
+        page.locator("#study-search-form button").click()
+        expect(page.locator("#study-selection")).to_contain_text("ambiguous")
+        expect(page.locator("#study-selection button")).to_have_count(2)
+        expect(page.locator("#study-json")).to_be_hidden()
+        expect(page.locator("#study-preview img")).to_have_count(0)
+
+        # Delay a genuine planning response, edit while it is in flight, and
+        # verify the old result cannot restore links or a frozen plan.
+        pending = []
+        def delay_plan(route):
+            pending.append((route, route.fetch()))
+        page.route("**/api/simulation-plan?*", delay_plan)
+        page.locator("#study-plan").click()
+        page.wait_for_timeout(100)
+        assert pending, "The test did not intercept a genuine planning request"
+        turns.fill("300")
+        route, response = pending.pop()
+        route.fulfill(response=response)
+        page.wait_for_timeout(150)
+        expect(page.locator("#study-json")).to_be_hidden()
+        expect(page.locator("#study-preview img")).to_have_count(0)
+        expect(page.locator("#study-message")).to_contain_text("edited parameters")
+        page.unroute("**/api/simulation-plan?*", delay_plan)
+        page.locator("#study-plan").click()
+        expect(page.locator("#study-preview img")).to_be_visible()
+
+        # A late natural-language lookup must not override a newer explicit
+        # study selection. Use real HTTP responses for both requests.
+        lookups = []
+        def delay_lookup(route):
+            lookups.append((route, route.fetch()))
+        page.route("**/api/simulation-request?*", delay_lookup)
+        page.locator("#study-request").fill("AirCore short solenoid at 2 A")
+        page.locator("#study-search-form button").click()
+        page.wait_for_timeout(100)
+        assert lookups
+        page.locator("#study-select").select_option("parallel-wires")
+        expect(page.locator("#study-message")).to_contain_text("Model ready")
+        route, response = lookups.pop()
+        route.fulfill(response=response)
+        page.wait_for_timeout(150)
+        expect(page.locator("#study-select")).to_have_value("parallel-wires")
+        page.unroute("**/api/simulation-request?*", delay_lookup)
+        page.locator("#study-request").fill("a 3D AC motor with unknown geometry")
+        expect(page.locator("#study-json")).to_be_hidden()
+        page.locator("#study-search-form button").click()
+        expect(page.locator("#study-selection")).to_contain_text("unsupported")
+        expect(page.locator("#study-preview img")).to_have_count(0)
+
         artifact_directory = os.getenv("BROWSER_SMOKE_ARTIFACTS")
         if artifact_directory:
             destination = Path(artifact_directory)
@@ -154,7 +226,7 @@ def exercise_browser(url, graph, folder):
         assert not external_requests, "Offline viewer requested external resources: " + json.dumps(external_requests)
         context.close()
         browser.close()
-    print("Browser checks passed: source navigation, graph expansion, parameterized construction, primitive links, exports and offline resources.")
+    print("Browser checks passed: graph, construction, local language selection, simulation plans/exports, stale-response guards and offline resources.")
 
 
 def main():
