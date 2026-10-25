@@ -55,6 +55,16 @@ contradicts it.
   compare region by region rather than entity by entity.
   (`lrkanalysis-flux-sweep`)
 
+- **Tubular and linear machines are one period with periodic ends.** Build the
+  armature with `magnet_array`, pair the two end edges of each region with a
+  periodic boundary (`segment_boundary` for edges another component drew), and
+  model ideal iron as natural boundaries when the paper does. Periodic and
+  natural boundaries alone leave the potential undetermined: fix it at one node
+  with `fixed_point_potential`. (`wang-2005-tubular-halbach`)
+- **Halbach directions decide which side the field is on.** Read each block's
+  arrow from the figure, then confirm with an independent sign in the paper's
+  results before trusting the reading. (`wang-2005-tubular-halbach`)
+
 ## Materials
 
 - FEMM needs a coercivity, not a remanence: `H_c = B_r / (mu0 * mu_r)`. Sintered
@@ -80,6 +90,9 @@ contradicts it.
 - **"Top" and "bottom" of a slot are ambiguous.** Decide which end each width
   belongs to from a figure and from whether the teeth come out parallel.
   (`elrefaie-2006-fscw-spm`)
+- **Rounded tables need an absolute allowance.** Harmonics given to three
+  decimals carry up to 0.0005 T of rounding, over 1% of a 0.047 T harmonic;
+  use 1% or 0.001 T, whichever is larger. (`wang-2005-tubular-halbach`)
 - **Unquantified agreement still bounds a tolerance.** When a paper says its
   analysis was "verified by FEA" without numbers, read the overlay figure at
   600 dpi before solving and set the analytic target's tolerance to the spread

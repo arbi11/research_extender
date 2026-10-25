@@ -327,6 +327,65 @@ class MachineGeometryTests(unittest.TestCase):
             self.build([magnet, dict(rotor, arc_angle=36)])
 
 
+class LinearMachineTests(unittest.TestCase):
+    problem = {"physics": "magnetics", "units": "millimeters", "type": "axisymmetric", "frequency": 0, "depth": 1}
+    array = {"use": "magnet_array", "start": 0, "inner": 19.5, "outer": 24.5, "magnet_material": "M",
+             "segments": [[2, 90], [6, 0], [4, 270], [6, 180], [2, 90]]}
+
+    def build(self, steps):
+        base = [{"use": "material", "name": "M", "values": {"Mu_x": 1.05, "Mu_y": 1.05, "H_c": 871576}},
+                {"use": "boundary", "name": "per", "values": {"BdryType": 4}}]
+        return assemble({"problem": self.problem, "steps": base + steps}, {})[0]
+
+    def test_magnet_blocks_share_edges_and_keep_their_directions(self):
+        model = self.build([self.array])
+        self.assertEqual([label["magdir"] for label in model["labels"]], [90, 0, 270, 180, 90])
+        self.assertEqual(len(model["segments"]), 2 * 5 + 6)
+        self.assertEqual(len(self.build([dict(self.array, draw_ends=False)])["segments"]), 2 * 5 + 4)
+        planar = assemble({"problem": {"physics": "magnetics", "units": "millimeters", "type": "planar", "frequency": 0, "depth": 1},
+                           "steps": [{"use": "material", "name": "M"}, dict(self.array, axis="x")]}, {})[0]
+        self.assertEqual(sorted({round(n["y"], 9) for n in planar["nodes"]}), [19.5, 24.5])
+        with self.assertRaisesRegex(ValueError, "positive length"):
+            self.build([dict(self.array, segments=[[0, 90]])])
+        with self.assertRaisesRegex(ValueError, "nonnegative radii"):
+            self.build([dict(self.array, inner=-1)])
+
+    def test_boundaries_go_to_the_segment_through_each_point(self):
+        model = self.build([self.array, {"use": "segment_boundary", "name": "per", "at": [[22, 0], [22, 20]]}])
+        ends = sorted((round(model["nodes"][s["n0"]]["y"], 9), s["boundary"]) for s in model["segments"] if s["boundary"])
+        self.assertEqual(ends, [(0.0, "per"), (20.0, "per")])
+        for at, pattern in (([[19.5, 0]], "exactly one"), ([[30, 30]], "exactly one")):
+            with self.assertRaisesRegex(ValueError, pattern):
+                self.build([self.array, {"use": "segment_boundary", "name": "per", "at": at}])
+        with self.assertRaisesRegex(ValueError, "Define the boundary"):
+            self.build([self.array, {"use": "segment_boundary", "name": "missing", "at": [[22, 0]]}])
+
+    def test_a_fixed_point_potential_holds_one_node(self):
+        model = self.build([self.array, {"use": "fixed_point_potential", "at": [19.5, 2], "name": "gauge"}])
+        held = [(n["x"], n["y"]) for n in model["nodes"] if n["point"] == "gauge"]
+        self.assertEqual(held, [(19.5, 2.0)])
+        self.assertEqual(model["point_properties"][0]["props"]["A_re"], 0.0)
+
+
+class SpatialHarmonicTests(unittest.TestCase):
+    def test_known_harmonics_are_recovered_and_uneven_sampling_refused(self):
+        from femm_brain.reference_models import run_assessor
+        period, count = 20.0, 160
+        points = [[25.0, (k + 0.5) * period / count] for k in range(count)]
+        field = lambda z: 1.164 * math.sin(2 * math.pi * z / period) + 0.128 * math.sin(6 * math.pi * z / period + 0.3)
+        raw = {("base", "probe:B1", k): complex(field(p[1])) for k, p in enumerate(points)}
+        case = {"measurements": [{"id": "probe", "op": "point_values", "points": points, "fields": ["B1"]}]}
+        for order, value in ((1, 1.164), (3, 0.128), (5, 0.0)):
+            assessor = {"kind": "spatial_harmonic", "measurement": "probe", "field": "B1", "axis": 1, "period": period,
+                        "order": order, "value": value, "absolute_tolerance": 1e-9}
+            result = run_assessor(assessor, case, raw, {}, None)
+            self.assertEqual(result["status"], "passed", result)
+        case["measurements"][0]["points"] = points[:-1] + [[25.0, 30.0]]
+        result = run_assessor(dict(assessor, order=1, value=1.164), case, raw, {}, None)
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("evenly", result["error"])
+
+
 class LrkReconstructionTests(unittest.TestCase):
     def test_components_rebuild_the_official_model_region_by_region(self):
         plan = plan_level(_lrk(), "components")

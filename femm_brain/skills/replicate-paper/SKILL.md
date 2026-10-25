@@ -113,8 +113,9 @@ per-paper Python. A missing capability becomes a generic component:
 2. Add its knowledge record to `femm_brain/data/components.json`, with
    constraints and source ids.
 3. Add contract tests (refusals of impossible input) and geometry tests.
-4. Add a synthetic design to `femm_brain/data/designs.json` that checks it
-   against a closed form or a prediction from the construction.
+4. Check it natively against a closed form or a prediction from the
+   construction: the replication itself when its targets are analytic,
+   otherwise a synthetic design in `femm_brain/data/designs.json`.
 
 ## 6. Verify geometry
 

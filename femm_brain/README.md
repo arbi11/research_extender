@@ -458,6 +458,13 @@ The first development paper, El-Refaie et al. (IEEE TIA 2006), a 36-slot
   because they match the cross-section figure and reproduce the stated iron
   mass within 0.9%; controls show what each other reading would give.
 
+The second, Wang and Howe (IEEE TMAG 2005, Part I), a tubular armature with
+quasi-Halbach magnets, is a full replication. Built as the paper's own
+finite-element model (one period in r-z, periodic ends, ideal iron), its radial
+flux density harmonics at r = 25 mm are 1.1648, 0.1283, 0.0767 and 0.0468 T
+against Table V's 1.164, 0.128, 0.076 and 0.047 T, all within 1% or the
+table's rounding, and mesh-converged.
+
 ## Explore
 
 - Search for a machine, component or method and select a source example.
