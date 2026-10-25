@@ -957,7 +957,8 @@ def belt_winding(m, inner_radius, outer_radius, belts, material, gap_material, m
             m.label(*point(middle, centre), material, mesh=mesh, circuit=owner[2], turns=owner[3], group=group)
 
 
-def ring_sectors(m, inner_radius, outer_radius, sectors, gap_material=None, max_segment=1, mesh=None, gap_mesh=None, group=0):
+def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0, gap_material=None, max_segment=1, mesh=None,
+                 gap_mesh=None, group=0):
     """An annulus divided into angular sectors, each a block of its own material and magnetization.
 
     ``sectors`` lists [start, end, material, magnetization] with angles in
@@ -965,14 +966,26 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, gap_material=None, max_
     or "inward" (radial, through FEMM's direction function) or a number (a
     parallel direction in degrees). Contiguous sectors make a closed ring of
     magnets (a magnetic gear's or Halbach rotor's); sectors with gaps between
-    them make pole pieces or teeth, and the gaps take ``gap_material``. Arcs are
-    split at every sector edge and wherever they would exceed 180 degrees, and
-    radial edges are drawn once where neighbours meet.
+    them make pole pieces or teeth, and the gaps take ``gap_material``. The
+    sectors may describe one period, repeated ``copies`` times by ``angle_step``
+    degrees (a parallel direction turns with its copy), so a pole count can be a
+    parameter. Arcs are split at every sector edge and wherever they would exceed
+    180 degrees, and radial edges are drawn once where neighbours meet.
     """
     if not 0 < inner_radius < outer_radius:
         raise ValueError("A ring needs 0 < inner radius < outer radius")
+    if not (_finite(copies) and float(copies).is_integer() and copies >= 1) or not _finite(angle_step):
+        raise ValueError("Copies is a positive whole number and the angle step a number of degrees")
+    repeated = []
+    for k in range(int(copies)):
+        for sector in sectors:
+            if len(sector) != 4 or not (_finite(sector[0]) and _finite(sector[1])):
+                raise ValueError("Each sector is [start degrees, end degrees, material, magnetization]")
+            turn = k * angle_step
+            direction = sector[3] + turn if _finite(sector[3]) else sector[3]
+            repeated.append([sector[0] + turn, sector[1] + turn, sector[2], direction])
     spans = []
-    for sector in sectors:
+    for sector in repeated:
         if len(sector) != 4 or not (_finite(sector[0]) and _finite(sector[1])) or not isinstance(sector[2], str):
             raise ValueError("Each sector is [start degrees, end degrees, material, magnetization]")
         magnetization = sector[3]

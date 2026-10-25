@@ -702,6 +702,18 @@ class RingSectorTests(unittest.TestCase):
         self.assertTrue(all(a["angle"] <= 180 for a in model["arcs"]))
         self.assertEqual(check_regions(model), [])
 
+    def test_one_period_repeated_by_a_pole_count_parameter(self):
+        steps = [{"use": "material", "name": "PM", "values": {"H_c": 900000}},
+                 {"use": "ring_sectors", "inner_radius": 10, "outer_radius": 12, "copies": "$p", "angle_step": "=360/p",
+                  "sectors": [["=-90/p", "=90/p", "PM", "outward"], ["=90/p", "=270/p", "PM", 30]]}]
+        model = assemble({"problem": self.problem, "steps": steps}, {"p": 3})[0]
+        self.assertEqual(sorted((round(l["magdir"]), l["magdir_function"]) for l in model["labels"]),
+                         [(0, "theta")] * 3 + [(30, None), (150, None), (270, None)])
+        self.assertEqual(len(model["segments"]), 6)
+        self.assertEqual(check_regions(model), [])
+        with self.assertRaises(ValueError):
+            self.ring([[0, 20, "Iron", None]], gap_material="Air", copies=2.5, angle_step=90)
+
     def test_refusals(self):
         for sectors, extra in (([[0, 20, "Iron", None], [10, 30, "Iron", None]], {"gap_material": "Air"}),
                                ([[0, 20, "Iron", None]], {}),

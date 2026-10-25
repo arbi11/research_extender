@@ -1,0 +1,1462 @@
+{
+ "schema_version": 1,
+ "id": "zhang-2014-coaxial-magnetic-gear",
+ "set": "development",
+ "status": "frozen",
+ "skill_version": null,
+ "title": "Analysis and Design Optimization of a Coaxial Surface-Mounted Permanent-Magnet Magnetic Gear",
+ "source": {
+  "citation": "X. Zhang, X. Liu, C. Wang, Z. Chen, Energies 7(12):8535-8553, 2014",
+  "doi": "10.3390/en7128535",
+  "url": "https://www.mdpi.com/1996-1073/7/12/8535",
+  "access": "open access",
+  "licence": "CC BY 4.0",
+  "pdf_sha256": "7372602d1a970cb6e10fe59a1488e189293a8c36a6cf09e033e597693e069911",
+  "pages": 19,
+  "accessed": "2026-10-26"
+ },
+ "machine": {
+  "family": "magnetic_gear",
+  "topology": "coaxial radial-flux magnetic gear: inner PM rotor, a stationary ring of modulating pole pieces, outer PM rotor; surface magnets filling the pole pitch",
+  "problem": "planar",
+  "poles": "2 x 23 outer, 2 x 4 inner (base); variants 11/2 to 28/5",
+  "pole_pieces": 27,
+  "symmetry": "Full cross-section (the combinations have no common periodicity). Two sliding bands, one in each air gap; the inner band turns the inner rotor."
+ },
+ "components_map": [
+  {
+   "part": "outer and inner PM rings (magnets fill the pole pitch, radially magnetized)",
+   "component": "ring_sectors"
+  },
+  {
+   "part": "modulating pole pieces with air between them",
+   "component": "ring_sectors"
+  },
+  {
+   "part": "air gaps and inner-rotor rotation",
+   "component": "air_gap_element (twice)"
+  },
+  {
+   "part": "yokes, bore and outer boundary",
+   "component": "circle, block_label, fixed_potential_boundary"
+  },
+  {
+   "part": "stall torque",
+   "component": "waveform_statistic assessor (fundamental over the inner rotor's period)"
+  }
+ ],
+ "article": {
+  "parameters": {
+   "outer_diameter_mm": {
+    "value": 320,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "outer diameter of the magnetic gear 320 mm",
+    "location": "Table 1, p. 8538"
+   },
+   "stack_length_mm": {
+    "value": 100,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "stack length 100 mm",
+    "location": "Table 1, p. 8538",
+    "note": "The 2D model's depth; end effects are neglected, as the analytic model assumes."
+   },
+   "outer_pole_pairs": {
+    "value": 23,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "PM pole-pair combination 23/4",
+    "location": "Table 1, p. 8538",
+    "note": "p_o of the outer PM ring."
+   },
+   "inner_pole_pairs": {
+    "value": 4,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "PM pole-pair combination 23/4",
+    "location": "Table 1, p. 8538",
+    "note": "p_i of the inner PM ring."
+   },
+   "piece_width_ratio": {
+    "value": 0.5,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "pole-piece width/pole pitch ratio 0.5",
+    "location": "Table 1, p. 8538",
+    "note": "tau_m/tau_p. The analytic model's slots are angular sectors (Fig. 2, Equation (28)), so this is the pole pieces' angular share of their pitch."
+   },
+   "piece_length_ratio": {
+    "value": 0.5,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "pole-piece length/pole pitch ratio 0.5",
+    "location": "Table 1, p. 8538",
+    "note": "tau_l/tau_p: radial length over the pole-piece pitch (gap: at which radius)."
+   },
+   "outer_magnet_mm": {
+    "value": 6,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "thickness of the outer PM ring 6 mm",
+    "location": "Table 1, p. 8538"
+   },
+   "inner_magnet_mm": {
+    "value": 6,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "thickness of the inner PM ring 6 mm",
+    "location": "Table 1, p. 8538"
+   },
+   "outer_gap_mm": {
+    "value": 1,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "length of the outer air-gap 1 mm",
+    "location": "Table 1, p. 8538"
+   },
+   "inner_gap_mm": {
+    "value": 1,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "length of the inner air-gap 1 mm",
+    "location": "Table 1, p. 8538"
+   },
+   "remanence_T": {
+    "value": 1.2,
+    "unit": "T",
+    "provenance": "quoted",
+    "quote": "remanence of the PM 1.2 T",
+    "location": "Table 1, p. 8538"
+   },
+   "magnet_mu_r": {
+    "value": 1,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "Relative recoil permeability of PM is 1;",
+    "location": "Section 3, assumption (3)",
+    "note": "The analytic model's assumption; the paper's FEM recoil permeability is not stated."
+   },
+   "iron_material": {
+    "value": "IronLinear",
+    "unit": "material",
+    "provenance": "quoted",
+    "quote": "Infinite permeability of ferromagnetic material;",
+    "location": "Section 3, assumption (1)",
+    "note": "Linear iron of iron_mu_r stands for infinite permeability; control nonlinear-steel builds the iron of M-19 to compare with the paper's nonlinear FEM."
+   },
+   "iron_mu_r": {
+    "value": 10000,
+    "unit": "ratio",
+    "provenance": "numerical",
+    "reason": "Stands for the analytic model's infinitely permeable iron; control iron-mu-1e5."
+   },
+   "pitch_depth_fraction": {
+    "value": 0.0,
+    "unit": "ratio",
+    "provenance": "assumed",
+    "reason": "Where tau_p is measured for tau_l: 0 at the pole pieces' outer face R4, 0.5 at their mean radius, 1 at R3. Table 2's PM masses fix 0: with it the implied magnet density varies 0.28-0.44% across the six pole-pair combinations, against 1.3-2.6% at the mean radius or R3 (geometry check 1).",
+    "sensitivity_control": "pitch-at-mean-radius"
+   },
+   "yoke_arc_depth_fraction": {
+    "value": 0.5,
+    "unit": "ratio",
+    "provenance": "assumed",
+    "reason": "Where 'the arc width of the PM block' is measured for the yoke thickness: 0 at the face against the yoke, 0.5 at the magnet's mean radius. The steel masses of Tables 1-3 favour 0.5 (spread 0.76% against 2.0%, geometry check 2); with infinitely permeable iron the yoke only sets the radial build.",
+    "sensitivity_control": "yoke-arc-at-yoke-face"
+   },
+   "band_margin_mm": {
+    "value": 0.3,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Each sliding band lies 0.3 mm inside its 1 mm gap, leaving thin air rings on both faces."
+   },
+   "thin_air_mesh_mm": {
+    "value": 0.25,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Air between a ring face and its sliding band."
+   },
+   "gap_arc_deg": {
+    "value": 0.25,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arcs at and next to the gaps (0.65 mm at 150 mm)."
+   },
+   "magnet_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Magnets."
+   },
+   "piece_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Pole pieces and the air between them."
+   },
+   "yoke_mesh_mm": {
+    "value": 3.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Yokes and the bore."
+   },
+   "positions_per_period": {
+    "value": 24,
+    "unit": "count",
+    "provenance": "numerical",
+    "reason": "Inner rotor positions over one electrical period (15 electrical degrees apart)."
+   },
+   "pole_pieces": {
+    "value": 27,
+    "unit": "count",
+    "provenance": "derived",
+    "expression": "outer_pole_pairs+inner_pole_pairs",
+    "inputs": [
+     "inner_pole_pairs",
+     "outer_pole_pairs"
+    ],
+    "note": "Equation (1), N_s = p_o + p_i."
+   },
+   "r7_mm": {
+    "value": 160.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "outer_diameter_mm/2",
+    "inputs": [
+     "outer_diameter_mm"
+    ],
+    "note": "Outer surface of the outer yoke."
+   },
+   "r6_mm": {
+    "value": 149.96308381597464,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "outer_diameter_mm/2-pi/(2*outer_pole_pairs)*(outer_diameter_mm/2-yoke_arc_depth_fraction*outer_magnet_mm)/(1+pi/(2*outer_pole_pairs))",
+    "inputs": [
+     "outer_diameter_mm",
+     "outer_magnet_mm",
+     "outer_pole_pairs",
+     "yoke_arc_depth_fraction"
+    ],
+    "note": "Outer yoke thickness is half the outer PM's arc width (pi/p_o of arc), measured yoke_arc_depth_fraction into the magnet."
+   },
+   "r5_mm": {
+    "value": 143.96308381597464,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r6_mm-outer_magnet_mm",
+    "inputs": [
+     "outer_magnet_mm",
+     "r6_mm"
+    ]
+   },
+   "r4_mm": {
+    "value": 142.96308381597464,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r5_mm-outer_gap_mm",
+    "inputs": [
+     "outer_gap_mm",
+     "r5_mm"
+    ],
+    "note": "Outer face of the pole pieces."
+   },
+   "piece_length_mm": {
+    "value": 16.63451014262251,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "piece_length_ratio*2*pi/pole_pieces*r4_mm/(1+pitch_depth_fraction*piece_length_ratio*2*pi/pole_pieces)",
+    "inputs": [
+     "piece_length_ratio",
+     "pitch_depth_fraction",
+     "pole_pieces",
+     "r4_mm"
+    ],
+    "note": "tau_l = ratio times the pole-piece pitch, taken pitch_depth_fraction of tau_l inside R4."
+   },
+   "r3_mm": {
+    "value": 126.32857367335214,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r4_mm-piece_length_mm",
+    "inputs": [
+     "piece_length_mm",
+     "r4_mm"
+    ]
+   },
+   "r2_mm": {
+    "value": 125.32857367335214,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r3_mm-inner_gap_mm",
+    "inputs": [
+     "inner_gap_mm",
+     "r3_mm"
+    ]
+   },
+   "r1_mm": {
+    "value": 119.32857367335214,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r2_mm-inner_magnet_mm",
+    "inputs": [
+     "inner_magnet_mm",
+     "r2_mm"
+    ]
+   },
+   "r0_mm": {
+    "value": 71.29025512631203,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r1_mm-pi/(2*inner_pole_pairs)*(r1_mm+yoke_arc_depth_fraction*inner_magnet_mm)",
+    "inputs": [
+     "inner_magnet_mm",
+     "inner_pole_pairs",
+     "r1_mm",
+     "yoke_arc_depth_fraction"
+    ],
+    "note": "Inner yoke thickness, as for the outer yoke."
+   },
+   "magnet_coercivity_A_per_m": {
+    "value": 954929.658551372,
+    "unit": "A/m",
+    "provenance": "derived",
+    "expression": "remanence_T/(mu0*magnet_mu_r)",
+    "inputs": [
+     "magnet_mu_r",
+     "remanence_T"
+    ]
+   }
+  },
+  "assembly": {
+   "problem": {
+    "physics": "magnetics",
+    "units": "millimeters",
+    "type": "planar",
+    "frequency": 0,
+    "depth": "$stack_length_mm"
+   },
+   "steps": [
+    {
+     "use": "material",
+     "name": "Air"
+    },
+    {
+     "use": "material",
+     "name": "IronLinear",
+     "values": {
+      "Mu_x": "$iron_mu_r",
+      "Mu_y": "$iron_mu_r"
+     }
+    },
+    {
+     "use": "library_material",
+     "name": "M-19",
+     "library": "matlib.dat",
+     "folder": "Metals Handbook DC Magnetization Curves",
+     "as_name": "M19"
+    },
+    {
+     "use": "material",
+     "name": "Magnet",
+     "values": {
+      "Mu_x": "$magnet_mu_r",
+      "Mu_y": "$magnet_mu_r",
+      "H_c": "$magnet_coercivity_A_per_m"
+     }
+    },
+    {
+     "use": "fixed_potential_boundary",
+     "name": "A=0"
+    },
+    {
+     "use": "circle",
+     "radius": "$r7_mm",
+     "max_segment": 1,
+     "boundary": "A=0"
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$r5_mm",
+     "outer_radius": "$r6_mm",
+     "copies": "$outer_pole_pairs",
+     "angle_step": "=360/outer_pole_pairs",
+     "sectors": [
+      [
+       "=-90/outer_pole_pairs",
+       "=90/outer_pole_pairs",
+       "Magnet",
+       "outward"
+      ],
+      [
+       "=90/outer_pole_pairs",
+       "=270/outer_pole_pairs",
+       "Magnet",
+       "inward"
+      ]
+     ],
+     "max_segment": "$gap_arc_deg",
+     "mesh": "$magnet_mesh_mm"
+    },
+    {
+     "use": "air_gap_element",
+     "rotor_radius": "=r4_mm+band_margin_mm",
+     "stator_radius": "=r5_mm-band_margin_mm",
+     "max_segment": "$gap_arc_deg",
+     "name": "AGE_out"
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$r3_mm",
+     "outer_radius": "$r4_mm",
+     "copies": "$pole_pieces",
+     "angle_step": "=360/pole_pieces",
+     "sectors": [
+      [
+       "=-180*piece_width_ratio/pole_pieces",
+       "=180*piece_width_ratio/pole_pieces",
+       "$iron_material",
+       null
+      ]
+     ],
+     "gap_material": "Air",
+     "max_segment": "$gap_arc_deg",
+     "mesh": "$piece_mesh_mm",
+     "gap_mesh": "$piece_mesh_mm"
+    },
+    {
+     "use": "air_gap_element",
+     "rotor_radius": "=r2_mm+band_margin_mm",
+     "stator_radius": "=r3_mm-band_margin_mm",
+     "max_segment": "$gap_arc_deg",
+     "name": "AGE_in"
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$r1_mm",
+     "outer_radius": "$r2_mm",
+     "copies": "$inner_pole_pairs",
+     "angle_step": "=360/inner_pole_pairs",
+     "sectors": [
+      [
+       "=-90/inner_pole_pairs",
+       "=90/inner_pole_pairs",
+       "Magnet",
+       "outward"
+      ],
+      [
+       "=90/inner_pole_pairs",
+       "=270/inner_pole_pairs",
+       "Magnet",
+       "inward"
+      ]
+     ],
+     "max_segment": "$gap_arc_deg",
+     "mesh": "$magnet_mesh_mm"
+    },
+    {
+     "use": "circle",
+     "radius": "$r0_mm",
+     "max_segment": 2
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(r6_mm+r7_mm)/2",
+      0
+     ],
+     "material": "$iron_material",
+     "mesh": "$yoke_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r5_mm-band_margin_mm/2",
+      0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r4_mm+band_margin_mm/2",
+      0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r3_mm-band_margin_mm/2",
+      0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r2_mm+band_margin_mm/2",
+      0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(r0_mm+r1_mm)/2",
+      0
+     ],
+     "material": "$iron_material",
+     "mesh": "$yoke_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      0
+     ],
+     "material": "Air",
+     "mesh": "$yoke_mesh_mm"
+    }
+   ]
+  }
+ },
+ "gaps": [
+  {
+   "item": "the radius at which the pole-piece pitch tau_p is taken for tau_l/tau_p",
+   "affects": "every radius inside the outer gap, hence every torque",
+   "decision": "assumed",
+   "note": "At the pole pieces' outer face R4: Table 2's PM masses imply a magnet density constant within 0.28-0.44% across six designs at R4, against 1.3-2.6% elsewhere (geometry check 1). Control pitch-at-mean-radius."
+  },
+  {
+   "item": "where the PM 'arc width' is measured for the yoke thickness",
+   "affects": "the radial build, by 0.2-0.4 mm",
+   "decision": "assumed",
+   "note": "At the magnet's mean radius, favoured by the steel masses (geometry check 2). Control yoke-arc-at-yoke-face."
+  },
+  {
+   "item": "how the analytic stall torque is read from the torque curve",
+   "affects": "every target, slightly",
+   "decision": "assumed",
+   "note": "The paper takes 'the maximum point of the outer rotor torque curve'; the model takes the fundamental amplitude over one electrical period of the inner rotor (24 positions), which equals the maximum for a sinusoidal curve. The findings report the curve's harmonics."
+  },
+  {
+   "item": "the steel and the recoil permeability of the paper's FEM",
+   "affects": "the FEM comparators",
+   "decision": "assumed",
+   "note": "Not stated; the FEM values are comparators. Control nonlinear-steel builds the iron of M-19 for the base design."
+  },
+  {
+   "item": "the orientation of the rotors at the start of the sweep",
+   "affects": "nothing measured: the sweep covers a whole electrical period",
+   "decision": "resolved",
+   "note": "Outer magnet 0 and pole piece 0 are centred at 0 degrees, inner magnet 0 likewise; the stall torque is a property of the period."
+  }
+ ],
+ "steps": [
+  {
+   "label": "p00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=0*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=1*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=2*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=3*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=4*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=5*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=6*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=7*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=8*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=9*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p10",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=10*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p11",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=11*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p12",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=12*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p13",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=13*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p14",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=14*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p15",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=15*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p16",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=16*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p17",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=17*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p18",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=18*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p19",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=19*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p20",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=20*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p21",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=21*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p22",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=22*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  },
+  {
+   "label": "p23",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=23*360/positions_per_period/inner_pole_pairs"
+    }
+   ]
+  }
+ ],
+ "variants": [
+  {
+   "id": "poles-11-2",
+   "parameters": {
+    "outer_pole_pairs": 11,
+    "inner_pole_pairs": 2
+   },
+   "purpose": "Table 2: the 11/2 pole-pair combination, other variables as in Table 1."
+  },
+  {
+   "id": "poles-16-3",
+   "parameters": {
+    "outer_pole_pairs": 16,
+    "inner_pole_pairs": 3
+   },
+   "purpose": "Table 2: the 16/3 pole-pair combination, other variables as in Table 1."
+  },
+  {
+   "id": "poles-21-4",
+   "parameters": {
+    "outer_pole_pairs": 21,
+    "inner_pole_pairs": 4
+   },
+   "purpose": "Table 2: the 21/4 pole-pair combination, other variables as in Table 1."
+  },
+  {
+   "id": "poles-26-5",
+   "parameters": {
+    "outer_pole_pairs": 26,
+    "inner_pole_pairs": 5
+   },
+   "purpose": "Table 2: the 26/5 pole-pair combination, other variables as in Table 1."
+  },
+  {
+   "id": "poles-28-5",
+   "parameters": {
+    "outer_pole_pairs": 28,
+    "inner_pole_pairs": 5
+   },
+   "purpose": "Table 2: the 28/5 pole-pair combination, other variables as in Table 1."
+  },
+  {
+   "id": "design-1",
+   "parameters": {
+    "outer_pole_pairs": 28,
+    "inner_pole_pairs": 5,
+    "piece_width_ratio": 0.44,
+    "piece_length_ratio": 0.39,
+    "outer_magnet_mm": 10,
+    "inner_magnet_mm": 10
+   },
+   "purpose": "Table 3: optimized design (wt = 1, wc = 0), 28/5 with 1 mm air gaps."
+  },
+  {
+   "id": "design-2",
+   "parameters": {
+    "outer_pole_pairs": 28,
+    "inner_pole_pairs": 5,
+    "piece_width_ratio": 0.47,
+    "piece_length_ratio": 0.41,
+    "outer_magnet_mm": 6.7,
+    "inner_magnet_mm": 10
+   },
+   "purpose": "Table 3: optimized design (wt = 0.7, wc = 0.3), 28/5 with 1 mm air gaps."
+  },
+  {
+   "id": "design-3",
+   "parameters": {
+    "outer_pole_pairs": 28,
+    "inner_pole_pairs": 5,
+    "piece_width_ratio": 0.55,
+    "piece_length_ratio": 0.49,
+    "outer_magnet_mm": 4.0,
+    "inner_magnet_mm": 7.9
+   },
+   "purpose": "Table 3: optimized design (wt = 0.5, wc = 0.5), 28/5 with 1 mm air gaps."
+  },
+  {
+   "id": "design-4",
+   "parameters": {
+    "outer_pole_pairs": 28,
+    "inner_pole_pairs": 5,
+    "piece_width_ratio": 0.52,
+    "piece_length_ratio": 0.55,
+    "outer_magnet_mm": 3,
+    "inner_magnet_mm": 3.6
+   },
+   "purpose": "Table 3: optimized design (wt = 0.3, wc = 0.7), 28/5 with 1 mm air gaps."
+  },
+  {
+   "id": "design-5",
+   "parameters": {
+    "outer_pole_pairs": 28,
+    "inner_pole_pairs": 5,
+    "piece_width_ratio": 0.51,
+    "piece_length_ratio": 0.8,
+    "outer_magnet_mm": 3,
+    "inner_magnet_mm": 3
+   },
+   "purpose": "Table 3: optimized design (wt = 0.1, wc = 0.9), 28/5 with 1 mm air gaps."
+  }
+ ],
+ "measurements": [
+  {
+   "id": "tq_out",
+   "op": "gap_integral",
+   "boundary": "AGE_out",
+   "type": 0
+  },
+  {
+   "id": "tq_in",
+   "op": "gap_integral",
+   "boundary": "AGE_in",
+   "type": 0
+  }
+ ],
+ "metrics": [
+  {
+   "name": "torque_outer_Nm",
+   "value": [
+    "tq_out",
+    0
+   ],
+   "unit": "N*m"
+  },
+  {
+   "name": "torque_inner_Nm",
+   "value": [
+    "tq_in",
+    0
+   ],
+   "unit": "N*m"
+  }
+ ],
+ "targets": [],
+ "assessors": [
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 4,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 873,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "23/4 5.75 873 Nm 864 Nm 7.87 kg",
+   "location": "Table 2, p. 8544",
+   "note": "Stall torque of the outer rotor as the inner rotor turns: the fundamental amplitude over one electrical period of the inner rotor. The analytic model's own assumptions (infinitely permeable iron, unit recoil permeability, ideal radial magnetization) are the model's."
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 4,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 864,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "23/4 5.75 873 Nm 864 Nm 7.87 kg",
+   "location": "Table 2, p. 8544",
+   "note": "The paper's nonlinear FEM (steel and tool not named), a comparator: the base build's iron is linear and nearly infinitely permeable."
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_inner_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 4,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 151,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "are 873 Nm and 151 Nm,",
+   "location": "Section 3.5, p. 8543",
+   "note": "Stall torque of the inner rotor, from the inner band's air-gap torque."
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 2,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 496,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "11/2 5.5 496 Nm 489 Nm 6.85 kg",
+   "location": "Table 2, p. 8544",
+   "note": "Stall torque of the outer rotor as the inner rotor turns: the fundamental amplitude over one electrical period of the inner rotor. The analytic model's own assumptions (infinitely permeable iron, unit recoil permeability, ideal radial magnetization) are the model's.",
+   "variant": "poles-11-2"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 2,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 489,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "11/2 5.5 496 Nm 489 Nm 6.85 kg",
+   "location": "Table 2, p. 8544",
+   "note": "The paper's nonlinear FEM (steel and tool not named), a comparator: the base build's iron is linear and nearly infinitely permeable.",
+   "variant": "poles-11-2"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 3,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 715,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "16/3 5.33 715 Nm 704 Nm 7.44 kg",
+   "location": "Table 2, p. 8544",
+   "note": "Stall torque of the outer rotor as the inner rotor turns: the fundamental amplitude over one electrical period of the inner rotor. The analytic model's own assumptions (infinitely permeable iron, unit recoil permeability, ideal radial magnetization) are the model's.",
+   "variant": "poles-16-3"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 3,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 704,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "16/3 5.33 715 Nm 704 Nm 7.44 kg",
+   "location": "Table 2, p. 8544",
+   "note": "The paper's nonlinear FEM (steel and tool not named), a comparator: the base build's iron is linear and nearly infinitely permeable.",
+   "variant": "poles-16-3"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 4,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 837,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "21/4 5.25 837 Nm 826 Nm 7.78 kg",
+   "location": "Table 2, p. 8544",
+   "note": "Stall torque of the outer rotor as the inner rotor turns: the fundamental amplitude over one electrical period of the inner rotor. The analytic model's own assumptions (infinitely permeable iron, unit recoil permeability, ideal radial magnetization) are the model's.",
+   "variant": "poles-21-4"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 4,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 826,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "21/4 5.25 837 Nm 826 Nm 7.78 kg",
+   "location": "Table 2, p. 8544",
+   "note": "The paper's nonlinear FEM (steel and tool not named), a comparator: the base build's iron is linear and nearly infinitely permeable.",
+   "variant": "poles-21-4"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 950,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "26/5 5.2 950 Nm 938 Nm 8.01 kg",
+   "location": "Table 2, p. 8544",
+   "note": "Stall torque of the outer rotor as the inner rotor turns: the fundamental amplitude over one electrical period of the inner rotor. The analytic model's own assumptions (infinitely permeable iron, unit recoil permeability, ideal radial magnetization) are the model's.",
+   "variant": "poles-26-5"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 938,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "26/5 5.2 950 Nm 938 Nm 8.01 kg",
+   "location": "Table 2, p. 8544",
+   "note": "The paper's nonlinear FEM (steel and tool not named), a comparator: the base build's iron is linear and nearly infinitely permeable.",
+   "variant": "poles-26-5"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 973,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "28/5 5.6 973 Nm 958 Nm 8.07 kg",
+   "location": "Table 2, p. 8544",
+   "note": "Stall torque of the outer rotor as the inner rotor turns: the fundamental amplitude over one electrical period of the inner rotor. The analytic model's own assumptions (infinitely permeable iron, unit recoil permeability, ideal radial magnetization) are the model's.",
+   "variant": "poles-28-5"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 958,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "28/5 5.6 973 Nm 958 Nm 8.07 kg",
+   "location": "Table 2, p. 8544",
+   "note": "The paper's nonlinear FEM (steel and tool not named), a comparator: the base build's iron is linear and nearly infinitely permeable.",
+   "variant": "poles-28-5"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 1264,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "torque capability 873 Nm 1264 Nm 1224 Nm 1001 Nm 653 Nm 554 Nm",
+   "location": "Table 3, Design 1 column, p. 8550",
+   "note": "Stall torque of the outer rotor as the inner rotor turns: the fundamental amplitude over one electrical period of the inner rotor. The analytic model's own assumptions (infinitely permeable iron, unit recoil permeability, ideal radial magnetization) are the model's.",
+   "variant": "design-1"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 1230,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "torque validated by FEM 864 Nm 1230 1223 Nm 996 Nm 636 Nm 524 Nm",
+   "location": "Table 3, Design 1 column, p. 8550",
+   "note": "The paper's nonlinear FEM (steel and tool not named), a comparator: the base build's iron is linear and nearly infinitely permeable.",
+   "variant": "design-1"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 1224,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "torque capability 873 Nm 1264 Nm 1224 Nm 1001 Nm 653 Nm 554 Nm",
+   "location": "Table 3, Design 2 column, p. 8550",
+   "note": "Stall torque of the outer rotor as the inner rotor turns: the fundamental amplitude over one electrical period of the inner rotor. The analytic model's own assumptions (infinitely permeable iron, unit recoil permeability, ideal radial magnetization) are the model's.",
+   "variant": "design-2"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 1223,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "torque validated by FEM 864 Nm 1230 1223 Nm 996 Nm 636 Nm 524 Nm",
+   "location": "Table 3, Design 2 column, p. 8550",
+   "note": "The paper's nonlinear FEM (steel and tool not named), a comparator: the base build's iron is linear and nearly infinitely permeable.",
+   "variant": "design-2"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 1001,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "torque capability 873 Nm 1264 Nm 1224 Nm 1001 Nm 653 Nm 554 Nm",
+   "location": "Table 3, Design 3 column, p. 8550",
+   "note": "Stall torque of the outer rotor as the inner rotor turns: the fundamental amplitude over one electrical period of the inner rotor. The analytic model's own assumptions (infinitely permeable iron, unit recoil permeability, ideal radial magnetization) are the model's.",
+   "variant": "design-3"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 996,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "torque validated by FEM 864 Nm 1230 1223 Nm 996 Nm 636 Nm 524 Nm",
+   "location": "Table 3, Design 3 column, p. 8550",
+   "note": "The paper's nonlinear FEM (steel and tool not named), a comparator: the base build's iron is linear and nearly infinitely permeable.",
+   "variant": "design-3"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 653,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "torque capability 873 Nm 1264 Nm 1224 Nm 1001 Nm 653 Nm 554 Nm",
+   "location": "Table 3, Design 4 column, p. 8550",
+   "note": "Stall torque of the outer rotor as the inner rotor turns: the fundamental amplitude over one electrical period of the inner rotor. The analytic model's own assumptions (infinitely permeable iron, unit recoil permeability, ideal radial magnetization) are the model's.",
+   "variant": "design-4"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 636,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "torque validated by FEM 864 Nm 1230 1223 Nm 996 Nm 636 Nm 524 Nm",
+   "location": "Table 3, Design 4 column, p. 8550",
+   "note": "The paper's nonlinear FEM (steel and tool not named), a comparator: the base build's iron is linear and nearly infinitely permeable.",
+   "variant": "design-4"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 554,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "torque capability 873 Nm 1264 Nm 1224 Nm 1001 Nm 653 Nm 554 Nm",
+   "location": "Table 3, Design 5 column, p. 8550",
+   "note": "Stall torque of the outer rotor as the inner rotor turns: the fundamental amplitude over one electrical period of the inner rotor. The analytic model's own assumptions (infinitely permeable iron, unit recoil permeability, ideal radial magnetization) are the model's.",
+   "variant": "design-5"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 5,
+   "rotor_group": 1,
+   "rotor_band": "AGE_in",
+   "half_wave_symmetry": false,
+   "value": 524,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "torque validated by FEM 864 Nm 1230 1223 Nm 996 Nm 636 Nm 524 Nm",
+   "location": "Table 3, Design 5 column, p. 8550",
+   "note": "The paper's nonlinear FEM (steel and tool not named), a comparator: the base build's iron is linear and nearly infinitely permeable.",
+   "variant": "design-5"
+  }
+ ],
+ "controls": [
+  {
+   "id": "mesh-0p7",
+   "level": "article",
+   "mesh_scale": 0.7,
+   "purpose": "Every element size and arc segment at 0.7 times."
+  },
+  {
+   "id": "iron-mu-1e5",
+   "level": "article",
+   "parameters": {
+    "iron_mu_r": 100000
+   },
+   "purpose": "Iron ten times more permeable: how far 1e4 stands for infinite permeability."
+  },
+  {
+   "id": "pitch-at-mean-radius",
+   "level": "article",
+   "parameters": {
+    "pitch_depth_fraction": 0.5
+   },
+   "purpose": "tau_p taken at the pole pieces' mean radius."
+  },
+  {
+   "id": "yoke-arc-at-yoke-face",
+   "level": "article",
+   "parameters": {
+    "yoke_arc_depth_fraction": 0.0
+   },
+   "purpose": "The PM arc width taken at the face against the yoke."
+  },
+  {
+   "id": "nonlinear-steel",
+   "level": "article",
+   "parameters": {
+    "iron_material": "M19"
+   },
+   "purpose": "Yokes and pole pieces of M-19 (nonlinear), against the paper's FEM comparators."
+  }
+ ],
+ "coverage": {
+  "scope": "core",
+  "reproduced": "Analytic stall torque of the outer rotor for the initial design, the five other pole-pair combinations of Table 2 and the five optimized designs of Table 3, and the inner rotor's stall torque of the initial design; the paper's FEM stall torques as comparators.",
+  "not_reproduced": "The air-gap flux density plots (Figs. 3-4), the parameter sweeps (Figs. 6-8), the PSO optimization itself, costs and torque densities (derived from the same torques)."
+ },
+ "geometry_checks": [
+  {
+   "quantity": "magnet density implied by Table 2's PM masses (kg/m^3), tau_p at R4",
+   "paper_value": {
+    "11/2": 6.85,
+    "16/3": 7.44,
+    "21/4": 7.78,
+    "23/4": 7.87,
+    "26/5": 8.01,
+    "28/5": 8.07
+   },
+   "model_value": {
+    "11/2": 7747,
+    "16/3": 7741,
+    "21/4": 7750,
+    "23/4": 7752,
+    "26/5": 7768,
+    "28/5": 7769
+   },
+   "location": "Table 2, p. 8544",
+   "note": "Spread 0.36% across the six designs; with tau_p at the mean radius 1.52% ({'11/2': 7634, '16/3': 7688, '21/4': 7719, '23/4': 7726, '26/5': 7748, '28/5': 7751})."
+  },
+  {
+   "quantity": "steel density implied by the active steel masses of Table 3 (kg/m^3)",
+   "paper_value": [
+    35.2,
+    28.1,
+    29.6,
+    31.6,
+    32.8,
+    33.0
+   ],
+   "model_value": {
+    "initial": 7723,
+    "design-1": 7706,
+    "design-2": 7746,
+    "design-3": 7693,
+    "design-4": 7687,
+    "design-5": 7727
+   },
+   "location": "Table 3, p. 8550",
+   "note": "Spread 0.76% with the arc width at the magnet's mean radius; 2.04% at the yoke face ({'initial': 7800, 'design-1': 7847, 'design-2': 7895, 'design-3': 7808, 'design-4': 7736, 'design-5': 7764})."
+  },
+  {
+   "quantity": "magnet density implied by Table 3's PM masses (kg/m^3)",
+   "paper_value": [
+    13.2,
+    10.6,
+    7.8,
+    4.5,
+    4.0
+   ],
+   "model_value": {
+    "design-1": 7750,
+    "design-2": 7461,
+    "design-3": 7713,
+    "design-4": 7820,
+    "design-5": 7782
+   },
+   "location": "Table 3, p. 8550",
+   "note": "Masses to 0.1 kg (up to 2.5% for 4.0 kg). Design 2 implies 4% less than the others under every reading of the radii; its stated PM thickness or mass is inconsistent with the rest."
+  }
+ ],
+ "findings": [],
+ "retrospective": []
+}

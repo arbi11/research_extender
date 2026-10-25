@@ -53,7 +53,9 @@ class IndexTests(unittest.TestCase):
         self.assertEqual(papers.check_index(), [])
         entries = papers.load_index()["papers"]
         sets = [entry["set"] for entry in entries]
-        self.assertEqual((sets.count("development"), sets.count("held_out")), (6, 4))
+        # The development set grew from 6 to 8 on 2026-10-26 (the magnetic gear and the double-cage bar, promoted from the
+        # unassigned candidates); the held-out set stays at the same four papers.
+        self.assertEqual((sets.count("development"), sets.count("held_out")), (8, 4))
         self.assertTrue(all(entry["set"] in ("development", "held_out", "unassigned") for entry in entries))
 
     def test_index_entries_need_planning_fields_and_the_screening_vocabulary(self):
