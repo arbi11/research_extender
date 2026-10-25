@@ -170,8 +170,6 @@ class LocalPlannerTests(unittest.TestCase):
         self.assertEqual(self.plan("Design an IPM motor")["status"], "unsupported")
 
 
-if __name__ == "__main__":
-    unittest.main()
 
 
 class EngineeringPlannerTests(unittest.TestCase):
@@ -196,3 +194,7 @@ class EngineeringPlannerTests(unittest.TestCase):
                      'gapped EI core axisymmetric', 'radial bearing at 60 Hz'):
             with self.subTest(text=text):
                 self.assertEqual(plan_request(text)['status'], 'unsupported')
+
+
+if __name__ == "__main__":
+    unittest.main()

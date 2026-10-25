@@ -18,7 +18,7 @@ class SimulationTests(unittest.TestCase):
     def test_catalog_bound_to_existing_source_workflows_and_methods(self):
         graph=load_graph()
         catalog=simulation_catalog(graph)
-        self.assertGreaterEqual(len(catalog),8)
+        self.assertGreaterEqual(len(catalog),9)
         node_ids={n['id'] for n in graph['nodes']}
         sources={s['id'] for s in graph['sources']}
         for case in catalog:
@@ -173,7 +173,7 @@ class SimulationTests(unittest.TestCase):
 
     def test_boundary_attachments_reject_removed_exterior_and_added_interior_or_axis_conditions(self):
         for case in simulation_catalog():
-            if case['family']=='native_source':continue  # Complete source assignment fixtures are checked separately.
+            if case['family'] in ('native_source','vm270'):continue  # Complete source/PM assignment fixtures are checked separately.
             plan=plan_simulation(case['id'])
             actual=deepcopy(plan['geometry']);actual['boundaries']=[{}]
             p=plan['parameters']

@@ -79,8 +79,8 @@ class SimulationApiTests(unittest.TestCase):
 
     def test_catalog_and_local_language_plan_export_match(self):
         catalog = self.get_json('/api/simulations')
-        self.assertTrue({'gapped-ei-core', 'radial-bearing'} <= {case['id'] for case in catalog['cases']})
-        self.assertGreaterEqual(len(catalog['cases']), 8)
+        self.assertTrue({'gapped-ei-core', 'radial-bearing', 'ansys-vm270'} <= {case['id'] for case in catalog['cases']})
+        self.assertGreaterEqual(len(catalog['cases']), 9)
         self.assertEqual(catalog['llm_calls'], 0)
         verified = self.get_json('/api/verification')['native_simulations']
         self.assertEqual(len(verified['cases']), 6)
@@ -91,6 +91,10 @@ class SimulationApiTests(unittest.TestCase):
         ei = next(case for case in engineering['cases'] if case['case_id'] == 'gapped-ei-core')
         self.assertEqual(ei['checks']['solve']['status'], 'passed')
         self.assertEqual(ei['checks']['target']['status'], 'failed')
+        vendor = self.get_json('/api/verification')['vendor_benchmarks']
+        self.assertEqual(len(vendor['cases']), 9)
+        self.assertEqual(vendor['audit']['status'], 'passed_with_reference_mismatch')
+        self.assertEqual(next(case for case in vendor['cases'] if case['case_id'] == 'ansys-vm270')['status'], 'passed')
         selection = self.get_json('/api/simulation-request?' + urlencode({'q': 'AirCore short solenoid at 2 A'}))
         self.assertEqual(selection['status'], 'ready')
         query = urlencode({'case': selection['selected_case_id'], 'parameters': json.dumps(selection['parameters'])})

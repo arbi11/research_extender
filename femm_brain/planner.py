@@ -18,6 +18,8 @@ _UNITS = {
     "m": ("length", 1.0), "meter": ("length", 1.0), "meters": ("length", 1.0),
     "in": ("length", 0.0254), "inch": ("length", 0.0254), "inches": ("length", 0.0254),
     '"': ("length", 0.0254), "a": ("current", 1.0), "amp": ("current", 1.0),
+    "ma": ("current", .001), "milliamp": ("current", .001), "milliamps": ("current", .001),
+    "milliampere": ("current", .001), "milliamperes": ("current", .001),
     "amps": ("current", 1.0), "ampere": ("current", 1.0), "amperes": ("current", 1.0),
     "t": ("field", 1.0), "tesla": ("field", 1.0), "mt": ("field", 0.001),
     "ut": ("field", 0.000001), "µt": ("field", 0.000001), "μt": ("field", 0.000001),
@@ -41,6 +43,7 @@ _ALIASES = {
     "center_distance": ["center distance", "centre distance", "wire spacing", "center spacing", "centre spacing"],
     "domain_radius": ["domain radius", "outer domain radius", "exterior radius"],
     "current_scale": ["current scale", "current multiplier", "excitation scale", "excitation multiplier"],
+    "displacement": ["axial displacement", "displacement", "stroke offset"],
 }
 _CASE_ALIASES = {
     "aircore-short": ["aircore short", "short aircore", "aircore square", "square aircore coil", "square cross section"],
@@ -229,7 +232,7 @@ def plan_request(text, graph=None, *, catalog=None):
                     continue
                 matches.append((match.start(), match.end(), name, match.group(1), match.group(2), spec))
             if name in {"turns", "current"}:
-                suffix_units = r"turns?" if name == "turns" else r"(?:a|amps?|amperes?)"
+                suffix_units = r"turns?" if name == "turns" else r"(?:a|ma|amps?|amperes?|milliamps?|milliamperes?)"
                 suffix = r"(?<![\w.])(" + _NUMBER + r")\s*(" + suffix_units + r")(?![\w])"
                 for match in re.finditer(suffix, normalized):
                     matches.append((match.start(), match.end(), name, match.group(1), match.group(2), spec))

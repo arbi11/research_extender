@@ -70,6 +70,77 @@
         "The source reports Maxwell surface-stress and Lorentz methods; the FEMM weighted-stress result retains its different method identity."
       ],
       "source_url": "https://doc.comsol.com/6.4/doc/com.comsol.help.models.acdc.parallel_wires/parallel_wires.html"
+    },
+    {
+      "id": "ansys-vm270",
+      "title": "SmCo magnet and coil: ANSYS VM270 / TEAM23 force transfer",
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ],
+      "family": "method_transfer",
+      "physics": [
+        "axisymmetric_dc_magnetostatics",
+        "permanent_magnets",
+        "linear_recoil_permeability",
+        "prescribed_series_winding",
+        "force_postprocessing"
+      ],
+      "summary": "Reconstruct a permanent magnet and wound coil from explicit vendor verification data and compare both bodies with a measured force target, independent estimators and mesh/domain sensitivity.",
+      "workflow_id": "workflow:ansys-vm270",
+      "node_ids": [
+        "workflow:ansys-vm270",
+        "stage:geometry",
+        "stage:materials",
+        "stage:excitation",
+        "stage:boundaries",
+        "stage:mesh_solve",
+        "stage:solution",
+        "method:vm270_geometry",
+        "method:vm270_material_current",
+        "method:vm270_exterior_mesh",
+        "method:vm270_dual_force",
+        "method:methods_axisymmetric_coil_section",
+        "method:methods_permanent_magnet_direction",
+        "method:methods_signed_turn_circuit",
+        "method:methods_magnetic_solve_snapshot",
+        "method:methods_weighted_stress_force",
+        "primitive:mi_probdef",
+        "primitive:mi_addnode",
+        "primitive:mi_addsegment",
+        "primitive:mi_addblocklabel",
+        "primitive:mi_addmaterial",
+        "primitive:mi_addcircprop",
+        "primitive:mi_selectlabel",
+        "primitive:mi_setblockprop",
+        "primitive:mi_addarc",
+        "primitive:mi_addboundprop",
+        "primitive:mi_selectarcsegment",
+        "primitive:mi_setarcsegmentprop",
+        "primitive:mi_createmesh",
+        "primitive:mo_selectblock",
+        "primitive:mo_blockintegral",
+        "primitive:mo_clearblock",
+        "primitive:mi_saveas",
+        "primitive:mi_analyze",
+        "primitive:mi_loadsolution",
+        "primitive:mo_getpointvalues",
+        "primitive:mo_getcircuitproperties",
+        "primitive:mi_clearselected"
+      ],
+      "assumptions": [
+        "All physical dimensions are millimeters; the magnet radius is 1.4986 mm and length 1.6 mm. The coil spans radii 1.524 to 1.9812 mm and axial coordinates 1.961 to 3.485 mm at the published displacement.",
+        "The source input expression mu_r=Br/(mu0*Hc), with Br=1.02 T and Hc=720000 A/m, is used. It differs slightly from the rounded printed permeability.",
+        "The source measured force is 1.150*9.81e-3 N at 50 mA and 280 turns; rounded comparison-table forces are not silently substituted."
+      ],
+      "limitations": [
+        "This is a fresh FEMM transfer of source physical inputs; no downloaded APDL is executed.",
+        "Infinite elements are replaced by a finite A=0 semicircle and explicitly checked with a domain study.",
+        "The force-mesh numerical settings are selected through recorded refinement. Coarse failed force estimates remain in the audit.",
+        "The measured target does not apply automatically after changing current or displacement."
+      ],
+      "source_url": "https://ansyshelp.ansys.com/public/Views/Secured/corp/v242/en/ans_vm/Hlp_V_VM270.html"
     }
   ],
   "nodes": [
@@ -437,6 +508,178 @@
       "arguments": [
         19
       ]
+    },
+    {
+      "id": "workflow:ansys-vm270",
+      "layer": 1,
+      "kind": "workflow",
+      "title": "SmCo magnet and coil: ANSYS VM270 / TEAM23 force transfer",
+      "description": "Reconstruct a permanent magnet and wound coil from explicit vendor verification data and compare both bodies with a measured force target, independent estimators and mesh/domain sensitivity.",
+      "parameters": [],
+      "inputs": [
+        "Source geometry, magnet law, coil excitation and displacement"
+      ],
+      "outputs": [
+        "Fresh native model, numerical force comparisons and retained audit"
+      ],
+      "constraints": [
+        "This is a fresh FEMM transfer of source physical inputs; no downloaded APDL is executed.",
+        "Infinite elements are replaced by a finite A=0 semicircle and explicitly checked with a domain study.",
+        "The force-mesh numerical settings are selected through recorded refinement. Coarse failed force estimates remain in the audit.",
+        "The measured target does not apply automatically after changing current or displacement."
+      ],
+      "capabilities": [],
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ],
+      "tags": [
+        "force",
+        "permanent_magnet",
+        "axisymmetric",
+        "vendor_transfer"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Source-backed method and explicit numerical acceptance protocol; actual native verification is recorded per run."
+      }
+    },
+    {
+      "id": "method:vm270_geometry",
+      "layer": 2,
+      "kind": "method",
+      "title": "Coaxial SmCo magnet and wound coil",
+      "description": "Construct axisymmetric millimeter sections from the primary source dimensions and retain the brass spool as nonmagnetic air-equivalent material.",
+      "parameters": [],
+      "inputs": [
+        "Pinned source parameters"
+      ],
+      "outputs": [
+        "Reviewable physical assignments or comparison checks"
+      ],
+      "constraints": [
+        "This is a fresh FEMM transfer of source physical inputs; no downloaded APDL is executed.",
+        "Infinite elements are replaced by a finite A=0 semicircle and explicitly checked with a domain study.",
+        "The force-mesh numerical settings are selected through recorded refinement. Coarse failed force estimates remain in the audit.",
+        "The measured target does not apply automatically after changing current or displacement."
+      ],
+      "capabilities": [],
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ],
+      "tags": [
+        "vm270",
+        "source_transfer"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Source-backed method and explicit numerical acceptance protocol; actual native verification is recorded per run."
+      }
+    },
+    {
+      "id": "method:vm270_material_current",
+      "layer": 2,
+      "kind": "method",
+      "title": "Permanent magnet law and measured-current winding",
+      "description": "Use the source coercivity and remanence expression for permeability, axial magnetization and a 280-turn series winding carrying 0.05 A.",
+      "parameters": [],
+      "inputs": [
+        "Pinned source parameters"
+      ],
+      "outputs": [
+        "Reviewable physical assignments or comparison checks"
+      ],
+      "constraints": [
+        "This is a fresh FEMM transfer of source physical inputs; no downloaded APDL is executed.",
+        "Infinite elements are replaced by a finite A=0 semicircle and explicitly checked with a domain study.",
+        "The force-mesh numerical settings are selected through recorded refinement. Coarse failed force estimates remain in the audit.",
+        "The measured target does not apply automatically after changing current or displacement."
+      ],
+      "capabilities": [],
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ],
+      "tags": [
+        "vm270",
+        "source_transfer"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Source-backed method and explicit numerical acceptance protocol; actual native verification is recorded per run."
+      }
+    },
+    {
+      "id": "method:vm270_exterior_mesh",
+      "layer": 2,
+      "kind": "method",
+      "title": "Finite exterior and local force-mesh refinement",
+      "description": "Replace source infinite elements with a finite semicircular A=0 exterior. Identical-air mesh interfaces add resolution without adding physical constraints.",
+      "parameters": [],
+      "inputs": [
+        "Pinned source parameters"
+      ],
+      "outputs": [
+        "Reviewable physical assignments or comparison checks"
+      ],
+      "constraints": [
+        "This is a fresh FEMM transfer of source physical inputs; no downloaded APDL is executed.",
+        "Infinite elements are replaced by a finite A=0 semicircle and explicitly checked with a domain study.",
+        "The force-mesh numerical settings are selected through recorded refinement. Coarse failed force estimates remain in the audit.",
+        "The measured target does not apply automatically after changing current or displacement."
+      ],
+      "capabilities": [],
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ],
+      "tags": [
+        "vm270",
+        "source_transfer"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Source-backed method and explicit numerical acceptance protocol; actual native verification is recorded per run."
+      }
+    },
+    {
+      "id": "method:vm270_dual_force",
+      "layer": 2,
+      "kind": "method",
+      "title": "Measured force, Lorentz cross-check and action-reaction",
+      "description": "Compare axial magnet weighted-stress force and coil Lorentz force against the signed measured source force, and assess force balance independently.",
+      "parameters": [],
+      "inputs": [
+        "Pinned source parameters"
+      ],
+      "outputs": [
+        "Reviewable physical assignments or comparison checks"
+      ],
+      "constraints": [
+        "This is a fresh FEMM transfer of source physical inputs; no downloaded APDL is executed.",
+        "Infinite elements are replaced by a finite A=0 semicircle and explicitly checked with a domain study.",
+        "The force-mesh numerical settings are selected through recorded refinement. Coarse failed force estimates remain in the audit.",
+        "The measured target does not apply automatically after changing current or displacement."
+      ],
+      "capabilities": [],
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ],
+      "tags": [
+        "vm270",
+        "source_transfer"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Source-backed method and explicit numerical acceptance protocol; actual native verification is recorded per run."
+      }
     }
   ],
   "edges": [
@@ -935,6 +1178,331 @@
       "parameter_bindings": {},
       "source_ids": [
         "comsol-parallel-wires",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:workflow:0",
+      "source": "workflow:ansys-vm270",
+      "target": "method:vm270_geometry",
+      "relation": "decomposes_into",
+      "when": "This source problem and its stated modeling assumptions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:0:0",
+      "source": "method:vm270_geometry",
+      "target": "primitive:mi_probdef",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:0:1",
+      "source": "method:vm270_geometry",
+      "target": "primitive:mi_addnode",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:0:2",
+      "source": "method:vm270_geometry",
+      "target": "primitive:mi_addsegment",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:0:3",
+      "source": "method:vm270_geometry",
+      "target": "primitive:mi_addblocklabel",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:workflow:1",
+      "source": "workflow:ansys-vm270",
+      "target": "method:vm270_material_current",
+      "relation": "decomposes_into",
+      "when": "This source problem and its stated modeling assumptions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:1:0",
+      "source": "method:vm270_material_current",
+      "target": "primitive:mi_addmaterial",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:1:1",
+      "source": "method:vm270_material_current",
+      "target": "primitive:mi_addcircprop",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:1:2",
+      "source": "method:vm270_material_current",
+      "target": "primitive:mi_selectlabel",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:1:3",
+      "source": "method:vm270_material_current",
+      "target": "primitive:mi_setblockprop",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:workflow:2",
+      "source": "workflow:ansys-vm270",
+      "target": "method:vm270_exterior_mesh",
+      "relation": "decomposes_into",
+      "when": "This source problem and its stated modeling assumptions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:2:0",
+      "source": "method:vm270_exterior_mesh",
+      "target": "primitive:mi_addarc",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:2:1",
+      "source": "method:vm270_exterior_mesh",
+      "target": "primitive:mi_addboundprop",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:2:2",
+      "source": "method:vm270_exterior_mesh",
+      "target": "primitive:mi_selectarcsegment",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:2:3",
+      "source": "method:vm270_exterior_mesh",
+      "target": "primitive:mi_setarcsegmentprop",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:2:4",
+      "source": "method:vm270_exterior_mesh",
+      "target": "primitive:mi_createmesh",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:workflow:3",
+      "source": "workflow:ansys-vm270",
+      "target": "method:vm270_dual_force",
+      "relation": "decomposes_into",
+      "when": "This source problem and its stated modeling assumptions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:3:0",
+      "source": "method:vm270_dual_force",
+      "target": "primitive:mo_selectblock",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:3:1",
+      "source": "method:vm270_dual_force",
+      "target": "primitive:mo_blockintegral",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:operation:3:2",
+      "source": "method:vm270_dual_force",
+      "target": "primitive:mo_clearblock",
+      "relation": "implemented_by",
+      "when": "Execute the locally authored typed FEMM construction or postprocessing operation.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:reuse:0",
+      "source": "workflow:ansys-vm270",
+      "target": "method:methods_axisymmetric_coil_section",
+      "relation": "reuses",
+      "when": "Retain this method identity and the VM270-specific physical assignments.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:reuse:1",
+      "source": "workflow:ansys-vm270",
+      "target": "method:methods_permanent_magnet_direction",
+      "relation": "reuses",
+      "when": "Retain this method identity and the VM270-specific physical assignments.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:reuse:2",
+      "source": "workflow:ansys-vm270",
+      "target": "method:methods_signed_turn_circuit",
+      "relation": "reuses",
+      "when": "Retain this method identity and the VM270-specific physical assignments.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:reuse:3",
+      "source": "workflow:ansys-vm270",
+      "target": "method:methods_magnetic_solve_snapshot",
+      "relation": "reuses",
+      "when": "Retain this method identity and the VM270-specific physical assignments.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
+        "manual5"
+      ]
+    },
+    {
+      "id": "vm270:reuse:4",
+      "source": "workflow:ansys-vm270",
+      "target": "method:methods_weighted_stress_force",
+      "relation": "reuses",
+      "when": "Retain this method identity and the VM270-specific physical assignments.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "ansys-vm270",
+        "ansys-vm270-input",
         "manual5"
       ]
     }

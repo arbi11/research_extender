@@ -18,12 +18,12 @@ current or analysis assumptions.
 
 ## Bundled source snapshot
 
-The current bundle contains **45 curated study profiles**, **1,154 knowledge
-nodes**, and **1,960 relationships**, including **654 documented API functions**
+The current bundle contains **46 curated study profiles**, **1,159 knowledge
+nodes**, and **1,985 relationships**, including **654 documented API functions**
 and **eight parameterized construction recipes**. These profiles describe
-source-backed methods; they do not mean 45 numerical studies were reproduced.
+source-backed methods; they do not mean 46 numerical studies were reproduced.
 
-The inventory retains **71 source records: 68 fetched and three unavailable**.
+The inventory retains **73 source records: 70 fetched and three unavailable**.
 There are **315 attachment records: 311 downloaded and four failed**. Collection
 failures remain visible in the manifest rather than disappearing from coverage
 counts. The offline viewer includes **67 native model previews**: 59 magnetics,
@@ -58,11 +58,11 @@ change that assistant's settings, jobs, development instance or deployment.
 
 ## Generate and solve from the knowledge base
 
-Eight registered studies now generate fresh geometry, assign physics, mesh and
+Nine registered studies now generate fresh geometry, assign physics, mesh and
 solve with native FEMM. Selection, parameter conversion, construction and
 assessment use local code and cited knowledge records. **No AI credential or
 external model call is used.** The eight teaching construction recipes and these
-eight executable studies have separate catalogs and verification evidence.
+nine executable studies have separate catalogs and verification evidence.
 
 | Case ID | Physical problem | Frozen comparison |
 |---|---|---|
@@ -74,6 +74,7 @@ eight executable studies have separate catalogs and verification evidence.
 | `parallel-wires` | Opposite 1 A currents in two circular wires, radius 0.2 m, centers 1 m apart | Analytic repulsive force 2×10⁻⁷ N/m |
 | `gapped-ei-core` | Gapped EI iron core, signed 66-turn winding, linear µr=2500 | Published 1.73 mH, 0.000865042 J and 1.11347 N; force agrees, L/energy mismatch retained |
 | `radial-bearing` | Eight-pole nonlinear M-19 magnetic bearing, four circuits and 16 winding sections | Published rounded upward rotor force ≈400 N |
+| `ansys-vm270` | Axisymmetric SmCo magnet and 280-turn coil at 50 mA, with measured displacement | Measured ±0.0112815 N magnet/coil force, independent estimators and action-reaction check |
 
 The five FEMM cases follow [AirCore](https://www.femm.info/wiki/AirCore) and
 [UniformField](https://www.femm.info/wiki/UniformField). Uniform-field shell
@@ -108,6 +109,21 @@ its 13-point M-19 B-H curve and signed 80-turn winding sections. The native file
 uses 1.6 inches of depth and unit lamination fill, while the prose gives nominal
 4 cm and 0.98; the inherited difference is shown explicitly. Current edits do
 not inherit the source's ≈400 N target or an assumed quadratic force law.
+
+The [ANSYS VM270 / TEAM23 verification case](https://ansyshelp.ansys.com/public/Views/Secured/corp/v242/en/ans_vm/Hlp_V_VM270.html)
+is reconstructed from its public dimension/material table and
+[input listing](https://ansyshelp.ansys.com/public/Views/Secured/corp/v242/en/ans_vm/Hlp_V_VM270TXT.html),
+without executing APDL. Its SmCo magnet uses the input expression
+`mu_r=Br/(mu0*Hc)` with Br=1.02 T and Hc=720000 A/m. The exact measured input
+target is 0.0112815 N, distinct from the rounded table value 0.0113 N and ANSYS's
+numerical result 0.0112 N. Both signed body forces and their balance are assessed.
+Source infinite elements are replaced by a finite semicircle; default radius is
+20 mm and a 40 mm control uses the same physical mesh lengths. Coarse and local-
+only refinements failed the predeclared 2% criterion. A graded air mesh with
+0.1 mm exterior spacing passed, preserving the physical inputs and original
+criterion. The default solve has approximately 937,000 triangles and may take
+20–30 seconds on this development laptop. No general convergence certificate is
+claimed. Editing current or displacement makes the measured target unassessed.
 
 `verify-solves` keeps a nonzero exit when a published target fails. CI then runs
 `python3 -m femm_brain.benchmark_audit --summary RESULTS/summary.json --output RESULTS/audit.json`.

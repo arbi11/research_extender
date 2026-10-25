@@ -23,10 +23,12 @@ from .core import load_graph
 from .geometry import _Drawing, _svg, arc_geometry, parse_fem
 from .native_check import _run, _version, geometry_signature
 from .source_recipe import compile_source, load_source, verify_source_physics
+from .vm270 import PARAMETERS as VM270_PARAMETERS, build_vm270, metric_lines as vm270_metrics, assess_vm270, verify_vm270
 
 DATA = Path(__file__).parent / "data"
 MU0 = 4e-7 * math.pi
 PARAMETERS = {
+    "vm270": VM270_PARAMETERS,
     "gapped_ei": [
         {"name":"current", "unit":"A", "description":"Signed DC series winding current; zero is excluded because linkage/current defines inductance", "minimum":-1000, "maximum":1000},
         {"name":"mesh_scale", "unit":"ratio", "description":"Multiplier on source block/contour mesh lengths; smaller values refine the mesh", "minimum":0.25, "maximum":4}
@@ -118,6 +120,10 @@ def _validate_parameters(case, overrides):
             raise ValueError(f"{name} must be between {spec['minimum']} and {spec['maximum']} {spec['unit']}")
         if spec.get("integer") and not float(value).is_integer():
             raise ValueError(name + " must be an integer")
+        # A browser's JSON 20 and a CLI/catalog 20.0 describe the same physical
+        # input. Normalize before hashing so frozen plans bind to values rather
+        # than a transport's choice of integer or floating-point notation.
+        parameters[name] = int(value) if spec.get("integer") else float(value)
     if case["family"] == "aircore" and parameters["outer_radius"] <= parameters["inner_radius"]:
         raise ValueError("outer_radius must be greater than inner_radius")
     if case["family"] == "parallel_wires":
@@ -298,6 +304,8 @@ def _finish_script(lines, case, p, probes, extent, radius):
             lines += [_call('amps,volts,linkage=mo_getcircuitproperties',circuit),
                       f'write(out,"{circuit}_current_A,",amps,",A\\n")',
                       f'write(out,"{circuit}_flux_linkage_Wb_turn,",linkage,",Wb-turn\\n")']
+    elif case['family']=='vm270':
+        lines += vm270_metrics(p)
     elif case['family']=='parallel_wires':
         distance=p['center_distance']
         lines += [_call('mo_selectblock',-distance/2,0),'left_fx=mo_blockintegral(18)','left_fy=mo_blockintegral(19)',
@@ -335,7 +343,7 @@ def plan_simulation(case_id, parameters=None, graph=None):
         raise ValueError("Unknown simulation: " + str(case_id))
     case = cases[case_id]
     p = _validate_parameters(case,parameters)
-    builder={'aircore':_aircore,'uniform':_uniform,'parallel_wires':_parallel_wires,'native_source':_native_source}[case['family']]
+    builder={'aircore':_aircore,'uniform':_uniform,'parallel_wires':_parallel_wires,'native_source':_native_source,'vm270':build_vm270}[case['family']]
     geometry,lines,probes,extent,radius,metres_per_unit = builder(case,p)
     reference = deepcopy(case["reference"])
     reference["applicable"] = True
@@ -362,6 +370,19 @@ def plan_simulation(case_id, parameters=None, graph=None):
                         'COMSOL reports Maxwell surface stress and volumetric Lorentz force. This transfer reports FEMM weighted stress as its primary estimator and FEMM Lorentz integration as a separate cross-check.',
                         case['boundary_adaptation']]
         limits += ['Transfer validation requires domain-radius and mesh-size sensitivity; this individual run does not establish infinite-domain convergence.']
+    elif case['family']=='vm270':
+        if any(p[name] != case['defaults'][name] for name in ('current','displacement')):
+            reference.update(applicable=False, reason='The measured VM270 target applies only to the published current and displacement; no force scaling is assumed.')
+        assumptions += ['Axisymmetric millimeter geometry follows the public ANSYS VM270 input dimensions, with a 280-turn series coil at 50 mA and axial magnetization.',
+                        'Magnet permeability is calculated from the source input expression Br/(mu0*Hc), retaining Br=1.02 T and Hc=720000 A/m rather than the slightly inconsistent rounded printed permeability.',
+                        'Brass and air have relative permeability one in this static model; the nonmagnetic spool has no separate magnetic interface.',
+                        'The measured target 1.150*9.81e-3 N is retained; the table-rounded 0.0113 N and ANSYS numerical result 0.0112 N are separate comparisons.',
+                        case['boundary_adaptation'],
+                        'The graded force-mesh settings were selected through recorded refinement; failed coarse force estimates remain in the audit.']
+        limits += ['Magnet weighted-stress force and coil Lorentz force must both match the signed measured targets, with an independent action-reaction and coil-estimator check.',
+                   'Local stress-force estimates need much finer mesh than the coil Lorentz integral. A single solve is not a convergence certificate.']
+        comparators = [{'kind':'published_ansys_result','metric':'force_magnet_z_N','value':.0112,'unit':'N','used_for_acceptance':False},
+                       {'kind':'published_table_rounded_measured_force','metric':'force_magnet_z_N','value':.0113,'unit':'N','used_for_acceptance':False}]
     elif case['family']=='native_source':
         assumptions += ['All geometry, signed winding assignments, material properties, B-H points and boundary attachments are reconstructed from pinned passive native model data.',
                         'The original source model is never opened or executed; a fresh FEMM model is generated from typed entities.',
@@ -391,6 +412,8 @@ def plan_simulation(case_id, parameters=None, graph=None):
     for item in case.get('additional_references',[]):
         extra=deepcopy(item)
         extra.update(applicable=reference['applicable'],tolerance_origin=reference['tolerance_origin'])
+        if not reference['applicable']:
+            extra['reason']=reference.get('reason', 'The published reference does not apply to these inputs.')
         if case['id']=='gapped-ei-core':
             extra['value'] *= (p['current']/case['defaults']['current'])**2
             extra['scaling'] = 'Linear source material law: baseline value multiplied by (current / baseline_current)^2'
@@ -400,12 +423,13 @@ def plan_simulation(case_id, parameters=None, graph=None):
             "source_url":case["source_url"],"knowledge_node_ids":case["knowledge_node_ids"],
             "knowledge_sources":case["knowledge_sources"],"knowledge_artifacts":case["knowledge_artifacts"],
             "recipe_bindings":{"geometry":"method:methods_axisymmetric_coil_section" if case["family"]=="aircore" else
+                              "method:vm270_geometry" if case['family']=='vm270' else
                               "method:methods_gapped_ei_core" if case_id=='gapped-ei-core' else
                               "method:machine_bearing_geometry" if case_id=='radial-bearing' else
                               "method:parallel_wire_cross_sections" if case['family']=='parallel_wires' else
                               "method:methods_uniform_field_iabc_axi" if case_id=="uniform-axisymmetric" else "method:methods_uniform_field_iabc_planar",
                               "solve":"method:methods_magnetic_solve_snapshot",
-                              "postprocess":"method:methods_weighted_stress_force" if case["family"]=="parallel_wires" or case_id=='radial-bearing' else "method:methods_linear_flux_inductance" if case["family"]=="aircore" or case_id=='gapped-ei-core' else "method:methods_field_probe_or_contour"},
+                              "postprocess":"method:vm270_dual_force" if case['family']=='vm270' else "method:methods_weighted_stress_force" if case["family"]=="parallel_wires" or case_id=='radial-bearing' else "method:methods_linear_flux_inductance" if case["family"]=="aircore" or case_id=='gapped-ei-core' else "method:methods_field_probe_or_contour"},
             "source_model_sha256":case.get("source_model_sha256"),
             "source_model_data_sha256":hashlib.sha256((DATA/"models"/(case["source_model_sha256"]+".json")).read_bytes()).hexdigest() if case.get("source_model_sha256") else None,
             "assumptions":assumptions,"limits":limits,
@@ -417,6 +441,8 @@ def plan_simulation(case_id, parameters=None, graph=None):
     if case['family']=='native_source':
         plan['source_recipe_sha256']=hashlib.sha256(Path(__file__).with_name('source_recipe.py').read_bytes()).hexdigest()
         plan['expected_source_physics']=geometry.pop('expected_source_physics')
+    if case['family']=='vm270':
+        plan['vm270_recipe_sha256']=hashlib.sha256(Path(__file__).with_name('vm270.py').read_bytes()).hexdigest()
     plan["plan_sha256"] = hashlib.sha256(json.dumps(plan,sort_keys=True,separators=(",",":"),allow_nan=False).encode()).hexdigest()
     return plan
 
@@ -544,6 +570,8 @@ def _compare_reference(ref, metrics):
 
 def assess_target(plan,metrics):
     """Compare actual native values only against the already frozen criteria."""
+    if plan['family']=='vm270':
+        return assess_vm270(plan,metrics)
     ref=plan["frozen_reference"]
     result=_compare_reference(ref,metrics)
     if plan['family']=='native_source':
@@ -603,6 +631,8 @@ def verify_boundary_attachments(plan, actual):
     """
     if plan['family']=='native_source':
         return verify_source_physics(plan['expected_source_physics'],actual)['boundary_attachments']
+    if plan['family']=='vm270':
+        return verify_vm270(plan,actual)['boundary_attachments']
     if len(actual.get('boundaries',[]))!=1:
         raise ValueError("Native recipe requires exactly one exterior boundary property")
     p=plan['parameters']
@@ -647,6 +677,8 @@ def verify_native_physics(plan, actual):
     """Inspect the saved native physical assignments, independently of Lua success."""
     if plan['family']=='native_source':
         return verify_source_physics(plan['expected_source_physics'],actual)
+    if plan['family']=='vm270':
+        return verify_vm270(plan,actual)
     attachments=verify_boundary_attachments(plan,actual)
     expected=plan['geometry']['metadata']
     if any(actual['metadata'].get(k)!=v for k,v in expected.items()) or float(actual['metadata'].get('Frequency',-1))!=0:
