@@ -284,6 +284,38 @@ def _waveform_statistic(assessor, case, raw, metrics, model):
             "absolute_tolerance": tolerance, "samples": len(values), "target": target}
 
 
+def _spatial_harmonic(assessor, case, raw, metrics, model):
+    """One spatial harmonic's amplitude of a field component sampled evenly along one period, against a frozen value.
+
+    The points of the named point_values measurement must lie on a line along
+    ``axis`` (0 for x or r, 1 for y or z) and sample exactly one ``period``
+    evenly; the amplitude of order n is |2/N sum v exp(-2 pi i n s / period)|.
+    """
+    measurement = next(m for m in case["measurements"] if m["id"] == assessor["measurement"])
+    points, axis, period = measurement["points"], assessor["axis"], assessor["period"]
+    along = [p[axis] for p in points]
+    across = {round(p[1 - axis], 9) for p in points}
+    count = len(points)
+    spacing = period / count
+    if len(across) != 1 or any(abs((s - along[0]) - k * spacing) > 1e-9 * period for k, s in enumerate(along)):
+        raise ValueError("The points must sample one period evenly along a line")
+    step = assessor.get("step") or (case.get("steps") or [{"label": "base"}])[0]["label"]
+    values = [raw[(step, f"{measurement['id']}:{assessor['field']}", k)].real for k in range(count)]
+    order = assessor["order"]
+    amplitude = abs(2 / count * sum(v * cmath.exp(-2j * math.pi * order * (s - along[0]) / period) for v, s in zip(values, along)))
+    metric = f"{measurement['id']}:{assessor['field']}:h{order}"
+    target = {key: assessor[key] for key in ("value", "relative_tolerance", "absolute_tolerance", "quote", "location",
+                                              "used_for_acceptance", "allowance") if key in assessor}
+    target.update(kind=assessor.get("value_kind"), metric=metric)
+    target.setdefault("used_for_acceptance", True)
+    error = abs(amplitude - assessor["value"])
+    tolerance = max(abs(assessor["value"]) * assessor.get("relative_tolerance", 0), assessor.get("absolute_tolerance", 0))
+    return {"status": "passed" if error <= tolerance else "failed", "assessor": "spatial_harmonic", "metric": metric,
+            "statistic": f"harmonic {order}", "observed": amplitude, "expected": assessor["value"], "absolute_error": error,
+            "relative_error": error / abs(assessor["value"]) if assessor["value"] else None,
+            "absolute_tolerance": tolerance, "samples": count, "target": target}
+
+
 def _phase_linkage(assessor, case, raw, metrics, model):
     """Winding sign and phase linkage: each phase's flux-linkage fundamental against the construction.
 
@@ -330,7 +362,7 @@ def _phase_linkage(assessor, case, raw, metrics, model):
 
 
 ASSESSORS = {"tube_bessel": _tube, "dipole_torque": _dipole_torque, "applied_field": _applied_field,
-             "phase_linkage": _phase_linkage, "waveform_statistic": _waveform_statistic}
+             "phase_linkage": _phase_linkage, "waveform_statistic": _waveform_statistic, "spatial_harmonic": _spatial_harmonic}
 
 
 def run_assessor(assessor, case, raw, metrics, model):

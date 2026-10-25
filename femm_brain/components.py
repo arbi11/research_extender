@@ -387,6 +387,62 @@ def kelvin_periodic_exterior(m, domain_radius, exterior_center, applied_field, f
     m.label(exterior_center[0], exterior_center[1], material, mesh=exterior_mesh, magdir=field_direction)
 
 
+def segment_boundary(m, name, at):
+    """Give the boundary ``name`` to existing segments, each picked by a point lying on it."""
+    if name not in {record["name"] for record in m.collections["boundaries"]}:
+        raise ValueError(f"Define the boundary {name} before assigning it")
+    if not at or not all(isinstance(p, (list, tuple)) and len(p) == 2 and all(_finite(v) for v in p) for p in at):
+        raise ValueError("Give one finite point per segment")
+    for x, y in at:
+        hits = []
+        for index, s in enumerate(m.segments):
+            a, b = m.nodes[s["n0"]], m.nodes[s["n1"]]
+            dx, dy = b["x"] - a["x"], b["y"] - a["y"]
+            t = ((x - a["x"]) * dx + (y - a["y"]) * dy) / (dx * dx + dy * dy)
+            distance = math.hypot(a["x"] + t * dx - x, a["y"] + t * dy - y)
+            if 0 < t < 1 and distance <= 1e-9 * max(1.0, math.hypot(dx, dy)):
+                hits.append(index)
+        if len(hits) != 1:
+            raise ValueError(f"The point ({x}, {y}) must lie inside exactly one segment; it lies on {len(hits)}")
+        m.segments[hits[0]]["boundary"] = name
+
+
+def fixed_point_potential(m, at, name, value=0):
+    """Hold the potential (A, V or T) at one node, for example to fix the gauge of a model with only periodic and natural boundaries."""
+    key = {"magnetics": "A_re", "electrostatics": "Vp", "heatflow": "Tp"}[m.physics]
+    m.property("point_properties", name, **{key: value})
+    m.nodes[m.node(at[0], at[1])]["point"] = name
+
+
+def magnet_array(m, start, inner, outer, segments, magnet_material, axis="y", mesh=None, group=0, draw_ends=True):
+    """Rectangular magnet blocks laid end to end along an axis, each with its own magnetization direction.
+
+    ``segments`` lists [length, direction] in order from ``start``; the blocks
+    span ``inner`` to ``outer`` across the axis. Along y in an axisymmetric
+    problem this is a tubular armature (radial blocks at 0 or 180 degrees,
+    axial ones at 90 or 270); along x in a planar problem, a linear array.
+    Quasi-Halbach, Halbach and radial arrays are different segment lists.
+    """
+    if axis not in ("x", "y") or not inner < outer:
+        raise ValueError("The axis is x or y, and inner must be below outer")
+    if m.problem.get("type") == "axisymmetric" and axis == "y" and inner < 0:
+        raise ValueError("An axisymmetric array lies at nonnegative radii")
+    if not segments or any(len(item) != 2 or not _finite(item[0]) or item[0] <= 0 or not _finite(item[1]) for item in segments):
+        raise ValueError("Each segment is [positive length, finite direction]")
+    point = (lambda across, along: (across, along)) if axis == "y" else (lambda across, along: (along, across))
+    edges = [start]
+    for length, _ in segments:
+        edges.append(edges[-1] + length)
+    for k, (_, direction) in enumerate(segments):
+        for across in (inner, outer):
+            m.segment(point(across, edges[k]), point(across, edges[k + 1]), group=group)
+        m.label(*point((inner + outer) / 2, (edges[k] + edges[k + 1]) / 2), magnet_material, mesh=mesh, magdir=direction % 360,
+                group=group)
+    for k, position in enumerate(edges):
+        if draw_ends or 0 < k < len(edges) - 1:
+            m.segment(point(inner, position), point(outer, position), group=group)
+
+
 # --- Electric-machine components ---------------------------------------------
 
 def _rotated(point, degrees):
@@ -674,8 +730,8 @@ def surface_magnet_rotor(m, pole_count, magnet_material, thickness, magnet_shape
 IMPLEMENTATIONS = {function.__name__: function for function in (
     segment, polyline, arc, circle, point, block_label, hole, material, library_material, circuit, conductor, boundary,
     fixed_potential_boundary, mixed_boundary, convection_boundary, iabc_open_boundary, axisymmetric_coil_section,
-    bar_magnet, air_gap_element, kelvin_periodic_exterior, slotted_stator, trapezoidal_slot_stator, tooth_coil_winding,
-    surface_magnet_rotor)}
+    bar_magnet, air_gap_element, kelvin_periodic_exterior, segment_boundary, fixed_point_potential, magnet_array,
+    slotted_stator, trapezoidal_slot_stator, tooth_coil_winding, surface_magnet_rotor)}
 
 
 def _finite(value):

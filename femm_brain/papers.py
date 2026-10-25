@@ -105,8 +105,8 @@ def check(case, cache=PAPER_CACHE, build=True):
                 problems.append(f"parameter {name}: assumption needs a control that varies it ({item['sensitivity_control']})")
         elif kind == "numerical" and not any(control.get("mesh_scale", 1) != 1 for control in controls.values()):
             problems.append(f"parameter {name}: a numerical choice needs a mesh control in the case")
-        elif kind == "figure" and not item["uncertainty"] > 0:
-            problems.append(f"parameter {name}: a figure reading needs a positive uncertainty")
+        elif kind == "figure" and not (item.get("discrete") or item["uncertainty"] > 0):
+            problems.append(f"parameter {name}: a figure reading needs a positive uncertainty, unless it is discrete (a direction or a count)")
         elif kind == "quoted" and text is not None and not _found(item["quote"], text):
             problems.append(f"parameter {name}: quote not found verbatim in the source text")
     for control in controls.values():
@@ -125,7 +125,8 @@ def check(case, cache=PAPER_CACHE, build=True):
     acceptance = 0
     # Assessors that compare against a value from the paper follow the same rules as targets.
     compared = [(f"target {t.get('metric')}", t) for t in case.get("targets", [])]
-    compared += [(f"assessor {a.get('metric')}:{a.get('statistic')}", dict(a, kind=a.get("value_kind")))
+    compared += [(f"assessor {a.get('metric') or a.get('measurement')}:{a.get('statistic') or a.get('order')}",
+                  dict(a, kind=a.get("value_kind"), metric=a.get("metric") or f"{a.get('measurement')}:{a.get('field')}"))
                  for a in case.get("assessors", []) if "value" in a]
     for where, target in compared:
         missing = [field for field in ("metric", "value", "kind", "quote", "location", "used_for_acceptance") if field not in target]

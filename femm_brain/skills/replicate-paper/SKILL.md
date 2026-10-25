@@ -56,7 +56,7 @@ exactly one provenance:
 |---|---|---|
 | `quoted` | `quote` (verbatim, at most about 15 words), `location` (page, table, equation) | numbers stated in the text or a table |
 | `derived` | `expression` over other parameter names, `inputs` | unit conversions, radial builds, anything computed |
-| `figure` | `figure`, `scale_reference`, `uncertainty` | values scaled from a dimensioned or to-scale figure |
+| `figure` | `figure`, `scale_reference`, `uncertainty` (zero with `discrete` for a direction or count) | values read from a dimensioned or to-scale figure |
 | `assumed` | `reason`, `sensitivity_control` (a control id) | physical inputs the paper omits, with a control that varies each |
 | `numerical` | `reason` | mesh sizes and arc discretization; the case needs a mesh control |
 
@@ -97,7 +97,8 @@ positions or current sweeps) and the assessors: `phase_linkage` checks winding
 signs and phase order against the construction, and `waveform_statistic`
 compares a statistic over the rotor sweep (fundamental rms or peak,
 peak-to-peak, mean) with a paper value under the same target rules (its
-`value_kind` plays the role of a target's `kind`). Then set `status` to
+`value_kind` plays the role of a target's `kind`); `spatial_harmonic` does the
+same for one harmonic of a field sampled evenly along one spatial period. Then set `status` to
 `frozen`. **Commit the frozen case before the first native
 solve**, so the history shows the targets came first.
 

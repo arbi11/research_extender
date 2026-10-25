@@ -1322,6 +1322,202 @@
    ]
   },
   {
+   "id": "segment_boundary",
+   "layer": 3,
+   "title": "Assign a boundary to existing segments",
+   "description": "Gives a defined boundary condition to segments already drawn, each picked by a point lying inside it, as FEMM selects segments. Used for periodic pairs and for boundaries on edges another component drew.",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "name",
+     "type": "string",
+     "description": "Boundary property to assign",
+     "required": true
+    },
+    {
+     "name": "at",
+     "type": "list",
+     "description": "One point inside each segment to assign",
+     "required": true
+    }
+   ],
+   "femm_functions": [
+    "selectsegment",
+    "setsegmentprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "boundary",
+   "constraints": [
+    "Each point must lie inside exactly one segment, not at an endpoint.",
+    "The boundary property must already be defined."
+   ]
+  },
+  {
+   "id": "fixed_point_potential",
+   "layer": 3,
+   "title": "Fixed potential at a point",
+   "description": "Holds the potential (vector potential, voltage or temperature) at one node, creating the node if needed; fixes the gauge of models bounded only by periodic and natural boundaries.",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "at",
+     "type": "point",
+     "description": "Node location",
+     "required": true
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "description": "Point property name",
+     "required": true
+    },
+    {
+     "name": "value",
+     "type": "number",
+     "description": "Potential held at the node",
+     "required": false,
+     "unit": "model potential",
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addpointprop",
+    "selectnode",
+    "setnodeprop"
+   ],
+   "uses_components": [
+    "point"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "boundary",
+   "constraints": [
+    "A magnetics point property here fixes A only; point currents are not set."
+   ]
+  },
+  {
+   "id": "magnet_array",
+   "layer": 2,
+   "title": "Magnet array along an axis",
+   "description": "Rectangular magnet blocks laid end to end along x or y, each with its own magnetization direction: tubular armatures in axisymmetric problems (radial blocks at 0 or 180 degrees, axial at 90 or 270) and linear arrays in planar ones. Quasi-Halbach, Halbach and radial arrays are different segment lists.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "start",
+     "type": "number",
+     "description": "Position of the first block's start along the axis",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "inner",
+     "type": "number",
+     "description": "Lower edge across the axis (inner radius of a tubular array)",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "outer",
+     "type": "number",
+     "description": "Upper edge across the axis",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "segments",
+     "type": "list",
+     "description": "[length, direction] of each block, in order",
+     "required": true
+    },
+    {
+     "name": "magnet_material",
+     "type": "string",
+     "description": "Magnet material",
+     "required": true
+    },
+    {
+     "name": "axis",
+     "type": "string",
+     "description": "Axis the blocks are laid along",
+     "required": false,
+     "choices": [
+      "x",
+      "y"
+     ],
+     "default": "y"
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Magnet element size",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the array",
+     "required": false,
+     "default": 0
+    },
+    {
+     "name": "draw_ends",
+     "type": "boolean",
+     "description": "Draw the array's two end lines",
+     "required": false,
+     "default": true
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "addblocklabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "segment",
+    "block_label"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": [
+    "Every block has a positive length and a finite direction.",
+    "An axisymmetric array along y lies at nonnegative radii."
+   ]
+  },
+  {
    "id": "slotted_stator",
    "layer": 2,
    "title": "Slotted stator with shoed teeth",

@@ -1,0 +1,1190 @@
+{
+ "schema_version": 1,
+ "id": "wang-2005-tubular-halbach",
+ "set": "development",
+ "status": "frozen",
+ "skill_version": null,
+ "title": "Tubular modular permanent-magnet machines equipped with quasi-Halbach magnetized magnets, Part I: magnetic field distribution, EMF, and thrust force",
+ "source": {
+  "citation": "J. Wang, D. Howe, IEEE Trans. Magnetics 41(9), 2005, pp. 2470-2478",
+  "doi": "10.1109/TMAG.2005.854437",
+  "url": "https://eprints.whiterose.ac.uk/id/eprint/821/1/wangjb3.pdf",
+  "access": "author copy (IEEE copyright)",
+  "licence": null,
+  "pdf_sha256": "ce276f77b7e2d0133610fdb1d71850764f81f92d7aa2e024f19c853f96460121",
+  "pages": 10,
+  "accessed": "2026-10-25"
+ },
+ "machine": {
+  "family": "tubular",
+  "topology": "moving-magnet tubular armature, quasi-Halbach magnets on a ferromagnetic tube, slotless stator",
+  "problem": "axisymmetric",
+  "phases": 3,
+  "symmetry": "One pole-pair period along z with periodic boundaries; ideal iron at the stator bore and the tube surface (natural boundaries), as the paper's own finite-element model."
+ },
+ "components_map": [
+  {
+   "part": "quasi-Halbach magnet rings",
+   "component": "magnet_array"
+  },
+  {
+   "part": "air space and winding region",
+   "component": "polyline, block_label"
+  },
+  {
+   "part": "periodic ends of the period",
+   "component": "boundary, polyline edges, segment_boundary"
+  },
+  {
+   "part": "gauge of the vector potential",
+   "component": "fixed_point_potential"
+  }
+ ],
+ "article": {
+  "parameters": {
+   "rs_m": {
+    "value": 0.0255,
+    "unit": "m",
+    "provenance": "quoted",
+    "quote": "0.0255 0.0245 0.0195 0.01 0.006 0.004",
+    "location": "Table IV, p. 2474",
+    "note": "Column Rs: stator bore, the surface of the slotless ferromagnetic stator core."
+   },
+   "rm_m": {
+    "value": 0.0245,
+    "unit": "m",
+    "provenance": "quoted",
+    "quote": "0.0255 0.0245 0.0195 0.01 0.006 0.004",
+    "location": "Table IV, p. 2474",
+    "note": "Column Rm: outer radius of the magnets."
+   },
+   "r0_m": {
+    "value": 0.0195,
+    "unit": "m",
+    "provenance": "quoted",
+    "quote": "0.0255 0.0245 0.0195 0.01 0.006 0.004",
+    "location": "Table IV, p. 2474",
+    "note": "Column R0: inner radius of the magnets, the surface of the supporting tube."
+   },
+   "tau_p_m": {
+    "value": 0.01,
+    "unit": "m",
+    "provenance": "quoted",
+    "quote": "0.0255 0.0245 0.0195 0.01 0.006 0.004",
+    "location": "Table IV, p. 2474",
+    "note": "Column tau_p: pole pitch."
+   },
+   "tau_mr_m": {
+    "value": 0.006,
+    "unit": "m",
+    "provenance": "quoted",
+    "quote": "0.0255 0.0245 0.0195 0.01 0.006 0.004",
+    "location": "Table IV, p. 2474",
+    "note": "Column tau_mr: axial length of a radially magnetized block."
+   },
+   "tau_mz_m": {
+    "value": 0.004,
+    "unit": "m",
+    "provenance": "quoted",
+    "quote": "0.0255 0.0245 0.0195 0.01 0.006 0.004",
+    "location": "Table IV, p. 2474",
+    "note": "Column tau_mz: axial length of an axially magnetized block."
+   },
+   "brem_T": {
+    "value": 1.15,
+    "unit": "T",
+    "provenance": "quoted",
+    "quote": "for which … = 1.15 T and",
+    "location": "p. 2474, section III-C",
+    "note": "Sintered NdFeB remanence."
+   },
+   "mu_r": {
+    "value": 1.05,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "T and … = 1.05",
+    "location": "p. 2474, section III-C",
+    "note": "Relative recoil permeability."
+   },
+   "probe_radius_m": {
+    "value": 0.025,
+    "unit": "m",
+    "provenance": "quoted",
+    "quote": "radial flux density at r = 0.025 m",
+    "location": "Fig. 8 caption, p. 2475",
+    "note": "Radius at which Table V's harmonics are taken."
+   },
+   "radial_out_deg": {
+    "value": 0,
+    "unit": "deg",
+    "provenance": "figure",
+    "figure": "Fig. 4(a)",
+    "scale_reference": "arrow directions",
+    "uncertainty": 0,
+    "discrete": true,
+    "note": "The radially magnetized block centred at z = +tau_p/2 points outward (FEMM direction 0 degrees in r-z); the block centred at -tau_p/2 points inward."
+   },
+   "axial_plus_deg": {
+    "value": 90,
+    "unit": "deg",
+    "provenance": "figure",
+    "figure": "Fig. 4(a)",
+    "scale_reference": "arrow directions",
+    "uncertainty": 0,
+    "discrete": true,
+    "note": "The axially magnetized block centred at z = 0 points +z (90 degrees), from the inward block toward the outward one; the one at z = tau_p points -z."
+   },
+   "magnet_mesh_mm": {
+    "value": 0.1,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Magnet element size, 50 across the 5 mm magnet."
+   },
+   "gap_mesh_mm": {
+    "value": 0.05,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Twenty elements across the 1 mm air space."
+   },
+   "rs_mm": {
+    "value": 25.5,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "rs_m*1000",
+    "inputs": [
+     "rs_m"
+    ]
+   },
+   "rm_mm": {
+    "value": 24.5,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "rm_m*1000",
+    "inputs": [
+     "rm_m"
+    ]
+   },
+   "r0_mm": {
+    "value": 19.5,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r0_m*1000",
+    "inputs": [
+     "r0_m"
+    ]
+   },
+   "tau_p_mm": {
+    "value": 10.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "tau_p_m*1000",
+    "inputs": [
+     "tau_p_m"
+    ]
+   },
+   "tau_mr_mm": {
+    "value": 6.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "tau_mr_m*1000",
+    "inputs": [
+     "tau_mr_m"
+    ]
+   },
+   "tau_mz_mm": {
+    "value": 4.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "tau_mz_m*1000",
+    "inputs": [
+     "tau_mz_m"
+    ]
+   },
+   "probe_radius_mm": {
+    "value": 25.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "probe_radius_m*1000",
+    "inputs": [
+     "probe_radius_m"
+    ]
+   },
+   "period_mm": {
+    "value": 20.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "2*tau_p_m*1000",
+    "inputs": [
+     "tau_p_m"
+    ],
+    "note": "One pole pair, the period of the field along z."
+   },
+   "magnet_coercivity_A_per_m": {
+    "value": 871562.7835984743,
+    "unit": "A/m",
+    "provenance": "derived",
+    "expression": "brem_T/(mu0*mu_r)",
+    "inputs": [
+     "brem_T",
+     "mu_r"
+    ]
+   }
+  },
+  "assembly": {
+   "problem": {
+    "physics": "magnetics",
+    "units": "millimeters",
+    "type": "axisymmetric",
+    "frequency": 0,
+    "depth": 1
+   },
+   "steps": [
+    {
+     "use": "material",
+     "name": "Air"
+    },
+    {
+     "use": "material",
+     "name": "Magnet",
+     "values": {
+      "Mu_x": "$mu_r",
+      "Mu_y": "$mu_r",
+      "H_c": "$magnet_coercivity_A_per_m"
+     }
+    },
+    {
+     "use": "boundary",
+     "name": "periodic magnets",
+     "values": {
+      "BdryType": 4
+     }
+    },
+    {
+     "use": "boundary",
+     "name": "periodic air",
+     "values": {
+      "BdryType": 4
+     }
+    },
+    {
+     "use": "magnet_array",
+     "start": 0,
+     "inner": "$r0_mm",
+     "outer": "$rm_mm",
+     "axis": "y",
+     "magnet_material": "Magnet",
+     "mesh": "$magnet_mesh_mm",
+     "segments": [
+      [
+       "=tau_mz_mm/2",
+       "$axial_plus_deg"
+      ],
+      [
+       "$tau_mr_mm",
+       "$radial_out_deg"
+      ],
+      [
+       "$tau_mz_mm",
+       "=axial_plus_deg+180"
+      ],
+      [
+       "$tau_mr_mm",
+       "=radial_out_deg+180"
+      ],
+      [
+       "=tau_mz_mm/2",
+       "$axial_plus_deg"
+      ]
+     ]
+    },
+    {
+     "use": "polyline",
+     "points": [
+      [
+       "$rm_mm",
+       0
+      ],
+      [
+       "$rs_mm",
+       0
+      ],
+      [
+       "$rs_mm",
+       "$period_mm"
+      ],
+      [
+       "$rm_mm",
+       "$period_mm"
+      ]
+     ],
+     "closed": false,
+     "edges": [
+      {
+       "boundary": "periodic air"
+      },
+      {},
+      {
+       "boundary": "periodic air"
+      }
+     ]
+    },
+    {
+     "use": "segment_boundary",
+     "name": "periodic magnets",
+     "at": [
+      [
+       "=(r0_mm+rm_mm)/2",
+       0
+      ],
+      [
+       "=(r0_mm+rm_mm)/2",
+       "$period_mm"
+      ]
+     ]
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(rm_mm+rs_mm)/2",
+      "=period_mm/2"
+     ],
+     "material": "Air",
+     "mesh": "$gap_mesh_mm"
+    },
+    {
+     "use": "fixed_point_potential",
+     "at": [
+      "$r0_mm",
+      "=tau_mz_mm/2"
+     ],
+     "name": "gauge"
+    }
+   ]
+  }
+ },
+ "gaps": [
+  {
+   "item": "whether Table V is analytic or finite-element",
+   "affects": "the targets' kind",
+   "decision": "resolved",
+   "note": "Analytic: Table V accompanies Fig. 8, which shows analytic curves; the paper reports its analysis agreeing extremely well with its finite-element model (Fig. 5)."
+  },
+  {
+   "item": "harmonic convention of Table V",
+   "affects": "the targets",
+   "decision": "resolved",
+   "note": "Amplitudes of the odd spatial harmonics of B_r over one pole-pair period, as the series (13) of sin(m_n z) implies."
+  },
+  {
+   "item": "magnet layout of the radially magnetized comparison",
+   "affects": "Table V's first column",
+   "decision": "out_of_scope",
+   "note": "Not stated; only the quasi-Halbach column is a target."
+  }
+ ],
+ "measurements": [
+  {
+   "id": "probe",
+   "op": "point_values",
+   "points": [
+    [
+     25.0,
+     0.0625
+    ],
+    [
+     25.0,
+     0.1875
+    ],
+    [
+     25.0,
+     0.3125
+    ],
+    [
+     25.0,
+     0.4375
+    ],
+    [
+     25.0,
+     0.5625
+    ],
+    [
+     25.0,
+     0.6875
+    ],
+    [
+     25.0,
+     0.8125
+    ],
+    [
+     25.0,
+     0.9375
+    ],
+    [
+     25.0,
+     1.0625
+    ],
+    [
+     25.0,
+     1.1875
+    ],
+    [
+     25.0,
+     1.3125
+    ],
+    [
+     25.0,
+     1.4375
+    ],
+    [
+     25.0,
+     1.5625
+    ],
+    [
+     25.0,
+     1.6875
+    ],
+    [
+     25.0,
+     1.8125
+    ],
+    [
+     25.0,
+     1.9375
+    ],
+    [
+     25.0,
+     2.0625
+    ],
+    [
+     25.0,
+     2.1875
+    ],
+    [
+     25.0,
+     2.3125
+    ],
+    [
+     25.0,
+     2.4375
+    ],
+    [
+     25.0,
+     2.5625
+    ],
+    [
+     25.0,
+     2.6875
+    ],
+    [
+     25.0,
+     2.8125
+    ],
+    [
+     25.0,
+     2.9375
+    ],
+    [
+     25.0,
+     3.0625
+    ],
+    [
+     25.0,
+     3.1875
+    ],
+    [
+     25.0,
+     3.3125
+    ],
+    [
+     25.0,
+     3.4375
+    ],
+    [
+     25.0,
+     3.5625
+    ],
+    [
+     25.0,
+     3.6875
+    ],
+    [
+     25.0,
+     3.8125
+    ],
+    [
+     25.0,
+     3.9375
+    ],
+    [
+     25.0,
+     4.0625
+    ],
+    [
+     25.0,
+     4.1875
+    ],
+    [
+     25.0,
+     4.3125
+    ],
+    [
+     25.0,
+     4.4375
+    ],
+    [
+     25.0,
+     4.5625
+    ],
+    [
+     25.0,
+     4.6875
+    ],
+    [
+     25.0,
+     4.8125
+    ],
+    [
+     25.0,
+     4.9375
+    ],
+    [
+     25.0,
+     5.0625
+    ],
+    [
+     25.0,
+     5.1875
+    ],
+    [
+     25.0,
+     5.3125
+    ],
+    [
+     25.0,
+     5.4375
+    ],
+    [
+     25.0,
+     5.5625
+    ],
+    [
+     25.0,
+     5.6875
+    ],
+    [
+     25.0,
+     5.8125
+    ],
+    [
+     25.0,
+     5.9375
+    ],
+    [
+     25.0,
+     6.0625
+    ],
+    [
+     25.0,
+     6.1875
+    ],
+    [
+     25.0,
+     6.3125
+    ],
+    [
+     25.0,
+     6.4375
+    ],
+    [
+     25.0,
+     6.5625
+    ],
+    [
+     25.0,
+     6.6875
+    ],
+    [
+     25.0,
+     6.8125
+    ],
+    [
+     25.0,
+     6.9375
+    ],
+    [
+     25.0,
+     7.0625
+    ],
+    [
+     25.0,
+     7.1875
+    ],
+    [
+     25.0,
+     7.3125
+    ],
+    [
+     25.0,
+     7.4375
+    ],
+    [
+     25.0,
+     7.5625
+    ],
+    [
+     25.0,
+     7.6875
+    ],
+    [
+     25.0,
+     7.8125
+    ],
+    [
+     25.0,
+     7.9375
+    ],
+    [
+     25.0,
+     8.0625
+    ],
+    [
+     25.0,
+     8.1875
+    ],
+    [
+     25.0,
+     8.3125
+    ],
+    [
+     25.0,
+     8.4375
+    ],
+    [
+     25.0,
+     8.5625
+    ],
+    [
+     25.0,
+     8.6875
+    ],
+    [
+     25.0,
+     8.8125
+    ],
+    [
+     25.0,
+     8.9375
+    ],
+    [
+     25.0,
+     9.0625
+    ],
+    [
+     25.0,
+     9.1875
+    ],
+    [
+     25.0,
+     9.3125
+    ],
+    [
+     25.0,
+     9.4375
+    ],
+    [
+     25.0,
+     9.5625
+    ],
+    [
+     25.0,
+     9.6875
+    ],
+    [
+     25.0,
+     9.8125
+    ],
+    [
+     25.0,
+     9.9375
+    ],
+    [
+     25.0,
+     10.0625
+    ],
+    [
+     25.0,
+     10.1875
+    ],
+    [
+     25.0,
+     10.3125
+    ],
+    [
+     25.0,
+     10.4375
+    ],
+    [
+     25.0,
+     10.5625
+    ],
+    [
+     25.0,
+     10.6875
+    ],
+    [
+     25.0,
+     10.8125
+    ],
+    [
+     25.0,
+     10.9375
+    ],
+    [
+     25.0,
+     11.0625
+    ],
+    [
+     25.0,
+     11.1875
+    ],
+    [
+     25.0,
+     11.3125
+    ],
+    [
+     25.0,
+     11.4375
+    ],
+    [
+     25.0,
+     11.5625
+    ],
+    [
+     25.0,
+     11.6875
+    ],
+    [
+     25.0,
+     11.8125
+    ],
+    [
+     25.0,
+     11.9375
+    ],
+    [
+     25.0,
+     12.0625
+    ],
+    [
+     25.0,
+     12.1875
+    ],
+    [
+     25.0,
+     12.3125
+    ],
+    [
+     25.0,
+     12.4375
+    ],
+    [
+     25.0,
+     12.5625
+    ],
+    [
+     25.0,
+     12.6875
+    ],
+    [
+     25.0,
+     12.8125
+    ],
+    [
+     25.0,
+     12.9375
+    ],
+    [
+     25.0,
+     13.0625
+    ],
+    [
+     25.0,
+     13.1875
+    ],
+    [
+     25.0,
+     13.3125
+    ],
+    [
+     25.0,
+     13.4375
+    ],
+    [
+     25.0,
+     13.5625
+    ],
+    [
+     25.0,
+     13.6875
+    ],
+    [
+     25.0,
+     13.8125
+    ],
+    [
+     25.0,
+     13.9375
+    ],
+    [
+     25.0,
+     14.0625
+    ],
+    [
+     25.0,
+     14.1875
+    ],
+    [
+     25.0,
+     14.3125
+    ],
+    [
+     25.0,
+     14.4375
+    ],
+    [
+     25.0,
+     14.5625
+    ],
+    [
+     25.0,
+     14.6875
+    ],
+    [
+     25.0,
+     14.8125
+    ],
+    [
+     25.0,
+     14.9375
+    ],
+    [
+     25.0,
+     15.0625
+    ],
+    [
+     25.0,
+     15.1875
+    ],
+    [
+     25.0,
+     15.3125
+    ],
+    [
+     25.0,
+     15.4375
+    ],
+    [
+     25.0,
+     15.5625
+    ],
+    [
+     25.0,
+     15.6875
+    ],
+    [
+     25.0,
+     15.8125
+    ],
+    [
+     25.0,
+     15.9375
+    ],
+    [
+     25.0,
+     16.0625
+    ],
+    [
+     25.0,
+     16.1875
+    ],
+    [
+     25.0,
+     16.3125
+    ],
+    [
+     25.0,
+     16.4375
+    ],
+    [
+     25.0,
+     16.5625
+    ],
+    [
+     25.0,
+     16.6875
+    ],
+    [
+     25.0,
+     16.8125
+    ],
+    [
+     25.0,
+     16.9375
+    ],
+    [
+     25.0,
+     17.0625
+    ],
+    [
+     25.0,
+     17.1875
+    ],
+    [
+     25.0,
+     17.3125
+    ],
+    [
+     25.0,
+     17.4375
+    ],
+    [
+     25.0,
+     17.5625
+    ],
+    [
+     25.0,
+     17.6875
+    ],
+    [
+     25.0,
+     17.8125
+    ],
+    [
+     25.0,
+     17.9375
+    ],
+    [
+     25.0,
+     18.0625
+    ],
+    [
+     25.0,
+     18.1875
+    ],
+    [
+     25.0,
+     18.3125
+    ],
+    [
+     25.0,
+     18.4375
+    ],
+    [
+     25.0,
+     18.5625
+    ],
+    [
+     25.0,
+     18.6875
+    ],
+    [
+     25.0,
+     18.8125
+    ],
+    [
+     25.0,
+     18.9375
+    ],
+    [
+     25.0,
+     19.0625
+    ],
+    [
+     25.0,
+     19.1875
+    ],
+    [
+     25.0,
+     19.3125
+    ],
+    [
+     25.0,
+     19.4375
+    ],
+    [
+     25.0,
+     19.5625
+    ],
+    [
+     25.0,
+     19.6875
+    ],
+    [
+     25.0,
+     19.8125
+    ],
+    [
+     25.0,
+     19.9375
+    ]
+   ],
+   "fields": [
+    "B1",
+    "B2"
+   ],
+   "note": "160 points at r = 25 mm, evenly over one 20 mm period."
+  }
+ ],
+ "metrics": [
+  {
+   "name": "br_at_mid_radial_block_T",
+   "value": [
+    "probe:B1",
+    39
+   ],
+   "unit": "T"
+  },
+  {
+   "name": "bz_near_block_edge_T",
+   "value": [
+    "probe:B2",
+    13
+   ],
+   "unit": "T"
+  }
+ ],
+ "targets": [
+  {
+   "metric": "br_at_mid_radial_block_T",
+   "value": 1.0,
+   "unit": "T",
+   "kind": "digitized",
+   "relative_tolerance": 0.03,
+   "digitization_uncertainty": 0.01,
+   "used_for_acceptance": false,
+   "quote": "Comparion of radial and axial",
+   "location": "Fig. 5(a), p. 2475",
+   "note": "B_r near the middle of the flat top, z = 4.94 mm, read as about 1.00 T."
+  },
+  {
+   "metric": "bz_near_block_edge_T",
+   "value": -0.26,
+   "unit": "T",
+   "kind": "digitized",
+   "relative_tolerance": 0.08,
+   "digitization_uncertainty": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Comparion of radial and axial",
+   "location": "Fig. 5(b), p. 2475",
+   "note": "The B_z minimum near z = 1.7 mm, read as about -0.26 T; sampled here at z = 1.69 mm."
+  }
+ ],
+ "assessors": [
+  {
+   "kind": "spatial_harmonic",
+   "measurement": "probe",
+   "field": "B1",
+   "axis": 1,
+   "period": 20.0,
+   "order": 1,
+   "value": 1.164,
+   "unit": "T",
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.001,
+   "used_for_acceptance": true,
+   "quote": "1 0.956 1.164",
+   "location": "Table V, p. 2475",
+   "note": "1% or 0.001 T, whichever is larger: the analytic solution of the same idealized problem the paper's FE solved, rounded to three decimals."
+  },
+  {
+   "kind": "spatial_harmonic",
+   "measurement": "probe",
+   "field": "B1",
+   "axis": 1,
+   "period": 20.0,
+   "order": 3,
+   "value": 0.128,
+   "unit": "T",
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.001,
+   "used_for_acceptance": true,
+   "quote": "3 0.198 0.128",
+   "location": "Table V, p. 2475",
+   "note": "1% or 0.001 T, whichever is larger: the analytic solution of the same idealized problem the paper's FE solved, rounded to three decimals."
+  },
+  {
+   "kind": "spatial_harmonic",
+   "measurement": "probe",
+   "field": "B1",
+   "axis": 1,
+   "period": 20.0,
+   "order": 5,
+   "value": 0.076,
+   "unit": "T",
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.001,
+   "used_for_acceptance": true,
+   "quote": "5 0.076 0.076",
+   "location": "Table V, p. 2475",
+   "note": "1% or 0.001 T, whichever is larger: the analytic solution of the same idealized problem the paper's FE solved, rounded to three decimals."
+  },
+  {
+   "kind": "spatial_harmonic",
+   "measurement": "probe",
+   "field": "B1",
+   "axis": 1,
+   "period": 20.0,
+   "order": 7,
+   "value": 0.047,
+   "unit": "T",
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.001,
+   "used_for_acceptance": true,
+   "quote": "7 0.037 0.047",
+   "location": "Table V, p. 2475",
+   "note": "1% or 0.001 T, whichever is larger: the analytic solution of the same idealized problem the paper's FE solved, rounded to three decimals."
+  }
+ ],
+ "controls": [
+  {
+   "id": "mesh-0p5",
+   "level": "article",
+   "mesh_scale": 0.5,
+   "purpose": "Halve every explicit mesh size."
+  }
+ ],
+ "coverage": {
+  "scope": "partial",
+  "reproduced": "The radial flux density harmonics in the air space of the quasi-Halbach armature on a ferromagnetic tube, and two point values of Fig. 5 as comparators.",
+  "not_reproduced": "The nonmagnetic-tube variant (Fig. 6), the radially magnetized comparison, the tube flux (Fig. 7), and EMF and thrust, which Part I gives only as formulas."
+ },
+ "geometry_checks": [
+  {
+   "quantity": "pole pitch from block lengths (m)",
+   "paper_value": 0.01,
+   "model_value": 0.01,
+   "location": "Table IV",
+   "note": "tau_mr + tau_mz = 0.006 + 0.004 m equals tau_p."
+  },
+  {
+   "quantity": "magnet radial thickness (mm)",
+   "paper_value": 5.0,
+   "model_value": 5.0,
+   "location": "Table IV",
+   "note": "Rm - R0."
+  },
+  {
+   "quantity": "air-space thickness (mm)",
+   "paper_value": 1.0,
+   "model_value": 1.0,
+   "location": "Table IV",
+   "note": "Rs - Rm; the probe at 25 mm is mid-gap."
+  }
+ ],
+ "findings": [],
+ "retrospective": []
+}
