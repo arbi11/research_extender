@@ -512,6 +512,93 @@ class HarmonicSuperpositionTests(unittest.TestCase):
         self.assertIn("No steps serve", result["error"])
 
 
+class DqLinkageTests(unittest.TestCase):
+    def test_park_transform_recovers_dq_flux_and_torque_at_any_angle(self):
+        psi_d, psi_q, i_d, i_q = 0.12, -0.05, -100.0, 150.0
+        steps, raw = [], {}
+        for k, angle in enumerate((0, 37, 200)):
+            theta = math.radians(angle)
+            label = f"s{k}"
+            steps.append({"label": label, "dq": {"point": "P", "id": i_d, "iq": i_q, "electrical_angle_deg": angle}})
+            for phase in range(3):
+                shift = theta - 2 * math.pi * phase / 3
+                raw[(label, "ph" + "ABC"[phase], 2)] = complex(psi_d * math.cos(shift) - psi_q * math.sin(shift), 0)
+            raw[(label, "torque", 0)] = complex(-1.5 * 4 * (psi_d * i_q - psi_q * i_d), 0)
+        case = {"steps": steps + [{"label": "other", "dq": {"point": "Q", "id": 0, "iq": 0, "electrical_angle_deg": 0}}]}
+        base = {"kind": "dq_linkage", "point": "P", "phases": ["phA", "phB", "phC"], "pole_pairs": 4, "value": 0, "absolute_tolerance": 1e9}
+        for quantity, expected in (("psi_d", psi_d), ("psi_q", psi_q), ("torque", 1.5 * 4 * (psi_d * i_q - psi_q * i_d))):
+            result = run_assessor(dict(base, quantity=quantity), case, raw, {}, {})
+            self.assertAlmostEqual(result["observed"], expected, places=12)
+            self.assertEqual(result["samples"], 3)
+        stress = run_assessor(dict(base, quantity="stress_torque", torque_measurement="torque", sequence_direction=-1), case, raw, {}, {})
+        self.assertAlmostEqual(stress["observed"], 1.5 * 4 * (psi_d * i_q - psi_q * i_d), places=9)
+        missing = run_assessor(dict(base, point="Z", quantity="psi_d"), case, raw, {}, {})
+        self.assertIn("No steps carry", missing["error"])
+
+
+def _dxf(*entities, blocks=()):
+    """A minimal ASCII DXF: BLOCKS then ENTITIES, each entity as group-code pairs."""
+    lines = ["0", "SECTION", "2", "BLOCKS"]
+    for name, items in blocks:
+        lines += ["0", "BLOCK", "2", name]
+        for item in items:
+            lines += [str(v) for v in item]
+        lines += ["0", "ENDBLK"]
+    lines += ["0", "ENDSEC", "0", "SECTION", "2", "ENTITIES"]
+    for item in entities:
+        lines += [str(v) for v in item]
+    return "\n".join(lines + ["0", "ENDSEC", "0", "EOF"]) + "\n"
+
+
+class DrawingTests(unittest.TestCase):
+    def test_dxf_entities_become_primitives(self):
+        from femm_brain import dxf
+        line = ["0", "LINE", "8", "0", "10", 0, "20", 0, "11", 10, "21", 0]
+        arc = ["0", "ARC", "10", 0, "20", 0, "40", 10, "50", 0, "51", 270]
+        bulged = ["0", "LWPOLYLINE", "90", 2, "70", 0, "10", 0, "20", 0, "42", 1, "10", 2, "20", 0]
+        insert = ["0", "INSERT", "2", "B", "10", 5, "20", 5, "50", 90]
+        text = _dxf(line, arc, bulged, insert, blocks=[("B", [["0", "LINE", "10", 0, "20", 0, "11", 1, "21", 0]])])
+        prims = dxf.primitives(dxf.read(text), scale=2)
+        segments = [p for p in prims if p[0] == "segment"]
+        arcs = [p for p in prims if p[0] == "arc"]
+        self.assertEqual(segments[0], ["segment", 0, 0, 20, 0])
+        # A 270 degree arc is split into two arcs no wider than 180 degrees.
+        self.assertEqual([round(a[5], 9) for a in arcs[:2]], [135.0, 135.0])
+        # A bulge of 1 is a counterclockwise half circle on the chord from (0, 0) to (2, 0): centre (1, 0).
+        half = arcs[2]
+        self.assertAlmostEqual(half[5], 180)
+        self.assertAlmostEqual(math.hypot(half[1] / 2 - 1, half[2] / 2), 1)
+        # The block's line, turned 90 degrees and moved to (5, 5), then scaled by 2.
+        self.assertEqual([round(v, 9) for v in segments[-1][1:]], [10, 10, 10, 12])
+
+    def test_patterns_join_copies_snap_noise_and_split_t_junctions(self):
+        problem = {"physics": "magnetics", "units": "millimeters", "type": "planar", "frequency": 0, "depth": 1}
+        # One quarter: an arc from 0 to 90 degrees, two radial edges, and a stub whose end rests 1e-6 off the middle
+        # of the lower edge (a T-junction drawn with noise).
+        quarter = [["arc", 10, 0, 0, 10, 90], ["segment", 0, 0, 10, 0], ["segment", 0, 0, 0, 10],
+                   ["segment", 5, 1e-6, 5, 3], ["segment", 5, 3, 7, 3], ["segment", 7, 3, 7, 0]]
+        model = assemble({"problem": problem, "steps": [
+            {"use": "entity_pattern", "entities": quarter, "copies": 4, "angle_step": 90, "snap": 1e-4}]}, {})[0]
+        # Shared radial edges are drawn once, and each lower edge is split at the stub's two feet.
+        self.assertEqual(len(model["arcs"]), 4)
+        lengths = sorted(round(math.dist((model["nodes"][s["n0"]]["x"], model["nodes"][s["n0"]]["y"]),
+                                         (model["nodes"][s["n1"]]["x"], model["nodes"][s["n1"]]["y"])), 6) for s in model["segments"])
+        self.assertEqual(lengths.count(5.0), 4)
+        self.assertEqual(lengths.count(3.0), 8)
+        self.assertEqual(sum(1 for length in lengths if length == 2.0), 8)
+        # Every stub rectangle and the rest of each quarter close into regions of their own.
+        turn = lambda x, y, k: [x * math.cos(math.pi * k / 2) - y * math.sin(math.pi * k / 2),
+                                x * math.sin(math.pi * k / 2) + y * math.cos(math.pi * k / 2)]
+        labels = [{"use": "block_label", "at": turn(x, y, k), "material": "Air"} for k in range(4) for x, y in ((6, 1.5), (3, 6))]
+        labelled = assemble({"problem": problem, "steps": [{"use": "material", "name": "Air"},
+            {"use": "entity_pattern", "entities": quarter, "copies": 4, "angle_step": 90, "snap": 1e-4}] + labels}, {})[0]
+        self.assertEqual(check_regions(labelled), [])
+        bands = assemble({"problem": problem, "steps": [
+            {"use": "entity_pattern", "entities": quarter, "copies": 4, "angle_step": 90, "snap": 1e-4,
+             "max_segment_bands": [[9, 11, 0.25]]}]}, {})[0]
+        self.assertTrue(all(arc["max_segment"] == 0.25 for arc in bands["arcs"]))
+
+
 class LinearMachineTests(unittest.TestCase):
     problem = {"physics": "magnetics", "units": "millimeters", "type": "axisymmetric", "frequency": 0, "depth": 1}
     array = {"use": "magnet_array", "start": 0, "inner": 19.5, "outer": 24.5, "magnet_material": "M",

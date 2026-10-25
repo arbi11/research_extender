@@ -98,6 +98,8 @@ def check(case, cache=PAPER_CACHE, build=True):
     def quote_problem(item):
         """Why a quote cannot be confirmed, or None. A quote names its source with "source" (default: the main one)."""
         name = item.get("source", "main")
+        if not isinstance(item.get("quote"), str):
+            return "a quote must be text"
         if name not in texts:
             return f"names an unknown source {name}"
         if texts[name] is not None and not _found(item["quote"], texts[name]):

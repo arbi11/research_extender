@@ -2556,6 +2556,102 @@
     "The annulus circles are drawn by the component; do not draw circles at its radii as well.",
     "Phase circuits and their currents are defined separately."
    ]
+  },
+  {
+   "id": "entity_pattern",
+   "layer": 2,
+   "title": "Contours from a drawing, as a polar array",
+   "description": "Segments and arcs given as data, usually extracted from a vector drawing a paper supplies (femm_brain.dxf reads DXF), repeated around the axis: copy k is turned by first_angle + k * angle_step. Endpoints within a snap distance are merged, so copies join exactly and drawing noise cannot split a corner, and a contour shared by two copies is drawn once. Arcs in given radius bands can take their own discretization, finer near an air gap.",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "entities",
+     "type": "list",
+     "description": "Items ['segment', x0, y0, x1, y1] or ['arc', x0, y0, x1, y1, angle], arcs counterclockwise and at most 180 degrees",
+     "required": true
+    },
+    {
+     "name": "copies",
+     "type": "integer",
+     "description": "Number of copies",
+     "required": false,
+     "minimum": 1,
+     "default": 1
+    },
+    {
+     "name": "angle_step",
+     "type": "number",
+     "description": "Turn between consecutive copies",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "first_angle",
+     "type": "number",
+     "description": "Turn of the first copy",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "snap",
+     "type": "number",
+     "description": "Distance within which endpoints are one point",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0,
+     "default": 1e-09
+    },
+    {
+     "name": "max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of the arcs",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
+    },
+    {
+     "name": "max_segment_bands",
+     "type": "list",
+     "required": false,
+     "description": "Bands [r_min, r_max, max_segment]: arcs whose radius lies in a band take that angular discretization (degrees)"
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the contours",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "addarc"
+   ],
+   "uses_components": [
+    "segment",
+    "arc"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": [
+    "Arcs are counterclockwise and no wider than 180 degrees (femm_brain.dxf splits wider ones).",
+    "Labels, materials and boundaries are assigned by other components; the drawing gives contours only."
+   ]
   }
  ]
 }

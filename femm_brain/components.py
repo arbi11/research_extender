@@ -18,6 +18,7 @@ import json
 import math
 from pathlib import Path
 
+from .geometry import arc_geometry
 from .reproduce import COLLECTIONS, PROPERTY_KEYS, UNITS, property_values
 
 DATA = Path(__file__).parent / "data"
@@ -900,12 +901,95 @@ def belt_winding(m, inner_radius, outer_radius, belts, material, gap_material, m
             m.label(*point(middle, centre), material, mesh=mesh, circuit=owner[2], turns=owner[3], group=group)
 
 
+def entity_pattern(m, entities, copies=1, angle_step=0, first_angle=0, snap=1e-9, max_segment=1, max_segment_bands=None,
+                   group=0):
+    """Contours given as data (from a drawing a paper supplies), repeated around the axis as a polar array.
+
+    ``entities`` holds ["segment", x0, y0, x1, y1] and ["arc", x0, y0, x1, y1,
+    angle] items, arcs counterclockwise and no wider than 180 degrees. Copy k is
+    turned by ``first_angle + k * angle_step`` degrees. An endpoint within
+    ``snap`` of a point this component already drew is that point, so copies
+    join exactly and drawing noise cannot split a corner; a contour drawn twice
+    (the shared edge of two copies) is drawn once; and a contour is split where
+    another contour's endpoint lies on it (a T-junction, as a magnet corner
+    resting on a pocket edge), as FEMM itself would split it. ``max_segment_bands``
+    lists [r_min, r_max, max_segment]: arcs whose radius lies in a band take that
+    angular discretization (finer near an air gap) instead of ``max_segment``.
+    """
+    if copies < 1 or not snap > 0:
+        raise ValueError("A pattern needs at least one copy and a positive snap distance")
+    cells, drawn, pieces = {}, set(), []
+
+    def point(x, y):
+        key = (round(x / snap), round(y / snap))
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for px, py in cells.get((key[0] + dx, key[1] + dy), []):
+                    if math.hypot(px - x, py - y) <= snap:
+                        return (px, py)
+        cells.setdefault(key, []).append((x, y))
+        return (x, y)
+
+    for k in range(copies):
+        turn = first_angle + k * angle_step
+        for item in entities:
+            kind = item[0]
+            if kind not in ("segment", "arc") or len(item) != (5 if kind == "segment" else 6):
+                raise ValueError("Pattern entities are ['segment', x0, y0, x1, y1] or ['arc', x0, y0, x1, y1, angle]")
+            a = point(*_rotated((item[1], item[2]), turn))
+            b = point(*_rotated((item[3], item[4]), turn))
+            if a == b:
+                continue  # shorter than the snap distance: not a contour
+            key = (kind, frozenset((a, b))) if kind == "segment" else (kind, a, b, round(item[5], 9))
+            if key not in drawn:
+                drawn.add(key)
+                pieces.append((kind, a, b, item[5] if kind == "arc" else None))
+    # Points on a contour's interior split it. A coarse grid keeps the search local.
+    points = [p for bucket in cells.values() for p in bucket]
+    size = max(snap * 1000, 1e-12)
+    grid = {}
+    for p in points:
+        grid.setdefault((math.floor(p[0] / size), math.floor(p[1] / size)), []).append(p)
+
+    def near(xmin, ymin, xmax, ymax):
+        for i in range(math.floor(xmin / size), math.floor(xmax / size) + 1):
+            for j in range(math.floor(ymin / size), math.floor(ymax / size) + 1):
+                yield from grid.get((i, j), [])
+
+    for kind, a, b, angle in pieces:
+        if kind == "segment":
+            dx, dy = b[0] - a[0], b[1] - a[1]
+            length2 = dx * dx + dy * dy
+            inner = []
+            for p in near(min(a[0], b[0]) - snap, min(a[1], b[1]) - snap, max(a[0], b[0]) + snap, max(a[1], b[1]) + snap):
+                t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / length2
+                if p not in (a, b) and 0 < t < 1 and math.hypot(a[0] + t * dx - p[0], a[1] + t * dy - p[1]) <= snap:
+                    inner.append((t, p))
+            chain = [a] + [p for _, p in sorted(inner)] + [b]
+            for u, v in zip(chain, chain[1:]):
+                m.segment(u, v, group=group)
+        else:
+            info = arc_geometry(a, b, angle)
+            (cx, cy), radius, start = info["center"], info["radius"], info["start_angle"]
+            inner = []
+            for p in near(cx - radius - snap, cy - radius - snap, cx + radius + snap, cy + radius + snap):
+                if p in (a, b) or abs(math.hypot(p[0] - cx, p[1] - cy) - radius) > snap:
+                    continue
+                along = (math.degrees(math.atan2(p[1] - cy, p[0] - cx)) - start) % 360
+                if 0 < along < angle:
+                    inner.append((along, p))
+            chain = [(0.0, a)] + sorted(inner) + [(angle, b)]
+            discretization = next((band[2] for band in max_segment_bands or [] if band[0] <= radius <= band[1]), max_segment)
+            for (u_angle, u), (v_angle, v) in zip(chain, chain[1:]):
+                m.arc(u, v, v_angle - u_angle, discretization, group=group)
+
+
 IMPLEMENTATIONS = {function.__name__: function for function in (
     segment, polyline, arc, circle, point, block_label, hole, material, library_material, circuit, conductor, boundary,
     fixed_potential_boundary, mixed_boundary, convection_boundary, iabc_open_boundary, axisymmetric_coil_section,
     bar_magnet, air_gap_element, kelvin_periodic_exterior, segment_boundary, fixed_point_potential, magnet_array,
     slotted_stator, trapezoidal_slot_stator, tooth_coil_winding, surface_magnet_rotor, salient_poles, salient_pole_winding,
-    belt_winding)}
+    belt_winding, entity_pattern)}
 
 
 def _finite(value):

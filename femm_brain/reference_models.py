@@ -490,9 +490,62 @@ def _harmonic_superposition(assessor, case, raw, metrics, model):
             "absolute_tolerance": tolerance, "samples": len(rows), "rows": rows, "target": target}
 
 
+def _dq_linkage(assessor, case, raw, metrics, model):
+    """d- and q-axis flux linkage or torque of one operating point, from measured phase flux linkages.
+
+    Each step of the point records its currents and the electrical angle of the
+    d-axis (the rotor's north-pole axis) from phase A's magnetic axis, measured
+    in the direction of the phase sequence: {"dq": {"point", "id", "iq",
+    "electrical_angle_deg"}}. The amplitude-invariant Park transform gives
+    psi_d = 2/3 sum psi_k cos(theta - k 120 deg) and psi_q = -2/3 sum psi_k
+    sin(theta - k 120 deg); torque is 3/2 p (psi_d i_q - psi_q i_d), or the
+    stress-tensor torque of a block-integral measurement turned into the
+    direction of the phase sequence. Values are averaged over the point's rotor
+    positions, or taken at its first position.
+    """
+    point, quantity = assessor["point"], assessor["quantity"]
+    steps = [s for s in case.get("steps") or [] if (s.get("dq") or {}).get("point") == point]
+    if not steps:
+        raise ValueError(f"No steps carry the operating point {point}")
+    if assessor.get("average", "positions") == "first":
+        steps = steps[:1]
+    phases = assessor["phases"]
+    rows = []
+    for step in steps:
+        dq = step["dq"]
+        theta = math.radians(dq["electrical_angle_deg"])
+        psi = [raw[(step["label"], phases[k], 2)].real for k in range(3)]
+        d = 2 / 3 * sum(psi[k] * math.cos(theta - 2 * math.pi * k / 3) for k in range(3))
+        q = -2 / 3 * sum(psi[k] * math.sin(theta - 2 * math.pi * k / 3) for k in range(3))
+        if quantity == "psi_d":
+            value = d
+        elif quantity == "psi_q":
+            value = q
+        elif quantity == "torque":
+            value = 1.5 * assessor["pole_pairs"] * (d * dq["iq"] - q * dq["id"])
+        elif quantity == "stress_torque":
+            value = assessor["sequence_direction"] * raw[(step["label"], assessor["torque_measurement"], 0)].real
+        else:
+            raise ValueError("Unknown dq quantity: " + str(quantity))
+        rows.append({"step": step["label"], "electrical_angle_deg": dq["electrical_angle_deg"], "psi_d": d, "psi_q": q, "value": value})
+    observed = sum(r["value"] for r in rows) / len(rows)
+    metric = f"{point}:{quantity}"
+    target = {key: assessor[key] for key in ("value", "relative_tolerance", "absolute_tolerance", "quote", "location",
+                                              "used_for_acceptance", "allowance") if key in assessor}
+    target.update(kind=assessor.get("value_kind"), metric=metric)
+    target.setdefault("used_for_acceptance", True)
+    error = abs(observed - assessor["value"])
+    tolerance = max(abs(assessor["value"]) * assessor.get("relative_tolerance", 0), assessor.get("absolute_tolerance", 0))
+    spread = max(r["value"] for r in rows) - min(r["value"] for r in rows)
+    return {"status": "passed" if error <= tolerance else "failed", "assessor": "dq_linkage", "metric": metric,
+            "statistic": f"mean over {len(rows)} rotor positions", "observed": observed, "expected": assessor["value"],
+            "absolute_error": error, "relative_error": error / abs(assessor["value"]) if assessor["value"] else None,
+            "absolute_tolerance": tolerance, "samples": len(rows), "position_spread": spread, "rows": rows, "target": target}
+
+
 ASSESSORS = {"tube_bessel": _tube, "dipole_torque": _dipole_torque, "applied_field": _applied_field,
              "phase_linkage": _phase_linkage, "waveform_statistic": _waveform_statistic, "spatial_harmonic": _spatial_harmonic,
-             "harmonic_superposition": _harmonic_superposition}
+             "harmonic_superposition": _harmonic_superposition, "dq_linkage": _dq_linkage}
 
 
 def run_assessor(assessor, case, raw, metrics, model):
