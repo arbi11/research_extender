@@ -236,6 +236,46 @@ The failures are kept with findings rather than relabeled:
 Examples with a passing case mark only their own workflow node as numerically
 checked, citing `data/verification/official_reproductions.json`. Article builds
 exist for six examples; the others need dimensions that appear only in figures.
+Some passing cases are narrow: the transient-heat example, for instance, only
+checks its published initial state, because no later temperature is published.
+
+## Reusable components and new designs
+
+Article builds contain no per-example code. Each is a data-only **assembly** of
+19 reusable, executable **components** (`components.py`, knowledge records in
+`data/components.json`): geometry and property operations (segment, polyline,
+arc, circle, block label, unmeshed region, material, official library material,
+circuit, conductor, boundaries) and layer-2 methods (open boundary builder,
+mixed open boundary, convection, axisymmetric winding section, bar magnet,
+air-gap element, Kelvin exterior with an applied field). Methods bind to the
+existing documented method nodes; a component is marked numerically checked only
+when a passing native assembly used it, and the node cites the cases.
+
+Assemblies use parameter references (`$name`) and a whitelisted arithmetic
+language (`=sqrt(a**2+b**2)/2`, with `pi`, `mu0`, `eps0`) that is parsed, never
+evaluated as code. Components validate their parameters, physics and problem type
+before building. The six article assemblies reproduce the earlier per-example
+builders exactly; frozen digests in the tests keep further changes deliberate.
+
+`data/designs.json` holds new designs assembled only from components, in
+combinations no official example uses, each checked against a closed-form result
+with the 1% policy fixed before running:
+
+| Design | Components exercised | Result |
+|---|---|---|
+| Coaxial capacitor | conductors on circles, unmeshed core | C within 0.11% |
+| Twin-lead line in open space | open boundary builder in planar electrostatics | C' within 0.23% |
+| Cylindrical heat shell | fixed-temperature conductors, library brick | Q within 0.017% |
+| Dipole torque variant | Kelvin exterior, air-gap element, bar magnet at new size, field and direction | m x B within 0.1% |
+
+```bash
+python3 -m femm_brain design --all --output work/designs --image research-extender-femm:dev-hierarchy-resumed-20261025
+python3 -m femm_brain reproduction-report --catalog designs --results work/designs
+```
+
+The dipole design also showed that the Kelvin exterior's applied field points at
+the mirror image of the exterior magnetization angle about x; this is recorded on
+the component rather than assumed.
 
 ## Explore
 

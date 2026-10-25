@@ -112,6 +112,86 @@ def validate_graph(graph):
     return issues
 
 
+def _attach_components(graph, directory):
+    """Bind executable components to their method nodes and record native evidence.
+
+    A component counts as numerically checked only when an article-level build
+    that used it, directly or inside another component, passed natively.
+    """
+    path = directory / "components.json"
+    if not path.exists():
+        return
+    catalog = json.loads(path.read_text())["components"]
+    index = {node["id"]: node for node in graph["nodes"]}
+    by_id = {c["id"]: c for c in catalog}
+    node_of = {}
+    for component in catalog:
+        executable = {k: component[k] for k in ("id", "parameters", "physics", "problem_types", "constraints",
+                                                "femm_functions", "uses_components")}
+        if component.get("node_id") in index:
+            index[component["node_id"]]["executable_component"] = executable
+            node_of[component["id"]] = component["node_id"]
+            continue
+        identifier = "component:" + component["id"]
+        node = {"id": identifier, "layer": component["layer"],
+                "kind": "executable_component" if component["layer"] == 2 else "executable_operation",
+                "title": component["title"], "description": component["description"], "parameters": component["parameters"],
+                "inputs": ["The typed model under construction and the parameters listed here."],
+                "outputs": ["Geometry, properties or labels added to the typed model."],
+                "constraints": component["constraints"], "capabilities": [component["stage"]],
+                "source_ids": component["source_ids"], "tags": ["component", component["id"]], "executable_component": executable,
+                "verification": {"status": "reconstructed",
+                                 "note": "Executable component; no passing native build has used it yet."}}
+        graph["nodes"].append(node)
+        index[identifier] = node
+        node_of[component["id"]] = identifier
+    prefixes = {"magnetics": "mi", "electrostatics": "ei", "heatflow": "hi"}
+    for component in catalog:
+        source = node_of[component["id"]]
+        targets = [node_of[u] for u in component["uses_components"]]
+        targets += [f"primitive:{prefixes[p]}_{f}" for p in component["physics"] for f in component["femm_functions"]
+                    if f"primitive:{prefixes[p]}_{f}" in index]
+        if not any(e["target"] == source for e in graph["edges"]) and "stage:" + component["stage"] in index and not any(
+                component["id"] in other["uses_components"] for other in catalog):
+            targets.insert(0, None)
+        for target in targets:
+            edge_source, edge_target = (("stage:" + component["stage"], source) if target is None else (source, target))
+            graph["edges"].append({"id": f"component:{edge_source}->{edge_target}", "source": edge_source, "target": edge_target,
+                                   "relation": "decomposes_into" if target is None else "implemented_by",
+                                   "when": "Executable construction used by data-only assemblies.", "parameter_bindings": {},
+                                   "source_ids": component["source_ids"]})
+    examples = {e["id"]: e for e in graph["examples"]}
+    checked, reports = {}, {}
+    cases = []
+    for name in ("official_reproductions.json", "component_designs.json"):
+        record_path = directory / "verification" / name
+        if record_path.exists():
+            cases += [dict(c, _report="verification/" + name) for c in json.loads(record_path.read_text()).get("cases", [])]
+    for case in cases:
+        article = case.get("levels", {}).get("article", {})
+        used = article.get("components_used") or []
+        example = examples.get(case.get("example_id"))
+        for component in used:
+            if example and component in node_of:
+                graph["edges"].append({"id": f"assembly:{example['id']}:{component}", "source": example["workflow_id"],
+                                       "target": node_of[component], "relation": "reuses",
+                                       "when": "The example's article build assembles this component.",
+                                       "parameter_bindings": {}, "source_ids": example.get("source_ids", [])})
+        if article.get("status") == "passed":
+            pending = list(used)
+            while pending:
+                component = pending.pop()
+                if component in by_id and case["case_id"] not in checked.setdefault(component, []):
+                    checked[component].append(case["case_id"])
+                    reports.setdefault(component, set()).add(case["_report"])
+                    pending.extend(by_id[component]["uses_components"])
+    for component, cases in checked.items():
+        index[node_of[component]]["verification"] = {
+            "status": "numerically_checked", "report": sorted(reports[component])[0], "reports": sorted(reports[component]),
+            "case_ids": sorted(cases),
+            "note": "Used by article-level or new-design assemblies that passed natively; applicability limits still apply."}
+
+
 def load_graph(data_dir=None):
     directory = Path(data_dir) if data_dir else DATA
     manifest_file = directory / "source_manifest.json"
@@ -219,6 +299,7 @@ def load_graph(data_dir=None):
                     "levels_passed": sorted({level for c in passed for level in c["levels_passed"]}),
                     "note": "This official example was solved natively and matched its published results. "
                             "Shared methods it uses are not thereby certified for other applications."}
+    _attach_components(graph, directory)
     baseline_path = directory / "curation_manifest.json"
     baseline = json.loads(baseline_path.read_text()) if baseline_path.exists() else {}
     baseline["source_hashes"] = {**external.get("curated_source_hashes", {}), **baseline.get("source_hashes", {})}

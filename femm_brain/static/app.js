@@ -210,6 +210,16 @@
       const signature = element("pre", null, "function-signature"); signature.id = "node-signature"; signature.append(element("code", node.signature));
       section.append(signature); sections.unshift(section);
     }
+    if (node.executable_component) {
+      const component = node.executable_component;
+      const section = element("section"); section.append(element("h3", "Executable component · " + component.id));
+      section.append(element("p", "Applies to " + array(component.physics).join(", ") + " · " + array(component.problem_types).join(", "), "muted"));
+      const table = element("table", null, "parameter-table");
+      array(component.parameters).forEach(parameter => { const row = element("tr"); row.append(element("td", parameter.name + (parameter.unit ? " [" + parameter.unit + "]" : "")), element("td", (parameter.description || "") + (parameter.required ? " (required)" : ""))); table.append(row); });
+      section.append(table);
+      if (array(node.verification?.case_ids).length) section.append(element("p", "Checked natively by: " + node.verification.case_ids.join(", "), "muted"));
+      sections.push(section);
+    }
     if (node.function || node.operation) sections.push(listSection("FEMM operation", [node.function || node.operation]));
     if (node.tags?.length) { const tags = element("div", null, "tag-list"); node.tags.forEach(tag => tags.append(element("span", tag, "tag"))); sections.push(tags); }
     $("node-details").replaceChildren(...sections);

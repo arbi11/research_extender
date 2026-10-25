@@ -65,7 +65,6 @@
     }
    ],
    "article": {
-    "recipe": "magnetics_tutorial_coil",
     "parameters": {
      "inner_diameter_in": {
       "value": 1,
@@ -107,6 +106,62 @@
       "unit": "count",
       "quote": "FEMM open boundary builder default (femm_makeabc.cpp: n defaults to 7)"
      }
+    },
+    "assembly": {
+     "problem": {
+      "physics": "magnetics",
+      "units": "inches",
+      "type": "axisymmetric",
+      "frequency": 0,
+      "depth": 1,
+      "ac_solver": 0
+     },
+     "let": {
+      "ri": "=inner_diameter_in/2",
+      "ro": "=outer_diameter_in/2",
+      "half": "=length_in/2"
+     },
+     "steps": [
+      {
+       "use": "library_material",
+       "name": "Air",
+       "library": "matlib.dat"
+      },
+      {
+       "use": "library_material",
+       "name": "$wire",
+       "library": "matlib.dat"
+      },
+      {
+       "use": "circuit",
+       "name": "Coil",
+       "current": "$current_A",
+       "series": true
+      },
+      {
+       "use": "axisymmetric_coil_section",
+       "inner_radius": "=ri",
+       "outer_radius": "=ro",
+       "z_min": "=-half",
+       "z_max": "=half",
+       "material": "$wire",
+       "circuit": "Coil",
+       "turns": "$turns"
+      },
+      {
+       "use": "block_label",
+       "at": [
+        "=(ro+boundary_radius_in)/2",
+        0
+       ],
+       "material": "Air"
+      },
+      {
+       "use": "iabc_open_boundary",
+       "radius": "$boundary_radius_in",
+       "layers": "$boundary_layers"
+      }
+     ]
     }
    }
   },
@@ -185,7 +240,6 @@
     }
    ],
    "article": {
-    "recipe": "electrostatics_square_capacitor",
     "parameters": {
      "inner_half_width_cm": {
       "value": 1,
@@ -209,6 +263,91 @@
       "unit": "V",
       "quote": "prescribed voltage value of 1"
      }
+    },
+    "assembly": {
+     "problem": {
+      "physics": "electrostatics",
+      "units": "centimeters",
+      "type": "planar",
+      "depth": "$depth_cm"
+     },
+     "let": {
+      "a": "=inner_half_width_cm",
+      "b": "=outer_half_width_cm"
+     },
+     "steps": [
+      {
+       "use": "material",
+       "name": "air",
+       "values": {
+        "ex": 1,
+        "ey": 1
+       }
+      },
+      {
+       "use": "conductor",
+       "name": "zero",
+       "value": 0
+      },
+      {
+       "use": "conductor",
+       "name": "one",
+       "value": "$inner_voltage_V"
+      },
+      {
+       "use": "polyline",
+       "points": [
+        [
+         0,
+         "=a"
+        ],
+        [
+         "=a",
+         "=a"
+        ],
+        [
+         "=a",
+         0
+        ],
+        [
+         "=b",
+         0
+        ],
+        [
+         "=b",
+         "=b"
+        ],
+        [
+         0,
+         "=b"
+        ]
+       ],
+       "edges": [
+        {
+         "conductor": "one"
+        },
+        {
+         "conductor": "one"
+        },
+        {},
+        {
+         "conductor": "zero"
+        },
+        {
+         "conductor": "zero"
+        },
+        {}
+       ]
+      },
+      {
+       "use": "block_label",
+       "at": [
+        "=(a+b)/2",
+        "=(a+b)/2"
+       ],
+       "material": "air"
+      }
+     ]
     }
    }
   },
@@ -299,7 +438,6 @@
     }
    ],
    "article": {
-    "recipe": "electrostatics_two_spheres",
     "parameters": {
      "sphere_bottom_z_m": {
       "value": 10,
@@ -330,7 +468,123 @@
       "value": 1,
       "unit": "m",
       "quote": "Mesh size” to 1"
+     },
+     "open_boundary_c0": {
+      "value": "2*eo/150",
+      "unit": "F/m^2 expression",
+      "quote": "2*eo/150",
+      "note": "Entered as the mixed boundary c0 coefficient; the assembly evaluates 2*eps0/domain_radius_m with FEMM's eo."
      }
+    },
+    "assembly": {
+     "problem": {
+      "physics": "electrostatics",
+      "units": "meters",
+      "type": "axisymmetric",
+      "depth": 1
+     },
+     "let": {
+      "bottom": "=sphere_bottom_z_m",
+      "top": "=sphere_top_z_m",
+      "extent": "=domain_radius_m"
+     },
+     "steps": [
+      {
+       "use": "material",
+       "name": "Air",
+       "values": {
+        "ex": 1,
+        "ey": 1
+       }
+      },
+      {
+       "use": "conductor",
+       "name": "+100V",
+       "value": "$sphere_voltage_V"
+      },
+      {
+       "use": "fixed_potential_boundary",
+       "name": "zero",
+       "value": 0
+      },
+      {
+       "use": "mixed_boundary",
+       "name": "open_bc",
+       "c0": "=2*eps0/extent",
+       "c1": 0
+      },
+      {
+       "use": "segment",
+       "start": [
+        0,
+        0
+       ],
+       "end": [
+        0,
+        "=bottom"
+       ]
+      },
+      {
+       "use": "segment",
+       "start": [
+        0,
+        "=top"
+       ],
+       "end": [
+        0,
+        "=extent"
+       ]
+      },
+      {
+       "use": "segment",
+       "start": [
+        0,
+        0
+       ],
+       "end": [
+        "=extent",
+        0
+       ],
+       "boundary": "zero"
+      },
+      {
+       "use": "arc",
+       "start": [
+        0,
+        "=bottom"
+       ],
+       "end": [
+        0,
+        "=top"
+       ],
+       "angle": 180,
+       "max_segment": "$max_segment_deg",
+       "conductor": "+100V"
+      },
+      {
+       "use": "arc",
+       "start": [
+        "=extent",
+        0
+       ],
+       "end": [
+        0,
+        "=extent"
+       ],
+       "angle": 90,
+       "max_segment": "$max_segment_deg",
+       "boundary": "open_bc"
+      },
+      {
+       "use": "block_label",
+       "at": [
+        "=extent/2",
+        "=extent/2"
+       ],
+       "material": "Air",
+       "mesh": "$air_mesh_size_m"
+      }
+     ]
     }
    }
   },
@@ -505,7 +759,6 @@
     }
    ],
    "article": {
-    "recipe": "tube_eddy_current",
     "parameters": {
      "inner_radius_in": {
       "value": 0.5,
@@ -559,6 +812,103 @@
       "unit": "count",
       "quote": "Not stated; chosen discretization rule, not tuned to the result"
      }
+    },
+    "assembly": {
+     "problem": {
+      "physics": "magnetics",
+      "units": "inches",
+      "type": "planar",
+      "frequency": "$frequency_Hz",
+      "depth": "$depth_in",
+      "ac_solver": 0
+     },
+     "let": {
+      "skin_depth_in": "=sqrt(2/(2*pi*frequency_Hz*relative_permeability*mu0*conductivity_MS_per_m*1e6))/0.0254"
+     },
+     "steps": [
+      {
+       "use": "material",
+       "name": "Air",
+       "values": {
+        "Mu_x": 1,
+        "Mu_y": 1
+       }
+      },
+      {
+       "use": "material",
+       "name": "wire",
+       "values": {
+        "Mu_x": 1,
+        "Mu_y": 1
+       }
+      },
+      {
+       "use": "material",
+       "name": "steel",
+       "values": {
+        "Mu_x": "$relative_permeability",
+        "Mu_y": "$relative_permeability",
+        "Sigma": "$conductivity_MS_per_m"
+       }
+      },
+      {
+       "use": "circuit",
+       "name": "Current",
+       "current": "$wire_current_A",
+       "series": true
+      },
+      {
+       "use": "circuit",
+       "name": "Zero Net Current",
+       "current": 0,
+       "series": false
+      },
+      {
+       "use": "fixed_potential_boundary",
+       "name": "A=0",
+       "value": 0
+      },
+      {
+       "use": "circle",
+       "radius": "$wire_radius_in"
+      },
+      {
+       "use": "circle",
+       "radius": "$inner_radius_in"
+      },
+      {
+       "use": "circle",
+       "radius": "$outer_radius_in",
+       "boundary": "A=0"
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        0
+       ],
+       "material": "wire",
+       "circuit": "Current"
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=(wire_radius_in+inner_radius_in)/2"
+       ],
+       "material": "Air"
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=(inner_radius_in+outer_radius_in)/2"
+       ],
+       "material": "steel",
+       "circuit": "Zero Net Current",
+       "mesh": "=skin_depth_in/elements_per_skin_depth"
+      }
+     ]
     }
    },
    "controls": [
@@ -1142,7 +1492,6 @@
     }
    ],
    "article": {
-    "recipe": "torque_benchmark",
     "parameters": {
      "magnet_length_cm": {
       "value": 1,
@@ -1219,6 +1568,70 @@
       "unit": "deg",
       "quote": "Not stated; chosen"
      }
+    },
+    "assembly": {
+     "problem": {
+      "physics": "magnetics",
+      "units": "centimeters",
+      "type": "planar",
+      "frequency": 0,
+      "depth": "$magnet_depth_cm",
+      "ac_solver": 0
+     },
+     "steps": [
+      {
+       "use": "material",
+       "name": "Air",
+       "values": {
+        "Mu_x": 1,
+        "Mu_y": 1
+       }
+      },
+      {
+       "use": "bar_magnet",
+       "length": "$magnet_length_cm",
+       "width": "$magnet_width_cm",
+       "coercivity": "$magnet_coercivity_A_per_m",
+       "direction": "$magnetization_direction_deg",
+       "mesh": "$mesh_size_cm"
+      },
+      {
+       "use": "air_gap_element",
+       "rotor_radius": "$rotor_radius_cm",
+       "stator_radius": "$stator_radius_cm",
+       "max_segment": "$gap_max_segment_deg"
+      },
+      {
+       "use": "kelvin_periodic_exterior",
+       "domain_radius": "$domain_radius_cm",
+       "exterior_center": [
+        "$exterior_center_x_cm",
+        0
+       ],
+       "applied_field": "$applied_field_T",
+       "field_direction": "$exterior_magnetization_deg",
+       "max_segment": "$boundary_max_segment_deg",
+       "exterior_mesh": "$exterior_mesh_size_cm"
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=(magnet_width_cm/2+rotor_radius_cm)/2"
+       ],
+       "material": "Air",
+       "mesh": "$mesh_size_cm"
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=(stator_radius_cm+domain_radius_cm)/2"
+       ],
+       "material": "Air",
+       "mesh": "$mesh_size_cm"
+      }
+     ]
     }
    },
    "controls": [
@@ -1751,7 +2164,6 @@
     }
    ],
    "article": {
-    "recipe": "heat_flow_chimney",
     "parameters": {
      "outer_half_width_m": {
       "value": 2,
@@ -1798,6 +2210,93 @@
       "unit": "W/m2K",
       "quote": "heat transfer coefficient of 5 W/m*K"
      }
+    },
+    "assembly": {
+     "problem": {
+      "physics": "heatflow",
+      "units": "meters",
+      "type": "planar",
+      "depth": "$depth_m",
+      "prev_soln": "",
+      "dt": 0
+     },
+     "let": {
+      "a": "=inner_half_width_m",
+      "b": "=outer_half_width_m"
+     },
+     "steps": [
+      {
+       "use": "library_material",
+       "name": "$material",
+       "library": "heatlib.dat"
+      },
+      {
+       "use": "convection_boundary",
+       "name": "Inner Boundary",
+       "ambient_temperature": "$inner_air_temperature_K",
+       "heat_transfer_coefficient": "$inner_heat_transfer_W_per_m2K"
+      },
+      {
+       "use": "convection_boundary",
+       "name": "Outer Boundary",
+       "ambient_temperature": "$outer_air_temperature_K",
+       "heat_transfer_coefficient": "$outer_heat_transfer_W_per_m2K"
+      },
+      {
+       "use": "polyline",
+       "points": [
+        [
+         0,
+         "=a"
+        ],
+        [
+         0,
+         "=b"
+        ],
+        [
+         "=b",
+         "=b"
+        ],
+        [
+         "=b",
+         0
+        ],
+        [
+         "=a",
+         0
+        ],
+        [
+         "=a",
+         "=a"
+        ]
+       ],
+       "edges": [
+        {},
+        {
+         "boundary": "Outer Boundary"
+        },
+        {
+         "boundary": "Outer Boundary"
+        },
+        {},
+        {
+         "boundary": "Inner Boundary"
+        },
+        {
+         "boundary": "Inner Boundary"
+        }
+       ]
+      },
+      {
+       "use": "block_label",
+       "at": [
+        "=(a+b)/2",
+        "=(a+b)/2"
+       ],
+       "material": "$material",
+       "mesh": "$mesh_size_m"
+      }
+     ]
     }
    }
   },

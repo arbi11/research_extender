@@ -175,10 +175,8 @@ Targets, verbatim quotes and the 1% policy are frozen in
 - Kept failures with findings: EI inductance (mesh refinement moves it away from
   1.73 mH), coilgun ball force (not mesh-converged), rotor-motion cogging torque
   (very mesh- and angle-sensitive at the source's ~1,400-node mesh).
-- Article builds are still one function per example in `article_recipes.py`.
-  They share an exact port of FEMM's open-boundary builder, library materials
-  and Kelvin/periodic exterior construction; turning these into graph methods is
-  the next recommended step.
+- Article builds are data-only assemblies of 19 reusable components (milestone 2
+  below); four new designs built only from components pass closed-form checks.
 
 Maintenance in the same PR: `restore-cache` restores the source snapshot by
 digest (the original cache was not on disk); scalar-physics model records keep
@@ -396,10 +394,16 @@ resource savings, and general dependency-aware backtracking is not complete.
    domain, gap and mesh controls. The rotor-motion example's cogging torque
    remains a recorded failure; a converged-mesh study of that machine is the open
    follow-up.
-2. **Reusable construction methods.** Extract air gaps, poles, signed windings,
-   nonlinear materials, magnets, boundaries and result extraction from verified
-   studies. Keep source applicability explicit instead of growing only a list
-   of one-off case builders.
+2. **Reusable construction methods.** Started in PR #7: 19 executable
+   components (open boundaries, Kelvin exterior, air-gap element, bar magnet,
+   axisymmetric winding, convection, conductors, circuits and geometry/property
+   operations) with knowledge records in `femm_brain/data/components.json`,
+   bound to the documented method nodes and marked checked only by passing
+   assemblies. Still missing: slotted stators and poles with rotate-and-repeat
+   (the teaching recipes are geometry-only), nonlinear B-H materials from a
+   library, signed multi-phase windings, and result-extraction methods as
+   graph-bound components. Measurement operations are already typed in the
+   reproduction catalog.
 3. **Natural language through the second brain.** Retrieve methods and fill typed
    parameters. Use OpenRouter only when interpretation or missing details need
    it. Unsupported combinations should state what is missing. Preserve the

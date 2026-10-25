@@ -54,6 +54,14 @@ def main(argv=None):
     report.add_argument("--results", type=Path, required=True)
     report.add_argument("--output", type=Path)
     report.add_argument("--html", type=Path)
+    report.add_argument("--catalog", choices=("reproductions", "designs"), default="reproductions")
+    design = sub.add_parser("design", help="Build, solve and check new designs assembled from reusable components")
+    design.add_argument("design_ids", nargs="*")
+    design.add_argument("--all", action="store_true")
+    design.add_argument("--output", type=Path, required=True)
+    design.add_argument("--engine", choices=("docker", "native"), default="docker")
+    design.add_argument("--image")
+    design.add_argument("--timeout", type=int, default=900)
     sub.add_parser("studies", help="List executable, source-backed studies")
     plan = sub.add_parser("plan", help="Select a known study locally, without an LLM")
     plan.add_argument("request", nargs="*")
@@ -115,9 +123,19 @@ def main(argv=None):
         print(json.dumps([{"case_id": s["case_id"], "levels": s["levels"],
                            "level_comparison": {k: v["status"] for k, v in s["level_comparison"].items()}} for s in summaries], indent=2))
         return 0 if all(v["status"] in ("passed", "comparators_only", "not_applicable", "not_attempted") for s in summaries for v in s["levels"].values()) else 1
+    if args.command == "design":
+        from .reproduce import load_designs, reproduce as run_reproduction
+        designs = load_designs()
+        identifiers = [d["id"] for d in designs] if args.all else args.design_ids
+        if not identifiers:
+            parser.error("Name design IDs or --all")
+        summaries = [run_reproduction(i, args.output / i, levels=("article",), engine=args.engine, image=args.image,
+                                      timeout=args.timeout, cases=designs) for i in identifiers]
+        print(json.dumps([{"design_id": s["case_id"], "status": s["levels"]["article"]["status"]} for s in summaries], indent=2))
+        return 0 if all(s["levels"]["article"]["status"] == "passed" for s in summaries) else 1
     if args.command == "reproduction-report":
-        from .reproduction_report import RECORD, write
-        record = write(args.results, args.output or RECORD, args.html)
+        from .reproduction_report import write
+        record = write(args.results, args.output, args.html, args.catalog)
         print(json.dumps({"totals": record["totals"], "audit": record["audit"]}, indent=2))
         return 0 if record["audit"]["status"] == "passed" else 1
     graph = load_graph()

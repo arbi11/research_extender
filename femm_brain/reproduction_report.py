@@ -11,10 +11,14 @@ import html
 import json
 from pathlib import Path
 
-from .reproduce import LEVELS, load_cases
+from .reproduce import LEVELS, load_cases, load_designs
 
 DATA = Path(__file__).parent / "data"
 RECORD = DATA / "verification" / "official_reproductions.json"
+DESIGN_RECORD = DATA / "verification" / "component_designs.json"
+SCOPES = {"reproductions": "Official FEMM examples reproduced from the unmodified model file (original), from the brain's stored model record "
+                           "(rebuild) and from article-stated parameters (article). Comparators are reported but never used for acceptance.",
+          "designs": "New designs assembled only from reusable components and checked against closed-form results at the assembly level."}
 
 
 def _target_row(result):
@@ -37,14 +41,14 @@ def _target_row(result):
             "quote": target.get("quote")}
 
 
-def collect(results):
+def collect(results, catalog="reproductions"):
     results = Path(results)
-    cases = {c["id"]: c for c in load_cases()}
+    cases = {c["id"]: c for c in (load_cases() if catalog == "reproductions" else load_designs())}
     entries = []
     for identifier, case in cases.items():
         summary_path = results / identifier / "summary.json"
         if not summary_path.is_file():
-            entries.append({"case_id": identifier, "example_id": case["example_id"], "title": case["title"], "status": "not_run"})
+            entries.append({"case_id": identifier, "example_id": case.get("example_id"), "title": case["title"], "status": "not_run"})
             continue
         summary = json.loads(summary_path.read_text())
         levels = {}
@@ -63,6 +67,8 @@ def collect(results):
                 entry["targets"] = [_target_row(r) for r in report["checks"]["targets"].get("results", [])]
                 entry["mesh_nodes"] = {k: v for k, v in report["metrics"].items() if k.startswith("mesh_nodes")}
                 entry["plan_sha256"] = report.get("plan_sha256")
+                if report.get("components_used"):
+                    entry["components_used"] = report["components_used"]
                 entry["report_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
                 entry["engine_image_id"] = report.get("execution", {}).get("image_id")
                 entry["errors"] = {k: v["error"] for k, v in report["checks"].items() if v.get("error")}
@@ -74,16 +80,15 @@ def collect(results):
         comparators = [level for level, entry in levels.items() if entry["status"] == "comparators_only"]
         status = ("passed" if attempted and len(passed) == len(attempted) else "failed" if attempted else
                   "comparators_only" if comparators else "not_attempted")
-        entries.append({"case_id": identifier, "example_id": case["example_id"], "title": case["title"], "source_url": case["source_url"],
+        entries.append({"case_id": identifier, "example_id": case.get("example_id"), "title": case["title"], "source_url": case.get("source_url"),
                         "status": status,
                         "levels_passed": passed, "levels": levels,
                         "rebuild_matches_original": summary.get("level_comparison", {}).get("rebuild"),
                         "article_model_vs_original": {"difference_count": summary["article_model_vs_original"]["difference_count"]}
                         if summary.get("article_model_vs_original") else None})
     return {"schema_version": 1, "generated_at": datetime.now(timezone.utc).isoformat(),
-            "catalog_sha256": hashlib.sha256((DATA / "reproductions.json").read_bytes()).hexdigest(),
-            "scope": "Official FEMM examples reproduced from the unmodified model file (original), from the brain's stored model record "
-                     "(rebuild) and from article-stated parameters (article). Comparators are reported but never used for acceptance.",
+            "catalog_sha256": hashlib.sha256((DATA / (catalog + ".json")).read_bytes()).hexdigest(),
+            "catalog": catalog, "scope": SCOPES[catalog],
             "llm_calls": 0, "cases": entries,
             "totals": {"cases": len(entries), "passed": sum(e["status"] == "passed" for e in entries),
                        "failed": sum(e["status"] == "failed" for e in entries),
@@ -122,7 +127,7 @@ def render_html(record):
                     items.append(f'<li class="s-{t["status"]}">{html.escape(t["metric"])}: {_format(t["observed"])} vs {_format(t["expected"])}'
                                  f' ({_format(t["relative_error"] * 100 if t["relative_error"] is not None else None)}%){role}</li>')
             detail.append(f'<div><b>{level}</b> · mesh {html.escape(json.dumps(entry.get("mesh_nodes", {})))}<ul>{"".join(items)}</ul></div>')
-        rows.append(f'<tr><td><a href="{html.escape(case.get("source_url", "#"))}">{html.escape(case["title"])}</a><br><code>{case["case_id"]}</code></td>'
+        rows.append(f'<tr><td><a href="{html.escape(case.get("source_url") or "#")}">{html.escape(case["title"])}</a><br><code>{case["case_id"]}</code></td>'
                     + "".join(cells) + f'<td><details><summary>{len(detail)} level(s)</summary>{"".join(detail)}</details></td></tr>')
     totals = record["totals"]
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -144,7 +149,7 @@ rebuild {totals["level_passes"]["rebuild"]}, article {totals["level_passes"]["ar
 
 def audit(record, registry_path=DATA / "verification" / "reviewed_reproduction_failures.json"):
     """Accept only reviewed failures; flag new failures and reviewed ones that now pass."""
-    registry = json.loads(Path(registry_path).read_text())["failures"]
+    registry = json.loads(Path(registry_path).read_text())["failures"] if Path(registry_path).exists() else []
     reviewed = {(f["case_id"], level, metric) for f in registry for level in f["levels"] for metric in f["metrics"]}
     observed = set()
     for case in record["cases"]:
@@ -163,9 +168,11 @@ def audit(record, registry_path=DATA / "verification" / "reviewed_reproduction_f
             "note": "A passing audit means every failure is a reviewed, recorded finding, not that all published targets passed."}
 
 
-def write(results, output=RECORD, html_output=None):
-    record = collect(results)
-    record["audit"] = audit(record)
+def write(results, output=None, html_output=None, catalog="reproductions"):
+    record = collect(results, catalog)
+    record["audit"] = audit(record, DATA / "verification" / ("reviewed_reproduction_failures.json" if catalog == "reproductions"
+                                                             else "reviewed_design_failures.json"))
+    output = output or (RECORD if catalog == "reproductions" else DESIGN_RECORD)
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(record, indent=1) + "\n")

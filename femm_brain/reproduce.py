@@ -528,6 +528,11 @@ def load_cases():
     return json.loads((DATA / "reproductions.json").read_text())["cases"]
 
 
+def load_designs():
+    """New designs assembled from components; they run at the article (assembly) level only."""
+    return json.loads((DATA / "designs.json").read_text())["designs"]
+
+
 def _source_record(case):
     sha = case.get("source_model_sha256")
     if not sha:
@@ -603,7 +608,7 @@ def plan_level(case, level, control=None):
     construction.append(_call(PHYSICS[physics]["pre"] + "_saveas", "model" + extension))
     lua = "\n".join(construction + solve_lines(case, physics, model["labels"])) + "\n"
     targets = [t for t in case["targets"] if level in t.get("levels", LEVELS)]
-    plan = {"schema_version": 1, "case_id": case["id"], "example_id": case["example_id"], "level": level,
+    plan = {"schema_version": 1, "case_id": case["id"], "example_id": case.get("example_id"), "level": level,
             "physics": physics, "source_ids": case["source_ids"], "source_url": case["source_url"],
             "source_model_sha256": case.get("source_model_sha256"),
             "expected_model": model if level != "original" else None,
@@ -611,10 +616,14 @@ def plan_level(case, level, control=None):
             "article_assumptions": built.get("assumptions") if level == "article" else None,
             "targets": targets, "assessors": case.get("assessors", []), "lua": lua,
             "control": control, "mesh_scaling": mesh_scaling,
-            "module_sha256": _sha(__file__), "catalog_sha256": _sha(DATA / "reproductions.json"),
+            "module_sha256": _sha(__file__),
+            "catalog_sha256": _sha(DATA / ("reproductions.json" if case.get("example_id") else "designs.json")),
             "requires_ai": False}
     if level == "article":
         plan["article_recipe_sha256"] = _sha(Path(__file__).with_name("article_recipes.py"))
+        plan["components_sha256"] = _sha(Path(__file__).with_name("components.py"))
+        plan["component_catalog_sha256"] = _sha(DATA / "components.json")
+        plan["components_used"] = built.get("components", [])
     plan["plan_sha256"] = hashlib.sha256(json.dumps(plan, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     return plan
 
@@ -670,11 +679,11 @@ def run_level(case, level, output, *, engine="docker", image=None, timeout=900, 
         if not source.is_file() or _sha(source) != plan["source_model_sha256"]:
             raise ValueError("The official model file is missing from the verified cache; run restore-cache")
         shutil.copyfile(source, folder / ("original" + extension))
-    report = {"schema_version": 1, "case_id": case["id"], "example_id": case["example_id"], "level": level,
+    report = {"schema_version": 1, "case_id": case["id"], "example_id": case.get("example_id"), "level": level,
               "physics": physics, "plan_sha256": plan["plan_sha256"], "started_at": datetime.now(timezone.utc).isoformat(),
               "checks": {name: {"status": "not_run"} for name in ("build", "solve", "targets")},
               "requires_ai": False, "status": "failed", "metrics": {}, "control": control,
-              "mesh_scaling": plan.get("mesh_scaling")}
+              "mesh_scaling": plan.get("mesh_scaling"), "components_used": plan.get("components_used")}
     started = time.monotonic()
     try:
         report["execution"] = _run_engine(folder, engine=engine, image=image or os.getenv("FEMM_BRAIN_IMAGE", ""), timeout=timeout)
@@ -781,15 +790,15 @@ def run_controls(case, reports, output, **options):
     return results
 
 
-def reproduce(case_id, output, *, levels=LEVELS, engine="docker", image=None, timeout=900, controls=False):
-    cases = {case["id"]: case for case in load_cases()}
+def reproduce(case_id, output, *, levels=LEVELS, engine="docker", image=None, timeout=900, controls=False, cases=None):
+    cases = {case["id"]: case for case in (cases if cases is not None else load_cases())}
     if case_id not in cases:
         raise ValueError("Unknown reproduction case: " + str(case_id))
     case = cases[case_id]
     output = Path(output)
     reports = {level: run_level(case, level, output / level, engine=engine, image=image, timeout=timeout) for level in levels}
     control_results = run_controls(case, reports, output, engine=engine, image=image, timeout=timeout) if controls else {}
-    summary = {"schema_version": 1, "case_id": case_id, "example_id": case["example_id"], "title": case["title"],
+    summary = {"schema_version": 1, "case_id": case_id, "example_id": case.get("example_id"), "title": case["title"],
                "levels": {level: {"status": r["status"], **({"reason": r["reason"]} if r.get("reason") else {})} for level, r in reports.items()},
                "level_comparison": compare_levels(case, reports), "controls": control_results, "llm_calls": 0,
                "completed_at": datetime.now(timezone.utc).isoformat()}

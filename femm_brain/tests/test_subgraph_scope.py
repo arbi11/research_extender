@@ -17,7 +17,10 @@ class ExampleScopeTests(unittest.TestCase):
         self.assertNotIn("method:methods_thermal_convection_boundary", selected)
         self.assertNotIn("method:methods_axisymmetric_spheres", selected)
         self.assertNotIn("recipe:slotted_stator", selected)
-        self.assertLess(len(selected), 60)
+        # Executable operations behind the example's own coil-section method are in
+        # scope; components for unrelated methods are not.
+        self.assertEqual({n for n in selected if n.startswith("component:")}, {"component:segment", "component:block_label"})
+        self.assertLess(len(selected), 62)
 
     def test_all_examples_keep_their_explicit_bindings_and_source_assets(self):
         graph = load_graph()

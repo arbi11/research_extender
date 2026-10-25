@@ -1,0 +1,1253 @@
+{
+ "schema_version": 1,
+ "purpose": "Executable construction components. Each record is the knowledge side of a function in femm_brain/components.py; layer-2 methods bind to existing documented method nodes where one exists.",
+ "components": [
+  {
+   "id": "segment",
+   "layer": 3,
+   "title": "Straight segment",
+   "description": "A straight contour between two points, with optional mesh size and contour properties.",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "start",
+     "type": "point",
+     "description": "Start point",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "end",
+     "type": "point",
+     "description": "End point",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Maximum element size along the segment; omit for automatic",
+     "required": false,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "boundary",
+     "type": "string",
+     "description": "Boundary property attached to the contour",
+     "required": false
+    },
+    {
+     "name": "conductor",
+     "type": "string",
+     "description": "Conductor (scalar physics) attached to the contour",
+     "required": false
+    },
+    {
+     "name": "hidden",
+     "type": "boolean",
+     "description": "Hide in the postprocessor",
+     "required": false
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group number for selection",
+     "required": false
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "selectsegment",
+    "setsegmentprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": []
+  },
+  {
+   "id": "polyline",
+   "layer": 3,
+   "title": "Polyline or polygon",
+   "description": "Consecutive straight segments through points, optionally closed, with per-edge contour properties.",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "points",
+     "type": "points",
+     "description": "Vertices in order",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "closed",
+     "type": "boolean",
+     "description": "Join the last vertex to the first",
+     "required": false,
+     "default": true
+    },
+    {
+     "name": "edges",
+     "type": "list",
+     "description": "One entry per edge with boundary, conductor, mesh, hidden or group",
+     "required": false
+    },
+    {
+     "name": "boundary",
+     "type": "string",
+     "description": "Boundary property attached to the contour",
+     "required": false
+    },
+    {
+     "name": "conductor",
+     "type": "string",
+     "description": "Conductor (scalar physics) attached to the contour",
+     "required": false
+    },
+    {
+     "name": "hidden",
+     "type": "boolean",
+     "description": "Hide in the postprocessor",
+     "required": false
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group number for selection",
+     "required": false
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "selectsegment",
+    "setsegmentprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": []
+  },
+  {
+   "id": "arc",
+   "layer": 3,
+   "title": "Circular arc",
+   "description": "A counterclockwise arc from start to end spanning the given angle, discretized at the given maximum segment angle.",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "start",
+     "type": "point",
+     "description": "Start point",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "end",
+     "type": "point",
+     "description": "End point",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "angle",
+     "type": "number",
+     "description": "Swept angle",
+     "required": true,
+     "unit": "degrees",
+     "minimum": 0,
+     "maximum": 180
+    },
+    {
+     "name": "max_segment",
+     "type": "number",
+     "description": "Maximum angle per discretized side",
+     "required": false,
+     "unit": "degrees",
+     "minimum": 0.01,
+     "maximum": 180,
+     "default": 1
+    },
+    {
+     "name": "boundary",
+     "type": "string",
+     "description": "Boundary property attached to the contour",
+     "required": false
+    },
+    {
+     "name": "conductor",
+     "type": "string",
+     "description": "Conductor (scalar physics) attached to the contour",
+     "required": false
+    },
+    {
+     "name": "hidden",
+     "type": "boolean",
+     "description": "Hide in the postprocessor",
+     "required": false
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group number for selection",
+     "required": false
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addarc",
+    "selectarcsegment",
+    "setarcsegmentprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": []
+  },
+  {
+   "id": "circle",
+   "layer": 3,
+   "title": "Full circle",
+   "description": "Two 180-degree arcs; contour properties may differ between the upper and lower halves.",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "radius",
+     "type": "number",
+     "description": "Radius",
+     "required": true,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "center",
+     "type": "point",
+     "description": "Center",
+     "required": false,
+     "unit": "model length",
+     "default": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "max_segment",
+     "type": "number",
+     "description": "Maximum angle per discretized side",
+     "required": false,
+     "unit": "degrees",
+     "minimum": 0.01,
+     "maximum": 180,
+     "default": 1
+    },
+    {
+     "name": "upper",
+     "type": "object",
+     "description": "Contour properties for the upper half",
+     "required": false
+    },
+    {
+     "name": "lower",
+     "type": "object",
+     "description": "Contour properties for the lower half",
+     "required": false
+    },
+    {
+     "name": "boundary",
+     "type": "string",
+     "description": "Boundary property attached to the contour",
+     "required": false
+    },
+    {
+     "name": "conductor",
+     "type": "string",
+     "description": "Conductor (scalar physics) attached to the contour",
+     "required": false
+    },
+    {
+     "name": "hidden",
+     "type": "boolean",
+     "description": "Hide in the postprocessor",
+     "required": false
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group number for selection",
+     "required": false
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addarc",
+    "selectarcsegment",
+    "setarcsegmentprop"
+   ],
+   "uses_components": [
+    "arc"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": []
+  },
+  {
+   "id": "block_label",
+   "layer": 3,
+   "title": "Block label",
+   "description": "Assigns a material and, for magnetics, a circuit, turns and magnetization direction to the enclosing region.",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "at",
+     "type": "point",
+     "description": "Label location inside the region",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "material",
+     "type": "string",
+     "description": "Material name",
+     "required": true
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Maximum element size; omit for automatic",
+     "required": false,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "circuit",
+     "type": "string",
+     "description": "Magnetics circuit",
+     "required": false
+    },
+    {
+     "name": "turns",
+     "type": "integer",
+     "description": "Signed series turns",
+     "required": false
+    },
+    {
+     "name": "magdir",
+     "type": "number",
+     "description": "Magnetization direction",
+     "required": false,
+     "unit": "degrees"
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group number",
+     "required": false
+    },
+    {
+     "name": "external",
+     "type": "boolean",
+     "description": "Member of a Kelvin external region",
+     "required": false
+    }
+   ],
+   "femm_functions": [
+    "addblocklabel",
+    "selectlabel",
+    "setblockprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "materials",
+   "constraints": []
+  },
+  {
+   "id": "hole",
+   "layer": 3,
+   "title": "Unmeshed region",
+   "description": "A block label marked <No Mesh>, for example the interior of an air-gap element.",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "at",
+     "type": "point",
+     "description": "Location inside the region",
+     "required": true,
+     "unit": "model length"
+    }
+   ],
+   "femm_functions": [
+    "addblocklabel",
+    "selectlabel",
+    "setblockprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "mesh_solve",
+   "constraints": []
+  },
+  {
+   "id": "material",
+   "layer": 3,
+   "title": "Material property",
+   "description": "A material with explicit native property values (FEMM file keys) and an optional B-H or k(T) curve.",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "name",
+     "type": "string",
+     "description": "Material name",
+     "required": true
+    },
+    {
+     "name": "values",
+     "type": "object",
+     "description": "Native property values, e.g. Mu_x, Sigma, H_c, ex, Kx",
+     "required": false
+    },
+    {
+     "name": "curve",
+     "type": "points",
+     "description": "B-H (T, A/m) or T-k points",
+     "required": false
+    }
+   ],
+   "femm_functions": [
+    "addmaterial",
+    "addbhpoint",
+    "addtkpoint"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "materials",
+   "constraints": []
+  },
+  {
+   "id": "library_material",
+   "layer": 3,
+   "title": "Official library material",
+   "description": "Copies a named entry exactly from FEMM's official material library, as tutorials instruct.",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "name",
+     "type": "string",
+     "description": "Library entry name",
+     "required": true
+    },
+    {
+     "name": "library",
+     "type": "string",
+     "description": "Library file (matlib.dat, heatlib.dat)",
+     "required": true
+    }
+   ],
+   "femm_functions": [
+    "addmaterial",
+    "addbhpoint",
+    "addtkpoint"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "femm-qt-source-06oct2026"
+   ],
+   "node_id": null,
+   "stage": "materials",
+   "constraints": [
+    "Only entries recorded with provenance in library_materials.json are available."
+   ]
+  },
+  {
+   "id": "circuit",
+   "layer": 3,
+   "title": "Circuit property",
+   "description": "A series or parallel circuit with a prescribed (possibly complex) total current.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "name",
+     "type": "string",
+     "description": "Circuit name",
+     "required": true
+    },
+    {
+     "name": "current",
+     "type": "number_or_complex",
+     "description": "Total current; [re, im] for AC",
+     "required": true,
+     "unit": "A"
+    },
+    {
+     "name": "series",
+     "type": "boolean",
+     "description": "Series (true) or parallel (false)",
+     "required": false,
+     "default": true
+    }
+   ],
+   "femm_functions": [
+    "addcircprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "manual5",
+    "magneticstutorial"
+   ],
+   "node_id": "method:methods_signed_turn_circuit",
+   "stage": "excitation",
+   "constraints": []
+  },
+  {
+   "id": "conductor",
+   "layer": 3,
+   "title": "Conductor property",
+   "description": "A prescribed-voltage (or temperature) or prescribed-charge (or heat-flux) conductor for scalar physics.",
+   "physics": [
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "name",
+     "type": "string",
+     "description": "Conductor name",
+     "required": true
+    },
+    {
+     "name": "value",
+     "type": "number",
+     "description": "Prescribed voltage or temperature",
+     "required": false,
+     "unit": "V or K"
+    },
+    {
+     "name": "prescribed",
+     "type": "string",
+     "description": "'value' or 'charge'",
+     "required": false,
+     "default": "value"
+    },
+    {
+     "name": "charge",
+     "type": "number",
+     "description": "Prescribed total charge or heat flux",
+     "required": false
+    }
+   ],
+   "femm_functions": [
+    "addconductorprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "manual5",
+    "electrostaticstutorial"
+   ],
+   "node_id": "method:methods_fixed_voltage_conductor",
+   "stage": "excitation",
+   "constraints": []
+  },
+  {
+   "id": "boundary",
+   "layer": 3,
+   "title": "Boundary property",
+   "description": "A boundary property with explicit native values (FEMM file keys).",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "name",
+     "type": "string",
+     "description": "Boundary name",
+     "required": true
+    },
+    {
+     "name": "values",
+     "type": "object",
+     "description": "Native boundary values, e.g. BdryType, c0",
+     "required": false
+    }
+   ],
+   "femm_functions": [
+    "addboundprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "boundaries",
+   "constraints": []
+  },
+  {
+   "id": "fixed_potential_boundary",
+   "layer": 3,
+   "title": "Fixed-potential boundary",
+   "description": "A Dirichlet boundary: prescribed vector potential, voltage or temperature.",
+   "physics": [
+    "magnetics",
+    "electrostatics",
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "name",
+     "type": "string",
+     "description": "Boundary name",
+     "required": true
+    },
+    {
+     "name": "value",
+     "type": "number",
+     "description": "Prescribed A, V or T",
+     "required": false
+    }
+   ],
+   "femm_functions": [
+    "addboundprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "boundaries",
+   "constraints": []
+  },
+  {
+   "id": "mixed_boundary",
+   "layer": 2,
+   "title": "Mixed (Robin) open boundary",
+   "description": "An asymptotic open-space boundary; the coefficients are supplied by the citing assembly (e.g. c0 = 2*eps0/r in the electrostatics tutorial).",
+   "physics": [
+    "magnetics",
+    "electrostatics"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "name",
+     "type": "string",
+     "description": "Boundary name",
+     "required": true
+    },
+    {
+     "name": "c0",
+     "type": "number",
+     "description": "Mixed coefficient c0",
+     "required": true
+    },
+    {
+     "name": "c1",
+     "type": "number",
+     "description": "Mixed coefficient c1",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addboundprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "electrostaticstutorial",
+    "manual5"
+   ],
+   "node_id": "method:methods_asymptotic_outer_boundary",
+   "stage": "boundaries",
+   "constraints": [
+    "The coefficient formula depends on physics and geometry and must be cited by the assembly."
+   ]
+  },
+  {
+   "id": "convection_boundary",
+   "layer": 2,
+   "title": "Convection boundary",
+   "description": "Heat transfer to ambient air with a film coefficient.",
+   "physics": [
+    "heatflow"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "name",
+     "type": "string",
+     "description": "Boundary name",
+     "required": true
+    },
+    {
+     "name": "ambient_temperature",
+     "type": "number",
+     "description": "Ambient temperature",
+     "required": true,
+     "unit": "K",
+     "minimum": 0
+    },
+    {
+     "name": "heat_transfer_coefficient",
+     "type": "number",
+     "description": "Film coefficient",
+     "required": true,
+     "unit": "W/(m^2 K)",
+     "minimum": 0
+    }
+   ],
+   "femm_functions": [
+    "addboundprop"
+   ],
+   "uses_components": [],
+   "source_ids": [
+    "heatflowtutorial"
+   ],
+   "node_id": "method:methods_thermal_convection_boundary",
+   "stage": "boundaries",
+   "constraints": []
+  },
+  {
+   "id": "iabc_open_boundary",
+   "layer": 2,
+   "title": "Improvised asymptotic boundary (open boundary builder)",
+   "description": "Nested shells whose permeabilities emulate unbounded space, built exactly as FEMM's open boundary builder.",
+   "physics": [
+    "magnetics",
+    "electrostatics"
+   ],
+   "problem_types": [
+    "planar",
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "radius",
+     "type": "number",
+     "description": "Radius of the domain of interest",
+     "required": true,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "layers",
+     "type": "integer",
+     "description": "Number of shells",
+     "required": false,
+     "minimum": 1,
+     "maximum": 12,
+     "default": 7
+    },
+    {
+     "name": "center_y",
+     "type": "number",
+     "description": "Center on the axis (axisymmetric) or vertical offset",
+     "required": false,
+     "unit": "model length",
+     "default": 0
+    },
+    {
+     "name": "dirichlet",
+     "type": "boolean",
+     "description": "Dirichlet outer edge",
+     "required": false,
+     "default": true
+    }
+   ],
+   "femm_functions": [
+    "addarc",
+    "setarcsegmentprop",
+    "addsegment",
+    "addmaterial",
+    "addblocklabel",
+    "setblockprop",
+    "addboundprop"
+   ],
+   "uses_components": [
+    "arc",
+    "segment",
+    "material",
+    "block_label",
+    "boundary"
+   ],
+   "source_ids": [
+    "femm-qt-source-06oct2026",
+    "magneticstutorial",
+    "manual5"
+   ],
+   "node_id": "method:methods_iabc_open_domain",
+   "stage": "boundaries",
+   "constraints": [
+    "Axisymmetric use requires no other geometry on the axis inside the domain radius.",
+    "Centered on the x = 0 axis."
+   ]
+  },
+  {
+   "id": "axisymmetric_coil_section",
+   "layer": 2,
+   "title": "Axisymmetric winding section",
+   "description": "A rectangular winding cross-section in r-z with its circuit, signed turns and wire material.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "axisymmetric"
+   ],
+   "parameters": [
+    {
+     "name": "inner_radius",
+     "type": "number",
+     "description": "Inner radius",
+     "required": true,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "outer_radius",
+     "type": "number",
+     "description": "Outer radius",
+     "required": true,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "z_min",
+     "type": "number",
+     "description": "Lower axial edge",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "z_max",
+     "type": "number",
+     "description": "Upper axial edge",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "material",
+     "type": "string",
+     "description": "Winding material",
+     "required": true
+    },
+    {
+     "name": "circuit",
+     "type": "string",
+     "description": "Circuit",
+     "required": true
+    },
+    {
+     "name": "turns",
+     "type": "integer",
+     "description": "Signed turns",
+     "required": true
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Maximum element size",
+     "required": false,
+     "unit": "model length",
+     "minimum": 0
+    }
+   ],
+   "femm_functions": [
+    "addsegment",
+    "addblocklabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "segment",
+    "block_label"
+   ],
+   "source_ids": [
+    "magneticstutorial"
+   ],
+   "node_id": "method:methods_axisymmetric_coil_section",
+   "stage": "geometry",
+   "constraints": []
+  },
+  {
+   "id": "bar_magnet",
+   "layer": 2,
+   "title": "Planar bar magnet",
+   "description": "A rectangular permanent magnet with linear recoil permeability, coercivity and magnetization direction.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "length",
+     "type": "number",
+     "description": "Length along x",
+     "required": true,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "width",
+     "type": "number",
+     "description": "Width along y",
+     "required": true,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "coercivity",
+     "type": "number",
+     "description": "Coercivity Hc",
+     "required": true,
+     "unit": "A/m",
+     "minimum": 0
+    },
+    {
+     "name": "direction",
+     "type": "number",
+     "description": "Magnetization direction",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "center",
+     "type": "point",
+     "description": "Center",
+     "required": false,
+     "unit": "model length",
+     "default": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "material",
+     "type": "string",
+     "description": "Material name",
+     "required": false,
+     "default": "magnet"
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Maximum element size",
+     "required": false,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "relative_permeability",
+     "type": "number",
+     "description": "Recoil permeability",
+     "required": false,
+     "minimum": 0,
+     "default": 1
+    }
+   ],
+   "femm_functions": [
+    "addmaterial",
+    "addsegment",
+    "addblocklabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "material",
+    "segment",
+    "block_label"
+   ],
+   "source_ids": [
+    "torquebenchmark"
+   ],
+   "node_id": "method:methods_planar_bar_magnet",
+   "stage": "geometry",
+   "constraints": []
+  },
+  {
+   "id": "air_gap_element",
+   "layer": 2,
+   "title": "Air-gap element (sliding band)",
+   "description": "Concentric rotor and stator circles linked by an air-gap boundary; rotor position is set by the boundary's inner angle without remeshing.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "rotor_radius",
+     "type": "number",
+     "description": "Rotor-side radius",
+     "required": true,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "stator_radius",
+     "type": "number",
+     "description": "Stator-side radius",
+     "required": true,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "max_segment",
+     "type": "number",
+     "description": "Arc discretization",
+     "required": false,
+     "unit": "degrees",
+     "minimum": 0.01,
+     "maximum": 10,
+     "default": 0.5
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "description": "Boundary name",
+     "required": false,
+     "default": "AGE"
+    },
+    {
+     "name": "antiperiodic",
+     "type": "boolean",
+     "description": "Antiperiodic (true) or periodic air gap",
+     "required": false,
+     "default": false
+    }
+   ],
+   "femm_functions": [
+    "addboundprop",
+    "addarc",
+    "setarcsegmentprop",
+    "addblocklabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "boundary",
+    "circle",
+    "hole"
+   ],
+   "source_ids": [
+    "torquebenchmark",
+    "rotormotion"
+   ],
+   "node_id": "method:machine_motion_band",
+   "stage": "geometry",
+   "constraints": [
+    "Both circles are centered at the origin."
+   ]
+  },
+  {
+   "id": "kelvin_periodic_exterior",
+   "layer": 2,
+   "title": "Kelvin exterior with uniform applied field",
+   "description": "Unbounded planar space modeled by a second disk periodically linked to the domain edge, filled with coercivity 2B/mu0 to impose a uniform field.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "domain_radius",
+     "type": "number",
+     "description": "Domain radius",
+     "required": true,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "exterior_center",
+     "type": "point",
+     "description": "Center of the exterior disk",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "applied_field",
+     "type": "number",
+     "description": "Uniform applied flux density magnitude",
+     "required": true,
+     "unit": "T"
+    },
+    {
+     "name": "field_direction",
+     "type": "number",
+     "description": "Magnetization direction of the exterior disk; the applied field points at the mirror angle about x",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "max_segment",
+     "type": "number",
+     "description": "Arc discretization",
+     "required": false,
+     "unit": "degrees",
+     "minimum": 0.01,
+     "maximum": 10,
+     "default": 1
+    },
+    {
+     "name": "exterior_mesh",
+     "type": "number",
+     "description": "Exterior element size",
+     "required": false,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "material",
+     "type": "string",
+     "description": "Exterior material name",
+     "required": false,
+     "default": "Ext"
+    },
+    {
+     "name": "boundaries",
+     "type": "list",
+     "description": "Names of the two periodic boundaries",
+     "required": false,
+     "default": [
+      "pbc1",
+      "pbc2"
+     ]
+    }
+   ],
+   "femm_functions": [
+    "addboundprop",
+    "addmaterial",
+    "addarc",
+    "setarcsegmentprop",
+    "addblocklabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "boundary",
+    "material",
+    "circle",
+    "block_label"
+   ],
+   "source_ids": [
+    "torquebenchmark"
+   ],
+   "node_id": "method:methods_kelvin_open_domain",
+   "stage": "boundaries",
+   "constraints": [
+    "The applied field is the mirror image of the exterior magnetization direction about the x axis (measured: 0 to 0 and 180 to 180 degrees in the torque benchmark, +30 to -30 degrees in design-dipole-torque-variant).",
+    "Measure the applied field with magnetized parts removed when a direction matters."
+   ]
+  }
+ ]
+}

@@ -1,0 +1,761 @@
+{
+ "schema_version": 1,
+ "purpose": "New designs assembled only from reusable components, in combinations no official example uses, each checked against a closed-form result. Targets and the 1% tolerance were fixed before any run.",
+ "designs": [
+  {
+   "id": "design-coaxial-capacitor",
+   "title": "Coaxial capacitor",
+   "source_ids": [
+    "electrostaticstutorial",
+    "manual5"
+   ],
+   "source_url": null,
+   "purpose": "Conductors on circular contours with a dielectric annulus: a combination no official example uses.",
+   "measurements": [
+    {
+     "id": "inner",
+     "op": "conductor",
+     "name": "inner"
+    }
+   ],
+   "metrics": [
+    {
+     "name": "capacitance_F",
+     "value": [
+      "inner",
+      1
+     ],
+     "divide": [
+      "inner",
+      0
+     ],
+     "unit": "F"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "capacitance_F",
+     "value": 3.456641749289633e-11,
+     "relative_tolerance": 0.01,
+     "kind": "analytic",
+     "quote": "C = 2*pi*eps0*L/ln(b/a)",
+     "used_for_acceptance": true
+    }
+   ],
+   "article": {
+    "parameters": {
+     "inner_radius_mm": {
+      "value": 1.0,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Inner conductor radius"
+     },
+     "outer_radius_mm": {
+      "value": 5.0,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Outer conductor radius"
+     },
+     "length_mm": {
+      "value": 1000.0,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Out-of-plane length"
+     },
+     "voltage_V": {
+      "value": 1,
+      "unit": "V",
+      "quote": "Design choice",
+      "note": "Inner conductor potential"
+     },
+     "mesh_divisions": {
+      "value": 20,
+      "unit": "count",
+      "quote": "Design choice",
+      "note": "Elements across the gap"
+     }
+    },
+    "assembly": {
+     "problem": {
+      "physics": "electrostatics",
+      "units": "millimeters",
+      "type": "planar",
+      "depth": "$length_mm"
+     },
+     "steps": [
+      {
+       "use": "material",
+       "name": "dielectric",
+       "values": {
+        "ex": 1,
+        "ey": 1
+       }
+      },
+      {
+       "use": "conductor",
+       "name": "inner",
+       "value": "$voltage_V"
+      },
+      {
+       "use": "conductor",
+       "name": "outer",
+       "value": 0
+      },
+      {
+       "use": "circle",
+       "radius": "$inner_radius_mm",
+       "conductor": "inner"
+      },
+      {
+       "use": "circle",
+       "radius": "$outer_radius_mm",
+       "conductor": "outer"
+      },
+      {
+       "use": "hole",
+       "at": [
+        0,
+        0
+       ]
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=(inner_radius_mm+outer_radius_mm)/2"
+       ],
+       "material": "dielectric",
+       "mesh": "=(outer_radius_mm-inner_radius_mm)/mesh_divisions"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "design-twin-lead-open",
+   "title": "Twin-lead line in open space",
+   "source_ids": [
+    "electrostaticstutorial",
+    "femm-qt-source-06oct2026"
+   ],
+   "source_url": null,
+   "purpose": "The open boundary builder applied to planar electrostatics, with two conductors at opposite potentials.",
+   "measurements": [
+    {
+     "id": "plus",
+     "op": "conductor",
+     "name": "plus"
+    },
+    {
+     "id": "minus",
+     "op": "conductor",
+     "name": "minus"
+    }
+   ],
+   "metrics": [
+    {
+     "name": "capacitance_per_m_F",
+     "value": [
+      "plus",
+      1
+     ],
+     "scale": 0.5,
+     "unit": "F/m"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "capacitance_per_m_F",
+     "value": 1.578005729619711e-11,
+     "relative_tolerance": 0.01,
+     "kind": "analytic",
+     "quote": "C' = pi*eps0/acosh(d/(2a))",
+     "used_for_acceptance": true
+    }
+   ],
+   "article": {
+    "parameters": {
+     "wire_radius_mm": {
+      "value": 1.0,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Wire radius"
+     },
+     "center_distance_mm": {
+      "value": 6.0,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Center-to-center distance"
+     },
+     "boundary_radius_mm": {
+      "value": 15.0,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Open-boundary radius"
+     },
+     "voltage_V": {
+      "value": 1,
+      "unit": "V",
+      "quote": "Design choice",
+      "note": "Each wire is at plus or minus this potential"
+     },
+     "air_mesh_mm": {
+      "value": 0.25,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Air element size"
+     },
+     "depth_mm": {
+      "value": 1000,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "One meter, so charge equals charge per meter"
+     }
+    },
+    "assembly": {
+     "problem": {
+      "physics": "electrostatics",
+      "units": "millimeters",
+      "type": "planar",
+      "depth": "$depth_mm"
+     },
+     "steps": [
+      {
+       "use": "material",
+       "name": "air",
+       "values": {
+        "ex": 1,
+        "ey": 1
+       }
+      },
+      {
+       "use": "conductor",
+       "name": "plus",
+       "value": "$voltage_V"
+      },
+      {
+       "use": "conductor",
+       "name": "minus",
+       "value": "=-voltage_V"
+      },
+      {
+       "use": "circle",
+       "radius": "$wire_radius_mm",
+       "center": [
+        "=-center_distance_mm/2",
+        0
+       ],
+       "conductor": "plus"
+      },
+      {
+       "use": "circle",
+       "radius": "$wire_radius_mm",
+       "center": [
+        "=center_distance_mm/2",
+        0
+       ],
+       "conductor": "minus"
+      },
+      {
+       "use": "hole",
+       "at": [
+        "=-center_distance_mm/2",
+        0
+       ]
+      },
+      {
+       "use": "hole",
+       "at": [
+        "=center_distance_mm/2",
+        0
+       ]
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=boundary_radius_mm/2"
+       ],
+       "material": "air",
+       "mesh": "$air_mesh_mm"
+      },
+      {
+       "use": "iabc_open_boundary",
+       "radius": "$boundary_radius_mm"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "design-cylindrical-heat-shell",
+   "title": "Heat conduction through a cylindrical shell",
+   "source_ids": [
+    "heatflowtutorial",
+    "femm-qt-source-06oct2026",
+    "manual5"
+   ],
+   "source_url": null,
+   "purpose": "Fixed-temperature conductors on circles with an official library material, in heat flow.",
+   "measurements": [
+    {
+     "id": "hot",
+     "op": "conductor",
+     "name": "hot"
+    }
+   ],
+   "metrics": [
+    {
+     "name": "heat_flow_W",
+     "value": [
+      "hot",
+      1
+     ],
+     "part": "abs",
+     "unit": "W"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "heat_flow_W",
+     "value": 3172.652099279035,
+     "relative_tolerance": 0.01,
+     "kind": "analytic",
+     "quote": "Q = 2*pi*k*L*(T1-T2)/ln(b/a)",
+     "used_for_acceptance": true,
+     "note": "Magnitude: the sign follows FEMM's conductor flux convention."
+    }
+   ],
+   "article": {
+    "parameters": {
+     "inner_radius_m": {
+      "value": 0.5,
+      "unit": "m",
+      "quote": "Design choice",
+      "note": "Inner radius"
+     },
+     "outer_radius_m": {
+      "value": 1.0,
+      "unit": "m",
+      "quote": "Design choice",
+      "note": "Outer radius"
+     },
+     "material": {
+      "value": "Brick, Common",
+      "unit": "library material",
+      "quote": "Design choice",
+      "note": "k = 0.7 W/(m K) from heatlib.dat"
+     },
+     "hot_temperature_K": {
+      "value": 800,
+      "unit": "K",
+      "quote": "Design choice",
+      "note": "Inner surface"
+     },
+     "cold_temperature_K": {
+      "value": 300,
+      "unit": "K",
+      "quote": "Design choice",
+      "note": "Outer surface"
+     },
+     "depth_m": {
+      "value": 1,
+      "unit": "m",
+      "quote": "Design choice",
+      "note": "Length"
+     },
+     "mesh_m": {
+      "value": 0.02,
+      "unit": "m",
+      "quote": "Design choice",
+      "note": "Element size"
+     }
+    },
+    "assembly": {
+     "problem": {
+      "physics": "heatflow",
+      "units": "meters",
+      "type": "planar",
+      "depth": "$depth_m",
+      "prev_soln": "",
+      "dt": 0
+     },
+     "steps": [
+      {
+       "use": "library_material",
+       "name": "$material",
+       "library": "heatlib.dat"
+      },
+      {
+       "use": "conductor",
+       "name": "hot",
+       "value": "$hot_temperature_K"
+      },
+      {
+       "use": "conductor",
+       "name": "cold",
+       "value": "$cold_temperature_K"
+      },
+      {
+       "use": "circle",
+       "radius": "$inner_radius_m",
+       "conductor": "hot"
+      },
+      {
+       "use": "circle",
+       "radius": "$outer_radius_m",
+       "conductor": "cold"
+      },
+      {
+       "use": "hole",
+       "at": [
+        0,
+        0
+       ]
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=(inner_radius_m+outer_radius_m)/2"
+       ],
+       "material": "$material",
+       "mesh": "$mesh_m"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "design-dipole-torque-variant",
+   "title": "Dipole torque: larger magnet, weaker field, rotated magnetization",
+   "source_ids": [
+    "torquebenchmark"
+   ],
+   "source_url": null,
+   "purpose": "Kelvin exterior, air-gap element and bar magnet reused at new dimensions, coercivity, field and direction.",
+   "steps": [
+    {
+     "label": "deg0",
+     "modify": [
+      {
+       "function": "modifyboundprop",
+       "name": "AGE",
+       "property": 10,
+       "value": 0
+      },
+      {
+       "function": "modifyboundprop",
+       "name": "AGE",
+       "property": 11,
+       "value": 0
+      }
+     ]
+    },
+    {
+     "label": "deg30",
+     "modify": [
+      {
+       "function": "modifyboundprop",
+       "name": "AGE",
+       "property": 10,
+       "value": 30
+      },
+      {
+       "function": "modifyboundprop",
+       "name": "AGE",
+       "property": 11,
+       "value": 0
+      }
+     ]
+    },
+    {
+     "label": "deg60",
+     "modify": [
+      {
+       "function": "modifyboundprop",
+       "name": "AGE",
+       "property": 10,
+       "value": 60
+      },
+      {
+       "function": "modifyboundprop",
+       "name": "AGE",
+       "property": 11,
+       "value": 0
+      }
+     ]
+    },
+    {
+     "label": "deg90",
+     "modify": [
+      {
+       "function": "modifyboundprop",
+       "name": "AGE",
+       "property": 10,
+       "value": 90
+      },
+      {
+       "function": "modifyboundprop",
+       "name": "AGE",
+       "property": 11,
+       "value": 0
+      }
+     ]
+    },
+    {
+     "label": "field",
+     "modify": [
+      {
+       "function": "modifyboundprop",
+       "name": "AGE",
+       "property": 10,
+       "value": 0
+      },
+      {
+       "function": "modifyboundprop",
+       "name": "AGE",
+       "property": 11,
+       "value": 0
+      },
+      {
+       "function": "modifymaterial",
+       "name": "magnet",
+       "property": 3,
+       "value": 0
+      }
+     ]
+    }
+   ],
+   "measurements": [
+    {
+     "id": "torque",
+     "op": "gap_integral",
+     "boundary": "AGE",
+     "type": 0
+    },
+    {
+     "id": "center",
+     "op": "point_values",
+     "points": [
+      [
+       0,
+       0
+      ]
+     ],
+     "fields": [
+      "B1",
+      "B2"
+     ]
+    }
+   ],
+   "metrics": [
+    {
+     "name": "torque_Nm",
+     "value": [
+      "torque",
+      0
+     ],
+     "unit": "N*m"
+    },
+    {
+     "name": "center_bx_T",
+     "value": [
+      "center:B1",
+      0
+     ],
+     "unit": "T"
+    },
+    {
+     "name": "center_by_T",
+     "value": [
+      "center:B2",
+      0
+     ],
+     "unit": "T"
+    }
+   ],
+   "targets": [],
+   "assessors": [
+    {
+     "kind": "dipole_torque",
+     "field_step": "field",
+     "field_metrics": [
+      "center_bx_T",
+      "center_by_T"
+     ],
+     "magnet_material": "magnet",
+     "moment_A_m2": 4.8,
+     "applied_field_T": 0.5,
+     "relative_tolerance": 0.01,
+     "torque_metric": "torque_Nm",
+     "rotation_steps": {
+      "deg0": 0,
+      "deg30": 30,
+      "deg60": 60,
+      "deg90": 90
+     },
+     "quote": "m = Hc*V; torque = m x B"
+    }
+   ],
+   "article": {
+    "parameters": {
+     "magnet_length_cm": {
+      "value": 2.0,
+      "unit": "cm",
+      "quote": "Design choice",
+      "note": "Magnet length"
+     },
+     "magnet_width_cm": {
+      "value": 1.0,
+      "unit": "cm",
+      "quote": "Design choice",
+      "note": "Magnet width"
+     },
+     "magnet_depth_cm": {
+      "value": 3.0,
+      "unit": "cm",
+      "quote": "Design choice",
+      "note": "Depth"
+     },
+     "magnet_coercivity_A_per_m": {
+      "value": 800000.0,
+      "unit": "A/m",
+      "quote": "Design choice",
+      "note": "Coercivity"
+     },
+     "magnetization_direction_deg": {
+      "value": 90,
+      "unit": "deg",
+      "quote": "Design choice",
+      "note": "Magnetized across its width"
+     },
+     "applied_field_T": {
+      "value": 0.5,
+      "unit": "T",
+      "quote": "Design choice",
+      "note": "Applied field"
+     },
+     "exterior_magnetization_deg": {
+      "value": 30,
+      "unit": "deg",
+      "quote": "Design choice",
+      "note": "Applied field direction (measured, not assumed)"
+     },
+     "rotor_radius_cm": {
+      "value": 1.4,
+      "unit": "cm",
+      "quote": "Design choice",
+      "note": "Rotor-side radius"
+     },
+     "stator_radius_cm": {
+      "value": 1.55,
+      "unit": "cm",
+      "quote": "Design choice",
+      "note": "Stator-side radius"
+     },
+     "domain_radius_cm": {
+      "value": 2.2,
+      "unit": "cm",
+      "quote": "Design choice",
+      "note": "Domain radius"
+     },
+     "exterior_center_x_cm": {
+      "value": 6.0,
+      "unit": "cm",
+      "quote": "Design choice",
+      "note": "Exterior disk center"
+     },
+     "mesh_size_cm": {
+      "value": 0.04,
+      "unit": "cm",
+      "quote": "Design choice",
+      "note": "Element size"
+     },
+     "exterior_mesh_size_cm": {
+      "value": 0.2,
+      "unit": "cm",
+      "quote": "Design choice",
+      "note": "Exterior element size"
+     },
+     "gap_max_segment_deg": {
+      "value": 0.5,
+      "unit": "deg",
+      "quote": "Design choice",
+      "note": "Air-gap arc discretization"
+     },
+     "boundary_max_segment_deg": {
+      "value": 1,
+      "unit": "deg",
+      "quote": "Design choice",
+      "note": "Boundary arc discretization"
+     }
+    },
+    "assembly": {
+     "problem": {
+      "physics": "magnetics",
+      "units": "centimeters",
+      "type": "planar",
+      "frequency": 0,
+      "depth": "$magnet_depth_cm",
+      "ac_solver": 0
+     },
+     "steps": [
+      {
+       "use": "material",
+       "name": "Air",
+       "values": {
+        "Mu_x": 1,
+        "Mu_y": 1
+       }
+      },
+      {
+       "use": "bar_magnet",
+       "length": "$magnet_length_cm",
+       "width": "$magnet_width_cm",
+       "coercivity": "$magnet_coercivity_A_per_m",
+       "direction": "$magnetization_direction_deg",
+       "mesh": "$mesh_size_cm"
+      },
+      {
+       "use": "air_gap_element",
+       "rotor_radius": "$rotor_radius_cm",
+       "stator_radius": "$stator_radius_cm",
+       "max_segment": "$gap_max_segment_deg"
+      },
+      {
+       "use": "kelvin_periodic_exterior",
+       "domain_radius": "$domain_radius_cm",
+       "exterior_center": [
+        "$exterior_center_x_cm",
+        0
+       ],
+       "applied_field": "$applied_field_T",
+       "field_direction": "$exterior_magnetization_deg",
+       "max_segment": "$boundary_max_segment_deg",
+       "exterior_mesh": "$exterior_mesh_size_cm"
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=(sqrt(magnet_length_cm**2+magnet_width_cm**2)/2+rotor_radius_cm)/2"
+       ],
+       "material": "Air",
+       "mesh": "$mesh_size_cm"
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=(stator_radius_cm+domain_radius_cm)/2"
+       ],
+       "material": "Air",
+       "mesh": "$mesh_size_cm"
+      }
+     ]
+    }
+   }
+  }
+ ]
+}
