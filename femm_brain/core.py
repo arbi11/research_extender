@@ -9,7 +9,7 @@ import re
 
 DATA = Path(__file__).parent / "data"
 RELATIONS = {"decomposes_into", "implemented_by", "depends_on", "alternative_to", "reuses", "precedes"}
-STATUSES = {"documented", "reconstructed", "geometry_checked", "numerically_checked"}
+STATUSES = {"documented", "reconstructed", "geometry_checked", "partially_checked", "numerically_checked"}
 
 
 def _common():
@@ -66,7 +66,7 @@ def validate_graph(graph):
         for source in node.get("source_ids", []):
             if source not in sources:
                 issue("source_unknown", "Unknown source: " + str(source), identifier)
-        if node.get("verification", {}).get("status") == "numerically_checked" and not node.get("verification", {}).get("report"):
+        if node.get("verification", {}).get("status") in ("numerically_checked", "partially_checked") and not node.get("verification", {}).get("report"):
             issue("numerical_evidence", "Numerically checked nodes require an actual report reference.", identifier)
     edge_ids, containment = set(), defaultdict(list)
     for edge in graph.get("edges", []):
@@ -110,6 +110,16 @@ def validate_graph(graph):
             if source not in sources:
                 issue("example_source", "Unknown example source: " + source, identifier)
     return issues
+
+
+def _current_case_bindings(directory):
+    from .reproduce import case_binding_digest
+    bindings = {}
+    for name, key in (("reproductions.json", "cases"), ("designs.json", "designs")):
+        path = directory / name
+        if path.exists():
+            bindings.update({c["id"]: case_binding_digest(c) for c in json.loads(path.read_text())[key]})
+    return bindings
 
 
 def _attach_components(graph, directory):
@@ -167,6 +177,10 @@ def _attach_components(graph, directory):
         record_path = directory / "verification" / name
         if record_path.exists():
             cases += [dict(c, _report="verification/" + name) for c in json.loads(record_path.read_text()).get("cases", [])]
+    from .components import component_digests
+    current_digests = component_digests(list(node_of))
+    current_bindings = _current_case_bindings(directory)
+    stale = {}
     for case in cases:
         article = case.get("levels", {}).get("article", {})
         used = article.get("components_used") or []
@@ -178,13 +192,23 @@ def _attach_components(graph, directory):
                                        "when": "The example's article build assembles this component.",
                                        "parameter_bindings": {}, "source_ids": example.get("source_ids", [])})
         if article.get("status") == "passed":
-            pending = list(used)
-            while pending:
-                component = pending.pop()
-                if component in by_id and case["case_id"] not in checked.setdefault(component, []):
+            recorded = article.get("component_digests") or {}
+            case_fresh = current_bindings.get(case["case_id"]) == case.get("case_binding_sha256")
+            for component, digest in recorded.items():
+                if component not in by_id:
+                    continue
+                # Evidence counts only for the implementation and case definition it ran under.
+                if digest != current_digests.get(component) or not case_fresh:
+                    stale.setdefault(component, []).append(case["case_id"])
+                elif case["case_id"] not in checked.setdefault(component, []):
                     checked[component].append(case["case_id"])
                     reports.setdefault(component, set()).add(case["_report"])
-                    pending.extend(by_id[component]["uses_components"])
+    for component, stale_cases in stale.items():
+        if component not in checked:
+            node = index[node_of[component]]
+            node["verification"] = dict(node["verification"], stale_evidence_case_ids=sorted(stale_cases),
+                                        note=node["verification"].get("note", "") + " Passing evidence exists for an earlier "
+                                             "implementation or case definition and no longer applies.")
     for component, cases in checked.items():
         index[node_of[component]]["verification"] = {
             "status": "numerically_checked", "report": sorted(reports[component])[0], "reports": sorted(reports[component]),
@@ -285,19 +309,29 @@ def load_graph(data_dir=None):
     if reproductions.exists():
         record = json.loads(reproductions.read_text())
         node_index = {node["id"]: node for node in graph["nodes"]}
+        current = _current_case_bindings(directory)
         for example in graph["examples"]:
             cases = [c for c in record.get("cases", []) if c.get("example_id") == example["id"]]
             if not cases:
                 continue
-            example["reproductions"] = [{k: c.get(k) for k in ("case_id", "title", "status", "levels_passed")} for c in cases]
-            passed = [c for c in cases if c.get("status") == "passed"]
+            for case in cases:
+                case["fresh"] = bool(case.get("case_binding_sha256")) and current.get(case["case_id"]) == case["case_binding_sha256"]
+            example["reproductions"] = [dict({k: c.get(k) for k in ("case_id", "title", "status", "levels_passed", "fresh")},
+                                             scope=(c.get("coverage") or {}).get("scope")) for c in cases]
+            passed = [c for c in cases if c.get("status") == "passed" and c["fresh"]]
+            core = [c for c in passed if (c.get("coverage") or {}).get("scope") == "core"]
             workflow = node_index.get(example.get("workflow_id"))
             if passed and workflow:
+                chosen = core or passed
                 workflow["verification"] = {
-                    "status": "numerically_checked", "report": "verification/official_reproductions.json",
-                    "case_ids": [c["case_id"] for c in passed],
-                    "levels_passed": sorted({level for c in passed for level in c["levels_passed"]}),
-                    "note": "This official example was solved natively and matched its published results. "
+                    "status": "numerically_checked" if core else "partially_checked",
+                    "report": "verification/official_reproductions.json",
+                    "case_ids": [c["case_id"] for c in chosen],
+                    "levels_passed": sorted({level for c in chosen for level in c["levels_passed"]}),
+                    "reproduced": [c["coverage"]["reproduced"] for c in chosen if c.get("coverage")],
+                    "not_reproduced": [c["coverage"]["not_reproduced"] for c in chosen if (c.get("coverage") or {}).get("not_reproduced")],
+                    "note": ("This official example's core published results were solved natively and matched. "
+                             if core else "Only part of this official example was reproduced; see what was and was not. ") +
                             "Shared methods it uses are not thereby certified for other applications."}
     _attach_components(graph, directory)
     baseline_path = directory / "curation_manifest.json"

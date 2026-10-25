@@ -1,14 +1,93 @@
 {
- "schema_version": 1,
- "purpose": "Reproduction failures that have been investigated and are kept as failures. The audit accepts exactly these failed acceptance metrics at these levels; any other failure, or a listed failure that starts passing, fails the audit. Targets and tolerances are never changed here.",
+ "schema_version": 2,
+ "purpose": "Reproduction failures that have been investigated and are kept as failures. Each is bound to its case definition, its frozen target and tolerance, and the value it fails with; the audit accepts it only while the observed value stays within the regression bound. Targets are never changed here.",
+ "regression_basis": "The freshly built CI image and the development image produced bit-identical values for all 192 targeted metrics (2026-10-25); 1e-6 relative allows only floating-point noise from another build.",
  "failures": [
-  {"case_id": "inductanceexample-dc", "levels": ["original", "rebuild"], "metrics": ["inductance_H", "energy_J"],
+  {
+   "case_id": "inductanceexample-dc",
+   "case_binding_sha256": "0c07e971f63389933417dfe2bf378df8d797a45d3c5fc6ec88c2accb0bc24289",
+   "source_model_sha256": "cea7acd3ed0296ea4531f7d8b6693adfa87683dd5c6857f4d76231042963cabb",
+   "levels": [
+    "original",
+    "rebuild"
+   ],
+   "metrics": [
+    {
+     "metric": "inductance_H",
+     "target": 0.00173,
+     "relative_tolerance": 0.01,
+     "observed": 0.0017560682796706,
+     "regression_relative_tolerance": 1e-06
+    },
+    {
+     "metric": "energy_J",
+     "target": 0.000865042,
+     "relative_tolerance": 0.01,
+     "observed": 0.00087803413983534,
+     "regression_relative_tolerance": 1e-06
+    }
+   ],
    "finding": "About 1.5% above the article in FEMM 5; mesh refinement moves the result further away and the original file gives the same values. Cause unresolved.",
-   "related": "reference_discrepancies.json (ei-original-source-current-engine-20261025)"},
-  {"case_id": "coilgun-z1p5", "levels": ["original", "rebuild"], "metrics": ["ball_force_z_N"],
-   "finding": "The small-ball weighted-stress force changes from -2.5% to +0.06% to +8.3% of the published value as explicit mesh sizes are halved and quartered: not mesh-converged."},
-  {"case_id": "rotormotion-cogging", "levels": ["original", "rebuild"],
-   "metrics": ["cogging_torque_Nm@deg6", "cogging_torque_Nm@deg12", "cogging_torque_Nm@deg18", "cogging_torque_Nm@deg24"],
-   "finding": "At the source's ~1,400-node mesh the cogging torque swings by about 0.1 N*m between adjacent 3-degree samples and changes by about 25% with smart meshing; the published values come from the 2018 sliding-band test build."}
+   "related": "reference_discrepancies.json (ei-original-source-current-engine-20261025)"
+  },
+  {
+   "case_id": "coilgun-z1p5",
+   "case_binding_sha256": "bc2e536feb813e56b7fcb2a371829f8abfca28d4989c2c5f3b7dcd3ed84c377d",
+   "source_model_sha256": "5d376b69a3337c69aceef643b6631d0a47a64403cedde60b12030c9ed44ddfe1",
+   "levels": [
+    "original",
+    "rebuild"
+   ],
+   "metrics": [
+    {
+     "metric": "ball_force_z_N",
+     "target": 0.0532421,
+     "relative_tolerance": 0.01,
+     "observed": 0.051914987744834,
+     "regression_relative_tolerance": 1e-06
+    }
+   ],
+   "finding": "The small-ball weighted-stress force changes from -2.5% to +0.06% to +8.3% of the published value as explicit mesh sizes are halved and quartered: not mesh-converged."
+  },
+  {
+   "case_id": "rotormotion-cogging",
+   "case_binding_sha256": "afb37fc7e3e6667a98845d36c1edf83e9ce67f3943cfc627124afe0c525877f2",
+   "source_model_sha256": "5f63fca9687a335be7e6e0e81a97b3d30ffed39fe08316cbb42da4efdaf143c9",
+   "levels": [
+    "original",
+    "rebuild"
+   ],
+   "metrics": [
+    {
+     "metric": "cogging_torque_Nm@deg6",
+     "target": -0.0168116,
+     "relative_tolerance": 0.01,
+     "observed": -0.012916829560595,
+     "regression_relative_tolerance": 1e-06
+    },
+    {
+     "metric": "cogging_torque_Nm@deg12",
+     "target": -0.101065,
+     "relative_tolerance": 0.01,
+     "observed": -0.1047910362319,
+     "regression_relative_tolerance": 1e-06
+    },
+    {
+     "metric": "cogging_torque_Nm@deg18",
+     "target": 0.102224,
+     "relative_tolerance": 0.01,
+     "observed": 0.12543674527374,
+     "regression_relative_tolerance": 1e-06
+    },
+    {
+     "metric": "cogging_torque_Nm@deg24",
+     "target": 0.01559,
+     "relative_tolerance": 0.01,
+     "observed": 0.013053258948257,
+     "regression_relative_tolerance": 1e-06
+    }
+   ],
+   "finding": "At the source's ~1,400-node mesh the cogging torque swings by about 0.1 N*m between adjacent 3-degree samples and changes by about 25% with smart meshing; the published values come from the 2018 sliding-band test build."
+  }
  ]
 }

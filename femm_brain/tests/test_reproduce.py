@@ -192,11 +192,13 @@ class ReferenceModelTests(unittest.TestCase):
             self.assertAlmostEqual(abs(s["c0"] * bessel_i(1, s["alpha"] * r) + s["c1"] * bessel_k(1, s["alpha"] * r)),
                                    100 / (2 * math.pi * r), places=6)
 
-    def test_dipole_assessor_uses_the_measured_applied_field_and_rotor_convention(self):
+    def test_dipole_assessor_uses_the_predicted_applied_field_and_rotor_convention(self):
         case = next(c for c in load_cases() if c["id"] == "torque-benchmark")
         assessor = case["assessors"][0]
-        model = {"labels": [{"material": "magnet", "magdir": 0.0}]}
         for field_angle in (0, 180):
+            # The exterior magnetized at -angle predicts a field at +angle (mirror about x).
+            model = {"labels": [{"material": "magnet", "magdir": 0.0}, {"material": "Ext", "magdir": -field_angle}],
+                     "materials": [{"name": "Ext", "props": {"H_c": 2 / (4e-7 * math.pi)}}]}
             bx, by = math.cos(math.radians(field_angle)), math.sin(math.radians(field_angle))
             metrics = {"center_bx_T@field": bx, "center_by_T@field": by}
             for step, angle in assessor["rotation_steps"].items():
@@ -207,21 +209,64 @@ class ReferenceModelTests(unittest.TestCase):
 
 
 class AuditTests(unittest.TestCase):
-    def record(self, case_id, metric, status):
-        return {"cases": [{"case_id": case_id, "levels": {"original": {"status": status, "build": "passed", "errors": {},
-                "targets": [{"metric": metric, "status": status, "acceptance": True}]}}}]}
+    """Runs the audit on the committed evidence, then on deliberately damaged copies."""
+    registry = DATA / "verification" / "reviewed_reproduction_failures.json"
 
-    def test_only_reviewed_failures_pass_and_resolved_ones_must_be_removed(self):
+    def record(self, name="official_reproductions.json"):
+        return json.loads((DATA / "verification" / name).read_text())
+
+    def audit(self, record, catalog="reproductions", registry=None):
         from femm_brain.reproduction_report import audit
+        default = self.registry if catalog == "reproductions" else DATA / "verification" / "reviewed_design_failures.json"
+        return audit(record, registry or default, catalog)
+
+    def test_committed_evidence_is_complete_current_and_within_bounds(self):
+        self.assertEqual(self.audit(self.record())["status"], "passed", self.audit(self.record())["problems"])
+        designs = self.record("component_designs.json")
+        self.assertEqual(self.audit(designs, "designs")["status"], "passed")
+
+    def test_missing_cases_levels_or_an_empty_record_fail(self):
+        record = self.record()
+        record["cases"] = [c for c in record["cases"] if c["case_id"] != "magneticstutorial-coil"]
+        self.assertIn("magneticstutorial-coil: missing from the record.", self.audit(record)["problems"])
+        record = self.record()
+        del next(c for c in record["cases"] if c["case_id"] == "tube-eddy-current")["levels"]["article"]
+        self.assertEqual(self.audit(record)["status"], "failed")
+        empty = dict(self.record("component_designs.json"), cases=[])
+        self.assertEqual(self.audit(empty, "designs")["status"], "failed")
+
+    def test_reviewed_failures_are_bounded_and_bound(self):
+        record = self.record()
+        ei = next(c for c in record["cases"] if c["case_id"] == "inductanceexample-dc")
+        target = next(t for t in ei["levels"]["original"]["targets"] if t["metric"] == "inductance_H" and t["acceptance"])
+        target["observed"] = 1000.0
+        self.assertTrue(any("left the reviewed value" in p for p in self.audit(record)["problems"]))
+        registry = json.loads(self.registry.read_text())
+        registry["failures"][0]["metrics"][0]["target"] = 0.00175
         with tempfile.TemporaryDirectory() as temp:
-            registry = Path(temp) / "registry.json"
-            registry.write_text(json.dumps({"failures": [{"case_id": "a", "levels": ["original"], "metrics": ["x"]}]}))
-            self.assertEqual(audit(self.record("a", "x", "failed"), registry)["status"], "passed")
-            new = audit(self.record("b", "y", "failed"), registry)
-            self.assertEqual(new["unreviewed_failures"], [("b", "original", "y")])
-            self.assertEqual(new["status"], "failed")
-            fixed = audit(self.record("a", "x", "passed"), registry)
-            self.assertEqual((fixed["status"], fixed["reviewed_failures_now_passing"]), ("failed", [("a", "original", "x")]))
+            path = Path(temp) / "registry.json"
+            path.write_text(json.dumps(registry))
+            self.assertTrue(any("frozen target differs" in p for p in self.audit(self.record(), registry=path)["problems"]))
+
+    def test_rebuild_agreement_and_current_catalog_are_mandatory(self):
+        record = self.record()
+        next(c for c in record["cases"] if c["case_id"] == "woofer-kelvin-centered")["rebuild_matches_original"]["status"] = "failed"
+        self.assertTrue(any("rebuild does not reproduce" in p for p in self.audit(record)["problems"]))
+        record = self.record()
+        record["catalog_sha256"] = "0" * 64
+        self.assertEqual(self.audit(record)["status"], "failed")
+
+    def test_unreviewed_failures_and_resolved_reviews_fail(self):
+        record = self.record()
+        tube = next(c for c in record["cases"] if c["case_id"] == "heatflow-chimney")
+        tube["levels"]["article"]["targets"][0]["status"] = "failed"
+        self.assertTrue(any("unreviewed failure" in p for p in self.audit(record)["problems"]))
+        record = self.record()
+        coilgun = next(c for c in record["cases"] if c["case_id"] == "coilgun-z1p5")
+        for level in ("original", "rebuild"):
+            for target in coilgun["levels"][level]["targets"]:
+                target["status"] = "passed"
+        self.assertTrue(any("no longer fails" in p for p in self.audit(record)["problems"]))
 
 
 class SourceChangeTests(unittest.TestCase):

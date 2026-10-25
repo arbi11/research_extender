@@ -68,7 +68,9 @@
       const button = element("button", null, "case-button" + (state.example?.id === example.id ? " active" : ""));
       button.type = "button"; button.dataset.exampleId = example.id;
       button.append(element("strong", example.title), element("small", (example.family || "Worked example").replaceAll("_", " ")));
-      if (array(example.reproductions).some(item => item.status === "passed")) button.append(element("span", "reproduced", "pill numerically_checked"));
+      const passing = array(example.reproductions).filter(item => item.status === "passed" && item.fresh);
+      if (passing.some(item => item.scope === "core")) button.append(element("span", "reproduced", "pill numerically_checked"));
+      else if (passing.length) button.append(element("span", "partly reproduced", "pill partially_checked"));
       button.addEventListener("click", () => selectExample(example));
       return button;
     }));
@@ -275,6 +277,7 @@
     $("node-title").textContent = example.title;
     $("node-description").textContent = example.summary || workflow?.description || "";
     const reproductions = array(example.reproductions).map(item => item.title + " — " + item.status.replaceAll("_", " ") +
+      (item.scope ? " · " + (item.scope === "core" ? "core results" : "partial") : "") + (item.fresh ? "" : " · evidence out of date") +
       (array(item.levels_passed).length ? " (passed: " + item.levels_passed.join(", ") + ")" : ""));
     const details = [listSection("Native reproduction", reproductions), listSection("Assumptions", example.assumptions),
                      listSection("Limits of this example", example.limitations), listSection("Physics", example.physics)].filter(Boolean);

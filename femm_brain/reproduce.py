@@ -524,6 +524,15 @@ def assess(target, metrics):
 # Catalog and execution
 # ---------------------------------------------------------------------------
 
+BINDING_FIELDS = ("id", "source_model_sha256", "steps", "measurements", "metrics", "targets", "assessors", "article")
+
+
+def case_binding_digest(case):
+    """Digest of everything that determines what a case builds, measures and accepts."""
+    binding = {key: case.get(key) for key in BINDING_FIELDS}
+    return hashlib.sha256(json.dumps(binding, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
 def load_cases():
     return json.loads((DATA / "reproductions.json").read_text())["cases"]
 
@@ -615,7 +624,7 @@ def plan_level(case, level, control=None):
             "article_parameters": built.get("parameters") if level == "article" else None,
             "article_assumptions": built.get("assumptions") if level == "article" else None,
             "targets": targets, "assessors": case.get("assessors", []), "lua": lua,
-            "control": control, "mesh_scaling": mesh_scaling,
+            "control": control, "mesh_scaling": mesh_scaling, "case_binding_sha256": case_binding_digest(case),
             "module_sha256": _sha(__file__),
             "catalog_sha256": _sha(DATA / ("reproductions.json" if case.get("example_id") else "designs.json")),
             "requires_ai": False}
@@ -624,6 +633,8 @@ def plan_level(case, level, control=None):
         plan["components_sha256"] = _sha(Path(__file__).with_name("components.py"))
         plan["component_catalog_sha256"] = _sha(DATA / "components.json")
         plan["components_used"] = built.get("components", [])
+        from .components import component_digests
+        plan["component_digests"] = component_digests(plan["components_used"])
     plan["plan_sha256"] = hashlib.sha256(json.dumps(plan, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     return plan
 
@@ -683,7 +694,9 @@ def run_level(case, level, output, *, engine="docker", image=None, timeout=900, 
               "physics": physics, "plan_sha256": plan["plan_sha256"], "started_at": datetime.now(timezone.utc).isoformat(),
               "checks": {name: {"status": "not_run"} for name in ("build", "solve", "targets")},
               "requires_ai": False, "status": "failed", "metrics": {}, "control": control,
-              "mesh_scaling": plan.get("mesh_scaling"), "components_used": plan.get("components_used")}
+              "mesh_scaling": plan.get("mesh_scaling"), "components_used": plan.get("components_used"),
+              "component_digests": plan.get("component_digests"), "case_binding_sha256": plan["case_binding_sha256"],
+              "coverage": case.get("coverage")}
     started = time.monotonic()
     try:
         report["execution"] = _run_engine(folder, engine=engine, image=image or os.getenv("FEMM_BRAIN_IMAGE", ""), timeout=timeout)

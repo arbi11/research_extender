@@ -162,8 +162,12 @@ Targets, verbatim quotes and the 1% policy are frozen in
 `femm_brain/data/verification/official_reproductions.json`. See the
 [second-brain README](femm_brain/README.md#reproduce-the-official-examples).
 
-- 27 cases from 19 examples: 23 pass every attempted level, 3 fail, 1 has
-  comparators only. All 26 rebuilds reproduce their original exactly.
+- 27 cases from 19 examples: 22 pass every attempted level, 3 fail, 2 have
+  comparators only. All 26 rebuilds reproduce their original exactly. Cases
+  declare core or partial coverage; labels use only fresh evidence.
+- The audit requires every case and level, the current catalog, exact rebuild
+  agreement, and reviewed failures bound to their case definition and target
+  within a 1e-6 regression bound.
 - Article-only builds pass for the magnetics tutorial, square capacitor, two
   spheres, tube eddy currents, torque benchmark and heat-flow chimney.
 - The torque benchmark (milestone 1 below) passes the whole 0–90° curve against
@@ -176,7 +180,8 @@ Targets, verbatim quotes and the 1% policy are frozen in
   1.73 mH), coilgun ball force (not mesh-converged), rotor-motion cogging torque
   (very mesh- and angle-sensitive at the source's ~1,400-node mesh).
 - Article builds are data-only assemblies of 19 reusable components (milestone 2
-  below); four new designs built only from components pass closed-form checks.
+  below); five new designs built only from components pass closed-form checks,
+  including a field-direction prediction declared before running.
 
 Maintenance in the same PR: `restore-cache` restores the source snapshot by
 digest (the original cache was not on disk); scalar-physics model records keep

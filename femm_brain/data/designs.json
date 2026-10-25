@@ -595,7 +595,12 @@
       "deg60": 60,
       "deg90": 90
      },
-     "quote": "m = Hc*V; torque = m x B"
+     "quote": "m = Hc*V; torque = m x B",
+     "expected_field": {
+      "rule": "kelvin_mirror",
+      "exterior_material": "Ext",
+      "direction_tolerance_deg": 0.5
+     }
     }
    ],
    "article": {
@@ -749,6 +754,150 @@
        "at": [
         0,
         "=(stator_radius_cm+domain_radius_cm)/2"
+       ],
+       "material": "Air",
+       "mesh": "$mesh_size_cm"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "design-kelvin-field-direction",
+   "title": "Kelvin applied field at an asymmetric angle",
+   "source_ids": [
+    "torquebenchmark",
+    "femm-qt-source-06oct2026"
+   ],
+   "source_url": null,
+   "purpose": "Tests the predicted applied field before running: an exterior magnetized at +70 degrees should give a uniform 0.8 T field at -70 degrees (FEMM reverses the second periodic chain, so the rim angle maps to 180 minus the domain angle).",
+   "measurements": [
+    {
+     "id": "field",
+     "op": "point_values",
+     "points": [
+      [
+       0,
+       0
+      ],
+      [
+       0.6,
+       0.4
+      ],
+      [
+       -0.5,
+       -0.7
+      ],
+      [
+       0.2,
+       -1.1
+      ]
+     ],
+     "fields": [
+      "B1",
+      "B2"
+     ]
+    }
+   ],
+   "metrics": [
+    {
+     "name": "center_bx_T",
+     "value": [
+      "field:B1",
+      0
+     ],
+     "unit": "T"
+    },
+    {
+     "name": "center_by_T",
+     "value": [
+      "field:B2",
+      0
+     ],
+     "unit": "T"
+    }
+   ],
+   "targets": [],
+   "assessors": [
+    {
+     "kind": "applied_field",
+     "measurement": "field",
+     "relative_tolerance": 0.01,
+     "expected_field": {
+      "rule": "kelvin_mirror",
+      "exterior_material": "Ext",
+      "direction_tolerance_deg": 0.5
+     },
+     "quote": "Predicted field: magnitude mu0*Hc/2 at the mirror angle of the exterior magnetization"
+    }
+   ],
+   "article": {
+    "parameters": {
+     "applied_field_T": {
+      "value": 0.8,
+      "unit": "T",
+      "quote": "Design choice",
+      "note": "Sets Hc = 2B/mu0"
+     },
+     "exterior_magnetization_deg": {
+      "value": 70,
+      "unit": "deg",
+      "quote": "Design choice",
+      "note": "Predicted field direction: -70 degrees"
+     },
+     "domain_radius_cm": {
+      "value": 1.5,
+      "unit": "cm",
+      "quote": "Design choice",
+      "note": "Domain radius"
+     },
+     "exterior_center_x_cm": {
+      "value": 4.0,
+      "unit": "cm",
+      "quote": "Design choice",
+      "note": "Exterior disk center"
+     },
+     "mesh_size_cm": {
+      "value": 0.05,
+      "unit": "cm",
+      "quote": "Design choice",
+      "note": "Element size"
+     }
+    },
+    "assembly": {
+     "problem": {
+      "physics": "magnetics",
+      "units": "centimeters",
+      "type": "planar",
+      "frequency": 0,
+      "depth": 1,
+      "ac_solver": 0
+     },
+     "steps": [
+      {
+       "use": "material",
+       "name": "Air",
+       "values": {
+        "Mu_x": 1,
+        "Mu_y": 1
+       }
+      },
+      {
+       "use": "kelvin_periodic_exterior",
+       "domain_radius": "$domain_radius_cm",
+       "exterior_center": [
+        "$exterior_center_x_cm",
+        0
+       ],
+       "applied_field": "$applied_field_T",
+       "field_direction": "$exterior_magnetization_deg",
+       "exterior_mesh": "$mesh_size_cm"
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        0
        ],
        "material": "Air",
        "mesh": "$mesh_size_cm"

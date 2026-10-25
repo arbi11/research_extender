@@ -2,6 +2,10 @@
 import hashlib
 import inspect
 import json
+import math
+import shutil
+import tempfile
+from pathlib import Path
 import unittest
 
 from femm_brain.article_recipes import build
@@ -97,7 +101,100 @@ class AssemblyTests(unittest.TestCase):
             self.assertTrue(all(t["kind"] == "analytic" for t in design["targets"]))
 
 
+class ContractTests(unittest.TestCase):
+    magnetic = {"physics": "magnetics", "units": "centimeters", "type": "planar", "frequency": 0, "depth": 1}
+    axisymmetric = dict(magnetic, type="axisymmetric")
+
+    def rejects(self, steps, problem=None, pattern=None):
+        with self.assertRaisesRegex(ValueError, pattern or ".") as caught:
+            assemble({"problem": problem or self.magnetic, "steps": steps}, {})
+        return caught
+
+    def test_types_bounds_and_finiteness_are_enforced(self):
+        coil = {"use": "axisymmetric_coil_section", "inner_radius": 1, "outer_radius": 2, "z_min": 0, "z_max": 1,
+                "material": "a", "circuit": "c", "turns": 10}
+        self.rejects([dict(coil, turns=2.5)], self.axisymmetric, "integer")
+        self.rejects([dict(coil, turns=0), {"use": "circuit", "name": "c", "current": 1}], self.axisymmetric, "nonzero")
+        self.rejects([{"use": "circle", "radius": True}], pattern="must be a number")
+        self.rejects([{"use": "circle", "radius": float("nan")}], pattern="must be a number")
+        self.rejects([{"use": "circle", "radius": 0}], pattern="range")
+        self.rejects([{"use": "circle", "radius": 1, "center": [0, float("inf")]}], pattern="point")
+        self.rejects([{"use": "block_label", "at": [0, 0], "material": "air", "turns": 5}], pattern="circuit")
+        self.rejects([{"use": "conductor", "name": "v", "prescribed": "both"}],
+                     {"physics": "electrostatics", "units": "meters", "type": "planar", "depth": 1}, "one of")
+
+    def test_incompatible_libraries_and_unphysical_materials_are_rejected(self):
+        self.rejects([{"use": "library_material", "name": "Brick, Common", "library": "heatlib.dat"}], pattern="heatflow")
+        self.rejects([{"use": "material", "name": "x", "values": {"Mu_x": 0}}], pattern="not physical")
+        self.rejects([{"use": "material", "name": "x", "values": {"Sigma": -1}}], pattern="not physical")
+
+    def test_degenerate_and_duplicate_geometry_is_rejected(self):
+        self.rejects([{"use": "segment", "start": [1, 1], "end": [1, 1]}], pattern="Degenerate")
+        self.rejects([{"use": "segment", "start": [0, 0], "end": [1, 0]}, {"use": "segment", "start": [1, 0], "end": [0, 0]}], pattern="Duplicate")
+        self.rejects([{"use": "polyline", "points": [[0, 0], [1, 0]]}], pattern="three points")
+        self.rejects([{"use": "block_label", "at": [0, 0], "material": "a"}, {"use": "block_label", "at": [0, 0], "material": "a"}], pattern="Duplicate")
+        self.rejects([{"use": "circle", "radius": 1}], dict(self.magnetic, depth=0), "depth")
+
+
+class KelvinRuleTests(unittest.TestCase):
+    def model(self, magdir, coercivity):
+        return {"labels": [{"material": "Ext", "magdir": magdir}, {"material": "magnet", "magdir": 0.0}],
+                "materials": [{"name": "Ext", "props": {"H_c": coercivity}}]}
+
+    def test_predicted_field_mirrors_the_exterior_magnetization(self):
+        from femm_brain.reference_models import MU0, kelvin_applied_field
+        rule = {"expected_field": {"rule": "kelvin_mirror", "exterior_material": "Ext", "direction_tolerance_deg": 0.5}}
+        bx, by, direction = kelvin_applied_field(rule, self.model(70, 2 * 0.8 / MU0))
+        self.assertAlmostEqual(direction, -70)
+        self.assertAlmostEqual(math.hypot(bx, by), 0.8)
+
+    def test_torque_is_judged_against_the_predicted_field_not_the_measured_one(self):
+        from femm_brain.reference_models import MU0, run_assessor
+        case = next(c for c in load_designs() if c["id"] == "design-dipole-torque-variant")
+        assessor = dict(case["assessors"][0], moment_A_m2=1.0, applied_field_T=1.0)
+        model = self.model(30, 2 / MU0)
+        wrong = math.radians(30)  # a measured field at +30 instead of the predicted -30 degrees
+        metrics = {"center_bx_T@field": math.cos(wrong), "center_by_T@field": math.sin(wrong)}
+        for step, angle in assessor["rotation_steps"].items():
+            metrics["torque_Nm@" + step] = math.sin(wrong - math.radians(angle))
+        result = run_assessor(assessor, case, {}, metrics, model)
+        self.assertEqual((result["status"], result["field_direction_check"]), ("failed", False))
+
+
 class EvidenceTests(unittest.TestCase):
+    def test_partial_coverage_is_not_reported_as_reproduced(self):
+        graph = load_graph()
+        examples = {e["id"]: e for e in graph["examples"]}
+        nodes = {n["id"]: n for n in graph["nodes"]}
+        status = lambda example: nodes[examples[example]["workflow_id"]]["verification"]["status"]
+        self.assertEqual(status("transientheat"), "partially_checked")
+        self.assertEqual(status("heatflowtutorial"), "numerically_checked")
+        self.assertTrue(nodes[examples["transientheat"]["workflow_id"]]["verification"]["not_reproduced"])
+
+    def test_evidence_goes_stale_when_a_component_or_case_changes(self):
+        source = Path(__file__).parents[1] / "data"
+        with tempfile.TemporaryDirectory() as temp:
+            data = Path(temp) / "data"
+            shutil.copytree(source, data)
+            record = json.loads((data / "verification" / "component_designs.json").read_text())
+            for case in record["cases"]:
+                digests = case["levels"]["article"].get("component_digests") or {}
+                if "iabc_open_boundary" in digests:
+                    digests["iabc_open_boundary"] = "0" * 64
+            (data / "verification" / "component_designs.json").write_text(json.dumps(record))
+            catalog_path = data / "reproductions.json"
+            cases = json.loads(catalog_path.read_text())
+            tutorial = next(c for c in cases["cases"] if c["id"] == "magneticstutorial-coil")
+            tutorial["targets"][0]["value"] = 0.0230
+            catalog_path.write_text(json.dumps(cases))
+            graph = load_graph(data)
+            nodes = {n["id"]: n for n in graph["nodes"]}
+            iabc = nodes["method:methods_iabc_open_domain"]["verification"]
+            self.assertNotEqual(iabc["status"], "numerically_checked")
+            self.assertTrue(iabc["stale_evidence_case_ids"])
+            examples = {e["id"]: e for e in graph["examples"]}
+            self.assertFalse(examples["magneticstutorial"]["reproductions"][0]["fresh"])
+
     def test_components_are_checked_only_by_passing_assemblies(self):
         graph = load_graph()
         nodes = {n["id"]: n for n in graph["nodes"]}

@@ -163,6 +163,11 @@
       }
      ]
     }
+   },
+   "coverage": {
+    "scope": "core",
+    "reproduced": "Coil inductance and resistance from the tutorial.",
+    "not_reproduced": ""
    }
   },
   {
@@ -349,6 +354,11 @@
       }
      ]
     }
+   },
+   "coverage": {
+    "scope": "core",
+    "reproduced": "Quarter-model charge, total charge and capacitance.",
+    "not_reproduced": ""
    }
   },
   {
@@ -586,6 +596,11 @@
       }
      ]
     }
+   },
+   "coverage": {
+    "scope": "core",
+    "reproduced": "Sphere charge and force with the open boundary, and charge with a grounded outer boundary.",
+    "not_reproduced": ""
    }
   },
   {
@@ -926,7 +941,12 @@
      },
      "purpose": "Double the pipe's elements per skin depth."
     }
-   ]
+   ],
+   "coverage": {
+    "scope": "core",
+    "reproduced": "Eddy-current density through the pipe wall against the analytic solution.",
+    "not_reproduced": ""
+   }
   },
   {
    "id": "torque-benchmark",
@@ -1488,7 +1508,12 @@
       "deg80": 80,
       "deg90": 90
      },
-     "quote": "|m| = Hc V = 1 A*m2; the bar is placed in a 1T field"
+     "quote": "|m| = Hc V = 1 A*m2; the bar is placed in a 1T field",
+     "expected_field": {
+      "rule": "kelvin_mirror",
+      "exterior_material": "Ext",
+      "direction_tolerance_deg": 0.5
+     }
     }
    ],
    "article": {
@@ -1665,7 +1690,12 @@
      "mesh_scale": 0.5,
      "purpose": "Halve the original model's explicit mesh sizes and arc segment angles."
     }
-   ]
+   ],
+   "coverage": {
+    "scope": "core",
+    "reproduced": "Torque over 0-90 degrees against Table 1 and m x B.",
+    "not_reproduced": ""
+   }
   },
   {
    "id": "team28-asymptotic",
@@ -1880,7 +1910,12 @@
      "mesh_scale": 0.25,
      "purpose": "Quarter explicit sizes."
     }
-   ]
+   ],
+   "coverage": {
+    "scope": "core",
+    "reproduced": "Steady levitation force at the measured height; published losses as comparators.",
+    "not_reproduced": "The TEAM 28 transient itself is out of scope of the article."
+   }
   },
   {
    "id": "team28-kelvin",
@@ -2095,7 +2130,12 @@
      "mesh_scale": 0.25,
      "purpose": "Quarter explicit sizes."
     }
-   ]
+   ],
+   "coverage": {
+    "scope": "core",
+    "reproduced": "Steady levitation force and the published loss break-down.",
+    "not_reproduced": "The TEAM 28 transient itself is out of scope of the article."
+   }
   },
   {
    "id": "heatflow-chimney",
@@ -2298,6 +2338,11 @@
       }
      ]
     }
+   },
+   "coverage": {
+    "scope": "core",
+    "reproduced": "Total heat flow through the chimney wall.",
+    "not_reproduced": ""
    }
   },
   {
@@ -2415,7 +2460,12 @@
    "findings": [
     "Mesh refinement moves inductance further from the published 1.73 mH (1.7561, 1.7577, 1.7607 mH), confirming the earlier source-control result that discretization does not explain the 1.5% gap.",
     "The original source file solved directly in FEMM 5 gives the same values; see reference_discrepancies.json."
-   ]
+   ],
+   "coverage": {
+    "scope": "core",
+    "reproduced": "Inductance and stored energy (failing).",
+    "not_reproduced": ""
+   }
   },
   {
    "id": "acforceexample-dc",
@@ -2533,7 +2583,12 @@
      "mesh_scale": 0.25,
      "purpose": "Quarter explicit sizes."
     }
-   ]
+   ],
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "DC weighted-stress force on the I-section.",
+    "not_reproduced": "The AC force results at 60 Hz (Table 1)."
+   }
   },
   {
    "id": "coilgun-z1p5",
@@ -2634,7 +2689,12 @@
    "findings": [
     "Halving and quartering the explicit mesh sizes moves the ball force from -2.5% to +0.06% to +8.3% of the published value: the small-ball weighted-stress force is not mesh-converged at these sizes.",
     "The published value was computed with FEMM 4.2's mesher in 2013; FEMM 5 uses a different mesher with the same size constraints."
-   ]
+   ],
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "Ball force at the first of 16 positions (failing).",
+    "not_reproduced": "The other 15 positions of the force-position curve, which need the ball moved."
+   }
   },
   {
    "id": "uniformfield-planar-base",
@@ -2737,6 +2797,11 @@
      }
     },
     "construction_notes": "Planar, any length unit. Draw an empty circular interior region (any radius R and center), assign Air to it, and run the Open Boundary Builder (mi_makeABC) with default settings (7 layers, default edge type; the supplied file uses a Dirichlet A=0 outer edge, R=1.1351 in centred at (4.625, 4.575) in - file-derived, not text). Edit each generated exterior material u1..u7 to Hc = 1/mu0 = 795774.7 A/m and give every exterior-layer block label the same magnetization direction (the file uses 0 deg, i.e. +x; the text only gives 90/-90 deg for the axisymmetric case). Solve and query B at any interior point: |B| should be 0.5 T along the magnetization axis."
+   },
+   "coverage": {
+    "scope": "core",
+    "reproduced": "Interior field magnitude.",
+    "not_reproduced": ""
    }
   },
   {
@@ -2845,6 +2910,11 @@
      }
     },
     "construction_notes": "Axisymmetric, any length unit. Draw an empty semicircular (spherical) interior region on the r=0 axis (any radius R, any z center), assign Air, and run the Open Boundary Builder (mi_makeABC) with defaults (7 layers, default edge type; the supplied file uses a Dirichlet A=0 outer edge, R=2.71765 in centred at z=5.76 in - file-derived, not text). Set Hc = 1/mu0 = 795774.7 A/m on every exterior material u1..u7 and magnetization direction 90 deg on every exterior-layer block label. Solve and query B anywhere inside: Bz should be 2/3 T (0.666609 T published)."
+   },
+   "coverage": {
+    "scope": "core",
+    "reproduced": "Interior field magnitude.",
+    "not_reproduced": ""
    }
   },
   {
@@ -2979,6 +3049,11 @@
    "article": {
     "status": "not_attempted",
     "reason": "The motor dimensions are given only in Figure 1 (an image). The text names Ceramic 5 and states the coil centre (r=16, z=17.15) and 11 mm coil length, but gives no pole-piece, plate, magnet or coil-radial dimensions, coil turn count or wire gauge."
+   },
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "Force factor, flux linkage and resistance with the coil centered.",
+    "not_reproduced": "Force factor and inductance versus coil displacement, and the inductance difference across currents."
    }
   },
   {
@@ -3113,6 +3188,11 @@
    "article": {
     "status": "not_attempted",
     "reason": "The motor dimensions are given only in Figure 1 (an image). The text names Ceramic 5 and states the coil centre (r=16, z=17.15) and 11 mm coil length, but gives no pole-piece, plate, magnet or coil-radial dimensions, coil turn count or wire gauge."
+   },
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "Comparators only: the same quantities with a simpler outer boundary.",
+    "not_reproduced": "All acceptance targets belong to the Kelvin-boundary case."
    }
   },
   {
@@ -3202,6 +3282,11 @@
    "article": {
     "status": "not_attempted",
     "reason": "The geometry comes from Figures 1-2 (taken from the Bortot thesis). The text gives only materials (Ceramic 5, 1018 steel at 5.8 MS/m, 25 AWG 15% CCA at 38.5265 MS/m) and mesh guidance, not the dimensions."
+   },
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "Comparator only: a DC force factor against the published incremental value.",
+    "not_reproduced": "The incremental-AC blocked impedance sweeps."
    }
   },
   {
@@ -3263,6 +3348,11 @@
    "article": {
     "status": "not_attempted",
     "reason": "The page gives no geometry. It refers to the SSF-082 geometry of BlockedImpedance / Bortot, whose dimensions appear only in figures."
+   },
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "DC coil resistance.",
+    "not_reproduced": "The transient response and fitted parameters."
    }
   },
   {
@@ -3418,7 +3508,12 @@
      "label": "base",
      "modify": []
     }
-   ]
+   ],
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "Winding fill factor computed by FEMM.",
+    "not_reproduced": "Impedance and proximity loss versus frequency."
+   }
   },
   {
    "id": "proximityloss-continuum-ff-1p0mm",
@@ -3573,7 +3668,12 @@
      "label": "base",
      "modify": []
     }
-   ]
+   ],
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "Winding fill factor computed by FEMM.",
+    "not_reproduced": "Impedance and proximity loss versus frequency."
+   }
   },
   {
    "id": "proximityloss-continuum-ff-1p1mm",
@@ -3728,7 +3828,12 @@
      "label": "base",
      "modify": []
     }
-   ]
+   ],
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "Winding fill factor computed by FEMM.",
+    "not_reproduced": "Impedance and proximity loss versus frequency."
+   }
   },
   {
    "id": "transientheat-T0-steady-initial",
@@ -3853,7 +3958,12 @@
      "label": "base",
      "modify": []
     }
-   ]
+   ],
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "The initial 300 K state of the first model.",
+    "not_reproduced": "Transient heating: no later temperature is published, and the time-step chain needs a previous solution."
+   }
   },
   {
    "id": "improvedconvergence-sparkgap-energy",
@@ -3915,7 +4025,12 @@
      "label": "base",
      "modify": []
     }
-   ]
+   ],
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "Stored energy at the default mesh.",
+    "not_reproduced": "The convergence study itself (the refined-mesh value is a comparator)."
+   }
   },
   {
    "id": "inductionmotorexample-L025hz",
@@ -3976,6 +4091,11 @@
    "article": {
     "status": "not_attempted",
     "reason": "The text gives slot counts, turns per slot, rotor diameter, gap, stack length, pole count and bar conductivity. It explicitly defers the remaining dimensions (slot shapes, stator OD, bar shapes, winding layout per slot) to the CAD file 2horse.dxf. The iron permeability (mu_r 7000 in the model) is also not stated."
+   },
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "Complex inductance at 0.25 Hz.",
+    "not_reproduced": "The other 11 frequencies and the identified equivalent circuit."
    }
   },
   {
@@ -4177,6 +4297,11 @@
    "article": {
     "status": "not_attempted",
     "reason": "The page text has no dimensions. The Mathcad worksheet (lrk-bldc.pdf) gives the stator outer radius, rotor inner radius, magnet thickness/width, turns, pole pairs and stack length. It gives no tooth/slot shape (only slot dimensions for a leakage estimate), no stator inner radius and no rotor back-iron outer radius. Back-iron/leg widths are only 'suggested' sizing values, not the drawn geometry."
+   },
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "Permanent-magnet flux linkage of each phase at zero rotor angle.",
+    "not_reproduced": "Back-EMF constant and cogging torque, which need rotor rotation."
    }
   },
   {
@@ -4419,7 +4544,12 @@
      "mesh_scale": 0.5,
      "purpose": "Smart refinement plus halved explicit sizes and arc segments."
     }
-   ]
+   ],
+   "coverage": {
+    "scope": "core",
+    "reproduced": "Cogging torque at six published rotor positions (failing).",
+    "not_reproduced": ""
+   }
   },
   {
    "id": "corelosscalculation-resistance",
@@ -4465,6 +4595,11 @@
    "article": {
     "status": "not_attempted",
     "reason": "Table 2 gives the axial length, lamination grade/thickness/stacking, magnet grade, turns and wire. All machine dimensions are only in Figure 4 ('All dimensions shown are in units of millimeters'), which is an image."
+   },
+   "coverage": {
+    "scope": "partial",
+    "reproduced": "Coil resistance.",
+    "not_reproduced": "Inductance, flux linkage, core loss and torque, which need rotation sweeps."
    }
   },
   {
@@ -4603,6 +4738,11 @@
    "article": {
     "status": "not_attempted",
     "reason": "The text gives the gap, pole width, axial length, turns, lamination grade, shaft diameter and coil size. It does not give the rotor outer diameter, the stator inner/outer diameters, the leg length or the slot shape. Those are only in Figure 5 ('dimensions in inches'). The text says only that the legs and back iron are 'approximately the same thickness'."
+   },
+   "coverage": {
+    "scope": "core",
+    "reproduced": "Rotor force at the published operating point.",
+    "not_reproduced": "Bias-current characterization and losses."
    }
   }
  ]

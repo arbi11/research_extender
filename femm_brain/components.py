@@ -12,11 +12,13 @@ Derived values use a small arithmetic language (numbers, parameter names, + - *
 / **, and a few math functions). It is parsed and evaluated without ``eval``.
 """
 import ast
+import hashlib
+import inspect
 import json
 import math
 from pathlib import Path
 
-from .reproduce import COLLECTIONS, PROPERTY_KEYS, property_values
+from .reproduce import COLLECTIONS, PROPERTY_KEYS, UNITS, property_values
 
 DATA = Path(__file__).parent / "data"
 EPSILON0 = 8.8541878188e-12  # FEMM's own eo constant (libfemm elec_results_doc.h)
@@ -25,6 +27,12 @@ FEMM_DEFAULTS = {"precision": 1e-8, "min_angle": 30}
 CONSTANTS = {"pi": math.pi, "mu0": MU0, "eps0": EPSILON0}
 FUNCTIONS = {"sqrt": math.sqrt, "sin": math.sin, "cos": math.cos, "tan": math.tan, "atan2": math.atan2,
              "radians": math.radians, "degrees": math.degrees, "min": min, "max": max, "abs": abs, "log": math.log}
+LIBRARY_PHYSICS = {"matlib.dat": "magnetics", "statlib.dat": "electrostatics", "heatlib.dat": "heatflow"}
+PROBLEM_KEYS = {"magnetics": {"units", "type", "frequency", "depth", "precision", "min_angle", "ac_solver", "smart_mesh"},
+                "electrostatics": {"units", "type", "depth", "precision", "min_angle"},
+                "heatflow": {"units", "type", "depth", "precision", "min_angle", "prev_soln", "dt"}}
+POSITIVE_PROPERTIES = {"Mu_x", "Mu_y", "ex", "ey", "Kx", "Ky", "LamFill"}
+NONNEGATIVE_PROPERTIES = {"Sigma", "WireD", "NStrands", "d_lam", "Kt"}
 OPERATORS = {ast.Add: lambda a, b: a + b, ast.Sub: lambda a, b: a - b, ast.Mult: lambda a, b: a * b,
              ast.Div: lambda a, b: a / b, ast.Pow: lambda a, b: a ** b}
 
@@ -84,6 +92,8 @@ class ModelBuilder:
         self._index = {}
 
     def node(self, x, y):
+        if not all(isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) for v in (x, y)):
+            raise ValueError(f"Node coordinates must be finite numbers: {x!r}, {y!r}")
         key = (round(x, 12), round(y, 12))
         if key not in self._index:
             self._index[key] = len(self.nodes)
@@ -96,14 +106,40 @@ class ModelBuilder:
             raise ValueError("Magnetics contours carry boundaries, not conductors")
         return {"boundary": boundary, "hidden": hidden, "group": group, "conductor": conductor}
 
+    def _ends(self, a, b, kind):
+        n0, n1 = self.node(*a), self.node(*b)
+        if n0 == n1:
+            raise ValueError(f"Degenerate {kind}: both ends are at {a}")
+        return n0, n1
+
     def segment(self, a, b, *, mesh=None, **properties):
-        self.segments.append({"n0": self.node(*a), "n1": self.node(*b), "mesh": mesh, **self._contour(**properties)})
+        n0, n1 = self._ends(a, b, "segment")
+        if any({s["n0"], s["n1"]} == {n0, n1} for s in self.segments):
+            raise ValueError(f"Duplicate segment between {a} and {b}")
+        if mesh is not None and not mesh > 0:
+            raise ValueError("Segment mesh sizes must be positive")
+        self.segments.append({"n0": n0, "n1": n1, "mesh": mesh, **self._contour(**properties)})
 
     def arc(self, a, b, angle, max_segment, **properties):
-        self.arcs.append({"n0": self.node(*a), "n1": self.node(*b), "angle": float(angle),
+        n0, n1 = self._ends(a, b, "arc")
+        if not 0 < angle <= 180 or not max_segment > 0:
+            raise ValueError("Arcs need 0 < angle <= 180 degrees and a positive maximum segment")
+        if any(x["n0"] == n0 and x["n1"] == n1 and math.isclose(x["angle"], angle) for x in self.arcs):
+            raise ValueError(f"Duplicate arc from {a} to {b}")
+        self.arcs.append({"n0": n0, "n1": n1, "angle": float(angle),
                           "max_segment": float(max_segment), **self._contour(**properties)})
 
     def label(self, x, y, material, *, mesh=None, group=0, circuit=None, magdir=0, turns=1, external=False):
+        if not (_finite(x) and _finite(y)):
+            raise ValueError(f"Label coordinates must be finite numbers: {x!r}, {y!r}")
+        if any(math.isclose(l["x"], x, abs_tol=1e-12) and math.isclose(l["y"], y, abs_tol=1e-12) for l in self.labels):
+            raise ValueError(f"Duplicate block label at ({x}, {y})")
+        if mesh is not None and not mesh > 0:
+            raise ValueError("Block mesh sizes must be positive")
+        if circuit is None and turns != 1:
+            raise ValueError("Turns are meaningful only for a label in a circuit")
+        if circuit is not None and (turns == 0 or not float(turns).is_integer()):
+            raise ValueError("A winding label needs a nonzero integer number of turns")
         label = {"x": float(x), "y": float(y), "material": material, "mesh": mesh, "group": group,
                  "external": external, "default": False}
         if self.physics == "magnetics":
@@ -123,6 +159,9 @@ class ModelBuilder:
         if any(item["name"] == name for item in self.collections[collection]):
             raise ValueError(f"Duplicate {collection} property: {name}")
         record = {"name": name, "props": property_values(keys, values)}
+        for key, value in record["props"].items():
+            if (key in POSITIVE_PROPERTIES and not value > 0) or (key in NONNEGATIVE_PROPERTIES and value < 0):
+                raise ValueError(f"{collection} {name}: {key} = {value} is not physical")
         if curve:
             record["curve"] = [[float(a), float(b)] for a, b in curve]
         self.collections[collection].append(record)
@@ -143,6 +182,8 @@ def segment(m, start, end, mesh=None, **options):
 
 
 def polyline(m, points, closed=True, edges=None, **options):
+    if len(points) < (3 if closed else 2):
+        raise ValueError("A closed polyline needs at least three points; an open one two")
     pairs = list(zip(points, points[1:] + (points[:1] if closed else [])))
     if edges is not None and len(edges) != len(pairs):
         raise ValueError("Give one edge property entry per polyline edge")
@@ -178,12 +219,17 @@ def material(m, name, values=None, curve=None):
 
 
 def library_material(m, name, library):
+    if LIBRARY_PHYSICS.get(library) != m.physics:
+        raise ValueError(f"{library} holds {LIBRARY_PHYSICS.get(library, 'unknown')} materials; this is a {m.physics} model")
     entries = json.loads((DATA / "library_materials.json").read_text())["materials"]
     entry = next((e for e in entries if e["name"] == name and e["library"] == library), None)
     if entry is None:
         raise ValueError(f"{name} is not recorded from {library}; add it to library_materials.json with provenance")
     keys = PROPERTY_KEYS[(m.physics, "materials")]
-    m.property("materials", name, curve=entry["curve"], **{k: v for k, v in entry["properties"].items() if k in keys})
+    dropped = set(entry["properties"]) - set(keys)
+    if dropped:
+        raise ValueError(f"Library entry {name} has properties this model cannot represent: {sorted(dropped)}")
+    m.property("materials", name, curve=entry["curve"], **entry["properties"])
 
 
 def circuit(m, name, current, series=True):
@@ -192,6 +238,8 @@ def circuit(m, name, current, series=True):
 
 
 def conductor(m, name, value=0, prescribed="value", charge=0):
+    if prescribed not in ("value", "charge"):
+        raise ValueError("A conductor prescribes its value or its charge")
     key = "Vc" if m.physics == "electrostatics" else "Tc"
     m.property("conductors", name, **{key: value, "qc": charge, "ConductorType": 1 if prescribed == "value" else 0})
 
@@ -312,8 +360,57 @@ IMPLEMENTATIONS = {function.__name__: function for function in (
     bar_magnet, air_gap_element, kelvin_periodic_exterior)}
 
 
+def _finite(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
+def check_parameter(component, spec, value):
+    """Enforce a declared parameter type, finiteness and bounds."""
+    point = lambda v: isinstance(v, (list, tuple)) and len(v) == 2 and all(_finite(x) for x in v)
+    checks = {"number": lambda v: _finite(v), "integer": lambda v: _finite(v) and float(v).is_integer(),
+              "boolean": lambda v: isinstance(v, bool), "string": lambda v: isinstance(v, str) and bool(v.strip()),
+              "point": point, "points": lambda v: isinstance(v, list) and len(v) >= 2 and all(point(p) for p in v),
+              "list": lambda v: isinstance(v, list), "object": lambda v: isinstance(v, dict),
+              "number_or_complex": lambda v: _finite(v) or point(v)}
+    if not checks[spec["type"]](value):
+        raise ValueError(f"{component}.{spec['name']} must be a {spec['type'].replace('_', ' ')}; got {value!r}")
+    if spec["type"] in ("number", "integer"):
+        low, high, above = spec.get("minimum"), spec.get("maximum"), spec.get("exclusive_minimum")
+        if (low is not None and value < low) or (high is not None and value > high) or (above is not None and not value > above):
+            raise ValueError(f"{component}.{spec['name']}={value} is outside its declared range")
+    if "choices" in spec and value not in spec["choices"]:
+        raise ValueError(f"{component}.{spec['name']} must be one of {spec['choices']}")
+
+
 def catalog():
     return {item["id"]: item for item in json.loads((DATA / "components.json").read_text())["components"]}
+
+
+def component_digests(identifiers):
+    """Implementation digests for components and everything they use.
+
+    A digest covers the component's function, its knowledge record, the shared
+    model builder and the digests of components it uses, so evidence recorded
+    under one digest goes stale when any of them changes.
+    """
+    records = catalog()
+    shared = inspect.getsource(ModelBuilder) + inspect.getsource(_contour_options) + inspect.getsource(property_values)
+    digests = {}
+
+    def digest(identifier, trail=()):
+        if identifier in digests:
+            return digests[identifier]
+        if identifier in trail:
+            raise ValueError("Component use cycle: " + identifier)
+        record = records[identifier]
+        parts = [inspect.getsource(IMPLEMENTATIONS[identifier]), json.dumps(record, sort_keys=True), shared]
+        parts += [digest(used, trail + (identifier,)) for used in sorted(record["uses_components"])]
+        digests[identifier] = hashlib.sha256("\n".join(parts).encode()).hexdigest()
+        return digests[identifier]
+
+    for identifier in identifiers:
+        digest(identifier)
+    return digests
 
 
 def assemble(assembly, parameters):
@@ -325,7 +422,15 @@ def assemble(assembly, parameters):
             raise ValueError("Derived value shadows a parameter or constant: " + name)
         names[name] = resolve(value, names)
     problem = dict(resolve(assembly["problem"], names))
-    physics = problem.pop("physics")
+    physics = problem.pop("physics", None)
+    if physics not in PROBLEM_KEYS or set(problem) - PROBLEM_KEYS[physics]:
+        raise ValueError(f"Unsupported problem definition: {physics} {sorted(set(problem) - PROBLEM_KEYS.get(physics, set()))}")
+    if problem.get("units") not in UNITS or problem.get("type") not in ("planar", "axisymmetric"):
+        raise ValueError("Problems need known length units and a planar or axisymmetric type")
+    for key, low in (("depth", 0), ("frequency", None), ("precision", 0)):
+        value = problem.get(key)
+        if value is not None and not (_finite(value) and (value > low if low is not None else value >= 0)):
+            raise ValueError(f"Problem {key} = {value!r} is invalid")
     m = ModelBuilder(physics, **problem)
     used = []
     for index, step in enumerate(assembly["steps"]):
@@ -342,10 +447,7 @@ def assemble(assembly, parameters):
         if unknown or missing:
             raise ValueError(f"{identifier}: unknown {sorted(unknown)}, missing {sorted(missing)}")
         for name, value in arguments.items():
-            low, high = declared[name].get("minimum"), declared[name].get("maximum")
-            if isinstance(value, (int, float)) and not isinstance(value, bool) and (
-                    (low is not None and value < low) or (high is not None and value > high)):
-                raise ValueError(f"{identifier}.{name}={value} is outside [{low}, {high}]")
+            check_parameter(identifier, declared[name], value)
         IMPLEMENTATIONS[identifier](m, **arguments)
         if identifier not in used:
             used.append(identifier)

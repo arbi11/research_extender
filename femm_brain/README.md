@@ -221,8 +221,8 @@ python3 -m femm_brain reproduce --all --controls --output work/reproductions \
 python3 -m femm_brain reproduction-report --results work/reproductions --html work/reproductions.html
 ```
 
-At the recorded snapshot, 27 cases from 19 official examples ran: 23 pass every
-attempted level, 3 fail their frozen targets and 1 has comparators only. All 26
+At the recorded snapshot, 27 cases from 19 official examples ran: 22 pass every
+attempted level, 3 fail their frozen targets and 2 have comparators only. All 26
 rebuilds reproduce their original's native values exactly; 6 article builds pass.
 The failures are kept with findings rather than relabeled:
 
@@ -233,11 +233,24 @@ The failures are kept with findings rather than relabeled:
 - **Rotor-motion cogging torque** varies by tens of percent between adjacent
   6-degree samples and with smart meshing at the source's coarse mesh.
 
-Examples with a passing case mark only their own workflow node as numerically
-checked, citing `data/verification/official_reproductions.json`. Article builds
-exist for six examples; the others need dimensions that appear only in figures.
-Some passing cases are narrow: the transient-heat example, for instance, only
-checks its published initial state, because no later temperature is published.
+Each case declares its coverage: **core** when it checks the example's main
+published results, **partial** otherwise, with what was and was not reproduced.
+An example's workflow node becomes `numerically_checked` only through a passing
+core case and `partially_checked` through partial ones (13 core and 14 partial
+cases; the transient-heat example, for instance, checks only its initial
+state). Labels use only fresh evidence: each record carries a digest of the case
+definition, so editing a case's inputs, measurements or targets makes its
+evidence stale until it is run again. Article builds exist for six examples; the
+others need dimensions that appear only in figures.
+
+`reproduction-report` audits the record before accepting it. Every catalog case
+and every applicable level must be present and fully built, solved and assessed;
+the record must come from the current catalog; every rebuild must reproduce its
+original. A failed target is accepted only if `reviewed_reproduction_failures.json`
+lists it with the same case definition and frozen target, and the observed value
+stays within a 1e-6 relative regression bound of the reviewed value (the CI and
+development images agree bit for bit). A reviewed failure that starts passing
+also fails the audit, so the registry cannot go stale.
 
 ## Reusable components and new designs
 
@@ -253,9 +266,17 @@ when a passing native assembly used it, and the node cites the cases.
 
 Assemblies use parameter references (`$name`) and a whitelisted arithmetic
 language (`=sqrt(a**2+b**2)/2`, with `pi`, `mu0`, `eps0`) that is parsed, never
-evaluated as code. Components validate their parameters, physics and problem type
-before building. The six article assemblies reproduce the earlier per-example
+evaluated as code. Before building, every parameter is checked against its
+declared type (integers, booleans, finite numbers, points), bounds (lengths and
+mesh sizes strictly positive) and applicability (physics, problem type). The
+builder rejects nonfinite coordinates, zero-length or duplicate contours,
+duplicate labels, turns without a nonzero integer winding, unphysical material
+constants, and library entries from another physics or with properties the model
+cannot represent. The six article assemblies reproduce the earlier per-example
 builders exactly; frozen digests in the tests keep further changes deliberate.
+Component evidence is bound to an implementation digest (the function, its
+record, the shared builder and the components it uses), so a component's checked
+status lapses when any of them changes.
 
 `data/designs.json` holds new designs assembled only from components, in
 combinations no official example uses, each checked against a closed-form result
@@ -266,16 +287,21 @@ with the 1% policy fixed before running:
 | Coaxial capacitor | conductors on circles, unmeshed core | C within 0.11% |
 | Twin-lead line in open space | open boundary builder in planar electrostatics | C' within 0.23% |
 | Cylindrical heat shell | fixed-temperature conductors, library brick | Q within 0.017% |
-| Dipole torque variant | Kelvin exterior, air-gap element, bar magnet at new size, field and direction | m x B within 0.1% |
+| Dipole torque variant | Kelvin exterior, air-gap element, bar magnet at new size, field and direction | m x B within 0.1% with the predicted field |
+| Kelvin field at 70 degrees | Kelvin exterior alone, prediction declared before running | uniform 0.800 T at -70.0 degrees, as predicted |
 
 ```bash
 python3 -m femm_brain design --all --output work/designs --image research-extender-femm:dev-hierarchy-resumed-20261025
 python3 -m femm_brain reproduction-report --catalog designs --results work/designs
 ```
 
-The dipole design also showed that the Kelvin exterior's applied field points at
-the mirror image of the exterior magnetization angle about x; this is recorded on
-the component rather than assumed.
+The Kelvin exterior's applied field is predicted, not measured: FEMM's mesher
+orients each periodic chain with its region on the left and reverses the second
+(`tangle.cpp`, `buildPbcTwinFromCDT`), so the exterior rim angle maps to 180
+degrees minus the domain angle, and the disk's magnetization at angle alpha
+appears in the domain as a uniform field at -alpha with magnitude mu0*Hc/2.
+Torque checks compare against m x B with this predicted field and separately
+require the measured field to match it within 0.5 degrees and 1%.
 
 ## Explore
 

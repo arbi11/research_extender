@@ -11,7 +11,7 @@ import html
 import json
 from pathlib import Path
 
-from .reproduce import LEVELS, load_cases, load_designs
+from .reproduce import LEVELS, case_binding_digest, load_cases, load_designs
 
 DATA = Path(__file__).parent / "data"
 RECORD = DATA / "verification" / "official_reproductions.json"
@@ -30,7 +30,12 @@ def _target_row(result):
             if key in result:
                 row[key] = result[key]
         if result.get("rows"):
-            row["rows"] = [{k: r[k] for k in ("step", "rotor_angle_deg", "expected_N_m", "observed_N_m", "passed")} for r in result["rows"]]
+            keep = ("step", "rotor_angle_deg", "expected_N_m", "observed_N_m", "point", "measured_T", "direction_deg",
+                    "relative_vector_error", "passed")
+            row["rows"] = [{k: r[k] for k in keep if k in r} for r in result["rows"]]
+        for key in ("predicted_applied_field_T", "predicted_field_direction_deg", "measured_field_direction_deg"):
+            if key in result:
+                row[key] = result[key]
         if result.get("analytic_constants"):
             row["analytic_constants"] = [{k: c.get(k) for k in ("name", "compare", "relative_difference", "passed", "used_for_acceptance", "note")}
                                          for c in result["analytic_constants"]]
@@ -69,6 +74,8 @@ def collect(results, catalog="reproductions"):
                 entry["plan_sha256"] = report.get("plan_sha256")
                 if report.get("components_used"):
                     entry["components_used"] = report["components_used"]
+                    entry["component_digests"] = report.get("component_digests")
+                entry["case_binding_sha256"] = report.get("case_binding_sha256")
                 entry["report_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
                 entry["engine_image_id"] = report.get("execution", {}).get("image_id")
                 entry["errors"] = {k: v["error"] for k, v in report["checks"].items() if v.get("error")}
@@ -81,7 +88,7 @@ def collect(results, catalog="reproductions"):
         status = ("passed" if attempted and len(passed) == len(attempted) else "failed" if attempted else
                   "comparators_only" if comparators else "not_attempted")
         entries.append({"case_id": identifier, "example_id": case.get("example_id"), "title": case["title"], "source_url": case.get("source_url"),
-                        "status": status,
+                        "status": status, "coverage": case.get("coverage"), "case_binding_sha256": case_binding_digest(case),
                         "levels_passed": passed, "levels": levels,
                         "rebuild_matches_original": summary.get("level_comparison", {}).get("rebuild"),
                         "article_model_vs_original": {"difference_count": summary["article_model_vs_original"]["difference_count"]}
@@ -147,31 +154,86 @@ rebuild {totals["level_passes"]["rebuild"]}, article {totals["level_passes"]["ar
 """
 
 
-def audit(record, registry_path=DATA / "verification" / "reviewed_reproduction_failures.json"):
-    """Accept only reviewed failures; flag new failures and reviewed ones that now pass."""
+def expected_levels(case, catalog):
+    """The state each level must reach for a complete record."""
+    if catalog == "designs":
+        return {"article": "executed"}
+    native = "executed" if case.get("source_model_sha256") else "not_applicable"
+    article = "executed" if "assembly" in (case.get("article") or {}) else "not_attempted"
+    return {"original": native, "rebuild": native, "article": article}
+
+
+def audit(record, registry_path, catalog="reproductions"):
+    """Complete, bound and bounded: the record must cover every expected case and level,
+    agree with the current catalog, keep rebuilds identical to originals, and fail only
+    where a reviewed failure stays within its frozen regression bound."""
+    cases = load_cases() if catalog == "reproductions" else load_designs()
+    problems = []
+    current_catalog = hashlib.sha256((DATA / (catalog + ".json")).read_bytes()).hexdigest()
+    if record.get("catalog_sha256") != current_catalog:
+        problems.append("The record was produced from a different catalog version.")
     registry = json.loads(Path(registry_path).read_text())["failures"] if Path(registry_path).exists() else []
-    reviewed = {(f["case_id"], level, metric) for f in registry for level in f["levels"] for metric in f["metrics"]}
-    observed = set()
-    for case in record["cases"]:
-        for level, entry in case.get("levels", {}).items():
-            if entry["status"] != "failed":
+    reviewed = {(f["case_id"], level, m["metric"]): (f, m) for f in registry for level in f["levels"] for m in f["metrics"]}
+    entries = {c["case_id"]: c for c in record.get("cases", [])}
+    observed_failures, accepted = set(), []
+    for case in cases:
+        identifier = case["id"]
+        entry = entries.get(identifier)
+        if entry is None or entry.get("status") == "not_run":
+            problems.append(f"{identifier}: missing from the record.")
+            continue
+        if entry.get("case_binding_sha256") != case_binding_digest(case):
+            problems.append(f"{identifier}: recorded under a different case definition.")
+        targets = {t["metric"]: t for t in case.get("targets", []) if t.get("used_for_acceptance", True)}
+        for level, expectation in expected_levels(case, catalog).items():
+            result = entry.get("levels", {}).get(level)
+            if result is None:
+                problems.append(f"{identifier}/{level}: missing level.")
                 continue
-            failed = [t["metric"] or t.get("assessor") for t in entry.get("targets", []) if t["acceptance"] and t["status"] != "passed"]
-            if entry.get("build") == "failed" or entry.get("errors") or not failed:
-                failed.append("build-or-execution")
-            observed |= {(case["case_id"], level, metric) for metric in failed}
-    unreviewed = sorted(observed - reviewed)
-    resolved = sorted(reviewed - observed)
-    return {"status": "passed" if not unreviewed and not resolved else "failed",
-            "accepted_reviewed_failures": sorted(observed & reviewed), "unreviewed_failures": unreviewed,
-            "reviewed_failures_now_passing": resolved,
-            "note": "A passing audit means every failure is a reviewed, recorded finding, not that all published targets passed."}
+            if expectation != "executed":
+                if result["status"] != expectation:
+                    problems.append(f"{identifier}/{level}: expected {expectation}, found {result['status']}.")
+                continue
+            if result["status"] not in ("passed", "failed", "comparators_only") or result.get("build") != "passed" \
+                    or result.get("solve") != "passed" or result.get("errors"):
+                problems.append(f"{identifier}/{level}: did not build, solve and assess completely ({result['status']}).")
+                continue
+            for target in result.get("targets", []):
+                if not target["acceptance"] or target["status"] == "passed":
+                    continue
+                name = target["metric"] or target.get("assessor")
+                key = (identifier, level, name)
+                observed_failures.add(key)
+                if key not in reviewed:
+                    problems.append(f"{identifier}/{level}/{name}: unreviewed failure.")
+                    continue
+                failure, metric = reviewed[key]
+                frozen = targets.get(name)
+                if failure.get("case_binding_sha256") != case_binding_digest(case):
+                    problems.append(f"{identifier}: reviewed failure is bound to a different case definition.")
+                elif frozen is None or frozen["value"] != metric["target"] or frozen.get("relative_tolerance") != metric["relative_tolerance"]:
+                    problems.append(f"{identifier}/{name}: the frozen target differs from the reviewed one.")
+                elif target.get("observed") is None or abs(target["observed"] - metric["observed"]) > \
+                        metric["regression_relative_tolerance"] * abs(metric["observed"]):
+                    problems.append(f"{identifier}/{level}/{name}: {target.get('observed')} left the reviewed value "
+                                    f"{metric['observed']} by more than {metric['regression_relative_tolerance']:g} (relative).")
+                else:
+                    accepted.append(list(key))
+        levels = entry.get("levels", {})
+        if all(levels.get(level, {}).get("status") in ("passed", "failed", "comparators_only") for level in ("original", "rebuild")):
+            if (entry.get("rebuild_matches_original") or {}).get("status") != "passed":
+                problems.append(f"{identifier}: rebuild does not reproduce the original's native values.")
+    resolved = sorted(set(reviewed) - observed_failures)
+    problems += [f"{'/'.join(key)}: reviewed failure no longer fails; review and remove it." for key in resolved]
+    return {"status": "passed" if not problems else "failed", "problems": problems, "accepted_reviewed_failures": accepted,
+            "note": "A passing audit means the record is complete and current and every failure is a reviewed finding within its "
+                    "regression bound, not that all published targets passed."}
 
 
 def write(results, output=None, html_output=None, catalog="reproductions"):
     record = collect(results, catalog)
     record["audit"] = audit(record, DATA / "verification" / ("reviewed_reproduction_failures.json" if catalog == "reproductions"
-                                                             else "reviewed_design_failures.json"))
+                                                             else "reviewed_design_failures.json"), catalog)
     output = output or (RECORD if catalog == "reproductions" else DESIGN_RECORD)
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)

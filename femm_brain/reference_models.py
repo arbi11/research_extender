@@ -99,34 +99,88 @@ def _tube(assessor, case, raw, metrics, model):
             "target": {"used_for_acceptance": True, "kind": "analytic", "quote": assessor.get("quote")}}
 
 
+def kelvin_applied_field(assessor, model):
+    """Applied field predicted for FEMM's periodically linked Kelvin disk, independent of any solve.
+
+    FEMM's mesher orients each periodic chain with its region on the left and
+    reverses the second chain (tangle.cpp, buildPbcTwinFromCDT), so the exterior
+    rim angle phi' is linked to the domain angle 180 - phi. The disk's uniform
+    magnetization at angle alpha is a rim current M sin(phi' - alpha), which in
+    the domain is M sin(phi + alpha): a uniform field at -alpha with magnitude
+    mu0*Hc/2.
+    """
+    rule = assessor["expected_field"]
+    if rule["rule"] != "kelvin_mirror":
+        raise ValueError("Unknown applied-field rule: " + rule["rule"])
+    exterior = next(label for label in model["labels"] if label.get("material") == rule["exterior_material"])
+    material = next(m for m in model["materials"] if m["name"] == rule["exterior_material"])
+    direction = -exterior["magdir"]
+    magnitude = MU0 * material["props"]["H_c"] / 2
+    return magnitude * math.cos(math.radians(direction)), magnitude * math.sin(math.radians(direction)), direction
+
+
+def _angle_difference(a, b):
+    return abs((a - b + 180) % 360 - 180)
+
+
 def _dipole_torque(assessor, case, raw, metrics, model):
-    """Torque on a rigid dipole, m x B, from the native field measured with the magnet removed."""
+    """Torque m x B against the applied field predicted from the construction, plus a measured-field check."""
     field = assessor["field_step"]
     bx = metrics[assessor["field_metrics"][0] + "@" + field]
     by = metrics[assessor["field_metrics"][1] + "@" + field]
     magnitude = math.hypot(bx, by)
+    ex, ey, direction = kelvin_applied_field(assessor, model)
+    predicted = math.hypot(ex, ey)
+    measured_direction = math.degrees(math.atan2(by, bx))
+    direction_ok = _angle_difference(measured_direction, direction) <= assessor["expected_field"]["direction_tolerance_deg"]
+    magnitude_ok = abs(magnitude - predicted) <= assessor["relative_tolerance"] * predicted
+    declared_ok = abs(predicted - assessor["applied_field_T"]) <= 1e-9 * assessor["applied_field_T"]
     magnet = next(label for label in model["labels"] if label.get("material") == assessor["magnet_material"])
     base = magnet["magdir"]
     moment = assessor["moment_A_m2"]
-    tolerance = assessor["relative_tolerance"] * moment * magnitude
+    tolerance = assessor["relative_tolerance"] * moment * predicted
     rows, ok = [], True
     for step, angle in assessor["rotation_steps"].items():
-        direction = math.radians(base + angle)
-        expected = moment * (math.cos(direction) * by - math.sin(direction) * bx)
+        rotated = math.radians(base + angle)
+        expected = moment * (math.cos(rotated) * ey - math.sin(rotated) * ex)
+        with_measured = moment * (math.cos(rotated) * by - math.sin(rotated) * bx)
         observed = metrics[assessor["torque_metric"] + "@" + step]
         error = abs(observed - expected)
         rows.append({"step": step, "rotor_angle_deg": angle, "expected_N_m": expected, "observed_N_m": observed,
-                     "absolute_error": error, "passed": error <= tolerance})
+                     "expected_from_measured_field_N_m": with_measured, "absolute_error": error, "passed": error <= tolerance})
         ok &= error <= tolerance
-    field_ok = abs(magnitude - assessor["applied_field_T"]) <= assessor["relative_tolerance"] * assessor["applied_field_T"]
-    return {"status": "passed" if ok and field_ok else "failed", "assessor": "dipole_torque",
-            "measured_applied_field_T": [bx, by], "applied_field_magnitude_T": magnitude, "applied_field_check": field_ok,
+    passed = ok and direction_ok and magnitude_ok and declared_ok
+    return {"status": "passed" if passed else "failed", "assessor": "dipole_torque",
+            "predicted_applied_field_T": [ex, ey], "predicted_field_direction_deg": direction,
+            "measured_applied_field_T": [bx, by], "measured_field_direction_deg": measured_direction,
+            "applied_field_magnitude_T": magnitude, "field_direction_check": direction_ok, "field_magnitude_check": magnitude_ok,
+            "declared_field_matches_construction": declared_ok,
             "magnet_direction_deg": base, "absolute_tolerance_N_m": tolerance, "rows": rows,
-            "convention": "Rotor angle rotates the inner air-gap side counterclockwise; torque is m x B about +z.",
+            "convention": "Rotor angle rotates the inner air-gap side counterclockwise; torque is m x B about +z with the predicted field.",
             "target": {"used_for_acceptance": True, "kind": "analytic", "quote": assessor.get("quote")}}
 
 
-ASSESSORS = {"tube_bessel": _tube, "dipole_torque": _dipole_torque}
+def _applied_field(assessor, case, raw, metrics, model):
+    """A Kelvin-imposed field is uniform, at the predicted direction and magnitude, at every probe."""
+    ex, ey, direction = kelvin_applied_field(assessor, model)
+    predicted = math.hypot(ex, ey)
+    step = (case.get("steps") or [{"label": "base"}])[0]["label"]
+    measurement = next(m for m in case["measurements"] if m["id"] == assessor["measurement"])
+    rows, ok = [], True
+    for index, point in enumerate(measurement["points"]):
+        bx = raw[(step, measurement["id"] + ":B1", index)].real
+        by = raw[(step, measurement["id"] + ":B2", index)].real
+        error = math.hypot(bx - ex, by - ey) / predicted
+        angle = math.degrees(math.atan2(by, bx))
+        passed = error <= assessor["relative_tolerance"] and _angle_difference(angle, direction) <= assessor["expected_field"]["direction_tolerance_deg"]
+        rows.append({"point": point, "measured_T": [bx, by], "direction_deg": angle, "relative_vector_error": error, "passed": passed})
+        ok &= passed
+    return {"status": "passed" if ok else "failed", "assessor": "applied_field", "predicted_applied_field_T": [ex, ey],
+            "predicted_field_direction_deg": direction, "rows": rows,
+            "target": {"used_for_acceptance": True, "kind": "analytic", "quote": assessor.get("quote")}}
+
+
+ASSESSORS = {"tube_bessel": _tube, "dipole_torque": _dipole_torque, "applied_field": _applied_field}
 
 
 def run_assessor(assessor, case, raw, metrics, model):
