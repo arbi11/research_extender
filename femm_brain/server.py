@@ -87,7 +87,9 @@ class Handler(BaseHTTPRequestHandler):
                 simulations = DATA / "verification/native_simulations.json"
                 engineering = DATA / "verification/engineering_benchmarks.json"
                 vendor = DATA / "verification/vendor_benchmarks.json"
+                reproductions = DATA / "verification/official_reproductions.json"
                 self._send({"graph": self.graph["validation"], "native": json.loads(report.read_text()) if report.is_file() else None,
+                            "official_reproductions": json.loads(reproductions.read_text()) if reproductions.is_file() else None,
                             "native_simulations": json.loads(simulations.read_text()) if simulations.is_file() else None,
                             "engineering_benchmarks": json.loads(engineering.read_text()) if engineering.is_file() else None,
                             "vendor_benchmarks": json.loads(vendor.read_text()) if vendor.is_file() else None})

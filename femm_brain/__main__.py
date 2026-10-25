@@ -49,6 +49,10 @@ def main(argv=None):
     reproduce.add_argument("--engine", choices=("docker", "native"), default="docker")
     reproduce.add_argument("--image")
     reproduce.add_argument("--timeout", type=int, default=900)
+    report = sub.add_parser("reproduction-report", help="Record reproduction evidence and render its audit page")
+    report.add_argument("--results", type=Path, required=True)
+    report.add_argument("--output", type=Path)
+    report.add_argument("--html", type=Path)
     sub.add_parser("studies", help="List executable, source-backed studies")
     plan = sub.add_parser("plan", help="Select a known study locally, without an LLM")
     plan.add_argument("request", nargs="*")
@@ -110,6 +114,11 @@ def main(argv=None):
         print(json.dumps([{"case_id": s["case_id"], "levels": s["levels"],
                            "level_comparison": {k: v["status"] for k, v in s["level_comparison"].items()}} for s in summaries], indent=2))
         return 0 if all(v["status"] in ("passed", "not_applicable", "not_attempted") for s in summaries for v in s["levels"].values()) else 1
+    if args.command == "reproduction-report":
+        from .reproduction_report import RECORD, write
+        record = write(args.results, args.output or RECORD, args.html)
+        print(json.dumps(record["totals"], indent=2))
+        return 0
     graph = load_graph()
     if args.command == "validate":
         print(json.dumps(graph["validation"], indent=2))

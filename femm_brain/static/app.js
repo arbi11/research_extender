@@ -68,6 +68,7 @@
       const button = element("button", null, "case-button" + (state.example?.id === example.id ? " active" : ""));
       button.type = "button"; button.dataset.exampleId = example.id;
       button.append(element("strong", example.title), element("small", (example.family || "Worked example").replaceAll("_", " ")));
+      if (array(example.reproductions).some(item => item.status === "passed")) button.append(element("span", "reproduced", "pill numerically_checked"));
       button.addEventListener("click", () => selectExample(example));
       return button;
     }));
@@ -263,7 +264,10 @@
     if (workflow) selectNode(workflow.id, {noRecipe: true});
     $("node-title").textContent = example.title;
     $("node-description").textContent = example.summary || workflow?.description || "";
-    const details = [listSection("Assumptions", example.assumptions), listSection("Limits of this example", example.limitations), listSection("Physics", example.physics)].filter(Boolean);
+    const reproductions = array(example.reproductions).map(item => item.title + " — " + item.status.replaceAll("_", " ") +
+      (array(item.levels_passed).length ? " (passed: " + item.levels_passed.join(", ") + ")" : ""));
+    const details = [listSection("Native reproduction", reproductions), listSection("Assumptions", example.assumptions),
+                     listSection("Limits of this example", example.limitations), listSection("Physics", example.physics)].filter(Boolean);
     $("node-details").replaceChildren(...details);
     showSources(example.source_ids, example.source_url);
     clearConstruction("Choose a parameterized reconstruction or inspect an available original model for this example.");

@@ -199,6 +199,26 @@ def load_graph(data_dir=None):
              "edges": sorted(merged_edges.values(), key=lambda e: e["id"]),
              "examples": sorted(examples, key=lambda e: e["id"]), "sources": manifest.get("sources", []),
              "artifacts": artifacts, "crawl": manifest.get("crawl", {}), "consolidation_conflicts": conflicts}
+    # Native reproduction evidence upgrades only the reproduced example's own
+    # workflow; shared methods keep their status for other applications.
+    reproductions = directory / "verification" / "official_reproductions.json"
+    if reproductions.exists():
+        record = json.loads(reproductions.read_text())
+        node_index = {node["id"]: node for node in graph["nodes"]}
+        for example in graph["examples"]:
+            cases = [c for c in record.get("cases", []) if c.get("example_id") == example["id"]]
+            if not cases:
+                continue
+            example["reproductions"] = [{k: c.get(k) for k in ("case_id", "title", "status", "levels_passed")} for c in cases]
+            passed = [c for c in cases if c.get("status") == "passed"]
+            workflow = node_index.get(example.get("workflow_id"))
+            if passed and workflow:
+                workflow["verification"] = {
+                    "status": "numerically_checked", "report": "verification/official_reproductions.json",
+                    "case_ids": [c["case_id"] for c in passed],
+                    "levels_passed": sorted({level for c in passed for level in c["levels_passed"]}),
+                    "note": "This official example was solved natively and matched its published results. "
+                            "Shared methods it uses are not thereby certified for other applications."}
     baseline_path = directory / "curation_manifest.json"
     baseline = json.loads(baseline_path.read_text()) if baseline_path.exists() else {}
     baseline["source_hashes"] = {**external.get("curated_source_hashes", {}), **baseline.get("source_hashes", {})}

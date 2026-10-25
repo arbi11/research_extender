@@ -96,6 +96,22 @@ jobs:
             -e HOME=/tmp -e PYTHONDONTWRITEBYTECODE=1 \
             femm-brain-native:ci python3 -m femm_brain.benchmark_audit \
             --summary /reports/summary.json --output /reports/audit.json
+      # Official model files are restored on the host by digest; the engine
+      # container that opens them has no network and a read-only cache mount.
+      - name: Restore the official model files that reproduction cases open
+        run: python3 -m femm_brain restore-cache --for-reproductions --cache "$PWD/femm-cache"
+      - name: Reproduce official examples from original files, stored data and article text
+        run: |
+          mkdir -p reproductions
+          docker run --rm --network none --read-only --memory=2g --cpus=2 \
+            --pids-limit 256 --tmpfs /tmp:rw,size=512m \
+            -v "$PWD/femm_brain:/repo/femm_brain:ro" -v "$PWD/femm-cache:/cache:ro" -v "$PWD/reproductions:/reports" -w /repo \
+            -e HOME=/tmp -e PYTHONDONTWRITEBYTECODE=1 -e FEMM_BRAIN_CACHE=/cache -e FEMM_LUA=/opt/femm/bin/femm-lua \
+            -e FEMM_DIR=/opt/femm/bin -e QT_QPA_PLATFORM=offscreen -e FEMM_MESH_EXPORT=1 \
+            femm-brain-native:ci python3 -m femm_brain reproduce --all --engine native --output /reports/cases
+      - name: Record reproduction evidence and audit page
+        if: always()
+        run: python3 -m femm_brain reproduction-report --results reproductions/cases --output reproductions/official_reproductions.json --html reproductions/index.html
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -103,4 +119,5 @@ jobs:
           path: |
             native-reports
             native-solves
+            reproductions
           if-no-files-found: ignore
