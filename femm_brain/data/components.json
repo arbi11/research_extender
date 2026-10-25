@@ -2194,6 +2194,266 @@
     "Adjacent magnets must not overlap.",
     "Radially magnetized arc magnets use FEMM's position-dependent direction (theta)."
    ]
+  },
+  {
+   "id": "salient_poles",
+   "layer": 2,
+   "title": "Salient poles with optional coil blocks",
+   "description": "Salient poles repeated around the axis, for stators (poles pointing toward the axis) and rotors (poles pointing away): each pole face is an arc of the pole arc on the tip radius, straight sides run to root corners of a given root width (parallel sides by default, tapered otherwise), and an arc centred on the axis or a straight chord joins neighbouring poles at the root radius. Optional coil blocks lie against both sides of every pole between two distances along the pole axis and reach a given width beyond the side; the sides are split at the coil corners so coil and pole share edges. Switched-reluctance stators and rotors and wound-field salient-pole rotors are built from it.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "pole_count",
+     "type": "integer",
+     "description": "Number of poles",
+     "required": true,
+     "minimum": 2
+    },
+    {
+     "name": "tip_radius",
+     "type": "number",
+     "description": "Radius of the pole faces at the air gap",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "root_radius",
+     "type": "number",
+     "description": "Radius at which the poles join the yoke or core",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "pole_arc",
+     "type": "number",
+     "description": "Angle spanned by each pole face",
+     "required": true,
+     "unit": "degrees",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "root_width",
+     "type": "number",
+     "description": "Chord width of each pole at its root (default: the face chord, so parallel sides)",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "root_shape",
+     "type": "string",
+     "description": "arc (centred on the axis) or flat (a chord) between neighbouring pole roots",
+     "required": false,
+     "choices": [
+      "arc",
+      "flat"
+     ],
+     "default": "arc"
+    },
+    {
+     "name": "first_pole_angle",
+     "type": "number",
+     "description": "Angle of the axis of pole 0",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "coil_start",
+     "type": "number",
+     "description": "Distance from the axis, along the pole axis, of the coil block end nearer the axis",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "coil_end",
+     "type": "number",
+     "description": "Distance from the axis, along the pole axis, of the coil block end farther from the axis",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "coil_width",
+     "type": "number",
+     "description": "How far each coil block reaches beyond the pole side, at right angles to the pole axis",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "tip_max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of the pole face arcs",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
+    },
+    {
+     "name": "root_max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of the root arcs",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the pole contours and label (a rotor's group is rotated between positions)",
+     "required": false,
+     "default": 0
+    },
+    {
+     "name": "iron_material",
+     "type": "string",
+     "description": "Material of the iron label placed in pole 0",
+     "required": false
+    },
+    {
+     "name": "iron_mesh",
+     "type": "number",
+     "description": "Element size of the iron",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "addarc",
+    "addblocklabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "segment",
+    "arc",
+    "block_label"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": [
+    "Pole faces and pole roots of neighbouring poles may not overlap, and the sides run from the face toward the root.",
+    "Coil blocks need a start, an end and a width; they lie strictly between the face and root corners, inside their half of the gap between poles, and clear of the pole-face circle and the root.",
+    "The yoke or shaft circle and its boundary are separate components; coil circuits and turns come from salient_pole_winding."
+   ]
+  },
+  {
+   "id": "salient_pole_winding",
+   "layer": 2,
+   "title": "Coils on salient poles",
+   "description": "Places the block labels of coils wound around salient poles: pole k belongs to phase k mod m, and a coil of positive polarity carries +turns on the clockwise side of its pole and -turns on the counterclockwise side. By default the polarity alternates between successive poles of each phase, so the opposite poles of a switched-reluctance phase, or neighbouring poles of a single-circuit field winding, are north and south; an explicit list gives one sign per pole instead.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "pole_count",
+     "type": "integer",
+     "description": "Number of poles",
+     "required": true,
+     "minimum": 2
+    },
+    {
+     "name": "phases",
+     "type": "list",
+     "description": "Circuit names in pole order; pole k belongs to phases[k mod m]",
+     "required": true
+    },
+    {
+     "name": "turns",
+     "type": "integer",
+     "description": "Turns per coil (per coil side label)",
+     "required": true,
+     "minimum": 1
+    },
+    {
+     "name": "material",
+     "type": "string",
+     "description": "Winding material",
+     "required": true
+    },
+    {
+     "name": "label_axial",
+     "type": "number",
+     "description": "Distance of the labels from the axis along each pole axis",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "label_offset",
+     "type": "number",
+     "description": "Distance of the labels to either side of each pole axis",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "first_pole_angle",
+     "type": "number",
+     "description": "Angle of the axis of pole 0",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "polarities",
+     "type": "list",
+     "description": "One polarity (+1 or -1) per pole; default alternates between successive poles of each phase",
+     "required": false
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Element size of the coil blocks",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the labels",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addblocklabel",
+    "selectlabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "block_label"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "excitation",
+   "constraints": [
+    "The pole count must be a multiple of the number of phases, and phase names must be distinct.",
+    "Each label must lie between its pole axis and the middle of the gap to the next pole; the coil outlines come from salient_poles.",
+    "Phase circuits and their currents are defined separately."
+   ]
   }
  ]
 }

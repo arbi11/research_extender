@@ -727,11 +727,135 @@ def surface_magnet_rotor(m, pole_count, magnet_material, thickness, magnet_shape
             m.arc(seat_corners[k][1], seat_corners[(k + 1) % pole_count][0], pitch - arc_angle, arc_max_segment, group=group)
 
 
+def _segment_distance(a, b):
+    """Distance from the axis to the nearest point of the segment ab."""
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    t = max(0.0, min(1.0, -(a[0] * dx + a[1] * dy) / (dx * dx + dy * dy)))
+    return math.hypot(a[0] + t * dx, a[1] + t * dy)
+
+
+def salient_poles(m, pole_count, tip_radius, root_radius, pole_arc, root_width=None, root_shape="arc", first_pole_angle=0,
+                  coil_start=None, coil_end=None, coil_width=None, tip_max_segment=1, root_max_segment=1, group=0,
+                  iron_material=None, iron_mesh=None):
+    """Salient poles of a stator or rotor, repeated around the axis, with optional coil blocks against their sides.
+
+    Each pole face is an arc of ``pole_arc`` degrees on ``tip_radius``. Straight
+    sides run from the face corners to root corners ``root_width`` apart on
+    ``root_radius`` (the face chord by default, so parallel sides), where an arc
+    centred on the axis, or a straight chord, joins the next pole. Poles point
+    toward the axis when the root radius exceeds the tip radius (stators) and away
+    from it otherwise (rotors). Coil blocks, when given, lie against both sides of
+    every pole between ``coil_start`` and ``coil_end`` (distances from the axis
+    along the pole axis) and reach ``coil_width`` beyond the side at right angles
+    to the pole axis; the sides are split at the coil corners so coil and pole
+    share edges.
+    """
+    if root_shape not in ("arc", "flat"):
+        raise ValueError("The root shape is arc or flat")
+    if tip_radius == root_radius:
+        raise ValueError("The tip and root radii must differ")
+    pitch = 360 / pole_count
+    tip_half = pole_arc / 2
+    face_half_width = tip_radius * math.sin(math.radians(tip_half))
+    root_half_width = face_half_width if root_width is None else root_width / 2
+    if tip_half >= pitch / 2:
+        raise ValueError("Pole faces overlap: reduce the pole arc")
+    if root_half_width >= root_radius or math.degrees(math.asin(root_half_width / root_radius)) >= pitch / 2:
+        raise ValueError("Pole roots overlap: reduce the root width")
+    root_half = math.degrees(math.asin(root_half_width / root_radius))
+    tip_x, root_x = tip_radius * math.cos(math.radians(tip_half)), math.sqrt(root_radius ** 2 - root_half_width ** 2)
+    if (root_x > tip_x) != (root_radius > tip_radius):
+        raise ValueError("The pole sides must run from the face toward the root")
+    coil = [coil_start, coil_end, coil_width]
+    if any(value is not None for value in coil) and any(value is None for value in coil):
+        raise ValueError("Coil blocks need a start, an end and a width")
+    profile = {("tip", -1): (tip_x, -face_half_width), ("tip", 1): (tip_x, face_half_width),
+               ("root", -1): (root_x, -root_half_width), ("root", 1): (root_x, root_half_width)}
+    sides = {s: [("tip", s), ("root", s)] for s in (-1, 1)}
+    if coil_start is not None:
+        if not (min(tip_x, root_x) < coil_start < coil_end < max(tip_x, root_x)) or not coil_width > 0:
+            raise ValueError("Coil blocks lie along the pole sides, strictly between the face and root corners")
+        slope = (root_half_width - face_half_width) / (root_x - tip_x)
+        on_side = lambda x: face_half_width + slope * (x - tip_x)
+        inner, outer = min(tip_radius, root_radius), max(tip_radius, root_radius)
+        corners = [(x, on_side(x) + across) for x in (coil_start, coil_end) for across in (0, coil_width)]
+        block = [corners[0], corners[2], corners[3], corners[1]]
+        flat_root = None
+        if root_shape == "flat":
+            following = _rotated((root_x, -root_half_width), pitch)
+            flat_root = lambda p: ((following[0] - root_x) * (p[1] - root_half_width)
+                                   - (following[1] - root_half_width) * (p[0] - root_x))
+        for p in block:
+            angle = math.degrees(math.atan2(p[1], p[0]))
+            # A flat root is a chord: stator coils stay on the axis side of it, rotor coils beyond it.
+            beyond_root = flat_root and not (flat_root(p) > 0 if root_radius > tip_radius else flat_root(p) < 0)
+            if not 0 < angle < pitch / 2 or math.hypot(*p) >= outer or beyond_root:
+                raise ValueError("Coil blocks must stay inside their half of the gap between poles")
+        if any(_segment_distance(a, b) <= inner for a, b in zip(block, block[1:] + block[:1])):
+            raise ValueError("Coil blocks must not reach the pole faces' circle")
+        for s in (-1, 1):
+            for name, (x, y) in zip(("coil_near", "coil_far", "coil_far_out", "coil_near_out"), block):
+                profile[name, s] = (x, s * y)
+            # Along each side from the face: the coil end nearer the face first.
+            if abs(coil_start - tip_x) > abs(coil_end - tip_x):
+                profile["coil_near", s], profile["coil_far", s] = profile["coil_far", s], profile["coil_near", s]
+                profile["coil_near_out", s], profile["coil_far_out", s] = profile["coil_far_out", s], profile["coil_near_out", s]
+            sides[s] = [("tip", s), ("coil_near", s), ("coil_far", s), ("root", s)]
+    # Every pole's points are computed once; the root between two poles joins the very points each pole was drawn with.
+    poles = [{key: _rotated(point, first_pole_angle + k * pitch) for key, point in profile.items()} for k in range(pole_count)]
+    for k, pole in enumerate(poles):
+        m.arc(pole["tip", -1], pole["tip", 1], pole_arc, tip_max_segment, group=group)
+        for s in (-1, 1):
+            for a, b in zip(sides[s], sides[s][1:]):
+                m.segment(pole[a], pole[b], group=group)
+            if coil_start is not None:
+                for a, b in (("coil_far", "coil_far_out"), ("coil_far_out", "coil_near_out"), ("coil_near_out", "coil_near")):
+                    m.segment(pole[a, s], pole[b, s], group=group)
+        start, end = pole["root", 1], poles[(k + 1) % pole_count]["root", -1]
+        if root_shape == "arc":
+            m.arc(start, end, pitch - 2 * root_half, root_max_segment, group=group)
+        else:
+            m.segment(start, end, group=group)
+    if iron_material:
+        m.label(*_rotated(((tip_x + root_x) / 2, 0), first_pole_angle), iron_material, mesh=iron_mesh, group=group)
+
+
+def salient_pole_winding(m, pole_count, phases, turns, material, label_axial, label_offset, first_pole_angle=0, polarities=None,
+                         mesh=None, group=0):
+    """Block labels of coils wound around salient poles: pole k belongs to phase k mod m.
+
+    A coil of positive polarity carries +turns on the clockwise side of its pole
+    and -turns on the counterclockwise side. By default the polarity alternates
+    between successive poles of each phase, so the opposite poles of a
+    switched-reluctance phase (or neighbouring poles of a field winding with one
+    circuit) are north and south; ``polarities`` gives one sign per pole instead.
+    Labels sit ``label_axial`` from the axis along each pole axis and
+    ``label_offset`` to either side of it.
+    """
+    phases = list(phases)
+    if not phases or len(set(phases)) != len(phases) or pole_count % len(phases):
+        raise ValueError("Phases need distinct names, and the pole count must be a multiple of the phase count")
+    if not float(turns).is_integer() or turns <= 0:
+        raise ValueError("Turns per coil side must be a positive integer")
+    if polarities is None:
+        polarities = [1 if (k // len(phases)) % 2 == 0 else -1 for k in range(pole_count)]
+    if len(polarities) != pole_count or any(p not in (1, -1) for p in polarities):
+        raise ValueError("Give one polarity, +1 or -1, per pole")
+    pitch = 360 / pole_count
+    if not 0 < math.degrees(math.atan2(label_offset, label_axial)) < pitch / 2:
+        raise ValueError("Each label must lie between its pole axis and the middle of the gap to the next pole")
+    for k in range(pole_count):
+        axis, phase, polarity = first_pole_angle + k * pitch, phases[k % len(phases)], polarities[k]
+        for side in (-1, 1):
+            m.label(*_rotated((label_axial, side * label_offset), axis), material, mesh=mesh, circuit=phase,
+                    turns=int(-side * polarity * turns), group=group)
+
+
 IMPLEMENTATIONS = {function.__name__: function for function in (
     segment, polyline, arc, circle, point, block_label, hole, material, library_material, circuit, conductor, boundary,
     fixed_potential_boundary, mixed_boundary, convection_boundary, iabc_open_boundary, axisymmetric_coil_section,
     bar_magnet, air_gap_element, kelvin_periodic_exterior, segment_boundary, fixed_point_potential, magnet_array,
-    slotted_stator, trapezoidal_slot_stator, tooth_coil_winding, surface_magnet_rotor)}
+    slotted_stator, trapezoidal_slot_stator, tooth_coil_winding, surface_magnet_rotor, salient_poles, salient_pole_winding)}
 
 
 def _finite(value):

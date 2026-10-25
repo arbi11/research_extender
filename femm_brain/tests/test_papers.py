@@ -91,6 +91,11 @@ class CaseRuleTests(unittest.TestCase):
         self.assertTrue(any("twice" in p for p in self.problems(minimal_case(targets=[digitized]))))
         self.assertTrue(any("allowance" in p for p in self.problems(minimal_case(targets=[measured]))))
         self.assertEqual(self.problems(minimal_case(targets=[dict(digitized, digitization_uncertainty=0.005)])), [])
+        # An absolute uncertainty needs an absolute (or a wide enough relative) tolerance of at least twice it.
+        absolute = dict(digitized, absolute_digitization_uncertainty=0.02)
+        self.assertTrue(any("twice" in p for p in self.problems(minimal_case(targets=[absolute]))))
+        self.assertEqual(self.problems(minimal_case(targets=[dict(absolute, absolute_tolerance=0.04)])), [])
+        self.assertEqual(self.problems(minimal_case(targets=[dict(absolute, relative_tolerance=0.04)])), [])
 
     def test_open_questions_block_freezing_and_regions_are_checked(self):
         case = minimal_case(gaps=[{"item": "turns", "affects": "flux", "decision": "ask"}])

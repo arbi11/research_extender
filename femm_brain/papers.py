@@ -140,8 +140,12 @@ def check(case, cache=PAPER_CACHE, build=True):
         if target["used_for_acceptance"]:
             acceptance += 1
             if target["kind"] == "digitized":
-                spread = target.get("digitization_uncertainty")
-                if not spread or (target.get("relative_tolerance") or 0) < 2 * spread:
+                # The uncertainty may be relative, absolute (in the target's unit) or both, like the tolerance;
+                # the tolerance band at the target value must be at least twice the uncertainty band.
+                size = abs(target["value"]) if isinstance(target["value"], (int, float)) else 0
+                spread = max(size * (target.get("digitization_uncertainty") or 0), target.get("absolute_digitization_uncertainty") or 0)
+                band = max(size * (target.get("relative_tolerance") or 0), target.get("absolute_tolerance") or 0)
+                if not spread or band < 2 * spread:
                     problems.append(f"{where}: a digitized acceptance target needs a stated uncertainty and a tolerance of at least twice it")
             if target["kind"] in ("measured", "3d_fea") and not target.get("allowance"):
                 problems.append(f"{where}: a {target['kind']} acceptance target needs an argued allowance")

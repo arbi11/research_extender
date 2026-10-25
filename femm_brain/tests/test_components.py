@@ -327,6 +327,97 @@ class MachineGeometryTests(unittest.TestCase):
             self.build([magnet, dict(rotor, arc_angle=36)])
 
 
+class SalientPoleTests(unittest.TestCase):
+    problem = {"physics": "magnetics", "units": "millimeters", "type": "planar", "frequency": 0, "depth": 1}
+    stator = {"use": "salient_poles", "pole_count": 8, "tip_radius": 48.75, "root_radius": 77.65, "pole_arc": 20.45,
+              "coil_start": 49.4, "coil_end": 72.9, "coil_width": 8.8}
+    rotor = {"use": "salient_poles", "pole_count": 6, "tip_radius": 48.35, "root_radius": 30.85, "pole_arc": 21.5,
+             "root_width": 19.5, "group": 1}
+
+    def build(self, steps):
+        return assemble({"problem": self.problem, "steps": steps}, {})[0]
+
+    def machine(self, stator=None, rotor=None, winding=None):
+        """An 8/6 switched-reluctance cross-section with four phases."""
+        half = 48.75 * math.sin(math.radians(10.225))
+        return [{"use": "material", "name": "Iron", "values": {"Mu_x": 1000, "Mu_y": 1000}}, {"use": "material", "name": "Air"},
+                *({"use": "circuit", "name": name, "current": 0} for name in "ABCD"),
+                dict(self.stator, iron_material="Iron", **(stator or {})), {"use": "circle", "radius": 89.75},
+                dict({"use": "salient_pole_winding", "pole_count": 8, "phases": ["A", "B", "C", "D"], "turns": 88, "material": "Air",
+                      "label_axial": 61, "label_offset": half + 4.4}, **(winding or {})),
+                {"use": "block_label", "at": [60, 24], "material": "Air"},
+                dict(self.rotor, iron_material="Iron", **(rotor or {})), {"use": "circle", "radius": 18, "group": 1},
+                {"use": "block_label", "at": [0, 0], "material": "Air", "group": 1}]
+
+    def test_poles_are_symmetric_with_faces_and_roots_on_their_radii(self):
+        for step, pitch, radii in ((self.stator, 45, (48.75, 77.65)), (self.rotor, 60, (48.35, 30.85))):
+            model = self.build([step])
+            points = [(n["x"], n["y"]) for n in model["nodes"]]
+            turn = math.radians(pitch)
+            for x, y in points:
+                turned = (x * math.cos(turn) - y * math.sin(turn), x * math.sin(turn) + y * math.cos(turn))
+                self.assertTrue(any(math.dist(turned, other) < 1e-9 for other in points), (x, y))
+            for arc in model["arcs"]:
+                a, b = model["nodes"][arc["n0"]], model["nodes"][arc["n1"]]
+                radius = arc_geometry((a["x"], a["y"]), (b["x"], b["y"]), arc["angle"])["radius"]
+                self.assertTrue(any(math.isclose(radius, r, rel_tol=1e-9) for r in radii), radius)
+            faces = sum(arc["angle"] for arc in model["arcs"] if math.isclose(arc["angle"], step["pole_arc"]))
+            self.assertAlmostEqual(faces, step["pole_arc"] * step["pole_count"])
+        # Parallel stator sides keep the face's half-width; the tapered rotor reaches the root width at its root corners.
+        half = 48.75 * math.sin(math.radians(10.225))
+        stator = [(n["x"], n["y"]) for n in self.build([self.stator])["nodes"]]
+        self.assertEqual(sum(1 for x, y in stator if x > 0 and math.isclose(abs(y), half, abs_tol=1e-9)), 8)
+        rotor = [(n["x"], n["y"]) for n in self.build([self.rotor])["nodes"]]
+        self.assertEqual(sum(1 for x, y in rotor if x > 0 and math.isclose(abs(y), 9.75, abs_tol=1e-9)
+                             and math.isclose(math.hypot(x, y), 30.85)), 2)
+
+    def test_coil_blocks_share_the_pole_sides_and_every_region_is_closed(self):
+        for variant in ({}, {"rotor": {"root_shape": "flat"}}, {"stator": {"root_shape": "flat"}}):
+            model = self.build(self.machine(**variant))
+            self.assertEqual(check_regions(model), [], variant)
+        model = self.build(self.machine())
+        coils = [label for label in model["labels"] if label.get("circuit")]
+        self.assertEqual(len(coils), 16)
+        # Pole 0 (phase A) is positive: +turns clockwise of it; its opposite pole 4 is negative.
+        signs = {(label["circuit"], round(math.degrees(math.atan2(label["y"], label["x"])) % 360)): label["turns"] for label in coils}
+        self.assertEqual(signs[("A", 348)], 88)
+        self.assertEqual(signs[("A", 12)], -88)
+        self.assertEqual(signs[("A", 168)], -88)
+        self.assertEqual(signs[("A", 192)], 88)
+        self.assertEqual({phase for phase, _ in signs}, set("ABCD"))
+        for phase in "ABCD":
+            self.assertEqual(sum(turns for (name, _), turns in signs.items() if name == phase), 0)
+        explicit = self.build(self.machine(winding={"polarities": [1, -1] * 4}))
+        flipped = [l for l in explicit["labels"] if l.get("circuit") == "A" and l["x"] < 0 and l["y"] > 0]
+        self.assertEqual(flipped[0]["turns"], 88)
+        field = self.build([{"use": "material", "name": "Cu"}, {"use": "circuit", "name": "F", "current": 0},
+                            {"use": "salient_pole_winding", "pole_count": 4, "phases": ["F"], "turns": 10, "material": "Cu",
+                             "label_axial": 20, "label_offset": 5}])
+        clockwise = sorted((math.degrees(math.atan2(l["y"], l["x"])) % 360, l["turns"]) for l in field["labels"])
+        # Alternate poles are north and south, so both coil sides in each gap carry the same sign.
+        self.assertEqual([turns for _, turns in clockwise], [-10, -10, 10, 10, -10, -10, 10, 10])
+
+    def test_impossible_poles_coils_and_windings_are_refused(self):
+        with self.assertRaisesRegex(ValueError, "faces overlap"):
+            self.build([dict(self.stator, pole_arc=46)])
+        with self.assertRaisesRegex(ValueError, "roots overlap"):
+            self.build([dict(self.rotor, root_width=40)])
+        with self.assertRaisesRegex(ValueError, "between the face and root"):
+            self.build([dict(self.stator, coil_end=80)])
+        with self.assertRaisesRegex(ValueError, "half of the gap"):
+            self.build([dict(self.stator, coil_width=13)])
+        with self.assertRaisesRegex(ValueError, "half of the gap"):
+            self.build([dict(self.stator, coil_end=77, coil_width=9)])
+        with self.assertRaisesRegex(ValueError, "start, an end and a width"):
+            self.build([{key: value for key, value in self.stator.items() if key != "coil_width"}])
+        with self.assertRaisesRegex(ValueError, "multiple of the phase count"):
+            self.build(self.machine(winding={"phases": ["A", "B", "C"]}))
+        with self.assertRaisesRegex(ValueError, "one polarity"):
+            self.build(self.machine(winding={"polarities": [1, -1]}))
+        with self.assertRaisesRegex(ValueError, "middle of the gap"):
+            self.build(self.machine(winding={"label_offset": 40}))
+
+
 class LinearMachineTests(unittest.TestCase):
     problem = {"physics": "magnetics", "units": "millimeters", "type": "axisymmetric", "frequency": 0, "depth": 1}
     array = {"use": "magnet_array", "start": 0, "inner": 19.5, "outer": 24.5, "magnet_material": "M",

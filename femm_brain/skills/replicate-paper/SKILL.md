@@ -90,7 +90,7 @@ verbatim quote and location, and whether it decides acceptance:
 | `analytic` | acceptance at 1% when the paper's own numerics agree with it; otherwise the agreement the paper reports |
 | `2d_fea` | acceptance at 1%, unless the quantity is mesh-noise dominated (cogging, ripple): then a comparator |
 | `3d_fea`, `measured` | comparator by default; acceptance only with an end-effect or test allowance argued in the case |
-| `digitized` | comparator unless the digitization uncertainty is stated; then acceptance at no tighter than twice that uncertainty |
+| `digitized` | comparator unless the digitization uncertainty is stated (relative, absolute or both); then acceptance with a tolerance band at least twice the uncertainty band |
 
 Write the measurement plan (`measurements`, `metrics`, `steps` for rotor
 positions or current sweeps) and the assessors: `phase_linkage` checks winding
