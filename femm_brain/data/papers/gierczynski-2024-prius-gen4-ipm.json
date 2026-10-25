@@ -61,7 +61,7 @@
   "slots": 48,
   "poles": 8,
   "phases": 3,
-  "symmetry": "Full cross-section. dq quantities from the phase flux linkages, with the d-axis on the rotor's north-pole axis and the phase-A axis and sequence from the winding's own MMF."
+  "symmetry": "One pole of eight (45 degrees) with antiperiodic radial ends and a sliding band in the gap that turns the rotor without remeshing; flux linkages times 8. dq quantities from the phase flux linkages, with the d-axis on the rotor's north-pole axis and the phase-A axis and sequence from the winding's own MMF."
  },
  "components_map": [
   {
@@ -75,6 +75,10 @@
   {
    "part": "three phases in series",
    "component": "circuit"
+  },
+  {
+   "part": "one-pole sector: antiperiodic ends, outer A = 0, sliding band in the gap",
+   "component": "segment_boundary, arc_boundary, sector_air_gap"
   },
   {
    "part": "flux-linkage maps",
@@ -460,6 +464,20 @@
    },
    "stator_contours": {
     "value": [
+     [
+      "segment",
+      70.85,
+      0.0,
+      107.5,
+      0.0
+     ],
+     [
+      "segment",
+      50.09851544706683,
+      50.0985154470669,
+      76.0139789775539,
+      76.01397897755382
+     ],
      [
       "arc",
       70.56041548495874,
@@ -4619,6 +4637,13 @@
      ],
      [
       "segment",
+      0.0,
+      0.0,
+      16.61700935788386,
+      16.617009357883873
+     ],
+     [
+      "segment",
       38.98771627197631,
       16.14924084580679,
       37.57178757222547,
@@ -5213,6 +5238,13 @@
       50.02271286788368,
       44.24332245924076,
       22.503834246098506
+     ],
+     [
+      "segment",
+      0.0,
+      0.0,
+      23.500000000000004,
+      -1.6664543524416136e-14
      ],
      [
       "segment",
@@ -5819,6 +5851,20 @@
       22.503834246098464
      ],
      [
+      "segment",
+      16.61700935788386,
+      16.617009357883873,
+      49.63889603929559,
+      49.63889603929565
+     ],
+     [
+      "segment",
+      23.500000000000004,
+      -1.6664543524416136e-14,
+      70.19999999999999,
+      -4.97e-14
+     ],
+     [
       "arc",
       69.75603277402955,
       7.882632277895286,
@@ -5907,6 +5953,12 @@
     "unit": "deg",
     "provenance": "numerical",
     "reason": "Other arcs."
+   },
+   "min_arc_piece_mm": {
+    "value": 0.1,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "No arc is cut into pieces shorter than this: the conductors' 0.2 mm corner fillets in 1 degree pieces gave the first mesh 3.35 million elements."
    },
    "gap_air_mesh_mm": {
     "value": 0.3,
@@ -6033,25 +6085,33 @@
      "current": 0
     },
     {
-     "use": "entity_pattern",
-     "entities": "$stator_contours",
-     "copies": 8,
-     "angle_step": 45,
-     "snap": "$contour_snap_mm",
-     "max_segment": "$coarse_arc_deg",
-     "max_segment_bands": [
-      [
-       69.0,
-       72.0,
-       "$fine_arc_deg"
-      ]
-     ]
+     "use": "fixed_potential_boundary",
+     "name": "A=0"
+    },
+    {
+     "use": "boundary",
+     "name": "shaft_ends",
+     "values": {
+      "BdryType": 5
+     }
+    },
+    {
+     "use": "boundary",
+     "name": "rotor_ends",
+     "values": {
+      "BdryType": 5
+     }
+    },
+    {
+     "use": "boundary",
+     "name": "stator_ends",
+     "values": {
+      "BdryType": 5
+     }
     },
     {
      "use": "entity_pattern",
-     "entities": "$rotor_contours",
-     "copies": 8,
-     "angle_step": 45,
+     "entities": "$stator_contours",
      "snap": "$contour_snap_mm",
      "max_segment": "$coarse_arc_deg",
      "max_segment_bands": [
@@ -6061,7 +6121,87 @@
        "$fine_arc_deg"
       ]
      ],
+     "min_segment_length": "$min_arc_piece_mm"
+    },
+    {
+     "use": "entity_pattern",
+     "entities": "$rotor_contours",
+     "snap": "$contour_snap_mm",
+     "max_segment": "$coarse_arc_deg",
+     "max_segment_bands": [
+      [
+       69.0,
+       72.0,
+       "$fine_arc_deg"
+      ]
+     ],
+     "min_segment_length": "$min_arc_piece_mm",
      "group": 1
+    },
+    {
+     "use": "segment_boundary",
+     "name": "shaft_ends",
+     "at": [
+      [
+       11.75,
+       0
+      ],
+      [
+       8.308504678941935,
+       8.308504678941933
+      ]
+     ]
+    },
+    {
+     "use": "segment_boundary",
+     "name": "rotor_ends",
+     "at": [
+      [
+       47,
+       0
+      ],
+      [
+       33.23401871576774,
+       33.23401871576773
+      ]
+     ]
+    },
+    {
+     "use": "segment_boundary",
+     "name": "stator_ends",
+     "at": [
+      [
+       90,
+       0
+      ],
+      [
+       63.63961030678928,
+       63.63961030678927
+      ]
+     ]
+    },
+    {
+     "use": "arc_boundary",
+     "name": "A=0",
+     "at": [
+      [
+       99.31704974496333,
+       41.13846897924715
+      ]
+     ]
+    },
+    {
+     "use": "sector_air_gap",
+     "rotor_radius": "=rotor_outer_diameter_mm/2",
+     "stator_radius": "=stator_inner_diameter_mm/2",
+     "start_angle": 0,
+     "end_angle": 45,
+     "band_inner_radius": "=rotor_outer_diameter_mm/2+air_gap_mm*0.3",
+     "band_outer_radius": "=rotor_outer_diameter_mm/2+air_gap_mm*0.7",
+     "antiperiodic": true,
+     "max_segment": "$fine_arc_deg",
+     "mesh": "$gap_air_mesh_mm",
+     "rotor_group": 1
     },
     {
      "use": "block_label",
@@ -6225,946 +6365,6 @@
      "material": "Steel",
      "mesh": "$stator_mesh_mm",
      "group": 0
-    },
-    {
-     "use": "block_label",
-     "at": [
-      8.11383395002747,
-      47.7470645680102
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      18.03589219089118,
-      43.54249553674836
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      6.5124534547281065,
-      57.02816190269506
-     ],
-     "material": "Magnet",
-     "magdir": 187.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      27.656724619511188,
-      38.62805127364877
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      35.72303458554438,
-      44.929564876593226
-     ],
-     "material": "Magnet",
-     "magdir": 307.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      17.581682671695788,
-      62.39961120809363
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      24.175980848768063,
-      59.47475136560051
-     ],
-     "material": "Magnet",
-     "magdir": 247.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      15.914477842810413,
-      66.01658575828984
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      35.273149560520885,
-      57.98644056692022
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      9.544658699700435,
-      69.07676611159432
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      20.67894513549899,
-      66.7432330262473
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      32.61330005770221,
-      61.80947736008508
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      42.11411333375776,
-      55.44226565578116
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -28.024926130305897,
-      39.499620145278
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -18.035892190891097,
-      43.5424955367484
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -35.72,
-      44.93
-     ],
-     "material": "Magnet",
-     "magdir": 52.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -7.757899475753398,
-      46.870414523484
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -6.509999999999996,
-      57.03
-     ],
-     "material": "Magnet",
-     "magdir": 172.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -31.691061186820995,
-      56.5553152704732
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -24.959999999999997,
-      59.15
-     ],
-     "material": "Magnet",
-     "magdir": 112.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -35.4275402587757,
-      57.9340106621643
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -16.060722093688398,
-      65.9444885897916
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -42.0955568492761,
-      55.5937426306148
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -32.57237033807749,
-      61.8168150042693
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -20.644814955239696,
-      66.7669862105854
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -9.424426887589977,
-      68.9827771315078
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -47.7470645680102,
-      8.11383395002747
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -43.54249553674836,
-      18.03589219089118
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -57.02816190269506,
-      6.5124534547281065
-     ],
-     "material": "Magnet",
-     "magdir": 277.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -38.62805127364877,
-      27.656724619511188
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -44.929564876593226,
-      35.72303458554438
-     ],
-     "material": "Magnet",
-     "magdir": 37.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -62.39961120809363,
-      17.581682671695788
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -59.47475136560051,
-      24.175980848768063
-     ],
-     "material": "Magnet",
-     "magdir": 337.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -66.01658575828984,
-      15.914477842810413
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -57.98644056692022,
-      35.273149560520885
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -69.07676611159432,
-      9.544658699700435
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -66.7432330262473,
-      20.67894513549899
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -61.80947736008508,
-      32.61330005770221
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -55.44226565578116,
-      42.11411333375776
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -39.499620145278,
-      -28.024926130305897
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -43.5424955367484,
-      -18.035892190891094
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -44.93000000000001,
-      -35.71999999999999
-     ],
-     "material": "Magnet",
-     "magdir": 142.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -46.870414523484,
-      -7.757899475753395
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -57.03,
-      -6.509999999999993
-     ],
-     "material": "Magnet",
-     "magdir": 262.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -56.55531527047321,
-      -31.691061186820992
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -59.15,
-      -24.959999999999994
-     ],
-     "material": "Magnet",
-     "magdir": 202.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -57.934010662164305,
-      -35.42754025877569
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -65.9444885897916,
-      -16.060722093688394
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -55.593742630614805,
-      -42.09555684927609
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -61.81681500426931,
-      -32.57237033807749
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -66.7669862105854,
-      -20.644814955239692
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -68.9827771315078,
-      -9.424426887589972
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -8.113833950027473,
-      -47.74706456801021
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -18.035892190891186,
-      -43.54249553674836
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -6.512453454728114,
-      -57.02816190269506
-     ],
-     "material": "Magnet",
-     "magdir": 7.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -27.656724619511195,
-      -38.62805127364877
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -35.72303458554439,
-      -44.929564876593226
-     ],
-     "material": "Magnet",
-     "magdir": 127.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -17.581682671695788,
-      -62.39961120809363
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -24.17598084876807,
-      -59.47475136560051
-     ],
-     "material": "Magnet",
-     "magdir": 67.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -15.91447784281042,
-      -66.01658575828984
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -35.27314956052089,
-      -57.98644056692022
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -9.544658699700442,
-      -69.07676611159432
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -20.678945135498996,
-      -66.7432330262473
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -32.61330005770222,
-      -61.80947736008509
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -42.11411333375777,
-      -55.44226565578116
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      28.024926130305893,
-      -39.49962014527801
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      18.035892190891094,
-      -43.5424955367484
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      35.71999999999999,
-      -44.93000000000001
-     ],
-     "material": "Magnet",
-     "magdir": 232.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      7.7578994757533914,
-      -46.870414523484
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      6.509999999999989,
-      -57.03
-     ],
-     "material": "Magnet",
-     "magdir": 352.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      31.69106118682099,
-      -56.55531527047321
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      24.95999999999999,
-      -59.150000000000006
-     ],
-     "material": "Magnet",
-     "magdir": 292.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      35.42754025877569,
-      -57.934010662164305
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      16.06072209368839,
-      -65.9444885897916
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      42.09555684927609,
-      -55.593742630614805
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      32.572370338077484,
-      -61.81681500426931
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      20.64481495523969,
-      -66.7669862105854
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      9.424426887589968,
-      -68.9827771315078
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      47.7470645680102,
-      -8.113833950027477
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      43.54249553674836,
-      -18.03589219089119
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      57.028161902695054,
-      -6.512453454728117
-     ],
-     "material": "Magnet",
-     "magdir": 97.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      38.628051273648765,
-      -27.656724619511195
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      44.92956487659322,
-      -35.72303458554439
-     ],
-     "material": "Magnet",
-     "magdir": 217.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      62.399611208093624,
-      -17.58168267169579
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      59.474751365600504,
-      -24.17598084876807
-     ],
-     "material": "Magnet",
-     "magdir": 157.5,
-     "mesh": "$magnet_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      66.01658575828984,
-      -15.914477842810424
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      57.98644056692022,
-      -35.27314956052089
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      69.07676611159432,
-      -9.544658699700445
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      66.7432330262473,
-      -20.678945135499
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      61.80947736008508,
-      -32.61330005770222
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      55.442265655781156,
-      -42.11411333375777
-     ],
-     "material": "Air",
-     "mesh": "$pocket_air_mesh_mm",
-     "group": 1
-    },
-    {
-     "use": "block_label",
-     "at": [
-      70.525,
-      0.3
-     ],
-     "material": "Air",
-     "mesh": "$gap_air_mesh_mm"
     },
     {
      "use": "block_label",
@@ -7693,3702 +6893,6 @@
      "circuit": "A",
      "turns": -1,
      "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      49.20049540032229,
-      56.10241263764532
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      41.45674404574538,
-      62.04440204021082
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      33.00365630656486,
-      66.92479452191021
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      23.985866857636765,
-      70.66008521428122
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      14.557672576635852,
-      73.18636225795913
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      4.880392481699364,
-      74.4604003523103
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      50.74078138329489,
-      57.858772184304286
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      42.754601744814934,
-      63.986783351758014
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      34.03687901666616,
-      69.01996291557522
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      24.73677585173653,
-      72.87219177795802
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      15.01341959365373,
-      75.47755723503141
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.033179563817225,
-      76.7914807614811
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      52.28200222609112,
-      59.61619773428611
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      44.053247164498124,
-      65.93034357051489
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      35.070728830052985,
-      71.11640294890756
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      25.48814060188262,
-      75.0856409556525
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      15.469443221366422,
-      77.77014282797363
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.186059378392721,
-      79.12397599455099
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      53.823223068887735,
-      61.37362328426839
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      45.35189258418162,
-      67.8739037892723
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      36.10457864344005,
-      73.21284298224045
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      26.239505352028885,
-      77.29909013334755
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      15.925466849079209,
-      80.06272842091643
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.338939192968236,
-      81.45647122762149
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      55.36444391168394,
-      63.131048834250365
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      46.65053800386476,
-      69.81746400802933
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      37.13842845682681,
-      75.3092830155729
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      26.99087010217489,
-      79.51253931104215
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      16.381490476791804,
-      82.35531401385876
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.491819007543623,
-      83.7889664606915
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      56.9056647544803,
-      64.88847438423248
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      47.94918342354802,
-      71.76102422678653
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      38.17227827021366,
-      77.40572304890556
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      27.74223485232097,
-      81.72598848873695
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      16.83751410450445,
-      84.64789960680129
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.644698822119028,
-      86.1214616937617
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      58.44688559727656,
-      66.64589993421454
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      49.247828843231204,
-      73.70458444554366
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      39.206128083600454,
-      79.50216308223813
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      28.493599602467,
-      83.93943766643166
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      17.293537732217054,
-      86.94048519974372
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.797578636694409,
-      88.45395692683181
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      59.986253129431674,
-      68.40121218843625
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      50.544912648051316,
-      75.64580754249765
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      40.238734697565526,
-      81.59608215652679
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      29.244060840119456,
-      86.15022518214984
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      17.749012993713478,
-      89.23031396955142
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.950274614029013,
-      90.78364734561713
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -4.880392481699445,
-      74.4604003523103
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -14.55767257663595,
-      73.1863622579591
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -23.985866857636857,
-      70.6600852142812
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -33.00365630656493,
-      66.92479452191017
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -41.45674404574544,
-      62.04440204021076
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -49.20049540032235,
-      56.102412637645266
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.033179563817216,
-      76.7914807614811
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -15.013419593653733,
-      75.47755723503141
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -24.73677585173654,
-      72.87219177795802
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -34.036879016666155,
-      69.01996291557523
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -42.75460174481493,
-      63.98678335175802
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -50.74078138329489,
-      57.85877218430429
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.186059378392596,
-      79.123975994551
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -15.469443221366312,
-      77.77014282797364
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -25.488140601882517,
-      75.08564095565255
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -35.07072883005287,
-      71.1164029489076
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -44.05324716449802,
-      65.93034357051496
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -52.28200222609103,
-      59.61619773428618
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.338939192968034,
-      81.4564712276215
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -15.92546684907903,
-      80.06272842091646
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -26.239505352028708,
-      77.2990901333476
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -36.10457864343987,
-      73.21284298224053
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -45.35189258418144,
-      67.8739037892724
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -53.82322306888759,
-      61.37362328426852
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.491819007543534,
-      83.7889664606915
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -16.381490476791736,
-      82.35531401385877
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -26.990870102174824,
-      79.51253931104216
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -37.13842845682673,
-      75.30928301557294
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -46.650538003864675,
-      69.81746400802938
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -55.364443911683885,
-      63.13104883425041
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.644698822119045,
-      86.1214616937617
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -16.837514104504482,
-      84.64789960680129
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -27.742234852321005,
-      81.72598848873695
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -38.17227827021368,
-      77.40572304890556
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -47.94918342354803,
-      71.76102422678653
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -56.90566475448031,
-      64.88847438423247
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.797578636694564,
-      88.4539569268318
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -17.293537732217224,
-      86.94048519974368
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -28.493599602467167,
-      83.9394376664316
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -39.206128083600596,
-      79.50216308223806
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -49.247828843231325,
-      73.70458444554357
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -58.44688559727669,
-      66.64589993421443
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.950274614029305,
-      90.7836473456171
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -17.749012993713787,
-      89.23031396955135
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -29.244060840119747,
-      86.15022518214974
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -40.238734697565796,
-      81.59608215652663
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -50.54491264805156,
-      75.64580754249748
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -59.98625312943191,
-      68.40121218843605
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -56.10241263764532,
-      49.20049540032229
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -62.04440204021081,
-      41.456744045745396
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -66.92479452191021,
-      33.003656306564835
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -70.66008521428122,
-      23.98586685763677
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -73.18636225795912,
-      14.557672576635875
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -74.4604003523103,
-      4.880392481699353
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -57.858772184304286,
-      50.74078138329489
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -63.986783351758,
-      42.75460174481496
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -69.01996291557523,
-      34.03687901666615
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -72.87219177795802,
-      24.73677585173654
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -75.47755723503141,
-      15.013419593653751
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -76.7914807614811,
-      5.033179563817215
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -59.61619773428611,
-      52.28200222609112
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -65.93034357051489,
-      44.053247164498146
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -71.11640294890756,
-      35.07072883005297
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -75.0856409556525,
-      25.488140601882627
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -77.77014282797363,
-      15.469443221366443
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -79.12397599455099,
-      5.18605937839271
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -61.37362328426839,
-      53.823223068887735
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -67.87390378927229,
-      45.35189258418164
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -73.21284298224045,
-      36.104578643440036
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -77.29909013334755,
-      26.239505352028885
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -80.06272842091643,
-      15.92546684907923
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -81.45647122762149,
-      5.3389391929682235
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -63.131048834250365,
-      55.36444391168394
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -69.81746400802932,
-      46.65053800386478
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -75.30928301557292,
-      37.138428456826794
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -79.51253931104215,
-      26.990870102174895
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -82.35531401385876,
-      16.38149047679183
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -83.7889664606915,
-      5.491819007543611
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -64.88847438423248,
-      56.9056647544803
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -71.76102422678653,
-      47.94918342354804
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -77.40572304890557,
-      38.172278270213646
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -81.72598848873695,
-      27.742234852320976
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -84.64789960680127,
-      16.83751410450447
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -86.1214616937617,
-      5.6446988221190155
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -66.64589993421454,
-      58.44688559727656
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -73.70458444554365,
-      49.247828843231225
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -79.50216308223814,
-      39.20612808360044
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -83.93943766643166,
-      28.493599602467008
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -86.9404851997437,
-      17.29353773221708
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -88.45395692683181,
-      5.797578636694396
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -68.40121218843625,
-      59.986253129431674
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -75.64580754249764,
-      50.54491264805134
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -81.59608215652678,
-      40.23873469756551
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -86.15022518214984,
-      29.244060840119456
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -89.2303139695514,
-      17.749012993713507
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -90.78364734561713,
-      5.950274614029
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -74.4604003523103,
-      -4.880392481699441
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -73.18636225795912,
-      -14.557672576635929
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -70.6600852142812,
-      -23.985866857636854
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -66.92479452191017,
-      -33.00365630656493
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -62.04440204021076,
-      -41.45674404574546
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -56.102412637645266,
-      -49.20049540032235
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -76.7914807614811,
-      -5.03317956381721
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -75.47755723503141,
-      -15.013419593653714
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -72.87219177795802,
-      -24.736775851736535
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -69.01996291557523,
-      -34.036879016666155
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -63.98678335175801,
-      -42.75460174481495
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -57.85877218430429,
-      -50.74078138329489
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -79.123975994551,
-      -5.18605937839259
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -77.77014282797366,
-      -15.469443221366292
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -75.08564095565255,
-      -25.488140601882513
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -71.11640294890762,
-      -35.07072883005287
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -65.93034357051496,
-      -44.05324716449803
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -59.61619773428618,
-      -52.28200222609103
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -81.4564712276215,
-      -5.33893919296803
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -80.06272842091647,
-      -15.925466849079006
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -77.2990901333476,
-      -26.2395053520287
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -73.21284298224053,
-      -36.104578643439865
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -67.8739037892724,
-      -45.35189258418147
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -61.37362328426852,
-      -53.82322306888759
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -83.7889664606915,
-      -5.491819007543529
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -82.35531401385877,
-      -16.381490476791715
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -79.51253931104216,
-      -26.990870102174817
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -75.30928301557296,
-      -37.13842845682672
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -69.81746400802936,
-      -46.6505380038647
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -63.13104883425041,
-      -55.364443911683885
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -86.1214616937617,
-      -5.6446988221190395
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -84.64789960680129,
-      -16.83751410450446
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -81.72598848873695,
-      -27.742234852321
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -77.40572304890557,
-      -38.172278270213674
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -71.76102422678652,
-      -47.94918342354806
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -64.88847438423247,
-      -56.90566475448031
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -88.4539569268318,
-      -5.797578636694559
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -86.94048519974369,
-      -17.2935377322172
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -83.9394376664316,
-      -28.49359960246716
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -79.50216308223806,
-      -39.20612808360059
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -73.70458444554356,
-      -49.24782884323135
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -66.64589993421443,
-      -58.44688559727669
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -90.7836473456171,
-      -5.950274614029299
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -89.23031396955136,
-      -17.749012993713762
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -86.15022518214974,
-      -29.244060840119744
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -81.59608215652665,
-      -40.23873469756579
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -75.64580754249747,
-      -50.544912648051586
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -68.40121218843605,
-      -59.98625312943191
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -49.200495400322296,
-      -56.10241263764532
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -41.456744045745396,
-      -62.044402040210805
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -33.003656306564885,
-      -66.9247945219102
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -23.985866857636736,
-      -70.66008521428122
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -14.557672576635845,
-      -73.18636225795913
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -4.8803924816993565,
-      -74.4604003523103
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -50.740781383294895,
-      -57.858772184304286
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -42.75460174481496,
-      -63.98678335175799
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -34.03687901666619,
-      -69.0199629155752
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -24.736775851736507,
-      -72.87219177795802
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -15.013419593653719,
-      -75.47755723503141
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.03317956381722,
-      -76.7914807614811
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -52.28200222609113,
-      -59.61619773428611
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -44.053247164498146,
-      -65.93034357051488
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -35.070728830053014,
-      -71.11640294890753
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -25.488140601882595,
-      -75.08564095565251
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -15.469443221366411,
-      -77.77014282797363
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.186059378392714,
-      -79.12397599455099
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -53.82322306888775,
-      -61.3736232842684
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -45.35189258418164,
-      -67.87390378927229
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -36.10457864344008,
-      -73.21284298224042
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -26.239505352028853,
-      -77.29909013334755
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -15.925466849079198,
-      -80.06272842091643
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.338939192968229,
-      -81.45647122762149
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -55.36444391168395,
-      -63.131048834250365
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -46.65053800386478,
-      -69.81746400802932
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -37.13842845682684,
-      -75.30928301557289
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -26.99087010217486,
-      -79.51253931104216
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -16.381490476791797,
-      -82.35531401385875
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.491819007543616,
-      -83.7889664606915
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -56.905664754480306,
-      -64.88847438423248
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -47.94918342354804,
-      -71.76102422678652
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -38.172278270213695,
-      -77.40572304890556
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -27.74223485232094,
-      -81.72598848873696
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -16.83751410450444,
-      -84.64789960680129
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.644698822119021,
-      -86.1214616937617
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -58.44688559727658,
-      -66.64589993421454
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -49.247828843231225,
-      -73.70458444554365
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -39.20612808360049,
-      -79.50216308223811
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -28.493599602466972,
-      -83.93943766643164
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -17.293537732217043,
-      -86.94048519974372
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.797578636694402,
-      -88.45395692683181
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -59.98625312943169,
-      -68.40121218843625
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -50.544912648051344,
-      -75.64580754249764
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -40.23873469756556,
-      -81.59608215652676
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -29.244060840119417,
-      -86.15022518214984
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -17.74901299371347,
-      -89.23031396955142
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      -5.950274614029004,
-      -90.78364734561713
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      4.880392481699436,
-      -74.4604003523103
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      14.557672576635925,
-      -73.18636225795912
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      23.985866857636818,
-      -70.6600852142812
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      33.00365630656495,
-      -66.92479452191016
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      41.45674404574546,
-      -62.04440204021076
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      49.200495400322346,
-      -56.10241263764527
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.033179563817206,
-      -76.7914807614811
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      15.01341959365371,
-      -75.47755723503141
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      24.736775851736496,
-      -72.87219177795804
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      34.03687901666618,
-      -69.01996291557522
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      42.75460174481495,
-      -63.98678335175801
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      50.74078138329488,
-      -57.85877218430429
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.186059378392586,
-      -79.123975994551
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      15.469443221366287,
-      -77.77014282797366
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      25.488140601882474,
-      -75.08564095565255
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      35.07072883005289,
-      -71.1164029489076
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      44.05324716449803,
-      -65.93034357051496
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      52.28200222609102,
-      -59.61619773428618
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.3389391929680245,
-      -81.4564712276215
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      15.925466849079001,
-      -80.06272842091647
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      26.239505352028665,
-      -77.29909013334762
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      36.10457864343989,
-      -73.21284298224052
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      45.35189258418147,
-      -67.8739037892724
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      53.823223068887586,
-      -61.373623284268525
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.4918190075435245,
-      -83.7889664606915
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      16.38149047679171,
-      -82.35531401385877
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      26.990870102174775,
-      -79.51253931104219
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      37.13842845682675,
-      -75.30928301557293
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      46.6505380038647,
-      -69.81746400802936
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      55.36444391168388,
-      -63.131048834250414
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.644698822119034,
-      -86.1214616937617
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      16.837514104504454,
-      -84.64789960680129
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      27.74223485232096,
-      -81.72598848873696
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      38.1722782702137,
-      -77.40572304890554
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      47.94918342354806,
-      -71.76102422678652
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      56.90566475448031,
-      -64.88847438423247
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.797578636694554,
-      -88.4539569268318
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      17.293537732217196,
-      -86.9404851997437
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      28.49359960246712,
-      -83.93943766643162
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      39.20612808360062,
-      -79.50216308223804
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      49.24782884323135,
-      -73.70458444554356
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      58.44688559727668,
-      -66.64589993421443
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      5.9502746140292935,
-      -90.7836473456171
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      17.74901299371376,
-      -89.23031396955136
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      29.244060840119698,
-      -86.15022518214975
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      40.23873469756582,
-      -81.59608215652663
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      50.544912648051586,
-      -75.64580754249747
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      59.9862531294319,
-      -68.40121218843605
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      56.102412637645315,
-      -49.200495400322296
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      62.044402040210805,
-      -41.456744045745396
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      66.9247945219102,
-      -33.003656306564885
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      70.66008521428122,
-      -23.985866857636744
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      73.18636225795913,
-      -14.557672576635849
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      74.4604003523103,
-      -4.880392481699362
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      57.85877218430428,
-      -50.740781383294895
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      63.98678335175799,
-      -42.75460174481496
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      69.0199629155752,
-      -34.03687901666619
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      72.87219177795802,
-      -24.73677585173651
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      75.47755723503141,
-      -15.013419593653726
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      76.7914807614811,
-      -5.033179563817224
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      59.6161977342861,
-      -52.28200222609113
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      65.93034357051488,
-      -44.053247164498146
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      71.11640294890753,
-      -35.070728830053014
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      75.08564095565251,
-      -25.4881406018826
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      77.77014282797363,
-      -15.469443221366415
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      79.12397599455099,
-      -5.186059378392719
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      61.37362328426839,
-      -53.82322306888775
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      67.87390378927229,
-      -45.35189258418164
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      73.21284298224042,
-      -36.10457864344008
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      77.29909013334755,
-      -26.239505352028857
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      80.06272842091643,
-      -15.925466849079205
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      81.45647122762149,
-      -5.338939192968234
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      63.13104883425035,
-      -55.36444391168395
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      69.81746400802932,
-      -46.65053800386478
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      75.30928301557289,
-      -37.13842845682684
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      79.51253931104216,
-      -26.990870102174867
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      82.35531401385875,
-      -16.381490476791804
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      83.7889664606915,
-      -5.491819007543621
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      64.88847438423248,
-      -56.905664754480306
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      71.76102422678652,
-      -47.94918342354804
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      77.40572304890556,
-      -38.172278270213695
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      81.72598848873696,
-      -27.742234852320948
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      84.64789960680129,
-      -16.837514104504443
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      86.1214616937617,
-      -5.644698822119024
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      66.64589993421453,
-      -58.44688559727658
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      73.70458444554365,
-      -49.247828843231225
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      79.50216308223811,
-      -39.20612808360049
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      83.93943766643166,
-      -28.49359960246698
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      86.94048519974372,
-      -17.293537732217047
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      88.45395692683181,
-      -5.797578636694407
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      68.40121218843625,
-      -59.98625312943169
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      75.64580754249764,
-      -50.544912648051344
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      81.59608215652676,
-      -40.23873469756556
-     ],
-     "material": "Copper",
-     "circuit": "C",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      86.15022518214984,
-      -29.244060840119424
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      89.23031396955142,
-      -17.749012993713475
-     ],
-     "material": "Copper",
-     "circuit": "B",
-     "turns": -1,
-     "mesh": "$conductor_mesh_mm"
-    },
-    {
-     "use": "block_label",
-     "at": [
-      90.78364734561713,
-      -5.950274614029009
-     ],
-     "material": "Copper",
-     "circuit": "A",
-     "turns": 1,
-     "mesh": "$conductor_mesh_mm"
     }
    ]
   }
@@ -11419,6 +6923,12 @@
    "note": "Motor-CAD computes maps at FE points and interpolates onto the 10 A grid; the chosen points are taken as given."
   },
   {
+   "item": "the magnet temperature of File S5's maps",
+   "affects": "every flux linkage, about 0.12% per degree",
+   "decision": "assumed",
+   "note": "Added after the first diagnostic solves. Section 3.1 assumes 40 C and Motor-CAD's Magnet_Temperature is 40, but the conditions of the map calculation are not stated; the model keeps 40 C and control magnet-20C shows the sensitivity."
+  },
+  {
    "item": "shaft material",
    "affects": "flux linkage, slightly",
    "decision": "resolved",
@@ -11429,6 +6939,12 @@
   {
    "label": "idp000_iqp000_r0",
    "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
     {
      "function": "modifycircprop",
      "name": "A",
@@ -11459,9 +6975,10 @@
    "label": "idp000_iqp000_r1",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.5
     },
     {
      "function": "modifycircprop",
@@ -11493,9 +7010,10 @@
    "label": "idp000_iqp000_r2",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
     },
     {
      "function": "modifycircprop",
@@ -11527,9 +7045,10 @@
    "label": "idp000_iqp000_r3",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.5
     },
     {
      "function": "modifycircprop",
@@ -11561,9 +7080,10 @@
    "label": "idp000_iqp000_r4",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
     },
     {
      "function": "modifycircprop",
@@ -11595,9 +7115,10 @@
    "label": "idp000_iqp000_r5",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.5
     },
     {
      "function": "modifycircprop",
@@ -11629,9 +7150,10 @@
    "label": "idp000_iqp100_r0",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": -12.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
     },
     {
      "function": "modifycircprop",
@@ -11663,9 +7185,10 @@
    "label": "idp000_iqp100_r1",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.5
     },
     {
      "function": "modifycircprop",
@@ -11697,9 +7220,10 @@
    "label": "idp000_iqp100_r2",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
     },
     {
      "function": "modifycircprop",
@@ -11731,9 +7255,10 @@
    "label": "idp000_iqp100_r3",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.5
     },
     {
      "function": "modifycircprop",
@@ -11765,9 +7290,10 @@
    "label": "idp000_iqp100_r4",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
     },
     {
      "function": "modifycircprop",
@@ -11799,9 +7325,10 @@
    "label": "idp000_iqp100_r5",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.5
     },
     {
      "function": "modifycircprop",
@@ -11833,9 +7360,10 @@
    "label": "idp000_iqp200_r0",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": -12.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
     },
     {
      "function": "modifycircprop",
@@ -11867,9 +7395,10 @@
    "label": "idp000_iqp200_r1",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.5
     },
     {
      "function": "modifycircprop",
@@ -11901,9 +7430,10 @@
    "label": "idp000_iqp200_r2",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
     },
     {
      "function": "modifycircprop",
@@ -11935,9 +7465,10 @@
    "label": "idp000_iqp200_r3",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.5
     },
     {
      "function": "modifycircprop",
@@ -11969,9 +7500,10 @@
    "label": "idp000_iqp200_r4",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
     },
     {
      "function": "modifycircprop",
@@ -12003,9 +7535,10 @@
    "label": "idp000_iqp200_r5",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.5
     },
     {
      "function": "modifycircprop",
@@ -12037,9 +7570,10 @@
    "label": "idm050_iqp050_r0",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": -12.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
     },
     {
      "function": "modifycircprop",
@@ -12071,9 +7605,10 @@
    "label": "idm050_iqp050_r1",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.5
     },
     {
      "function": "modifycircprop",
@@ -12105,9 +7640,10 @@
    "label": "idm050_iqp050_r2",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
     },
     {
      "function": "modifycircprop",
@@ -12139,9 +7675,10 @@
    "label": "idm050_iqp050_r3",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.5
     },
     {
      "function": "modifycircprop",
@@ -12173,9 +7710,10 @@
    "label": "idm050_iqp050_r4",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
     },
     {
      "function": "modifycircprop",
@@ -12207,9 +7745,10 @@
    "label": "idm050_iqp050_r5",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.5
     },
     {
      "function": "modifycircprop",
@@ -12241,9 +7780,10 @@
    "label": "idm100_iqp000_r0",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": -12.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
     },
     {
      "function": "modifycircprop",
@@ -12275,9 +7815,10 @@
    "label": "idm100_iqp000_r1",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.5
     },
     {
      "function": "modifycircprop",
@@ -12309,9 +7850,10 @@
    "label": "idm100_iqp000_r2",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
     },
     {
      "function": "modifycircprop",
@@ -12343,9 +7885,10 @@
    "label": "idm100_iqp000_r3",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.5
     },
     {
      "function": "modifycircprop",
@@ -12377,9 +7920,10 @@
    "label": "idm100_iqp000_r4",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
     },
     {
      "function": "modifycircprop",
@@ -12411,9 +7955,10 @@
    "label": "idm100_iqp000_r5",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.5
     },
     {
      "function": "modifycircprop",
@@ -12445,9 +7990,10 @@
    "label": "idm100_iqp100_r0",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": -12.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
     },
     {
      "function": "modifycircprop",
@@ -12479,9 +8025,10 @@
    "label": "idm100_iqp100_r1",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.5
     },
     {
      "function": "modifycircprop",
@@ -12513,9 +8060,10 @@
    "label": "idm100_iqp100_r2",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
     },
     {
      "function": "modifycircprop",
@@ -12547,9 +8095,10 @@
    "label": "idm100_iqp100_r3",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.5
     },
     {
      "function": "modifycircprop",
@@ -12581,9 +8130,10 @@
    "label": "idm100_iqp100_r4",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
     },
     {
      "function": "modifycircprop",
@@ -12615,9 +8165,10 @@
    "label": "idm100_iqp100_r5",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.5
     },
     {
      "function": "modifycircprop",
@@ -12649,9 +8200,10 @@
    "label": "idm100_iqp200_r0",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": -12.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
     },
     {
      "function": "modifycircprop",
@@ -12683,9 +8235,10 @@
    "label": "idm100_iqp200_r1",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.5
     },
     {
      "function": "modifycircprop",
@@ -12717,9 +8270,10 @@
    "label": "idm100_iqp200_r2",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
     },
     {
      "function": "modifycircprop",
@@ -12751,9 +8305,10 @@
    "label": "idm100_iqp200_r3",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.5
     },
     {
      "function": "modifycircprop",
@@ -12785,9 +8340,10 @@
    "label": "idm100_iqp200_r4",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
     },
     {
      "function": "modifycircprop",
@@ -12819,9 +8375,10 @@
    "label": "idm100_iqp200_r5",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.5
     },
     {
      "function": "modifycircprop",
@@ -12853,9 +8410,10 @@
    "label": "idm150_iqp150_r0",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": -12.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
     },
     {
      "function": "modifycircprop",
@@ -12887,9 +8445,10 @@
    "label": "idm150_iqp150_r1",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.5
     },
     {
      "function": "modifycircprop",
@@ -12921,9 +8480,10 @@
    "label": "idm150_iqp150_r2",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
     },
     {
      "function": "modifycircprop",
@@ -12955,9 +8515,10 @@
    "label": "idm150_iqp150_r3",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.5
     },
     {
      "function": "modifycircprop",
@@ -12989,9 +8550,10 @@
    "label": "idm150_iqp150_r4",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
     },
     {
      "function": "modifycircprop",
@@ -13023,9 +8585,10 @@
    "label": "idm150_iqp150_r5",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.5
     },
     {
      "function": "modifycircprop",
@@ -13057,9 +8620,10 @@
    "label": "idm200_iqp000_r0",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": -12.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
     },
     {
      "function": "modifycircprop",
@@ -13091,9 +8655,10 @@
    "label": "idm200_iqp000_r1",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.5
     },
     {
      "function": "modifycircprop",
@@ -13125,9 +8690,10 @@
    "label": "idm200_iqp000_r2",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
     },
     {
      "function": "modifycircprop",
@@ -13159,9 +8725,10 @@
    "label": "idm200_iqp000_r3",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.5
     },
     {
      "function": "modifycircprop",
@@ -13193,9 +8760,10 @@
    "label": "idm200_iqp000_r4",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
     },
     {
      "function": "modifycircprop",
@@ -13227,9 +8795,10 @@
    "label": "idm200_iqp000_r5",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.5
     },
     {
      "function": "modifycircprop",
@@ -13261,9 +8830,10 @@
    "label": "idm200_iqp100_r0",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": -12.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
     },
     {
      "function": "modifycircprop",
@@ -13295,9 +8865,10 @@
    "label": "idm200_iqp100_r1",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.5
     },
     {
      "function": "modifycircprop",
@@ -13329,9 +8900,10 @@
    "label": "idm200_iqp100_r2",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
     },
     {
      "function": "modifycircprop",
@@ -13363,9 +8935,10 @@
    "label": "idm200_iqp100_r3",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.5
     },
     {
      "function": "modifycircprop",
@@ -13397,9 +8970,10 @@
    "label": "idm200_iqp100_r4",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
     },
     {
      "function": "modifycircprop",
@@ -13431,9 +9005,10 @@
    "label": "idm200_iqp100_r5",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.5
     },
     {
      "function": "modifycircprop",
@@ -13465,9 +9040,10 @@
    "label": "idm200_iqp200_r0",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": -12.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
     },
     {
      "function": "modifycircprop",
@@ -13499,9 +9075,10 @@
    "label": "idm200_iqp200_r1",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.5
     },
     {
      "function": "modifycircprop",
@@ -13533,9 +9110,10 @@
    "label": "idm200_iqp200_r2",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
     },
     {
      "function": "modifycircprop",
@@ -13567,9 +9145,10 @@
    "label": "idm200_iqp200_r3",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.5
     },
     {
      "function": "modifycircprop",
@@ -13601,9 +9180,10 @@
    "label": "idm200_iqp200_r4",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
     },
     {
      "function": "modifycircprop",
@@ -13635,9 +9215,10 @@
    "label": "idm200_iqp200_r5",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.5
     },
     {
      "function": "modifycircprop",
@@ -13669,9 +9250,10 @@
    "label": "idm250_iqp100_r0",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": -12.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
     },
     {
      "function": "modifycircprop",
@@ -13703,9 +9285,10 @@
    "label": "idm250_iqp100_r1",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.5
     },
     {
      "function": "modifycircprop",
@@ -13737,9 +9320,10 @@
    "label": "idm250_iqp100_r2",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
     },
     {
      "function": "modifycircprop",
@@ -13771,9 +9355,10 @@
    "label": "idm250_iqp100_r3",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.5
     },
     {
      "function": "modifycircprop",
@@ -13805,9 +9390,10 @@
    "label": "idm250_iqp100_r4",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
     },
     {
      "function": "modifycircprop",
@@ -13839,9 +9425,10 @@
    "label": "idm250_iqp100_r5",
    "modify": [
     {
-     "function": "rotate_group",
-     "group": 1,
-     "angle": 2.5
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.5
     },
     {
      "function": "modifycircprop",
@@ -13871,7 +9458,7 @@
   }
  ],
  "engine": {
-  "solves_per_process": 8
+  "solves_per_process": 12
  },
  "measurements": [
   {
@@ -13890,12 +9477,10 @@
    "name": "C"
   },
   {
-   "id": "torque",
-   "op": "block_integral",
-   "select": {
-    "group": 1
-   },
-   "type": 22
+   "id": "gaptorque",
+   "op": "gap_integral",
+   "boundary": "AGE",
+   "type": 0
   }
  ],
  "metrics": [
@@ -13926,7 +9511,7 @@
   {
    "name": "torque_Nm",
    "value": [
-    "torque",
+    "gaptorque",
     0
    ],
    "unit": "N*m"
@@ -13944,6 +9529,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": 0.0751536234187861,
    "relative_tolerance": 0.01,
@@ -13964,6 +9550,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": 0.0751536234187861,
    "relative_tolerance": 0.01,
@@ -13985,6 +9572,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 2.88778716609684e-05,
    "relative_tolerance": 0.01,
@@ -14005,6 +9593,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 2.88778716609684e-05,
    "relative_tolerance": 0.01,
@@ -14026,12 +9615,13 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "torque",
    "value": 0.0,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "0.0",
    "location": "File S5, id = 0 A, iq = 0 A, sheet Trq",
@@ -14048,17 +9638,18 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "stress_torque",
    "value": 0.0,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "0.0",
    "location": "File S5, id = 0 A, iq = 0 A, sheet Trq",
    "source": "s5",
-   "note": "Stress-tensor torque on the rotor, a comparator: the gap mesh is two layers."
+   "note": "Stress-tensor torque of the whole machine from the sliding band (FEMM's air-gap-element torque), a comparator."
   },
   {
    "kind": "dq_linkage",
@@ -14070,6 +9661,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": 0.0734482672315031,
    "relative_tolerance": 0.01,
@@ -14090,6 +9682,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": 0.0734482672315031,
    "relative_tolerance": 0.01,
@@ -14111,6 +9704,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.165201462392623,
    "relative_tolerance": 0.01,
@@ -14131,6 +9725,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.165201462392623,
    "relative_tolerance": 0.01,
@@ -14152,12 +9747,13 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "torque",
    "value": 44.0689603389019,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "44.0689603389019",
    "location": "File S5, id = 0 A, iq = 100 A, sheet Trq",
@@ -14174,17 +9770,18 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "stress_torque",
    "value": 44.0689603389019,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "44.0689603389019",
    "location": "File S5, id = 0 A, iq = 100 A, sheet Trq",
    "source": "s5",
-   "note": "Stress-tensor torque on the rotor, a comparator: the gap mesh is two layers."
+   "note": "Stress-tensor torque of the whole machine from the sliding band (FEMM's air-gap-element torque), a comparator."
   },
   {
    "kind": "dq_linkage",
@@ -14196,6 +9793,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": 0.0609892523210761,
    "relative_tolerance": 0.01,
@@ -14216,6 +9814,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": 0.0609892523210761,
    "relative_tolerance": 0.01,
@@ -14237,6 +9836,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.19347529075806,
    "relative_tolerance": 0.01,
@@ -14257,6 +9857,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.19347529075806,
    "relative_tolerance": 0.01,
@@ -14278,12 +9879,13 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "torque",
    "value": 73.1871027852914,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "73.1871027852914",
    "location": "File S5, id = 0 A, iq = 200 A, sheet Trq",
@@ -14300,17 +9902,18 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "stress_torque",
    "value": 73.1871027852914,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "73.1871027852914",
    "location": "File S5, id = 0 A, iq = 200 A, sheet Trq",
    "source": "s5",
-   "note": "Stress-tensor torque on the rotor, a comparator: the gap mesh is two layers."
+   "note": "Stress-tensor torque of the whole machine from the sliding band (FEMM's air-gap-element torque), a comparator."
   },
   {
    "kind": "dq_linkage",
@@ -14322,6 +9925,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": 0.0394152190766335,
    "relative_tolerance": 0.01,
@@ -14342,6 +9946,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": 0.0394152190766335,
    "relative_tolerance": 0.01,
@@ -14363,6 +9968,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.120043428699696,
    "relative_tolerance": 0.01,
@@ -14383,6 +9989,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.120043428699696,
    "relative_tolerance": 0.01,
@@ -14404,12 +10011,13 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "torque",
    "value": 47.8375943328988,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "47.8375943328988",
    "location": "File S5, id = -50 A, iq = 50 A, sheet Trq",
@@ -14426,17 +10034,18 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "stress_torque",
    "value": 47.8375943328988,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "47.8375943328988",
    "location": "File S5, id = -50 A, iq = 50 A, sheet Trq",
    "source": "s5",
-   "note": "Stress-tensor torque on the rotor, a comparator: the gap mesh is two layers."
+   "note": "Stress-tensor torque of the whole machine from the sliding band (FEMM's air-gap-element torque), a comparator."
   },
   {
    "kind": "dq_linkage",
@@ -14448,6 +10057,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": -0.00192224783337638,
    "relative_tolerance": 0.01,
@@ -14468,6 +10078,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": -0.00192224783337638,
    "relative_tolerance": 0.01,
@@ -14489,6 +10100,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 3.21562046241978e-05,
    "relative_tolerance": 0.01,
@@ -14509,6 +10121,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 3.21562046241978e-05,
    "relative_tolerance": 0.01,
@@ -14530,12 +10143,13 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "torque",
    "value": 0.0192937227745187,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "0.0192937227745187",
    "location": "File S5, id = -100 A, iq = 0 A, sheet Trq",
@@ -14552,17 +10166,18 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "stress_torque",
    "value": 0.0192937227745187,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "0.0192937227745187",
    "location": "File S5, id = -100 A, iq = 0 A, sheet Trq",
    "source": "s5",
-   "note": "Stress-tensor torque on the rotor, a comparator: the gap mesh is two layers."
+   "note": "Stress-tensor torque of the whole machine from the sliding band (FEMM's air-gap-element torque), a comparator."
   },
   {
    "kind": "dq_linkage",
@@ -14574,6 +10189,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": 0.0070266001786918,
    "relative_tolerance": 0.01,
@@ -14594,6 +10210,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": 0.0070266001786918,
    "relative_tolerance": 0.01,
@@ -14615,6 +10232,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.168116114031079,
    "relative_tolerance": 0.01,
@@ -14635,6 +10253,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.168116114031079,
    "relative_tolerance": 0.01,
@@ -14656,12 +10275,13 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "torque",
    "value": 105.085628525863,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "105.085628525863",
    "location": "File S5, id = -100 A, iq = 100 A, sheet Trq",
@@ -14678,17 +10298,18 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "stress_torque",
    "value": 105.085628525863,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "105.085628525863",
    "location": "File S5, id = -100 A, iq = 100 A, sheet Trq",
    "source": "s5",
-   "note": "Stress-tensor torque on the rotor, a comparator: the gap mesh is two layers."
+   "note": "Stress-tensor torque of the whole machine from the sliding band (FEMM's air-gap-element torque), a comparator."
   },
   {
    "kind": "dq_linkage",
@@ -14700,6 +10321,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": 0.00894890995554674,
    "relative_tolerance": 0.01,
@@ -14720,6 +10342,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": 0.00894890995554674,
    "relative_tolerance": 0.01,
@@ -14741,6 +10364,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.198920489366497,
    "relative_tolerance": 0.01,
@@ -14761,6 +10385,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.198920489366497,
    "relative_tolerance": 0.01,
@@ -14782,12 +10407,13 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "torque",
    "value": 130.090985566555,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "130.090985566555",
    "location": "File S5, id = -100 A, iq = 200 A, sheet Trq",
@@ -14804,17 +10430,18 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "stress_torque",
    "value": 130.090985566555,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "130.090985566555",
    "location": "File S5, id = -100 A, iq = 200 A, sheet Trq",
    "source": "s5",
-   "note": "Stress-tensor torque on the rotor, a comparator: the gap mesh is two layers."
+   "note": "Stress-tensor torque of the whole machine from the sliding band (FEMM's air-gap-element torque), a comparator."
   },
   {
    "kind": "dq_linkage",
@@ -14826,6 +10453,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": -0.0199542293455305,
    "relative_tolerance": 0.01,
@@ -14846,6 +10474,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": -0.0199542293455305,
    "relative_tolerance": 0.01,
@@ -14867,6 +10496,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.185930042100807,
    "relative_tolerance": 0.01,
@@ -14887,6 +10517,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.185930042100807,
    "relative_tolerance": 0.01,
@@ -14908,12 +10539,13 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "torque",
    "value": 149.378231479749,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "149.378231479749",
    "location": "File S5, id = -150 A, iq = 150 A, sheet Trq",
@@ -14930,17 +10562,18 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "stress_torque",
    "value": 149.378231479749,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "149.378231479749",
    "location": "File S5, id = -150 A, iq = 150 A, sheet Trq",
    "source": "s5",
-   "note": "Stress-tensor torque on the rotor, a comparator: the gap mesh is two layers."
+   "note": "Stress-tensor torque of the whole machine from the sliding band (FEMM's air-gap-element torque), a comparator."
   },
   {
    "kind": "dq_linkage",
@@ -14952,6 +10585,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": -0.0714714499146832,
    "relative_tolerance": 0.01,
@@ -14972,6 +10606,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": -0.0714714499146832,
    "relative_tolerance": 0.01,
@@ -14993,6 +10628,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 3.34929533183361e-06,
    "relative_tolerance": 0.01,
@@ -15013,6 +10649,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 3.34929533183361e-06,
    "relative_tolerance": 0.01,
@@ -15034,12 +10671,13 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "torque",
    "value": 0.00401915439820033,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "0.00401915439820033",
    "location": "File S5, id = -200 A, iq = 0 A, sheet Trq",
@@ -15056,17 +10694,18 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "stress_torque",
    "value": 0.00401915439820033,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "0.00401915439820033",
    "location": "File S5, id = -200 A, iq = 0 A, sheet Trq",
    "source": "s5",
-   "note": "Stress-tensor torque on the rotor, a comparator: the gap mesh is two layers."
+   "note": "Stress-tensor torque of the whole machine from the sliding band (FEMM's air-gap-element torque), a comparator."
   },
   {
    "kind": "dq_linkage",
@@ -15078,6 +10717,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": -0.0562814864759761,
    "relative_tolerance": 0.01,
@@ -15098,6 +10738,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": -0.0562814864759761,
    "relative_tolerance": 0.01,
@@ -15119,6 +10760,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.155025407335131,
    "relative_tolerance": 0.01,
@@ -15139,6 +10781,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.155025407335131,
    "relative_tolerance": 0.01,
@@ -15160,12 +10803,13 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "torque",
    "value": 152.261596916571,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "152.261596916571",
    "location": "File S5, id = -200 A, iq = 100 A, sheet Trq",
@@ -15182,17 +10826,18 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "stress_torque",
    "value": 152.261596916571,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "152.261596916571",
    "location": "File S5, id = -200 A, iq = 100 A, sheet Trq",
    "source": "s5",
-   "note": "Stress-tensor torque on the rotor, a comparator: the gap mesh is two layers."
+   "note": "Stress-tensor torque of the whole machine from the sliding band (FEMM's air-gap-element torque), a comparator."
   },
   {
    "kind": "dq_linkage",
@@ -15204,6 +10849,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": -0.0419859322431108,
    "relative_tolerance": 0.01,
@@ -15224,6 +10870,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": -0.0419859322431108,
    "relative_tolerance": 0.01,
@@ -15245,6 +10892,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.19383246978645,
    "relative_tolerance": 0.01,
@@ -15265,6 +10913,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.19383246978645,
    "relative_tolerance": 0.01,
@@ -15286,12 +10935,13 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "torque",
    "value": 182.215845052007,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "182.215845052007",
    "location": "File S5, id = -200 A, iq = 200 A, sheet Trq",
@@ -15308,17 +10958,18 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "stress_torque",
    "value": 182.215845052007,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "182.215845052007",
    "location": "File S5, id = -200 A, iq = 200 A, sheet Trq",
    "source": "s5",
-   "note": "Stress-tensor torque on the rotor, a comparator: the gap mesh is two layers."
+   "note": "Stress-tensor torque of the whole machine from the sliding band (FEMM's air-gap-element torque), a comparator."
   },
   {
    "kind": "dq_linkage",
@@ -15330,6 +10981,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": -0.0853928416239746,
    "relative_tolerance": 0.01,
@@ -15350,6 +11002,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_d",
    "value": -0.0853928416239746,
    "relative_tolerance": 0.01,
@@ -15371,6 +11024,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.144407572488086,
    "relative_tolerance": 0.01,
@@ -15391,6 +11045,7 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "psi_q",
    "value": 0.144407572488086,
    "relative_tolerance": 0.01,
@@ -15412,12 +11067,13 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "torque",
    "value": 165.375653757744,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "165.375653757744",
    "location": "File S5, id = -250 A, iq = 100 A, sheet Trq",
@@ -15434,17 +11090,18 @@
    ],
    "pole_pairs": 4,
    "value_kind": "2d_fea",
+   "flux_scale": 8,
    "quantity": "stress_torque",
    "value": 165.375653757744,
    "relative_tolerance": 0.02,
    "absolute_tolerance": 1.63,
    "used_for_acceptance": false,
-   "torque_measurement": "torque",
+   "torque_measurement": "gaptorque",
    "sequence_direction": 1,
    "quote": "165.375653757744",
    "location": "File S5, id = -250 A, iq = 100 A, sheet Trq",
    "source": "s5",
-   "note": "Stress-tensor torque on the rotor, a comparator: the gap mesh is two layers."
+   "note": "Stress-tensor torque of the whole machine from the sliding band (FEMM's air-gap-element torque), a comparator."
   }
  ],
  "controls": [
@@ -15469,6 +11126,14 @@
     "shaft_material": "Air"
    },
    "purpose": "A non-magnetic shaft."
+  },
+  {
+   "id": "magnet-20C",
+   "level": "article",
+   "parameters": {
+    "magnet_temperature_C": 20
+   },
+   "purpose": "Added after the frozen case's first diagnostic solves (disclosed in the findings): the magnets at Motor-CAD's 20 C reference remanence, since the magnet temperature of File S5's maps is not stated."
   }
  ],
  "coverage": {
@@ -15478,7 +11143,7 @@
  },
  "geometry_checks": [
   {
-   "quantity": "File S3 patterned eight times against File S2 (segments, arcs, nodes)",
+   "quantity": "File S3 patterned eight times against File S2 (segments, arcs, nodes); checked on the full cross-section before the restructure",
    "paper_value": [
     2720,
     3024,
@@ -15507,17 +11172,17 @@
    "location": "Table 2; File S3"
   },
   {
-   "quantity": "regions after patterning and labelling",
+   "quantity": "regions of the one-pole model after labelling",
    "paper_value": null,
    "model_value": {
-    "conductors": 384,
-    "air": 81,
-    "magnets": 24,
+    "conductors": 48,
+    "air": 10,
+    "magnets": 3,
     "steel": 2,
     "shaft": 1
    },
    "location": "File S3; File S4",
-   "note": "Every closed region has exactly one label, once contours are split where a magnet corner rests on a pocket edge."
+   "note": "Every closed region has exactly one label, once contours are split where a magnet corner rests on a pocket edge; the sliding band itself is a hole. The full cross-section built before the restructure had 384 conductors, 81 air regions, 24 magnets, 2 steel regions and 1 shaft."
   },
   {
    "quantity": "phase-A axis, sequence and the d-axis at the first rotor position",
