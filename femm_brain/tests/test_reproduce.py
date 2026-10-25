@@ -181,6 +181,21 @@ class CatalogTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "parameter values"):
             solve_lines(case, "magnetics", [])
 
+    def test_long_sweeps_run_as_several_engine_processes(self):
+        from femm_brain.reproduce import solve_ranges
+        steps = [{"label": f"s{k}", "modify": [{"function": "rotate_group", "group": 1, "angle": 1}]} for k in range(5)]
+        case = {"id": "toy", "measurements": [], "steps": steps, "engine": {"solves_per_process": 2}}
+        self.assertEqual(solve_ranges(case), [(0, 2), (2, 4), (4, 5)])
+        self.assertEqual(solve_ranges(dict(case, engine=None)), [(0, 5)])
+        first, middle, last = (solve_lines(case, "magnetics", [], None, span) for span in solve_ranges(case))
+        self.assertIn('out=openfile("raw.csv","w")', first)
+        self.assertIn('out=openfile("raw.csv","a")', middle)
+        # Later processes replay earlier rotations before solving their own steps.
+        self.assertEqual(sum(line.startswith("mi_moverotate") for line in middle), 4)
+        self.assertEqual(middle.count("mi_analyze(1)"), 2)
+        self.assertTrue(any("chunk-completed.txt" in line for line in first))
+        self.assertTrue(any("solve-completed.txt" in line for line in last) and last.count("mi_analyze(1)") == 1)
+
     def test_rebuild_comparison_covers_every_raw_value(self):
         case = load_cases()[0]
         original = {"status": "passed", "metrics": {"x": 1.0}, "raw": {"base|a|0": [1.0, 0.0], "base|a|1": [1e-9, 0.0]}}

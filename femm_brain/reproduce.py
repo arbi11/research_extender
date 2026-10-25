@@ -666,49 +666,71 @@ def measurement_lines(case, physics, labels, step):
     return lines
 
 
-def solve_lines(case, physics, labels, values=None):
+def _modify_lines(change, physics, values):
+    pre = PHYSICS[physics]["pre"]
+    if change["function"] == "rotate_group":
+        # Rotate a group (for example a rotor) about the origin, as machine scripts do between positions.
+        return [_call(pre + "_selectgroup", change["group"]), _call(pre + "_moverotate", 0, 0, change["angle"]), pre + "_clearselected()"]
+    value = change.get("value")
+    if _refers(value):
+        if values is None:
+            raise ValueError("Step values that refer to parameters need the level's parameter values")
+        from .components import resolve
+        value = resolve(value, values)
+    if change["function"] == "set_frequency":
+        # A new solution frequency keeps every other problem setting (mi_probdef with one argument).
+        if physics != "magnetics" or not (_finite_number(value) and value >= 0):
+            raise ValueError("Frequency steps apply to magnetics, with a nonnegative frequency")
+        return [_call("mi_probdef", value)]
+    if change["function"] not in ("modifyboundprop", "modifymaterial", "modifycircprop", "modifyconductorprop"):
+        raise ValueError("Unsupported step modification")
+    # A two-number list is a complex value (a phasor current, for example), written as re+I*im.
+    if isinstance(value, list):
+        if len(value) != 2 or not all(_finite_number(v) for v in value):
+            raise ValueError("A complex step value is [real, imaginary]")
+        value = complex(*value)
+    return [_call(pre + "_" + change["function"], change["name"], change["property"], value)]
+
+
+def solve_lines(case, physics, labels, values=None, solve_range=None):
     """Steps and measurements as Lua. A step value written as "=expression" or "$name" (or a list of them)
-    is resolved against the level's parameter values, so a control that varies a parameter reaches the steps."""
+    is resolved against the level's parameter values, so a control that varies a parameter reaches the steps.
+
+    ``solve_range`` (start, stop) makes the script for one engine process of a long sweep: steps before
+    ``start`` only replay their modifications, steps from ``start`` to ``stop`` are solved and measured,
+    and results are appended to raw.csv after the first process.
+    """
     pre, post = PHYSICS[physics]["pre"], PHYSICS[physics]["post"]
-    lines = ['out=openfile("raw.csv","w")', 'write(out,"step,id,index,re,im\\n")',
-             'function emit(step,id,index,v) if v then write(out,step,",",id,",",index,",",re(v),",",im(v),"\\n") end end']
-    lines += circle_tables(case, physics)
     steps = case.get("steps") or [{"label": "base", "modify": []}]
-    for step in steps:
+    start, stop = solve_range or (0, len(steps))
+    first, last = start == 0, stop >= len(steps)
+    lines = (['out=openfile("raw.csv","w")', 'write(out,"step,id,index,re,im\\n")'] if first else ['out=openfile("raw.csv","a")'])
+    lines.append('function emit(step,id,index,v) if v then write(out,step,",",id,",",index,",",re(v),",",im(v),"\\n") end end')
+    lines += circle_tables(case, physics)
+    for index, step in enumerate(steps[:stop]):
         label = step["label"]
         if not re.fullmatch(r"[A-Za-z0-9_.+-]+", label):
             raise ValueError("Step labels must be simple identifiers")
         for change in step.get("modify", []):
-            if change["function"] == "rotate_group":
-                # Rotate a group (for example a rotor) about the origin, as machine scripts do between positions.
-                lines += [_call(pre + "_selectgroup", change["group"]), _call(pre + "_moverotate", 0, 0, change["angle"]),
-                          pre + "_clearselected()"]
-                continue
-            value = change.get("value")
-            if _refers(value):
-                if values is None:
-                    raise ValueError("Step values that refer to parameters need the level's parameter values")
-                from .components import resolve
-                value = resolve(value, values)
-            if change["function"] == "set_frequency":
-                # A new solution frequency keeps every other problem setting (mi_probdef with one argument).
-                if physics != "magnetics" or not (_finite_number(value) and value >= 0):
-                    raise ValueError("Frequency steps apply to magnetics, with a nonnegative frequency")
-                lines.append(_call("mi_probdef", value))
-                continue
-            if change["function"] not in ("modifyboundprop", "modifymaterial", "modifycircprop", "modifyconductorprop"):
-                raise ValueError("Unsupported step modification")
-            # A two-number list is a complex value (a phasor current, for example), written as re+I*im.
-            if isinstance(value, list):
-                if len(value) != 2 or not all(_finite_number(v) for v in value):
-                    raise ValueError("A complex step value is [real, imaginary]")
-                value = complex(*value)
-            lines.append(_call(pre + "_" + change["function"], change["name"], change["property"], value))
+            lines += _modify_lines(change, physics, values)
+        if index < start:
+            continue
         lines += [pre + "_createmesh()", pre + "_analyze(1)", pre + "_loadsolution()"]
         lines += measurement_lines(case, physics, labels, label)
         lines.append(post + "_close()")
-    lines += ["closefile(out)", 'out=openfile("solve-completed.txt","w")', 'write(out,"completed\\n")', "closefile(out)"]
+    marker = "solve-completed.txt" if last else "chunk-completed.txt"
+    lines += ["closefile(out)", f'out=openfile("{marker}","w")', 'write(out,"completed\\n")', "closefile(out)"]
     return lines
+
+
+def solve_ranges(case):
+    """Step ranges, one per engine process. FEMM's memory grows with every solve in one process, so a case
+    with a long sweep sets engine.solves_per_process; otherwise one process solves every step."""
+    count = len(case.get("steps") or [None])
+    size = int((case.get("engine") or {}).get("solves_per_process") or count)
+    if size < 1:
+        raise ValueError("engine.solves_per_process must be at least 1")
+    return [(k, min(k + size, count)) for k in range(0, count, size)]
 
 
 def read_raw(path):
@@ -933,7 +955,8 @@ def plan_level(case, level, control=None):
     # snapshot is kept separately from the file that later steps modify.
     construction.append(_call(PHYSICS[physics]["pre"] + "_saveas", "model" + extension))
     values = built.get("values") if level == "article" else None
-    lua = "\n".join(construction + solve_lines(case, physics, model["labels"], values)) + "\n"
+    chunks = ["\n".join(construction + solve_lines(case, physics, model["labels"], values, span)) + "\n" for span in solve_ranges(case)]
+    lua = chunks[0]
     targets = [t for t in case["targets"] if level in t.get("levels", LEVELS)]
     plan = {"schema_version": 1, "case_id": case["id"], "example_id": case.get("example_id"), "level": level,
             "physics": physics, "source_ids": case.get("source_ids", []),
@@ -945,6 +968,7 @@ def plan_level(case, level, control=None):
             "component_parameters": built.get("parameters") if level == "components" else None,
             "reference_model": reference,
             "targets": targets, "assessors": case.get("assessors", []), "lua": lua,
+            **({"lua_chunks": chunks} if len(chunks) > 1 else {}),
             "control": control, "mesh_scaling": mesh_scaling, "case_binding_sha256": case_binding_digest(case),
             "module_sha256": _sha(__file__),
             "catalog_sha256": (_sha(catalog_file(case)) if catalog_file(case).is_file()
@@ -1022,7 +1046,18 @@ def run_level(case, level, output, *, engine="docker", image=None, timeout=900, 
               "coverage": case.get("coverage")}
     started = time.monotonic()
     try:
-        report["execution"] = _run_engine(folder, engine=engine, image=image or os.getenv("FEMM_BRAIN_IMAGE", ""), timeout=timeout)
+        # A long sweep runs as several engine processes, each starting from a fresh FEMM (see solve_ranges).
+        scripts = plan.get("lua_chunks") or [plan["lua"]]
+        for index, script in enumerate(scripts):
+            (folder / "model.lua").write_text(script)
+            report["execution"] = _run_engine(folder, engine=engine, image=image or os.getenv("FEMM_BRAIN_IMAGE", ""), timeout=timeout)
+            if index < len(scripts) - 1:
+                marker = folder / "chunk-completed.txt"
+                if not marker.is_file():
+                    raise RuntimeError(f"Engine process {index + 1} of {len(scripts)} did not complete its steps")
+                marker.unlink()
+        if len(scripts) > 1:
+            report["execution"]["processes"] = len(scripts)
     except (RuntimeError, OSError, subprocess.SubprocessError) as exc:
         report["execution_error"] = str(exc)
     stage = "build"
