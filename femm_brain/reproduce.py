@@ -726,12 +726,15 @@ def catalog_file(case):
 
 
 def catalog_digest(catalog):
-    """Digest of a whole catalog; the papers catalog is one file per case."""
+    """Digest of a whole catalog.
+
+    Paper cases gain findings and a retrospective after their runs, so the
+    papers catalog is bound by each case's definition (what it builds, measures
+    and accepts) rather than by its file bytes.
+    """
     if catalog == "papers":
-        digest = hashlib.sha256()
-        for path in sorted((DATA / "papers").glob("*.json")):
-            digest.update(path.name.encode() + b"\0" + path.read_bytes())
-        return digest.hexdigest()
+        bindings = sorted((case["id"], case_binding_digest(case)) for case in load_papers())
+        return hashlib.sha256(json.dumps(bindings).encode()).hexdigest()
     return _sha(DATA / (catalog + ".json"))
 
 

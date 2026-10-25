@@ -579,12 +579,14 @@ def winding_layout(slot_count, pole_pairs, phases, layout="tooth_coils", layers=
 
 
 def tooth_coil_winding(m, slot_count, pole_pairs, turns, material, label_radius, phases=("A", "B", "C"), layers="single",
-                       layout="tooth_coils", phase_sequence="forward", first_tooth_angle=0, mesh=None, group=0):
+                       layout="tooth_coils", phase_sequence="forward", first_tooth_angle=0, mesh=None, group=0,
+                       layer_offset=None):
     """Block labels carrying each slot's circuit and signed turns.
 
     A positive coil around tooth k carries +turns in the slot clockwise of the
     tooth and -turns in the slot counterclockwise of it. Double layers place one
-    label in each half of a divided slot.
+    label in each half of a divided slot, ``layer_offset`` degrees from the slot
+    centre (a quarter pitch by default; narrow slots need less).
     """
     if not float(turns).is_integer() or turns <= 0:
         raise ValueError("Turns per coil side must be a positive integer")
@@ -595,9 +597,11 @@ def tooth_coil_winding(m, slot_count, pole_pairs, turns, material, label_radius,
             m.label(*_rotated((label_radius, 0), first_tooth_angle + (k + 0.5) * pitch), material, mesh=mesh,
                     circuit=phase, turns=int(polarity * turns), group=group)
         return
+    if layer_offset is not None and not 0 < layer_offset < pitch / 2:
+        raise ValueError("A layer offset lies between the slot centre and half a pitch")
     for k, (phase, polarity) in assignment.items():
         tooth = first_tooth_angle + k * pitch
-        offset = pitch / 2 if layers == "single" else pitch / 4
+        offset = pitch / 2 if layers == "single" else pitch / 2 - (pitch / 4 if layer_offset is None else layer_offset)
         m.label(*_rotated((label_radius, 0), tooth - offset), material, mesh=mesh, circuit=phase, turns=int(polarity * turns), group=group)
         m.label(*_rotated((label_radius, 0), tooth + offset), material, mesh=mesh, circuit=phase, turns=int(-polarity * turns), group=group)
 

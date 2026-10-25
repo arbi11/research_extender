@@ -131,6 +131,38 @@ class SkillTests(unittest.TestCase):
             self.assertTrue((SKILL / name).is_file())
 
 
+class PaperAuditTests(unittest.TestCase):
+    """The committed paper evidence passes its audit; damaged copies do not."""
+    def record(self):
+        return json.loads((Path(__file__).parents[1] / "data" / "verification" / "paper_replications.json").read_text())
+
+    def audit(self, record):
+        from femm_brain.reproduction_report import DATA, audit
+        return audit(record, DATA / "verification" / "reviewed_paper_failures.json", "papers")
+
+    def test_committed_paper_evidence_is_complete_and_within_bounds(self):
+        result = self.audit(self.record())
+        self.assertEqual(result["status"], "passed", result["problems"])
+        self.assertIn(["elrefaie-2006-fscw-spm", "article", "inductance_H@ind"], result["accepted_reviewed_failures"])
+
+    def test_a_reviewed_paper_failure_cannot_drift_and_cases_cannot_vanish(self):
+        record = self.record()
+        case = next(c for c in record["cases"] if c["case_id"] == "elrefaie-2006-fscw-spm")
+        target = next(t for t in case["levels"]["article"]["targets"] if t.get("metric") == "inductance_H@ind" and t["acceptance"])
+        target["observed"] = 1.17e-3
+        self.assertTrue(any("left the reviewed value" in p for p in self.audit(record)["problems"]))
+        record = self.record()
+        record["cases"] = [c for c in record["cases"] if c["case_id"] != "elrefaie-2006-fscw-spm"]
+        self.assertIn("elrefaie-2006-fscw-spm: missing from the record.", self.audit(record)["problems"])
+
+    def test_a_case_that_newly_passes_or_fails_differently_is_caught(self):
+        record = self.record()
+        case = next(c for c in record["cases"] if c["case_id"] == "elrefaie-2006-fscw-spm")
+        flux = next(t for t in case["levels"]["article"]["targets"] if t.get("metric") == "flux_A_Wb:fundamental_rms")
+        flux["status"] = "failed"
+        self.assertTrue(any("unreviewed failure" in p for p in self.audit(record)["problems"]))
+
+
 class RenderTests(unittest.TestCase):
     def test_render_draws_contours_labels_and_magnet_directions(self):
         svg = papers.render_case(minimal_case())

@@ -426,11 +426,16 @@ resource savings, and general dependency-aware backtracking is not complete.
    interior (buried) magnets, distributed double-layer and fractional-slot
    distributed windings, rotor bars, and result-extraction methods as
    graph-bound components (measurements are typed in the catalog).
-3. **Natural language through the second brain.** Retrieve methods and fill typed
-   parameters. Use OpenRouter only when interpretation or missing details need
-   it. Unsupported combinations should state what is missing. Preserve the
-   distinction between a documented source, illustrative recipe and executed
-   validated study.
+3. **Papers and natural language through the second brain.** Started on
+   branch `claude/femm-paper-replication`: coding agents replicate machines from
+   papers and PDFs with the replicate-paper skill
+   (`femm_brain/skills/replicate-paper/`) under the root `AGENTS.md` (Claude
+   Code reads it through `CLAUDE.md`). Each paper is a typed case in
+   `femm_brain/data/papers/` with provenance for every number, targets frozen
+   and committed before solving, and controls for every assumption; ten
+   papers are selected (six development, four held out). A dedicated harness
+   comes after the skill is reliable. Use OpenRouter only when interpretation
+   or missing details need it; unsupported combinations state what is missing.
 4. **Controlled recovery in this pipeline.** Track each feature/operation, inputs,
    dependencies and checkpoints. Diagnose an actual failed geometry/mesh/solve
    operation, roll back and retain an evidence-supported repair branch. Prefer

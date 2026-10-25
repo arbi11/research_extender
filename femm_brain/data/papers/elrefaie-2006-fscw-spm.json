@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "elrefaie-2006-fscw-spm",
  "set": "development",
- "status": "frozen",
+ "status": "partial",
  "skill_version": null,
  "title": "Experimental verification of optimal flux weakening in surface PM machines using concentrated windings",
  "source": {
@@ -1261,10 +1261,10 @@
  ],
  "controls": [
   {
-   "id": "mesh-0p75",
+   "id": "mesh-1p5",
    "level": "article",
-   "mesh_scale": 0.75,
-   "purpose": "Shrink every explicit mesh size by a quarter."
+   "mesh_scale": 1.5,
+   "purpose": "Grow every explicit mesh size by half. Added after the first run: shrinking by a quarter (about 250,000 elements) exhausted the engine container's 2 GB after 39 of 50 steps."
   },
   {
    "id": "steel-m19-solid",
@@ -1307,6 +1307,14 @@
     "slot_width_yoke_end_mm": 10
    },
    "purpose": "The other reading of which slot end each width belongs to."
+  },
+  {
+   "id": "magnet-mu-1",
+   "level": "article",
+   "parameters": {
+    "magnet_mu_r": 1.0
+   },
+   "purpose": "Magnets with the permeability of air. Added after the first run to investigate the inductance target: the paper calls the effective air gap 14 mm (magnet depth plus gap), which treats the magnets as air."
   }
  ],
  "coverage": {
@@ -1351,6 +1359,21 @@
    "note": "Over the 60 mm active length; 6.78 over the 72 mm total length, plausible for bonded NdFeB, so the magnets likely run the full length."
   }
  ],
- "findings": [],
- "retrospective": []
+ "findings": [
+  "Flux linkage passes: the fundamental rms of phase A over one electrical period is 34.30 mWb, 1.4% below the analytic 34.8 mWb (tolerance 3%). A coarser mesh leaves it unchanged, and a finer one moved the phase-A waveform by 0.02% of its amplitude over the 39 positions it solved.",
+  "Winding sign and phase linkage pass: the phases peak in the order A, B, C as the rotor turns counterclockwise, within 0.002 electrical degrees of the construction's prediction, with amplitudes equal within 5e-6. The mutual inductance is about zero (2.2 uH against 1.2 mH), as Table III states.",
+  "The inductance target fails: 1.2007 mH against the paper's 2D FEA 1.16 mH (+3.5%, tolerance 1%), and 1.2104 mH at a tenth of rated current, so the iron is nearly linear. The paper's analytic 1.03 mH and measured 1.3 mH bracket it; end-winding leakage, absent in 2D, explains part of the measured excess.",
+  "Investigation of the inductance: the mesh (1.5 times coarser: -0.09%), the steel grade (-0.6%), the hub and the magnet remanence (no change) do not explain it. With the magnets' permeability set to 1 the inductance is 1.1607 mH, within 0.06% of the paper's FEA, while the flux linkage stays within its tolerance (35.24 mWb, +1.3%). The paper calls the effective air gap 14 mm, magnet depth plus gap, which treats the magnets as air, so its FEA inductance most likely used unit magnet permeability while Table IV states 1.22. The case keeps the quoted 1.22 and records the failure as reviewed.",
+  "Table I's 11.4 mm tooth width contradicts its slot widths, which are used. Building 11.4 mm teeth instead raises the inductance to 1.289 mH (+11%); swapping which end each slot width belongs to gives 1.011 mH at rated current through saturated 3.8 mm tooth tips (1.162 mH at a tenth of rated) and misses the flux target by 5.6%. Neither alternative reading fits the paper better.",
+  "With the delivered magnets' 0.59 T remanence (p. 449) the flux linkage rises 7.2% to 36.78 mWb, consistent with the paper's report that the measured flux linkage was slightly higher than predicted.",
+  "Cogging torque, a comparator, is 0.76 N*m peak to peak against about 0.36 N*m read from Fig. 3. Cogging is mesh-noise sensitive and was sampled at eight positions per period, so this is not evidence either way.",
+  "A finer mesh (0.75 times, about 250,000 elements with nonlinear steel) exhausted the engine container's 2 GB after 39 of 50 steps; the mesh control was changed to a coarser one."
+ ],
+ "retrospective": [
+  "Longest: deciding the slot geometry from a self-contradictory table, which took the figure, the iron mass and the parallel-teeth argument, and the inductance investigation.",
+  "Added generically because this paper needed them: OCR of image tables at intake, a slot-profile stator, a waveform-statistic assessor for statistics over a rotor sweep, metrics limited to steps, derived parameters recomputed under controls, numerical provenance for mesh choices, and shared corner points computed once.",
+  "Writing findings after a run changed the case file and would have made its evidence look stale; the papers catalog is now bound by case definitions, not file bytes.",
+  "Lessons confirmed: cogging is a comparator; the memory limit bites earlier with nonlinear steel over many steps. New lesson: when a paper's FEA disagrees with its stated material data, a control on that property can show what the FEA used; check a quoted effective air gap against the magnet permeability.",
+  "Skill: version 0.2 adds the OCR step, the waveform_statistic assessor with value_kind, and numerical provenance."
+ ]
 }

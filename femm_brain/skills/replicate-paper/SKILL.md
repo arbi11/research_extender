@@ -5,7 +5,8 @@ description: Replicate an electric machine from a paper, report or PDF in FEMM w
 
 # Replicate a machine from a paper
 
-Version 0.1. Work through the stages in order; each stage writes part of one
+Version 0.2 (0.1 plus OCR at intake, the waveform_statistic assessor and numerical provenance,
+from the first replication). Work through the stages in order; each stage writes part of one
 case file, `femm_brain/data/papers/<id>.json`, whose structure is described in
 [`spec.schema.json`](spec.schema.json). Read [`lessons.md`](lessons.md) first:
 it holds what earlier replications taught. Rules that override everything here

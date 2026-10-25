@@ -41,7 +41,15 @@ contradicts it.
   balance and the counterclockwise phase order from the construction alone.
   (`lrkanalysis-flux-sweep`)
 - **Double-layer windings need divided slots**, or two labels share one region;
-  the region check catches it. (`design-inner-rotor-spm-phase-linkage`)
+  the region check catches it. In narrow slots, set `layer_offset` so each
+  label falls inside its half slot. (`design-inner-rotor-spm-phase-linkage`,
+  `design-outer-rotor-profiled-slots`)
+- **Slots given by tabulated widths** (opening width and height, wedge, top and
+  bottom widths, slot height) are built by `trapezoidal_slot_stator`; teeth
+  given by width and shoe use `slotted_stator`. (`elrefaie-2006-fscw-spm`)
+- **Components compute shared corner points once.** Two computations of the
+  same corner by different angle arithmetic can differ in the last bits, enough
+  to split a node and open a contour. (`elrefaie-2006-fscw-spm`)
 - **Exact geometry reproduces to the last bit only when coordinates come from
   the same arithmetic.** A faithful rebuild can still mesh differently, so
   compare region by region rather than entity by entity.
@@ -61,6 +69,25 @@ contradicts it.
 
 ## Sources and extraction
 
+- **Tables are often images.** OCR every page at intake (`ocr.txt`) so table
+  quotes can be checked mechanically; read the page image as well, because OCR
+  garbles Greek letters and subscripts. (`elrefaie-2006-fscw-spm`)
+- **A table can contradict itself.** Table I gave an 11.4 mm tooth width that no
+  slot of the tabulated widths admits. Settle such conflicts with independent
+  evidence (a figure, a mass or area the paper states) before solving, record
+  the choice, and add a control for the rejected reading.
+  (`elrefaie-2006-fscw-spm`)
+- **"Top" and "bottom" of a slot are ambiguous.** Decide which end each width
+  belongs to from a figure and from whether the teeth come out parallel.
+  (`elrefaie-2006-fscw-spm`)
+- **Unquantified agreement still bounds a tolerance.** When a paper says its
+  analysis was "verified by FEA" without numbers, read the overlay figure at
+  600 dpi before solving and set the analytic target's tolerance to the spread
+  it shows (3% in that paper's back-EMF overlay). (`elrefaie-2006-fscw-spm`)
+- **Cogging from a figure needs dense samples.** Use at least eight rotor
+  positions per cogging period, and still treat it as a comparator.
+  (`elrefaie-2006-fscw-spm`)
+
 - Text extraction scrambles tables, Greek letters and superscripts; read tables
   from page images and quote the text verbatim.
 - Papers often leave rms or peak unstated (TEAM 30's 310 A/cm2). Resolve it
@@ -69,5 +96,11 @@ contradicts it.
   landing pages. Author copies under IEEE copyright are for reading only: keep
   them in the cache, never in the repository.
 - Measured inductances usually exceed 2D values because of end-winding leakage
-  (one surface-PM paper: 2D 1.16 mH, measured about 1.3 mH). Treat measured
-  values as comparators in a 2D replication unless an allowance is argued.
+  (2D 1.20 mH against a measured 1.3 mH). Treat measured values as comparators
+  in a 2D replication unless an allowance is argued. (`elrefaie-2006-fscw-spm`)
+- **A paper's FEA may not use its own stated material data.** El-Refaie's 2D
+  FEA inductance (1.16 mH) matches unit magnet permeability within 0.06%, not
+  the 1.22 its table states (+3.5%), and its quoted 14 mm effective air gap
+  (magnet depth plus gap) implies the same. Keep the stated value, and use a
+  control on the property to show what the FEA most likely used.
+  (`elrefaie-2006-fscw-spm`)

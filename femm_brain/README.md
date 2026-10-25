@@ -401,6 +401,63 @@ meshes of 0.5, 0.25 and 0.125 mm gave errors of 2.3%, 0.54% and 0.28% there, so
 the error was discretization; the design records this history beside its mesh
 parameter.
 
+## Replicate machines from papers
+
+Coding agents (Codex, Claude Code) replicate machines from papers, reports or
+PDFs with the replicate-paper skill (`skills/replicate-paper/SKILL.md`), under
+the repository's `AGENTS.md`. Each paper becomes one case,
+`data/papers/<id>.json`, which a later harness can check stage by stage:
+
+1. Intake: the PDF in its own cache directory (`~/.cache/femm-brain/papers/<sha256>/`),
+   with extracted text, page images and OCR of every page, since tables are
+   often images. Papers are never committed.
+2. Extraction: every parameter is `quoted` (verbatim, with its location),
+   `derived` (an expression, recomputed when a control varies an input),
+   `figure` (scaled, with uncertainty), `assumed` (with a control that varies
+   it) or `numerical` (a mesh choice, with a mesh control).
+3. Gaps and contradictions are decided before solving and recorded.
+4. Targets are frozen and committed before the first native solve, with
+   tolerances set by how each number was obtained (analytic, 2D or 3D FEA,
+   measured, digitized from a plot).
+5. The machine is a data-only assembly of components; a missing capability
+   becomes a generic component with tests and a synthetic design.
+6. `papers --check` validates the case: derived values follow their
+   expressions, assumptions have controls, quotes are found verbatim in the
+   cached text or OCR, weak targets cannot decide acceptance, regions close.
+   `papers --render` draws the model for comparison with the paper's figures.
+7. `replicate` solves natively with controls; `reproduction-report --catalog
+   papers` audits the evidence like the official catalog.
+8. Findings, lessons (`skills/replicate-paper/lessons.md`) and a retrospective
+   feed back into the skill and the brain.
+
+`data/papers.json` lists ten selected papers: six for developing the skill and
+four held out to measure it with the skill frozen, plus alternates.
+
+```bash
+python3 -m femm_brain papers                                  # index and case checks
+python3 -m femm_brain papers --check elrefaie-2006-fscw-spm
+python3 -m femm_brain papers --render elrefaie-2006-fscw-spm --output model.svg
+python3 -m femm_brain replicate elrefaie-2006-fscw-spm --controls --output work/papers \
+  --image research-extender-femm:dev-hierarchy-resumed-20261025
+python3 -m femm_brain reproduction-report --catalog papers --results work/papers
+```
+
+The first development paper, El-Refaie et al. (IEEE TIA 2006), a 36-slot
+30-pole concentrated-winding surface-PM machine, is a partial replication:
+
+- Its RMS PM flux linkage is 34.30 mWb against the paper's analytic 34.8 mWb
+  (−1.4%, tolerance 3%, set before solving from the paper's own FEA-versus-
+  analysis spread), and is mesh-converged. Winding signs and phase order match
+  the construction's prediction; the mutual inductance is about zero, as stated.
+- Its 2D phase inductance is 1.20 mH against the paper's FEA 1.16 mH (+3.5%,
+  tolerance 1%): a reviewed failure. A control with unit magnet permeability
+  gives 1.1607 mH (+0.06%), and the paper's quoted 14 mm effective air gap also
+  treats the magnets as air, so the paper's FEA most likely used μr = 1 where
+  its table states 1.22. The case keeps the stated value.
+- Table I's tooth width contradicts its slot widths. The slot widths are used,
+  because they match the cross-section figure and reproduce the stated iron
+  mass within 0.9%; controls show what each other reading would give.
+
 ## Explore
 
 - Search for a machine, component or method and select a source example.

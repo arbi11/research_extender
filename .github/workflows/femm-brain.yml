@@ -121,6 +121,17 @@ jobs:
             -e HOME=/tmp -e PYTHONDONTWRITEBYTECODE=1 -e FEMM_LUA=/opt/femm/bin/femm-lua \
             -e FEMM_DIR=/opt/femm/bin -e QT_QPA_PLATFORM=offscreen -e FEMM_MESH_EXPORT=1 \
             femm-brain-native:ci python3 -m femm_brain design --all --engine native --output /reports/designs
+      - name: Replicate machines from papers with their frozen targets
+        continue-on-error: true
+        run: |
+          docker run --rm --network none --read-only --memory=2g --cpus=2 \
+            --pids-limit 256 --tmpfs /tmp:rw,size=512m \
+            -v "$PWD/femm_brain:/repo/femm_brain:ro" -v "$PWD/reproductions:/reports" -w /repo \
+            -e HOME=/tmp -e PYTHONDONTWRITEBYTECODE=1 -e FEMM_LUA=/opt/femm/bin/femm-lua \
+            -e FEMM_DIR=/opt/femm/bin -e QT_QPA_PLATFORM=offscreen -e FEMM_MESH_EXPORT=1 \
+            femm-brain-native:ci python3 -m femm_brain replicate --all --engine native --output /reports/papers
+      - name: Audit paper replications against the reviewed registry
+        run: python3 -m femm_brain reproduction-report --catalog papers --results reproductions/papers --output reproductions/paper_replications.json --html reproductions/papers.html
       - name: Audit component designs (every design must pass)
         run: python3 -m femm_brain reproduction-report --catalog designs --results reproductions/designs --output reproductions/component_designs.json --html reproductions/designs.html
       - name: Audit reproduction failures against the reviewed registry
