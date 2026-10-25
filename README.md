@@ -1,8 +1,16 @@
+# Continue FEMM development
+
+**New agent: start with the [FEMM agent handover](handover/README.md).** It records
+the active branch, tested implementation, known failures, local run commands,
+deployment boundaries and the next development milestones. The
+[second-brain README](femm_brain/README.md) documents the current knowledge-based
+construction and native solver workflow.
+
 # FEMM 5 interactive companion
 
 The [FEMM Assistant](femm_assistant/README.md) creates and modifies 2D planar DC
 magnetic models from circles, rectangles and simple polygons, alongside a C-core
-example. Jev checks request intent and plan fidelity; deterministic checks validate
+example. Jev routes requests and diagnoses failed calls; deterministic checks validate
 geometry and an actual mesh before native Linux FEMM solves. Readers follow
 **AI → preview → Check mesh → Solve → Download** and export editable Python CAD
 scripts with their native Lua bridge. See its README for supported physics,

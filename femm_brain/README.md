@@ -1,5 +1,9 @@
 # FEMM second brain
 
+For another agent continuing development, read the repository
+[handover](https://github.com/arbi11/research_extender/blob/codex/femm-brain-solver-20261025/handover/README.md) for branch relationships, current evidence,
+known failures, protected services and the next milestones.
+
 A local, source-backed engineering knowledge graph with exactly three semantic
 layers:
 
@@ -302,7 +306,7 @@ establish their numerical reproduction or convergence.
 The registered solve layer records additional field-solve evidence per run;
 the historical construction-only report is not retroactively relabeled as a
 solve report. Run `verify-solves` to generate current native evidence for all
-six executable studies. External vendor documentation retains its own publisher,
+nine executable studies. External vendor documentation retains its own publisher,
 version, source hash and redistribution status in `data/external_sources.json`;
 it does not become an official FEMM source or an open-licensed document merely
 because a method transfer is indexed here.
@@ -326,5 +330,7 @@ Graph/API/browser tests verify navigation, provenance, consolidation,
 construction and exports. They do not imply a successful native FEMM solve for
 every documented source example. Use the actual validation report and its
 coverage counts when reporting what has been checked. The native CI job performs
-the construction checks and all six actual field solves in Docker with networking
-disabled, and uploads their separate reports and native artifacts.
+the construction checks and all nine actual field solves in Docker with networking
+disabled, then applies the explicit reference-discrepancy audit described above.
+It uploads the separate reports and native artifacts; the EI inductance and
+energy comparisons remain failed.
