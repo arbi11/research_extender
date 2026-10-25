@@ -9,16 +9,17 @@ The current reliable path is **second brain → registered construction method �
 native FEMM geometry and physical assignments → mesh → solve → frozen numerical
 comparison**. It runs locally with Docker and makes no external LLM calls.
 
-Continue on `codex/femm-brain-solver-20261025`, the branch of
-[PR #6](https://github.com/arbi11/research_extender/pull/6). Its last tested
-implementation commit before this documentation is
-`c46abba83b95882b4eff5df20a1c15d712265583`. Start by checking the current branch,
-worktree status and remote; preserve any subsequent work by other agents.
+Continue on `claude/femm-brain-official-examples`, the branch of
+[PR #7](https://github.com/arbi11/research_extender/pull/7), stacked on
+[PR #6](https://github.com/arbi11/research_extender/pull/6). It adds the
+official-example reproduction ladder described below on top of PR #6's solver
+work. Start by checking the current branch, worktree status and remote; preserve
+any subsequent work by other agents.
 
 For a new checkout only:
 
 ```bash
-git clone --branch codex/femm-brain-solver-20261025 \
+git clone --branch claude/femm-brain-official-examples \
   https://github.com/arbi11/research_extender.git research_extender
 cd research_extender
 ```
@@ -76,9 +77,10 @@ Repository: <https://github.com/arbi11/research_extender>.
 | Assistant, hierarchical paper intake and recovery foundation | `codex/femm5-linux-assistant-20261022` | `cbd58722161578b4f44d7feabca1f6db60a3247a` | [#3](https://github.com/arbi11/research_extender/pull/3) |
 | Original three-layer second brain | `codex/femm-second-brain-20261025` | `e94244902d85781e86cf185cbc643397e965a26c` | [#5](https://github.com/arbi11/research_extender/pull/5) |
 | Second-brain native solving and nine executable studies | `codex/femm-brain-solver-20261025` | `c46abba83b95882b4eff5df20a1c15d712265583` | [#6](https://github.com/arbi11/research_extender/pull/6) |
+| Official-example reproduction ladder, source-cache restore and maintenance fixes | `claude/femm-brain-official-examples` | see the PR head | [#7](https://github.com/arbi11/research_extender/pull/7) |
 
-These are stacked: PR #5's commit descends from the recorded PR #3 head, and
-PR #6 is based on PR #5. The current solver branch contains that earlier source
+These are stacked: PR #5's commit descends from the recorded PR #3 head,
+PR #6 is based on PR #5, and PR #7 on PR #6. The current solver branch contains that earlier source
 history. PR #3 and PR #6 remain draft development PRs at handover. Do not
 independently cherry-pick the entire stacks or reset an existing checkout.
 
@@ -147,6 +149,43 @@ Important qualifications:
   evidence, not proof of convergence.
 - Mesh previews show at most 100,000 actual triangles. Full `.node`, `.ele` and
   solution files remain available; the solver mesh itself is not decimated.
+
+### Official-example reproduction (PR #7)
+
+`python3 -m femm_brain reproduce` checks the brain against FEMM's official
+examples at three levels sharing one measurement plan: **original** (the
+unmodified official model file, opened as data), **rebuild** (compiled from the
+brain's stored model record and compared field by field with the saved native
+file) and **article** (built only from parameters quoted from the article text).
+Targets, verbatim quotes and the 1% policy are frozen in
+`femm_brain/data/reproductions.json`; the evidence record is
+`femm_brain/data/verification/official_reproductions.json`. See the
+[second-brain README](femm_brain/README.md#reproduce-the-official-examples).
+
+- 27 cases from 19 examples: 23 pass every attempted level, 3 fail, 1 has
+  comparators only. All 26 rebuilds reproduce their original exactly.
+- Article-only builds pass for the magnetics tutorial, square capacitor, two
+  spheres, tube eddy currents, torque benchmark and heat-flow chimney.
+- The torque benchmark (milestone 1 below) passes the whole 0–90° curve against
+  Table 1 and m×B at all three levels. Domain-radius, gap-radius and mesh
+  controls change torque by at most 0.5%.
+- AC references (milestone 5): the tube matches its analytic eddy-current
+  density; TEAM 28 matches published losses within 0.35% and force within 0.5%
+  under both open-boundary methods, converging toward the finest-mesh value.
+- Kept failures with findings: EI inductance (mesh refinement moves it away from
+  1.73 mH), coilgun ball force (not mesh-converged), rotor-motion cogging torque
+  (very mesh- and angle-sensitive at the source's ~1,400-node mesh).
+- Article builds are still one function per example in `article_recipes.py`.
+  They share an exact port of FEMM's open-boundary builder, library materials
+  and Kelvin/periodic exterior construction; turning these into graph methods is
+  the next recommended step.
+
+Maintenance in the same PR: `restore-cache` restores the source snapshot by
+digest (the original cache was not on disk); scalar-physics model records keep
+conductors and k(T) curves; source-change detection compares page text because
+wiki markup carries a per-request timestamp; reproduced examples mark only their
+own workflow node as numerically checked. CI restores the referenced model files
+by digest and runs the full catalog in the engine container.
 
 ## Resume locally without disturbing existing services
 
@@ -352,11 +391,11 @@ resource savings, and general dependency-aware backtracking is not complete.
 
 ## Next milestones agreed with the user
 
-1. **Torque over rotor position.** Use the documented
-   [FEMM torque benchmark](https://www.femm.info/wiki/TorqueBenchmark) as the next
-   candidate. Recover its complete source inputs, freeze an angle-sweep target
-   and criteria, then compare the whole curve with mesh and boundary controls.
-   It has not yet been implemented or solved by this harness.
+1. **Torque over rotor position.** Done in PR #7 for the documented
+   [FEMM torque benchmark](https://www.femm.info/wiki/TorqueBenchmark), with
+   domain, gap and mesh controls. The rotor-motion example's cogging torque
+   remains a recorded failure; a converged-mesh study of that machine is the open
+   follow-up.
 2. **Reusable construction methods.** Extract air gaps, poles, signed windings,
    nonlinear materials, magnets, boundaries and result extraction from verified
    studies. Keep source applicability explicit instead of growing only a list
@@ -372,9 +411,10 @@ resource savings, and general dependency-aware backtracking is not complete.
    mesh-only repair initially. A target mismatch requires investigation, not
    optimization of physical inputs to match the answer. Keep every failed run
    and the original target. Measure savings rather than assuming them.
-5. **AC and eddy-current losses.** Validate one complete documented reference
-   before moving to a complete motor. This is future execution support, even
-   though the graph already documents broader FEMM physics.
+5. **AC and eddy-current losses.** Documented references now pass (tube eddy
+   currents, TEAM 28 losses, induction-motor complex inductance at one frequency).
+   Frequency sweeps, previous-solution chains and moving geometry are not yet
+   expressible as reproduction steps; they block the remaining AC examples.
 6. **Blind documentation transfer, then journal papers.** Select an unseen,
    sufficiently specified vendor/tutorial problem, freeze implementation and
    target criteria, and audit extraction → construction → mesh → solve → target.
