@@ -1,0 +1,102 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://github.com/arbi11/research_extender/femm_brain/skills/replicate-paper/spec.schema.json",
+ "title": "Paper replication case",
+ "description": "One machine replicated from one paper. Stages of the replicate-paper skill fill it in order; femm_brain.papers.check enforces the rules a schema cannot (derived values, controls for assumptions, quotes found in the source text).",
+ "type": "object",
+ "required": ["schema_version", "id", "set", "status", "title", "source", "machine"],
+ "properties": {
+  "schema_version": {"const": 1},
+  "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+  "set": {"enum": ["development", "held_out", "unassigned"]},
+  "status": {"enum": ["candidate", "extracting", "frozen", "replicated", "partial", "failed"]},
+  "skill_version": {"type": ["string", "null"], "description": "Commit of femm_brain/skills/replicate-paper the run started from; required for held-out papers."},
+  "title": {"type": "string"},
+  "source": {
+   "type": "object",
+   "required": ["citation", "url", "access"],
+   "properties": {
+    "citation": {"type": "string"},
+    "doi": {"type": ["string", "null"]},
+    "url": {"type": "string"},
+    "access": {"type": "string", "description": "open access, author copy, government report or user-supplied"},
+    "licence": {"type": ["string", "null"]},
+    "pdf_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "pages": {"type": ["integer", "null"]},
+    "accessed": {"type": ["string", "null"], "format": "date"},
+    "related": {"type": "array", "items": {"type": "object"}}
+   }
+  },
+  "machine": {
+   "type": "object",
+   "required": ["family"],
+   "properties": {
+    "family": {"enum": ["spm", "ipm", "synrm", "pmasynrm", "srm", "induction", "fspm", "tubular", "magnetic_gear", "other"]},
+    "topology": {"type": "string"},
+    "problem": {"enum": ["planar", "axisymmetric"]},
+    "slots": {"type": "integer"},
+    "poles": {"type": "integer"},
+    "phases": {"type": "integer"},
+    "symmetry": {"type": "string"}
+   }
+  },
+  "components_map": {"type": "array", "items": {"type": "object", "required": ["part", "component"]}},
+  "article": {
+   "type": "object",
+   "required": ["parameters", "assembly"],
+   "properties": {
+    "parameters": {"type": "object", "additionalProperties": {"$ref": "#/$defs/parameter"}},
+    "assembly": {"type": "object", "required": ["problem", "steps"]}
+   }
+  },
+  "gaps": {"type": "array", "items": {
+   "type": "object", "required": ["item", "affects", "decision"],
+   "properties": {"decision": {"enum": ["ask", "figure", "assumed", "out_of_scope", "resolved"]}}}},
+  "steps": {"type": "array"},
+  "measurements": {"type": "array"},
+  "metrics": {"type": "array"},
+  "targets": {"type": "array", "items": {"$ref": "#/$defs/target"}},
+  "assessors": {"type": "array"},
+  "controls": {"type": "array", "items": {"type": "object", "required": ["id", "level", "purpose"]}},
+  "coverage": {"type": "object", "required": ["scope"], "properties": {"scope": {"enum": ["core", "partial"]}}},
+  "geometry_checks": {"type": "array", "items": {"type": "object", "required": ["quantity", "paper_value", "model_value"]}},
+  "findings": {"type": "array", "items": {"type": "string"}},
+  "retrospective": {"type": "array", "items": {"type": "string"}}
+ },
+ "$defs": {
+  "parameter": {
+   "type": "object",
+   "required": ["value", "unit", "provenance"],
+   "properties": {
+    "provenance": {"enum": ["quoted", "derived", "figure", "assumed"]},
+    "quote": {"type": "string"},
+    "location": {"type": "string"},
+    "expression": {"type": "string"},
+    "inputs": {"type": "array", "items": {"type": "string"}},
+    "figure": {"type": "string"},
+    "scale_reference": {"type": "string"},
+    "uncertainty": {"type": "number"},
+    "reason": {"type": "string"},
+    "sensitivity_control": {"type": "string"},
+    "note": {"type": "string"}
+   },
+   "allOf": [
+    {"if": {"properties": {"provenance": {"const": "quoted"}}}, "then": {"required": ["quote", "location"]}},
+    {"if": {"properties": {"provenance": {"const": "derived"}}}, "then": {"required": ["expression", "inputs"]}},
+    {"if": {"properties": {"provenance": {"const": "figure"}}}, "then": {"required": ["figure", "scale_reference", "uncertainty"]}},
+    {"if": {"properties": {"provenance": {"const": "assumed"}}}, "then": {"required": ["reason", "sensitivity_control"]}}
+   ]
+  },
+  "target": {
+   "type": "object",
+   "required": ["metric", "value", "kind", "quote", "location", "used_for_acceptance"],
+   "properties": {
+    "kind": {"enum": ["analytic", "2d_fea", "3d_fea", "measured", "digitized"]},
+    "relative_tolerance": {"type": "number"},
+    "absolute_tolerance": {"type": "number"},
+    "digitization_uncertainty": {"type": "number"},
+    "used_for_acceptance": {"type": "boolean"}
+   }
+  }
+ }
+}

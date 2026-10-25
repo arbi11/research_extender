@@ -119,6 +119,9 @@ def _current_case_bindings(directory):
         path = directory / name
         if path.exists():
             bindings.update({c["id"]: case_binding_digest(c) for c in json.loads(path.read_text())[key]})
+    for path in sorted((directory / "papers").glob("*.json")):
+        case = json.loads(path.read_text())
+        bindings[case["id"]] = case_binding_digest(case)
     return bindings
 
 
@@ -175,7 +178,7 @@ def _attach_components(graph, directory):
     examples = {e["id"]: e for e in graph["examples"]}
     checked, reports = {}, {}
     cases = []
-    for name in ("official_reproductions.json", "component_designs.json"):
+    for name in ("official_reproductions.json", "component_designs.json", "paper_replications.json"):
         record_path = directory / "verification" / name
         if record_path.exists():
             cases += [dict(c, _report="verification/" + name) for c in json.loads(record_path.read_text()).get("cases", [])]

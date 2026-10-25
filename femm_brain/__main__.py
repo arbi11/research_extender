@@ -54,7 +54,7 @@ def main(argv=None):
     report.add_argument("--results", type=Path, required=True)
     report.add_argument("--output", type=Path)
     report.add_argument("--html", type=Path)
-    report.add_argument("--catalog", choices=("reproductions", "designs"), default="reproductions")
+    report.add_argument("--catalog", choices=("reproductions", "designs", "papers"), default="reproductions")
     design = sub.add_parser("design", help="Build, solve and check new designs assembled from reusable components")
     design.add_argument("design_ids", nargs="*")
     design.add_argument("--all", action="store_true")
@@ -62,6 +62,19 @@ def main(argv=None):
     design.add_argument("--engine", choices=("docker", "native"), default="docker")
     design.add_argument("--image")
     design.add_argument("--timeout", type=int, default=900)
+    papers = sub.add_parser("papers", help="Paper index, case checks and model drawings for paper replications")
+    papers.add_argument("--components", action="store_true", help="List the components assemblies can use")
+    papers.add_argument("--check", metavar="PAPER_ID", help="Check one case (provenance, targets, regions)")
+    papers.add_argument("--render", metavar="PAPER_ID", help="Draw one case's model as SVG")
+    papers.add_argument("--output", type=Path)
+    replicate = sub.add_parser("replicate", help="Build, solve and assess paper replication cases")
+    replicate.add_argument("paper_ids", nargs="*")
+    replicate.add_argument("--all", action="store_true")
+    replicate.add_argument("--output", type=Path, required=True)
+    replicate.add_argument("--engine", choices=("docker", "native"), default="docker")
+    replicate.add_argument("--image")
+    replicate.add_argument("--timeout", type=int, default=900)
+    replicate.add_argument("--controls", action="store_true", help="Also run each case's diagnostic controls")
     sub.add_parser("studies", help="List executable, source-backed studies")
     plan = sub.add_parser("plan", help="Select a known study locally, without an LLM")
     plan.add_argument("request", nargs="*")
@@ -132,6 +145,44 @@ def main(argv=None):
         summaries = [run_reproduction(i, args.output / i, levels=("article",), engine=args.engine, image=args.image,
                                       timeout=args.timeout, cases=designs) for i in identifiers]
         print(json.dumps([{"design_id": s["case_id"], "status": s["levels"]["article"]["status"]} for s in summaries], indent=2))
+        return 0 if all(s["levels"]["article"]["status"] == "passed" for s in summaries) else 1
+    if args.command == "papers":
+        from . import papers as paper_tools
+        from .reproduce import load_papers
+        cases = {case["id"]: case for case in load_papers()}
+        if args.components:
+            print(json.dumps(paper_tools.components_listing(), indent=2))
+            return 0
+        if args.check or args.render:
+            identifier = args.check or args.render
+            if identifier not in cases:
+                parser.error("No case file for paper " + identifier)
+            if args.render:
+                svg = paper_tools.render_case(cases[identifier])
+                if args.output:
+                    args.output.write_text(svg)
+                else:
+                    print(svg)
+                return 0
+            result = paper_tools.check(cases[identifier])
+            print(json.dumps(result, indent=2))
+            return 0 if not result["problems"] else 1
+        index = paper_tools.load_index()
+        problems = paper_tools.check_index()
+        for identifier, case in cases.items():
+            problems += [f"{identifier}: {problem}" for problem in paper_tools.check(case, build=False)["problems"]]
+        print(json.dumps({"papers": [{k: e.get(k) for k in ("id", "set", "status", "family")} for e in index["papers"]],
+                          "problems": problems}, indent=2))
+        return 0 if not problems else 1
+    if args.command == "replicate":
+        from .reproduce import load_papers, reproduce as run_reproduction
+        cases = load_papers()
+        identifiers = [c["id"] for c in cases if c["status"] != "candidate"] if args.all else args.paper_ids
+        if not identifiers:
+            parser.error("Name paper ids or --all")
+        summaries = [run_reproduction(i, args.output / i, levels=("article",), engine=args.engine, image=args.image,
+                                      timeout=args.timeout, controls=args.controls, cases=cases) for i in identifiers]
+        print(json.dumps([{"paper_id": s["case_id"], "status": s["levels"]["article"]["status"]} for s in summaries], indent=2))
         return 0 if all(s["levels"]["article"]["status"] == "passed" for s in summaries) else 1
     if args.command == "reproduction-report":
         from .reproduction_report import write

@@ -708,6 +708,31 @@ def load_designs():
     return json.loads((DATA / "designs.json").read_text())["designs"]
 
 
+def load_papers():
+    """Paper replication cases, one file each under data/papers/; they run at the article level."""
+    folder = DATA / "papers"
+    return [json.loads(path.read_text()) for path in sorted(folder.glob("*.json"))] if folder.is_dir() else []
+
+
+def catalog_file(case):
+    """The catalog file a case is defined in, and so bound to."""
+    if case.get("example_id"):
+        return DATA / "reproductions.json"
+    if case.get("source") and case.get("set"):
+        return DATA / "papers" / (case["id"] + ".json")
+    return DATA / "designs.json"
+
+
+def catalog_digest(catalog):
+    """Digest of a whole catalog; the papers catalog is one file per case."""
+    if catalog == "papers":
+        digest = hashlib.sha256()
+        for path in sorted((DATA / "papers").glob("*.json")):
+            digest.update(path.name.encode() + b"\0" + path.read_bytes())
+        return digest.hexdigest()
+    return _sha(DATA / (catalog + ".json"))
+
+
 def _source_record(case):
     sha = case.get("source_model_sha256")
     if not sha:
@@ -836,7 +861,8 @@ def plan_level(case, level, control=None):
     lua = "\n".join(construction + solve_lines(case, physics, model["labels"])) + "\n"
     targets = [t for t in case["targets"] if level in t.get("levels", LEVELS)]
     plan = {"schema_version": 1, "case_id": case["id"], "example_id": case.get("example_id"), "level": level,
-            "physics": physics, "source_ids": case["source_ids"], "source_url": case["source_url"],
+            "physics": physics, "source_ids": case.get("source_ids", []),
+            "source_url": case.get("source_url") or (case.get("source") or {}).get("url"),
             "source_model_sha256": case.get("source_model_sha256"),
             "expected_model": model if level != "original" else None,
             "article_parameters": built.get("parameters") if level == "article" else None,
@@ -846,7 +872,8 @@ def plan_level(case, level, control=None):
             "targets": targets, "assessors": case.get("assessors", []), "lua": lua,
             "control": control, "mesh_scaling": mesh_scaling, "case_binding_sha256": case_binding_digest(case),
             "module_sha256": _sha(__file__),
-            "catalog_sha256": _sha(DATA / ("reproductions.json" if case.get("example_id") else "designs.json")),
+            "catalog_sha256": (_sha(catalog_file(case)) if catalog_file(case).is_file()
+                               else hashlib.sha256(json.dumps(case, sort_keys=True).encode()).hexdigest()),
             "requires_ai": False}
     if level in ("article", "components"):
         plan["article_recipe_sha256"] = _sha(Path(__file__).with_name("article_recipes.py"))

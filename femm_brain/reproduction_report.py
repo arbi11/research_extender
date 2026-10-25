@@ -11,15 +11,30 @@ import html
 import json
 from pathlib import Path
 
-from .reproduce import LEVELS, case_binding_digest, load_cases, load_designs
+from .reproduce import LEVELS, case_binding_digest, catalog_digest, load_cases, load_designs, load_papers
 
 DATA = Path(__file__).parent / "data"
 RECORD = DATA / "verification" / "official_reproductions.json"
 DESIGN_RECORD = DATA / "verification" / "component_designs.json"
+PAPER_RECORD = DATA / "verification" / "paper_replications.json"
+RECORDS = {"reproductions": RECORD, "designs": DESIGN_RECORD, "papers": PAPER_RECORD}
+REGISTRIES = {"reproductions": "reviewed_reproduction_failures.json", "designs": "reviewed_design_failures.json",
+              "papers": "reviewed_paper_failures.json"}
+TITLES = {"reproductions": "Official FEMM example reproductions", "designs": "Component designs",
+          "papers": "Paper replications"}
 SCOPES = {"reproductions": "Official FEMM examples reproduced from the unmodified model file (original), from the brain's stored model record "
                            "(rebuild), from article-stated parameters (article) and from reusable machine components (components). "
                            "Comparators are reported but never used for acceptance.",
-          "designs": "New designs assembled only from reusable components and checked against closed-form results at the assembly level."}
+          "designs": "New designs assembled only from reusable components and checked against closed-form results at the assembly level.",
+          "papers": "Machines rebuilt from papers and reports with reusable components, from parameters whose provenance is recorded, "
+                    "against targets frozen before solving. Comparators are reported but never used for acceptance."}
+
+
+def catalog_cases(catalog):
+    """Cases a record must cover: every reproduction and design, and every paper case past extraction."""
+    if catalog == "papers":
+        return [case for case in load_papers() if case.get("status") not in ("candidate", "extracting")]
+    return load_cases() if catalog == "reproductions" else load_designs()
 
 
 def _target_row(result):
@@ -51,7 +66,7 @@ def _target_row(result):
 
 def collect(results, catalog="reproductions"):
     results = Path(results)
-    cases = {c["id"]: c for c in (load_cases() if catalog == "reproductions" else load_designs())}
+    cases = {c["id"]: c for c in catalog_cases(catalog)}
     entries = []
     for identifier, case in cases.items():
         summary_path = results / identifier / "summary.json"
@@ -93,7 +108,8 @@ def collect(results, catalog="reproductions"):
         comparators = [level for level, entry in levels.items() if entry["status"] == "comparators_only"]
         status = ("passed" if attempted and len(passed) == len(attempted) else "failed" if attempted else
                   "comparators_only" if comparators else "not_attempted")
-        entries.append({"case_id": identifier, "example_id": case.get("example_id"), "title": case["title"], "source_url": case.get("source_url"),
+        entries.append({"case_id": identifier, "example_id": case.get("example_id"), "title": case["title"],
+                        "source_url": case.get("source_url") or (case.get("source") or {}).get("url"),
                         "status": status, "coverage": case.get("coverage"), "case_binding_sha256": case_binding_digest(case),
                         "levels_passed": passed, "levels": levels,
                         "rebuild_matches_original": summary.get("level_comparison", {}).get("rebuild"),
@@ -101,7 +117,7 @@ def collect(results, catalog="reproductions"):
                         "article_model_vs_original": {"difference_count": summary["article_model_vs_original"]["difference_count"]}
                         if summary.get("article_model_vs_original") else None})
     return {"schema_version": 1, "generated_at": datetime.now(timezone.utc).isoformat(),
-            "catalog_sha256": hashlib.sha256((DATA / (catalog + ".json")).read_bytes()).hexdigest(),
+            "catalog_sha256": catalog_digest(catalog),
             "catalog": catalog, "scope": SCOPES[catalog],
             "llm_calls": 0, "cases": entries,
             "totals": {"cases": len(entries), "passed": sum(e["status"] == "passed" for e in entries),
@@ -148,14 +164,14 @@ def render_html(record):
                     + "".join(cells) + f'<td><details><summary>{len(detail)} level(s)</summary>{"".join(detail)}</details></td></tr>')
     totals = record["totals"]
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Official Example Reproductions</title><style>
+<title>{html.escape(TITLES.get(record.get("catalog"), "Reproductions"))}</title><style>
 :root{{--bg:#fbfaf7;--fg:#1f2a28;--muted:#5d6b68;--line:#d9dcd6;--pass:#1d6b4f;--fail:#a1321b;--na:#6c6c6c}}
 @media (prefers-color-scheme:dark){{:root{{--bg:#151917;--fg:#e8ece9;--muted:#9aa7a3;--line:#2f3633;--pass:#5fc296;--fail:#f08a6c;--na:#9a9a9a}}}}
 body{{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif;margin:0 auto;max-width:1100px;padding:24px 16px}}
 table{{border-collapse:collapse;width:100%}}td,th{{border-bottom:1px solid var(--line);padding:8px;vertical-align:top;text-align:left}}
 .s-passed{{color:var(--pass)}}.s-failed{{color:var(--fail)}}.s-not_applicable,.s-not_attempted,.s-not_run{{color:var(--na)}}
 code{{font-size:12px;color:var(--muted)}}ul{{margin:4px 0 8px 18px;padding:0}}p{{color:var(--muted)}}
-</style></head><body><h1>Official FEMM example reproductions</h1>
+</style></head><body><h1>{html.escape(TITLES.get(record.get("catalog"), "Reproductions"))}</h1>
 <p>{html.escape(record["scope"])} Generated {html.escape(record["generated_at"])}; catalog {record["catalog_sha256"][:12]}; LLM calls: {record["llm_calls"]}.</p>
 <p><b>{totals["passed"]}</b> of {totals["cases"]} cases pass every attempted level; {totals["failed"]} fail; {totals.get("comparators_only", 0)} have comparators only. Level passes — original {totals["level_passes"]["original"]},
 rebuild {totals["level_passes"]["rebuild"]}, article {totals["level_passes"]["article"]}, components {totals["level_passes"]["components"]}.</p>
@@ -166,7 +182,7 @@ rebuild {totals["level_passes"]["rebuild"]}, article {totals["level_passes"]["ar
 
 def expected_levels(case, catalog):
     """The state each level must reach for a complete record."""
-    if catalog == "designs":
+    if catalog in ("designs", "papers"):
         return {"article": "executed"}
     native = "executed" if case.get("source_model_sha256") else "not_applicable"
     article = "executed" if "assembly" in (case.get("article") or {}) else "not_attempted"
@@ -178,9 +194,9 @@ def audit(record, registry_path, catalog="reproductions"):
     """Complete, bound and bounded: the record must cover every expected case and level,
     agree with the current catalog, keep rebuilds identical to originals, and fail only
     where a reviewed failure stays within its frozen regression bound."""
-    cases = load_cases() if catalog == "reproductions" else load_designs()
+    cases = catalog_cases(catalog)
     problems = []
-    current_catalog = hashlib.sha256((DATA / (catalog + ".json")).read_bytes()).hexdigest()
+    current_catalog = catalog_digest(catalog)
     if record.get("catalog_sha256") != current_catalog:
         problems.append("The record was produced from a different catalog version.")
     registry = json.loads(Path(registry_path).read_text())["failures"] if Path(registry_path).exists() else []
@@ -248,9 +264,8 @@ def audit(record, registry_path, catalog="reproductions"):
 
 def write(results, output=None, html_output=None, catalog="reproductions"):
     record = collect(results, catalog)
-    record["audit"] = audit(record, DATA / "verification" / ("reviewed_reproduction_failures.json" if catalog == "reproductions"
-                                                             else "reviewed_design_failures.json"), catalog)
-    output = output or (RECORD if catalog == "reproductions" else DESIGN_RECORD)
+    record["audit"] = audit(record, DATA / "verification" / REGISTRIES[catalog], catalog)
+    output = output or RECORDS[catalog]
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(record, indent=1) + "\n")
