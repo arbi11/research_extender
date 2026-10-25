@@ -408,3 +408,67 @@ class RestoreTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class VariantTests(unittest.TestCase):
+    """Further designs a paper reports: article builds with their own parameters and targets."""
+
+    def case(self):
+        from femm_brain.reproduce import load_designs
+        case = deepcopy(next(d for d in load_designs() if d["id"] == "design-coaxial-capacitor"))
+        base_target = case["targets"][0]
+        case["variants"] = [{"id": "wide", "parameters": {"outer_radius_mm": 8.0}, "purpose": "A wider capacitor"}]
+        case["targets"] = [base_target, dict(base_target, value=2.6e-11, variant="wide")]
+        return case
+
+    def test_a_variant_builds_with_its_parameters_and_only_its_targets(self):
+        from femm_brain.reproduce import case_binding_digest, case_levels, plan_level
+        case = self.case()
+        base, wide = plan_level(case, "article"), plan_level(case, "article", variant=case["variants"][0])
+        radius = lambda plan: max(math.hypot(n["x"], n["y"]) for n in plan["expected_model"]["nodes"])
+        self.assertAlmostEqual(radius(base), 5.0)
+        self.assertAlmostEqual(radius(wide), 8.0)
+        self.assertEqual([t.get("variant") for t in base["targets"]], [None])
+        self.assertEqual([t["value"] for t in wide["targets"]], [2.6e-11])
+        self.assertEqual(wide["variant"], "wide")
+        # Both plans carry the case's own binding, which covers the variants.
+        self.assertEqual(base["case_binding_sha256"], wide["case_binding_sha256"])
+        self.assertNotEqual(case_binding_digest(case), case_binding_digest(dict(case, variants=[])))
+        self.assertEqual(case_levels(case), LEVELS + ("variant-wide",))
+        from femm_brain.reproduction_report import expected_levels
+        self.assertEqual(expected_levels(case, "designs"), {"article": "executed", "variant-wide": "executed"})
+        with self.assertRaises(ValueError):
+            plan_level(case, "article", variant={"id": "bad", "parameters": {"no_such": 1}})
+
+    def test_cases_without_variants_keep_their_binding(self):
+        from femm_brain.reproduce import BINDING_FIELDS, case_binding_digest, load_designs
+        import hashlib
+        case = next(d for d in load_designs() if d["id"] == "design-coaxial-capacitor")
+        legacy = hashlib.sha256(json.dumps({key: case.get(key) for key in BINDING_FIELDS}, sort_keys=True,
+                                           separators=(",", ":")).encode()).hexdigest()
+        self.assertEqual(case_binding_digest(case), legacy)
+
+    def test_papers_check_variants(self):
+        from femm_brain.papers import check
+        from femm_brain.reproduce import load_papers
+        case = deepcopy(next(c for c in load_papers() if c["id"] == "elrefaie-2006-fscw-spm"))
+        target = case["targets"][0]
+        case["variants"] = [{"id": "long", "parameters": {"active_length_mm": 100}, "purpose": "Named by a target"},
+                            {"id": "orphan", "parameters": {"active_length_mm": 60}, "purpose": "Nothing names it"},
+                            {"id": "bad", "parameters": {"no_such": 1}, "purpose": "Unknown parameter"}]
+        case["targets"] = case["targets"] + [dict(target, variant="long"), dict(target, variant="missing")]
+        problems = check(case, build=False)["problems"]
+        self.assertTrue(any("orphan: no acceptance target" in p for p in problems))
+        self.assertTrue(any("bad: unknown parameters" in p for p in problems))
+        self.assertTrue(any("unknown variant missing" in p for p in problems))
+        self.assertFalse(any("variant long" in p for p in problems))
+
+    def test_steps_reach_assessors_as_solved(self):
+        from femm_brain.reproduce import load_designs
+        original = next(d for d in load_designs() if d["id"] == "design-sector-spm-sliding-band")
+        case = deepcopy(original)
+        case["article"]["parameters"]["step_deg"] = {"value": 7.5, "unit": "deg", "quote": "Design choice"}
+        for k, step in enumerate(case["steps"]):
+            step["modify"][0]["value"] = f"={k}*step_deg"
+        self.assertEqual([s["modify"][0]["value"] for s in plan_level(case, "article")["resolved_steps"]], [7.5 * k for k in range(24)])
+        self.assertNotIn("resolved_steps", plan_level(original, "article"))

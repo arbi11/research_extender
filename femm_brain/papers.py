@@ -146,6 +146,26 @@ def check(case, cache=PAPER_CACHE, build=True):
         unknown = set(control.get("parameters") or {}) - set(parameters)
         if unknown:
             problems.append(f"control {control['id']}: unknown parameters {sorted(unknown)}")
+    variants = {}
+    for variant in case.get("variants", []):
+        identifier = variant.get("id")
+        if not identifier or identifier in variants or not variant.get("purpose") or not variant.get("parameters"):
+            problems.append(f"variant {identifier}: needs a unique id, a purpose and parameters")
+            continue
+        variants[identifier] = variant
+        unknown = set(variant["parameters"]) - set(parameters)
+        if unknown:
+            problems.append(f"variant {identifier}: unknown parameters {sorted(unknown)}")
+        derived = sorted(name for name in variant["parameters"] if parameters.get(name, {}).get("provenance") == "derived")
+        if derived:
+            problems.append(f"variant {identifier}: derived parameters {derived} follow their inputs; vary the inputs")
+    for item in case.get("targets", []) + case.get("assessors", []):
+        if item.get("variant") is not None and item["variant"] not in variants:
+            problems.append(f"{item.get('metric') or item.get('kind')}: names an unknown variant {item['variant']}")
+    for identifier in variants:
+        if not any(item.get("variant") == identifier and item.get("used_for_acceptance", True)
+                   for item in case.get("targets", []) + case.get("assessors", [])):
+            problems.append(f"variant {identifier}: no acceptance target or assessor names it")
 
     for gap in case.get("gaps", []):
         if gap.get("decision") not in GAP_DECISIONS:
@@ -190,11 +210,13 @@ def check(case, cache=PAPER_CACHE, build=True):
                 problems.append(f"a frozen case needs {key}")
 
     if build and (case.get("article") or {}).get("assembly"):
-        try:
-            plan = plan_level(case, "article")
-            problems += [f"region: {problem}" for problem in check_regions(plan["expected_model"])]
-        except (ValueError, KeyError, TypeError) as exc:
-            problems.append(f"assembly does not build: {exc}")
+        for variant in [None] + list(variants.values()):
+            where = f" (variant {variant['id']})" if variant else ""
+            try:
+                plan = plan_level(case, "article", variant=variant)
+                problems += [f"region{where}: {problem}" for problem in check_regions(plan["expected_model"])]
+            except (ValueError, KeyError, TypeError) as exc:
+                problems.append(f"assembly does not build{where}: {exc}")
     return {"problems": problems, "notes": notes}
 
 

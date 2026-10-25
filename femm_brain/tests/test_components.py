@@ -674,6 +674,43 @@ class DrawingTests(unittest.TestCase):
         self.assertEqual(len(fine["arcs"]), 4)
 
 
+class RingSectorTests(unittest.TestCase):
+    problem = {"physics": "magnetics", "units": "millimeters", "type": "planar", "frequency": 0, "depth": 1}
+
+    def ring(self, sectors, **extra):
+        steps = [{"use": "material", "name": "Air"}, {"use": "material", "name": "Iron"},
+                 {"use": "material", "name": "PM", "values": {"H_c": 900000}},
+                 dict({"use": "ring_sectors", "inner_radius": 10, "outer_radius": 12, "sectors": sectors}, **extra)]
+        return assemble({"problem": self.problem, "steps": steps}, {})[0]
+
+    def test_a_closed_ring_of_alternating_radial_magnets(self):
+        sectors = [[90 * k - 45, 90 * k + 45, "PM", "outward" if k % 2 == 0 else "inward"] for k in range(4)]
+        model = self.ring(sectors)
+        self.assertEqual(len(model["segments"]), 4)                    # one radial edge between each pair
+        self.assertEqual(len(model["arcs"]), 8)                        # each 90 degree stretch on both circles
+        self.assertEqual([l["magdir_function"] for l in sorted(model["labels"], key=lambda l: round(math.degrees(math.atan2(l["y"], l["x"]))) % 360)],
+                         ["theta", "theta+180", "theta", "theta+180"])
+        self.assertEqual(check_regions(model), [])
+
+    def test_pole_pieces_with_air_between_and_parallel_directions(self):
+        model = self.ring([[0, 20, "Iron", None], [120, 140, "Iron", None], [240, 250, "PM", 30]], gap_material="Air")
+        materials = sorted(l["material"] for l in model["labels"])
+        self.assertEqual(materials, ["Air", "Air", "Air", "Iron", "Iron", "PM"])
+        magnet = next(l for l in model["labels"] if l["material"] == "PM")
+        self.assertEqual((magnet["magdir"], magnet["magdir_function"]), (30, None))
+        # The 220 degree air stretch from 250 to 360 (110) and so on: no arc wider than 180 degrees.
+        self.assertTrue(all(a["angle"] <= 180 for a in model["arcs"]))
+        self.assertEqual(check_regions(model), [])
+
+    def test_refusals(self):
+        for sectors, extra in (([[0, 20, "Iron", None], [10, 30, "Iron", None]], {"gap_material": "Air"}),
+                               ([[0, 20, "Iron", None]], {}),
+                               ([[0, 20, "Iron", "sideways"]], {"gap_material": "Air"}),
+                               ([[0, 0, "Iron", None]], {"gap_material": "Air"})):
+            with self.assertRaises(ValueError):
+                self.ring(sectors, **extra)
+
+
 class AssessorMetricTests(unittest.TestCase):
     def test_names_are_those_the_assessors_report(self):
         self.assertEqual(assessor_metric({"kind": "waveform_statistic", "metric": "flux", "statistic": "mean"}), "flux:mean")

@@ -79,6 +79,11 @@ POINT_FIELDS = {"magnetics": ("A", "B1", "B2", "Sig", "E", "H1", "H2", "Je", "Js
                 "electrostatics": ("V", "Dx", "Dy", "Ex", "Ey", "ex", "ey", "nrg"),
                 "heatflow": ("T", "Fx", "Fy", "Gx", "Gy", "kx", "ky")}
 LEVELS = ("original", "rebuild", "article", "components")
+
+
+def case_levels(case):
+    """The case's levels and one more per variant: an article build with its own parameters and acceptance targets."""
+    return LEVELS + tuple("variant-" + variant["id"] for variant in case.get("variants", []))
 RELATIVE = 1e-9
 
 
@@ -789,6 +794,8 @@ BINDING_FIELDS = ("id", "source_model_sha256", "steps", "measurements", "metrics
 def case_binding_digest(case):
     """Digest of everything that determines what a case builds, measures and accepts."""
     binding = {key: case.get(key) for key in BINDING_FIELDS}
+    if case.get("variants"):
+        binding["variants"] = case["variants"]  # only when present, so cases without variants keep their digests
     return hashlib.sha256(json.dumps(binding, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
@@ -891,16 +898,28 @@ def jitter_coordinates(model, seed, size):
     return jittered
 
 
-def plan_level(case, level, control=None):
+def plan_level(case, level, control=None, variant=None):
     """Freeze construction, measurement Lua and targets for one level of one case.
 
     A control is a diagnostic variant (scaled explicit mesh, overridden article
     or component parameters, the same entities in another order, or coordinates
     moved by a sub-nanometre jitter). It is reported beside the level and never
-    changes the level's acceptance.
+    changes the level's acceptance. A variant is a further design the paper
+    reports (another pole count or size): an article build with its own
+    parameter values, assessed against the targets and assessors that name it.
     """
     if level not in LEVELS:
         raise ValueError("Unknown reproduction level: " + str(level))
+    binding = case_binding_digest(case)
+    variant_id = variant["id"] if variant else None
+    if variant:
+        if level != "article" or control:
+            raise ValueError("A variant is an article build, without a control")
+        case = deepcopy(case)
+        for name, value in (variant.get("parameters") or {}).items():
+            if name not in case["article"]["parameters"]:
+                raise ValueError("Unknown article parameter in variant: " + name)
+            case["article"]["parameters"][name]["value"] = value
     if control:
         if control.get("level") != level or level == "original":
             raise ValueError("Controls vary the rebuild, article or components level they name")
@@ -957,7 +976,7 @@ def plan_level(case, level, control=None):
     values = built.get("values") if level == "article" else None
     chunks = ["\n".join(construction + solve_lines(case, physics, model["labels"], values, span)) + "\n" for span in solve_ranges(case)]
     lua = chunks[0]
-    targets = [t for t in case["targets"] if level in t.get("levels", LEVELS)]
+    targets = [t for t in case["targets"] if level in t.get("levels", LEVELS) and t.get("variant") == variant_id]
     plan = {"schema_version": 1, "case_id": case["id"], "example_id": case.get("example_id"), "level": level,
             "physics": physics, "source_ids": case.get("source_ids", []),
             "source_url": case.get("source_url") or (case.get("source") or {}).get("url"),
@@ -967,9 +986,10 @@ def plan_level(case, level, control=None):
             "article_assumptions": built.get("assumptions") if level == "article" else None,
             "component_parameters": built.get("parameters") if level == "components" else None,
             "reference_model": reference,
-            "targets": targets, "assessors": case.get("assessors", []), "lua": lua,
+            "targets": targets, "assessors": [a for a in case.get("assessors", []) if a.get("variant") == variant_id], "lua": lua,
             **({"lua_chunks": chunks} if len(chunks) > 1 else {}),
-            "control": control, "mesh_scaling": mesh_scaling, "case_binding_sha256": case_binding_digest(case),
+            "control": control, **({"variant": variant_id} if variant else {}), "mesh_scaling": mesh_scaling,
+            "case_binding_sha256": binding,
             "module_sha256": _sha(__file__),
             "catalog_sha256": (_sha(catalog_file(case)) if catalog_file(case).is_file()
                                else hashlib.sha256(json.dumps(case, sort_keys=True).encode()).hexdigest()),
@@ -981,6 +1001,11 @@ def plan_level(case, level, control=None):
         plan["components_used"] = built.get("components", [])
         from .components import component_digests
         plan["component_digests"] = component_digests(plan["components_used"])
+    if values is not None and any(_refers(change.get("value")) for step in case.get("steps") or [] for change in step.get("modify", [])):
+        # Assessors read rotor angles and the like from the steps: give them the values as solved.
+        from .components import resolve
+        plan["resolved_steps"] = [dict(step, modify=[dict(change, value=resolve(change["value"], values)) if _refers(change.get("value"))
+                                                     else change for change in step.get("modify", [])]) for step in case["steps"]]
     plan["plan_sha256"] = hashlib.sha256(json.dumps(plan, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     return plan
 
@@ -1016,9 +1041,9 @@ def _run_engine(folder, *, engine, image, timeout):
     return {"engine": "docker", "image": image, "image_id": image_id, "network": "none", "read_only_container": True}
 
 
-def run_level(case, level, output, *, engine="docker", image=None, timeout=900, control=None):
-    """Execute one frozen level in an empty directory and retain all evidence."""
-    plan = plan_level(case, level, control)
+def run_level(case, level, output, *, engine="docker", image=None, timeout=900, control=None, variant=None):
+    """Execute one frozen level (or one variant of the article level) in an empty directory and retain all evidence."""
+    plan = plan_level(case, level, control, variant)
     folder = Path(output).resolve()
     folder.mkdir(parents=True, exist_ok=True)
     if any(folder.iterdir()):
@@ -1041,6 +1066,7 @@ def run_level(case, level, output, *, engine="docker", image=None, timeout=900, 
               "checks": {name: {"status": "not_run"} for name in ("build", "solve", "targets")
                          } | ({"reference": {"status": "not_run"}} if level == "components" else {}),
               "requires_ai": False, "status": "failed", "metrics": {}, "control": control,
+              **({"variant": plan["variant"]} if plan.get("variant") else {}),
               "mesh_scaling": plan.get("mesh_scaling"), "components_used": plan.get("components_used"),
               "component_digests": plan.get("component_digests"), "case_binding_sha256": plan["case_binding_sha256"],
               "coverage": case.get("coverage")}
@@ -1103,9 +1129,10 @@ def run_level(case, level, output, *, engine="docker", image=None, timeout=900, 
         stage = "targets"
         from .reference_models import run_assessor
         results = [assess(t, report["metrics"]) for t in plan["targets"]]
+        assessed = dict(case, steps=plan["resolved_steps"]) if plan.get("resolved_steps") else case
         for assessor in plan["assessors"]:
             if level in assessor.get("levels", LEVELS):
-                results.append(run_assessor(assessor, case, raw, report["metrics"],
+                results.append(run_assessor(assessor, assessed, raw, report["metrics"],
                                             plan["expected_model"] or _source_record(case)[1]))
         acceptance = [r for r in results if r.get("target", {}).get("used_for_acceptance", True)]
         # A level with only comparators has nothing to pass; it is reported as such.
@@ -1243,6 +1270,10 @@ def reproduce(case_id, output, *, levels=LEVELS, engine="docker", image=None, ti
     output = Path(output)
     reports = {level: run_level(case, level, output / level, engine=engine, image=image, timeout=timeout) for level in levels}
     control_results = run_controls(case, reports, output, engine=engine, image=image, timeout=timeout) if controls else {}
+    if "article" in levels:
+        for variant in case.get("variants", []):
+            reports["variant-" + variant["id"]] = run_level(case, "article", output / ("variant-" + variant["id"]), engine=engine,
+                                                            image=image, timeout=timeout, variant=variant)
     summary = {"schema_version": 1, "case_id": case_id, "example_id": case.get("example_id"), "title": case["title"],
                "levels": {level: {"status": r["status"], **({"reason": r["reason"]} if r.get("reason") else {})} for level, r in reports.items()},
                "level_comparison": compare_levels(case, reports), "controls": control_results, "llm_calls": 0,

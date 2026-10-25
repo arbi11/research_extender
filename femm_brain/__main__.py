@@ -182,8 +182,10 @@ def main(argv=None):
             parser.error("Name paper ids or --all")
         summaries = [run_reproduction(i, args.output / i, levels=("article",), engine=args.engine, image=args.image,
                                       timeout=args.timeout, controls=args.controls, cases=cases) for i in identifiers]
-        print(json.dumps([{"paper_id": s["case_id"], "status": s["levels"]["article"]["status"]} for s in summaries], indent=2))
-        return 0 if all(s["levels"]["article"]["status"] == "passed" for s in summaries) else 1
+        print(json.dumps([{"paper_id": s["case_id"], "status": s["levels"]["article"]["status"],
+                           **({"variants": {level: r["status"] for level, r in s["levels"].items() if level.startswith("variant-")}}
+                              if any(level.startswith("variant-") for level in s["levels"]) else {})} for s in summaries], indent=2))
+        return 0 if all(r["status"] == "passed" for s in summaries for r in s["levels"].values()) else 1
     if args.command == "reproduction-report":
         from .reproduction_report import write
         record = write(args.results, args.output, args.html, args.catalog)

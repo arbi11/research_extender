@@ -957,6 +957,63 @@ def belt_winding(m, inner_radius, outer_radius, belts, material, gap_material, m
             m.label(*point(middle, centre), material, mesh=mesh, circuit=owner[2], turns=owner[3], group=group)
 
 
+def ring_sectors(m, inner_radius, outer_radius, sectors, gap_material=None, max_segment=1, mesh=None, gap_mesh=None, group=0):
+    """An annulus divided into angular sectors, each a block of its own material and magnetization.
+
+    ``sectors`` lists [start, end, material, magnetization] with angles in
+    degrees, counterclockwise from start to end. Magnetization is null, "outward"
+    or "inward" (radial, through FEMM's direction function) or a number (a
+    parallel direction in degrees). Contiguous sectors make a closed ring of
+    magnets (a magnetic gear's or Halbach rotor's); sectors with gaps between
+    them make pole pieces or teeth, and the gaps take ``gap_material``. Arcs are
+    split at every sector edge and wherever they would exceed 180 degrees, and
+    radial edges are drawn once where neighbours meet.
+    """
+    if not 0 < inner_radius < outer_radius:
+        raise ValueError("A ring needs 0 < inner radius < outer radius")
+    spans = []
+    for sector in sectors:
+        if len(sector) != 4 or not (_finite(sector[0]) and _finite(sector[1])) or not isinstance(sector[2], str):
+            raise ValueError("Each sector is [start degrees, end degrees, material, magnetization]")
+        magnetization = sector[3]
+        if magnetization is not None and magnetization not in ("outward", "inward") and not _finite(magnetization):
+            raise ValueError("Magnetization is null, outward, inward or a direction in degrees")
+        start, width = sector[0] % 360, (sector[1] - sector[0]) % 360
+        if not 0 < width < 360:
+            raise ValueError("A sector spans more than zero and less than 360 degrees")
+        spans.append((start, width, sector[2], magnetization))
+    ordered = sorted(spans)
+    for (s0, w0, _, _), (s1, _, _, _) in zip(ordered, ordered[1:] + ordered[:1]):
+        if len(ordered) > 1 and (s1 - s0) % 360 < w0 - 1e-9:
+            raise ValueError("Sectors overlap")
+    radial = sorted({round(s % 360, 12) for s, _, _, _ in spans} | {round((s + w) % 360, 12) for s, w, _, _ in spans})
+    covered = abs(sum(w for _, w, _, _ in spans) - 360) < 1e-9
+    if not covered and gap_material is None:
+        raise ValueError("Sectors leave gaps: give a gap material")
+    edges = []
+    for a, b in zip(radial, radial[1:] + [radial[0] + 360]):
+        pieces = max(1, math.ceil((b - a) / 180 - 1e-12))
+        edges += [round((a + (b - a) * k / pieces) % 360, 12) for k in range(pieces)]
+    edges.sort()
+    point = lambda r, angle: (r * math.cos(math.radians(angle)), r * math.sin(math.radians(angle)))
+    for a, b in zip(edges, edges[1:] + [edges[0]]):
+        for r in (inner_radius, outer_radius):
+            m.arc(point(r, a), point(r, b), (b - a) % 360 or 360, max_segment, group=group)
+    for angle in radial:
+        m.segment(point(inner_radius, angle), point(outer_radius, angle), group=group)
+    middle = (inner_radius + outer_radius) / 2
+    for a, b in zip(radial, radial[1:] + [radial[0] + 360]):
+        centre = (a + b) / 2
+        owner = next((sector for sector in spans if (centre - sector[0]) % 360 < sector[1]), None)
+        if owner is None:
+            m.label(*point(middle, centre), gap_material, mesh=gap_mesh, group=group)
+        elif owner[3] in ("outward", "inward"):
+            m.label(*point(middle, centre), owner[2], mesh=mesh, group=group,
+                    magdir_function="theta" if owner[3] == "outward" else "theta+180")
+        else:
+            m.label(*point(middle, centre), owner[2], mesh=mesh, magdir=(owner[3] or 0) % 360, group=group)
+
+
 def entity_pattern(m, entities, copies=1, angle_step=0, first_angle=0, snap=1e-9, max_segment=1, max_segment_bands=None,
                    min_segment_length=0, group=0):
     """Contours given as data (from a drawing a paper supplies), repeated around the axis as a polar array.
@@ -1055,7 +1112,7 @@ IMPLEMENTATIONS = {function.__name__: function for function in (
     fixed_potential_boundary, mixed_boundary, convection_boundary, iabc_open_boundary, axisymmetric_coil_section,
     bar_magnet, air_gap_element, kelvin_periodic_exterior, segment_boundary, fixed_point_potential, magnet_array,
     slotted_stator, trapezoidal_slot_stator, tooth_coil_winding, surface_magnet_rotor, salient_poles, salient_pole_winding,
-    belt_winding, entity_pattern, sector_air_gap, arc_boundary)}
+    belt_winding, entity_pattern, sector_air_gap, arc_boundary, ring_sectors)}
 
 
 def _finite(value):

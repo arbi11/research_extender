@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 
 from .reference_models import assessor_metric
-from .reproduce import LEVELS, case_binding_digest, catalog_digest, load_cases, load_designs, load_papers
+from .reproduce import LEVELS, case_binding_digest, case_levels, catalog_digest, load_cases, load_designs, load_papers
 
 DATA = Path(__file__).parent / "data"
 RECORD = DATA / "verification" / "official_reproductions.json"
@@ -77,7 +77,7 @@ def collect(results, catalog="reproductions"):
             continue
         summary = json.loads(summary_path.read_text())
         levels = {}
-        for level in LEVELS:
+        for level in case_levels(case):
             path = results / identifier / level / "report.json"
             if not path.is_file():
                 continue
@@ -187,7 +187,7 @@ rebuild {totals["level_passes"]["rebuild"]}, article {totals["level_passes"]["ar
 def expected_levels(case, catalog):
     """The state each level must reach for a complete record."""
     if catalog in ("designs", "papers"):
-        return {"article": "executed"}
+        return {level: "executed" for level in case_levels(case) if level == "article" or level.startswith("variant-")}
     native = "executed" if case.get("source_model_sha256") else "not_applicable"
     article = "executed" if "assembly" in (case.get("article") or {}) else "not_attempted"
     components = "executed" if case.get("components") else "not_attempted"
@@ -215,11 +215,12 @@ def audit(record, registry_path, catalog="reproductions"):
             continue
         if entry.get("case_binding_sha256") != case_binding_digest(case):
             problems.append(f"{identifier}: recorded under a different case definition.")
-        targets = {t["metric"]: t for t in case.get("targets", []) if t.get("used_for_acceptance", True)}
-        # Assessors are frozen targets too: a reviewed failure of one binds to the assessor's value and tolerances.
-        targets.update({assessor_metric(a): a for a in case.get("assessors", [])
-                        if a.get("used_for_acceptance", True) and assessor_metric(a) is not None})
         for level, expectation in expected_levels(case, catalog).items():
+            # Assessors are frozen targets too: a reviewed failure of one binds to the assessor's value and tolerances.
+            variant = level[len("variant-"):] if level.startswith("variant-") else None
+            targets = {t["metric"]: t for t in case.get("targets", []) if t.get("used_for_acceptance", True) and t.get("variant") == variant}
+            targets.update({assessor_metric(a): a for a in case.get("assessors", [])
+                            if a.get("used_for_acceptance", True) and a.get("variant") == variant and assessor_metric(a) is not None})
             result = entry.get("levels", {}).get(level)
             if result is None:
                 problems.append(f"{identifier}/{level}: missing level.")

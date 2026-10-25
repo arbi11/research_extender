@@ -2839,6 +2839,102 @@
    "constraints": [
     "Each point must lie inside exactly one arc."
    ]
+  },
+  {
+   "id": "ring_sectors",
+   "layer": 2,
+   "title": "Annulus of material sectors",
+   "description": "An annulus divided into angular sectors, each a block of its own material and magnetization (radial outward or inward through FEMM's direction function, a parallel direction, or none), with an optional gap material between sectors: closed magnet rings of magnetic gears and Halbach rotors, and modulation pole pieces or teeth separated by air. The component draws the annulus arcs split at every sector edge, the radial edges once, and one label per region.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "inner_radius",
+     "type": "number",
+     "description": "Inner radius of the annulus",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "outer_radius",
+     "type": "number",
+     "description": "Outer radius of the annulus",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "sectors",
+     "type": "list",
+     "description": "Sectors as [start degrees, end degrees, material, magnetization], counterclockwise from start to end; magnetization is null, \"outward\", \"inward\" or a direction in degrees; sectors may not overlap",
+     "required": true
+    },
+    {
+     "name": "gap_material",
+     "type": "string",
+     "description": "Material between sectors, required when the sectors leave gaps",
+     "required": false
+    },
+    {
+     "name": "max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of the annulus arcs",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Element size in the sectors",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "gap_mesh",
+     "type": "number",
+     "description": "Element size between the sectors",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the ring's contours and labels",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "addarc",
+    "addblocklabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "segment",
+    "arc",
+    "block_label"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": [
+    "Sectors span more than zero and less than 360 degrees and may not overlap; sectors that leave gaps need a gap material.",
+    "The annulus circles are drawn by the component; do not draw circles at its radii as well.",
+    "Radial magnetization uses FEMM's theta and theta+180 direction functions, so it follows each element's angle."
+   ]
   }
  ]
 }
