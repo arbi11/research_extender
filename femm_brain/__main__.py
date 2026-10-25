@@ -34,6 +34,21 @@ def main(argv=None):
     ingest.add_argument("--workers", type=int, default=4)
     ingest.add_argument("--max-pages", type=int, default=100)
     ingest.add_argument("--max-attachments", type=int, default=200)
+    restore = sub.add_parser("restore-cache", help="Re-fetch the recorded source snapshot, accepting identical bytes only")
+    restore.add_argument("--cache", type=Path)
+    restore.add_argument("--manifest", type=Path, default=DATA / "source_manifest.json")
+    restore.add_argument("--report", type=Path)
+    restore.add_argument("--workers", type=int, default=4)
+    restore.add_argument("--for-reproductions", action="store_true",
+                         help="Restore only the official model files that reproduction cases open")
+    reproduce = sub.add_parser("reproduce", help="Reproduce official examples from the original model, stored data and article text")
+    reproduce.add_argument("case_ids", nargs="*")
+    reproduce.add_argument("--all", action="store_true")
+    reproduce.add_argument("--levels", default="original,rebuild,article")
+    reproduce.add_argument("--output", type=Path, required=True)
+    reproduce.add_argument("--engine", choices=("docker", "native"), default="docker")
+    reproduce.add_argument("--image")
+    reproduce.add_argument("--timeout", type=int, default=900)
     sub.add_parser("studies", help="List executable, source-backed studies")
     plan = sub.add_parser("plan", help="Select a known study locally, without an LLM")
     plan.add_argument("request", nargs="*")
@@ -71,6 +86,30 @@ def main(argv=None):
             build_recipe_graph(directory / "recipes.json")
         print(json.dumps(result["crawl"], indent=2))
         return 0
+    if args.command == "restore-cache":
+        from . import collect
+        only = None
+        if args.for_reproductions:
+            from .reproduce import load_cases
+            only = sorted({c["source_model_sha256"] for c in load_cases() if c.get("source_model_sha256")})
+        result = collect.restore(json.loads(args.manifest.read_text()), cache=args.cache or collect.DEFAULT_CACHE,
+                                 workers=args.workers, only=only)
+        if args.report:
+            args.report.parent.mkdir(parents=True, exist_ok=True)
+            args.report.write_text(json.dumps(result, indent=2) + "\n")
+        print(json.dumps({key: result[key] for key in ("cache", "expected", "pages", "artifacts")}, indent=2))
+        return 0 if set(result["artifacts"]) <= {"restored"} else 1
+    if args.command == "reproduce":
+        from .reproduce import LEVELS, load_cases, reproduce as run_reproduction
+        identifiers = [c["id"] for c in load_cases()] if args.all else args.case_ids
+        levels = tuple(args.levels.split(","))
+        if not identifiers or set(levels) - set(LEVELS):
+            parser.error("Name case IDs or --all, and levels from: " + ",".join(LEVELS))
+        summaries = [run_reproduction(i, args.output / i, levels=levels, engine=args.engine, image=args.image,
+                                      timeout=args.timeout) for i in identifiers]
+        print(json.dumps([{"case_id": s["case_id"], "levels": s["levels"],
+                           "level_comparison": {k: v["status"] for k, v in s["level_comparison"].items()}} for s in summaries], indent=2))
+        return 0 if all(v["status"] in ("passed", "not_applicable", "not_attempted") for s in summaries for v in s["levels"].values()) else 1
     graph = load_graph()
     if args.command == "validate":
         print(json.dumps(graph["validation"], indent=2))

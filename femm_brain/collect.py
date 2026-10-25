@@ -179,6 +179,14 @@ def _cache(data, cache):
     return digest, str(path.relative_to(cache))
 
 
+_TASKRUNNER = re.compile(rb"(taskrunner\.php\?id=[^\"&]*)&amp;\d+")
+
+
+def content_digest(data):
+    """Digest page markup without DokuWiki's per-request taskrunner timestamp."""
+    return hashlib.sha256(_TASKRUNNER.sub(rb"\1", data)).hexdigest()
+
+
 def collect_page(name, cache, timeout=15):
     url = page_url(name)
     record = {"id": name, "url": url, "retrieved_at": now(), "status": "failed", "links": []}
@@ -194,7 +202,7 @@ def collect_page(name, cache, timeout=15):
         text_path = cache / "texts" / (name.replace(":", "_") + ".txt")
         text_path.parent.mkdir(parents=True, exist_ok=True)
         text_path.write_text(parser.text, encoding="utf-8")
-        record.update(title=parser.title, sha256=digest, content_type=media,
+        record.update(title=parser.title, sha256=digest, content_sha256=content_digest(data), content_type=media,
                       cache_key=key, text_cache_key=str(text_path.relative_to(cache)),
                       status="missing" if missing else "fetched", links=parser.links)
     except (OSError, ValueError, urllib.error.URLError, http.client.HTTPException) as error:
@@ -367,6 +375,113 @@ def crawl(*, cache=DEFAULT_CACHE, seeds=SEEDS, max_pages=100, max_attachments=16
             "artifact_fetched_count": sum(a["status"] == "fetched" for a in artifacts),
             "artifact_failed_count": sum(a["status"] == "failed" for a in artifacts),
             "note": "Discovery is bounded; indexed/fetched does not establish construction or numerical verification."}}
+
+
+def restore(manifest, *, cache=DEFAULT_CACHE, workers=4, timeout=30, only=None):
+    """Re-fetch a recorded snapshot into the cache, accepting only identical bytes.
+
+    The manifest is never rewritten. Pages or attachments whose current bytes
+    differ from the recorded digest are reported as changed and their new bytes
+    are not linked to the recorded identity. ``only`` limits the restore to the
+    named attachment digests (pages are then skipped).
+    """
+    cache = Path(cache)
+    cache.mkdir(parents=True, exist_ok=True)
+    artifacts = [a for a in manifest["artifacts"] if a.get("status") == "fetched"]
+    if only is not None:
+        wanted = set(only)
+        parents = {a["archive_id"] for a in artifacts if a["sha256"] in wanted and a.get("archive_id")}
+        artifacts = [a for a in artifacts if a["sha256"] in wanted or a["id"] in parents]
+        unknown = wanted - {a["sha256"] for a in artifacts}
+        if unknown:
+            raise ValueError("Requested digests are not in the manifest: " + ", ".join(sorted(unknown)))
+    members = {}
+    for artifact in artifacts:
+        if artifact.get("archive_id"):
+            members.setdefault(artifact["archive_id"], []).append(artifact)
+    top = [a for a in artifacts if not a.get("archive_id")]
+    pages = [] if only is not None else [s for s in manifest["sources"] if s.get("status") == "fetched" and s.get("sha256")
+             and not any(s["id"] in a.get("source_ids", []) and a.get("sha256") == s["sha256"] for a in top)]
+
+    def restore_page(source):
+        result = {"id": source["id"], "url": source["url"], "expected_sha256": source["sha256"]}
+        try:
+            data, media, final_url = fetch(source["url"], timeout=timeout)
+            digest = hashlib.sha256(data).hexdigest()
+            result.update(observed_sha256=digest, observed_content_sha256=content_digest(data), retrieved_at=now())
+            if source.get("content_sha256"):
+                same = result["observed_content_sha256"] == source["content_sha256"]
+            elif digest == source["sha256"]:
+                same = True
+            elif _TASKRUNNER.search(data):
+                # Snapshots recorded before content_sha256 hashed the timestamped
+                # markup, so their identity cannot be reproduced byte for byte.
+                same = None
+            else:
+                same = False
+            if same is False:
+                result["status"] = "changed"
+                return result
+            _cache(data, cache)
+            parser = PageParser(final_url)
+            parser.feed(data.decode("utf-8", errors="replace"))
+            text_path = cache / source["text_cache_key"]
+            text_path.parent.mkdir(parents=True, exist_ok=True)
+            text_path.write_text(parser.text, encoding="utf-8")
+            result["status"] = "restored" if same else "current_text_unverifiable_snapshot"
+        except (OSError, ValueError, urllib.error.URLError, http.client.HTTPException) as error:
+            result.update(status="failed", error=type(error).__name__ + ": " + str(error)[:300])
+        return result
+
+    def restore_artifact(artifact):
+        results = []
+        try:
+            cached = cache / "objects" / artifact["sha256"]
+            if cached.is_file() and hashlib.sha256(cached.read_bytes()).hexdigest() == artifact["sha256"]:
+                data, media = cached.read_bytes(), artifact.get("media_type", "application/octet-stream")
+            else:
+                data, media, _ = fetch(artifact["url"], timeout=timeout)
+            digest = hashlib.sha256(data).hexdigest()
+            if digest != artifact["sha256"]:
+                return [{"id": artifact["id"], "url": artifact["url"], "status": "changed",
+                         "expected_sha256": artifact["sha256"], "observed_sha256": digest}]
+            _artifact(data, url=artifact["url"], sources=artifact["source_ids"], name=artifact["filename"],
+                      cache=cache, media=media)
+            results.append({"id": artifact["id"], "url": artifact["url"], "status": "restored"})
+            if members.get(artifact["id"]):
+                with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                    available = {member.filename: member for member in _safe_members(archive)}
+                    for record in members[artifact["id"]]:
+                        if only is not None and record["sha256"] not in set(only):
+                            continue
+                        member = available.get(record["archive_member"])
+                        if member is None:
+                            results.append({"id": record["id"], "status": "missing_member", "archive_member": record["archive_member"]})
+                            continue
+                        content = archive.read(member)
+                        observed = hashlib.sha256(content).hexdigest()
+                        if observed != record["sha256"]:
+                            results.append({"id": record["id"], "status": "changed", "expected_sha256": record["sha256"], "observed_sha256": observed})
+                            continue
+                        _artifact(content, url=artifact["url"], sources=record["source_ids"], name=record["archive_member"],
+                                  cache=cache, parent=artifact["id"])
+                        results.append({"id": record["id"], "status": "restored", "archive_member": record["archive_member"]})
+        except (OSError, ValueError, zipfile.BadZipFile, urllib.error.URLError, http.client.HTTPException) as error:
+            results.append({"id": artifact["id"], "url": artifact["url"], "status": "failed",
+                            "error": type(error).__name__ + ": " + str(error)[:300]})
+        return results
+
+    started = now()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(max(1, workers), 4)) as pool:
+        page_results = list(pool.map(restore_page, pages))
+        artifact_results = [item for records in pool.map(restore_artifact, top) for item in records]
+    counts = lambda items: {status: sum(item["status"] == status for item in items)
+                            for status in sorted({item["status"] for item in items})}
+    return {"schema_version": 1, "started_at": started, "finished_at": now(), "cache": str(cache),
+            "expected": {"pages": len(pages), "artifacts": len(artifacts)},
+            "pages": counts(page_results), "artifacts": counts(artifact_results),
+            "page_results": page_results, "artifact_results": artifact_results,
+            "note": "Only bytes identical to the recorded digest are restored; the source manifest is unchanged."}
 
 
 if __name__ == "__main__":

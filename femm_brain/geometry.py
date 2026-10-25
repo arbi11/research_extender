@@ -408,20 +408,26 @@ def parse_fem(text, *, physics="magnetics"):
         raise ValueError("FEMM input must be text smaller than 32 MiB.")
     lines = text.lstrip("\ufeff").splitlines()
     sections,metadata,properties = {},{"physics":physics}, {"materials":[],"boundaries":[],"circuits":[],"point_properties":[]}
+    # Scalar-potential files name their fixed-voltage/temperature surfaces as
+    # conductors. Magnetics records keep their historical shape unchanged.
+    if physics != "magnetics":
+        properties["conductors"] = []
     aliases = {"numpoints":"nodes","numsegments":"segments","numarcsegments":"arcs","numblocklabels":"labels","numholes":"holes"}
-    blocks = {"block":"materials","bdry":"boundaries","circuit":"circuits","point":"point_properties"}
+    blocks = {"block":"materials","bdry":"boundaries","circuit":"circuits","point":"point_properties","conductor":"conductors"}
     current_block = None
     i = 0
     while i < len(lines):
         line = lines[i].strip(); i+=1
         if not line or line.startswith(("#",";")):
             continue
-        begin = re.fullmatch(r"<Begin(Block|Bdry|Circuit|Point)>",line,re.I)
+        begin = re.fullmatch(r"<Begin(Block|Bdry|Circuit|Point|Conductor)>",line,re.I)
         if begin:
+            if blocks[begin.group(1).lower()] not in properties:
+                raise ValueError("Conductor properties are not part of a magnetics model.")
             current_block = {"source_line":i,"properties":{}}
             properties[blocks[begin.group(1).lower()]].append(current_block)
             continue
-        if re.fullmatch(r"<End(?:Block|Bdry|Circuit|Point)>",line,re.I):
+        if re.fullmatch(r"<End(?:Block|Bdry|Circuit|Point|Conductor)>",line,re.I):
             current_block = None; continue
         match = re.match(r"\[([^]]+)\]\s*=\s*(.*)",line)
         if match:
@@ -446,9 +452,9 @@ def parse_fem(text, *, physics="magnetics"):
         if prop and current_block is not None:
             key,value = prop.groups()
             current_block["properties"][key]=value.strip().strip('"')
-            if key.lower() in ("blockname","bdryname","circuitname","pointname"):
+            if key.lower() in ("blockname","bdryname","circuitname","pointname","conductorname"):
                 current_block["name"]=value.strip().strip('"')
-            if key.lower() == "bhpoints":
+            if key.lower() in ("bhpoints","tkpoints"):
                 try:
                     count = int(value)
                 except ValueError:
@@ -469,7 +475,7 @@ def parse_fem(text, *, physics="magnetics"):
                     if not all(math.isfinite(v) for v in point):
                         raise ValueError("Non-finite FEMM B-H curve value.")
                     curve.append(point)
-                current_block["bh_points"] = curve
+                current_block["bh_points" if key.lower() == "bhpoints" else "tk_points"] = curve
     if "nodes" not in sections or not sections["nodes"]:
         raise ValueError("No native FEMM point section was found.")
     drawing = {"nodes":[],"segments":[],"arcs":[],"labels":[],"operations":[]}
