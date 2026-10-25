@@ -19,7 +19,8 @@ from .reproduce import DATA, check_regions, load_papers, plan_level
 
 PAPER_CACHE = DEFAULT_CACHE / "papers"
 PROVENANCE = {"quoted": ("quote", "location"), "derived": ("expression", "inputs"),
-              "figure": ("figure", "scale_reference", "uncertainty"), "assumed": ("reason", "sensitivity_control")}
+              "figure": ("figure", "scale_reference", "uncertainty"), "assumed": ("reason", "sensitivity_control"),
+              "numerical": ("reason",)}
 TARGET_KINDS = ("analytic", "2d_fea", "3d_fea", "measured", "digitized")
 STATUSES = ("candidate", "extracting", "frozen", "replicated", "partial", "failed")
 FROZEN = STATUSES[2:]
@@ -31,10 +32,14 @@ def load_index():
 
 
 def source_text(case, cache=PAPER_CACHE):
-    """The cached text of the case's source PDF, or None when it is not on this machine."""
+    """The cached text of the case's source PDF (extracted text plus OCR of its pages, where tables
+    are images), or None when it is not on this machine."""
     sha = (case.get("source") or {}).get("pdf_sha256")
-    path = cache / sha / "text.txt" if sha else None
-    return path.read_text(errors="replace") if path and path.is_file() else None
+    if not sha:
+        return None
+    parts = [(cache / sha / name) for name in ("text.txt", "ocr.txt")]
+    texts = [path.read_text(errors="replace") for path in parts if path.is_file()]
+    return "\n".join(texts) if texts else None
 
 
 def _squash(text):
@@ -98,6 +103,8 @@ def check(case, cache=PAPER_CACHE, build=True):
             control = controls.get(item["sensitivity_control"])
             if control is None or name not in (control.get("parameters") or {}):
                 problems.append(f"parameter {name}: assumption needs a control that varies it ({item['sensitivity_control']})")
+        elif kind == "numerical" and not any(control.get("mesh_scale", 1) != 1 for control in controls.values()):
+            problems.append(f"parameter {name}: a numerical choice needs a mesh control in the case")
         elif kind == "figure" and not item["uncertainty"] > 0:
             problems.append(f"parameter {name}: a figure reading needs a positive uncertainty")
         elif kind == "quoted" and text is not None and not _found(item["quote"], text):
@@ -116,8 +123,11 @@ def check(case, cache=PAPER_CACHE, build=True):
             problems.append(f"gap {gap.get('item')}: resolve the question before freezing")
 
     acceptance = 0
-    for target in case.get("targets", []):
-        where = f"target {target.get('metric')}"
+    # Assessors that compare against a value from the paper follow the same rules as targets.
+    compared = [(f"target {t.get('metric')}", t) for t in case.get("targets", [])]
+    compared += [(f"assessor {a.get('metric')}:{a.get('statistic')}", dict(a, kind=a.get("value_kind")))
+                 for a in case.get("assessors", []) if "value" in a]
+    for where, target in compared:
         missing = [field for field in ("metric", "value", "kind", "quote", "location", "used_for_acceptance") if field not in target]
         if missing:
             problems.append(f"{where}: needs {', '.join(missing)}")
@@ -137,7 +147,7 @@ def check(case, cache=PAPER_CACHE, build=True):
         if text is not None and not _found(target["quote"], text):
             problems.append(f"{where}: quote not found verbatim in the source text")
     if frozen:
-        if not (acceptance or case.get("assessors")):
+        if not (acceptance or any(a.get("kind") == "phase_linkage" for a in case.get("assessors", []))):
             problems.append("a frozen case needs at least one acceptance target or assessor")
         for key in ("measurements", "metrics", "coverage"):
             if not case.get(key):

@@ -228,6 +228,62 @@ def linkage_prediction(model, pole_pairs, circuits, rotor_group):
     return windings, rotor
 
 
+def _rotor_samples(assessor, case):
+    """Rotor angle of each step from the case's rotate_group steps, keeping one even sweep of the declared span.
+
+    The span is one electrical period, or half of one when the assessor declares
+    half-wave symmetry (a pole pitch negates every linkage). ``step_prefix``
+    keeps only the sweep's steps when others (an inductance step) follow it.
+    """
+    group = assessor["rotor_group"]
+    period = 360 / assessor["pole_pairs"]
+    span = period / 2 if assessor.get("half_wave_symmetry") else period
+    alpha, angles = 0.0, {}
+    for step in case["steps"]:
+        alpha += sum(c["angle"] for c in step.get("modify", []) if c["function"] == "rotate_group" and c["group"] == group)
+        if step["label"].startswith(assessor.get("step_prefix", "")):
+            angles.setdefault(step["label"], alpha)
+    samples = sorted((a, label) for label, a in angles.items() if -1e-9 <= a < span - 1e-9)
+    count = len(samples)
+    if count < 8 or any(abs(a - k * span / count) > 1e-6 * span for k, (a, _) in enumerate(samples)):
+        raise ValueError("Rotor positions must sample the declared span evenly from zero")
+    return samples, span
+
+
+def _waveform_statistic(assessor, case, raw, metrics, model):
+    """A statistic of one metric over the rotor sweep, against a value frozen in the assessor.
+
+    ``fundamental_rms`` and ``fundamental_peak`` take the component at
+    pole_pairs times the rotor angle (extending a half period by the declared
+    half-wave symmetry); ``peak_to_peak`` and ``mean`` use the samples as they are.
+    """
+    statistic = assessor["statistic"]
+    samples, span = _rotor_samples(assessor, case)
+    p = assessor["pole_pairs"]
+    values = [(a, metrics[assessor["metric"] + "@" + label]) for a, label in samples]
+    if statistic in ("fundamental_rms", "fundamental_peak"):
+        points = values + ([(a + span, -v) for a, v in values] if assessor.get("half_wave_symmetry") else [])
+        amplitude = abs(2 / len(points) * sum(v * cmath.exp(1j * math.radians(p * a)) for a, v in points))
+        observed = amplitude / math.sqrt(2) if statistic == "fundamental_rms" else amplitude
+    elif statistic == "peak_to_peak":
+        observed = max(v for _, v in values) - min(v for _, v in values)
+    elif statistic == "mean":
+        observed = sum(v for _, v in values) / len(values)
+    else:
+        raise ValueError("Unknown waveform statistic: " + statistic)
+    target = {key: assessor[key] for key in ("value", "relative_tolerance", "absolute_tolerance", "quote", "location",
+                                              "used_for_acceptance", "allowance") if key in assessor}
+    target.update(kind=assessor.get("value_kind"), metric=f"{assessor['metric']}:{statistic}")
+    target.setdefault("used_for_acceptance", True)
+    error = abs(observed - assessor["value"])
+    tolerance = max(abs(assessor["value"]) * assessor.get("relative_tolerance", 0), assessor.get("absolute_tolerance", 0))
+    return {"status": "passed" if error <= tolerance else "failed", "assessor": "waveform_statistic",
+            "metric": f"{assessor['metric']}:{statistic}", "statistic": statistic, "observed": observed,
+            "expected": assessor["value"], "absolute_error": error,
+            "relative_error": error / abs(assessor["value"]) if assessor["value"] else None,
+            "absolute_tolerance": tolerance, "samples": len(values), "target": target}
+
+
 def _phase_linkage(assessor, case, raw, metrics, model):
     """Winding sign and phase linkage: each phase's flux-linkage fundamental against the construction.
 
@@ -237,16 +293,8 @@ def _phase_linkage(assessor, case, raw, metrics, model):
     """
     p, sequence, group = assessor["pole_pairs"], assessor["expected_sequence"], assessor["rotor_group"]
     windings, rotor = linkage_prediction(model, p, sequence, group)
-    period = 360 / p
-    span = period / 2 if assessor.get("half_wave_symmetry") else period
-    alpha, angles = 0.0, {}
-    for step in case["steps"]:
-        alpha += sum(c["angle"] for c in step.get("modify", []) if c["function"] == "rotate_group" and c["group"] == group)
-        angles[step["label"]] = alpha
-    samples = sorted((a, label) for label, a in angles.items() if -1e-9 <= a < span - 1e-9)
+    samples, span = _rotor_samples(assessor, case)
     count = len(samples)
-    if count < 8 or any(abs(a - k * span / count) > 1e-6 * span for k, (a, _) in enumerate(samples)):
-        raise ValueError("Rotor positions must sample the declared span evenly from zero")
     rows, phases_ok = [], True
     predicted, measured = {}, {}
     for name in sequence:
@@ -282,7 +330,7 @@ def _phase_linkage(assessor, case, raw, metrics, model):
 
 
 ASSESSORS = {"tube_bessel": _tube, "dipole_torque": _dipole_torque, "applied_field": _applied_field,
-             "phase_linkage": _phase_linkage}
+             "phase_linkage": _phase_linkage, "waveform_statistic": _waveform_statistic}
 
 
 def run_assessor(assessor, case, raw, metrics, model):

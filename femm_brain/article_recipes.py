@@ -7,7 +7,7 @@ where the article relies on them. It never reads the example's native model
 file. The resulting typed model is compiled by ``reproduce.compile_model``, so
 article builds, rebuilds and new designs share one compiler.
 """
-from .components import assemble
+from .components import assemble, evaluate
 
 
 def build(case):
@@ -17,6 +17,12 @@ def build(case):
     if "assembly" not in article:
         raise ValueError("No article assembly is registered for case " + case["id"])
     parameters = {name: item["value"] for name, item in article["parameters"].items()}
+    # Derived parameters follow their expressions, so a control that varies an
+    # input (a magnet remanence) also varies what is derived from it.
+    derived = {name: item for name, item in article["parameters"].items() if item.get("provenance") == "derived"}
+    for _ in range(len(derived)):
+        for name, item in derived.items():
+            parameters[name] = evaluate(item["expression"], {n: parameters[n] for n in item["inputs"]})
     model, used = assemble(article["assembly"], parameters)
     return {"status": "built", "model": model, "parameters": article["parameters"], "components": used,
             "assumptions": article.get("assumptions", [])}

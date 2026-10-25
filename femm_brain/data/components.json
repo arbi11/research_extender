@@ -1475,6 +1475,197 @@
    ]
   },
   {
+   "id": "trapezoidal_slot_stator",
+   "layer": 2,
+   "title": "Stator with tabulated slot profiles",
+   "description": "Slots of the profile papers tabulate, repeated around the axis: a parallel-sided opening of given width and height, an optional wedge tapering to the slot top width, straight sides from the top width to the bottom width over the slot height, and a flat or arc bottom, with optional opening chords and slot dividers. The teeth are what lies between the slots. Slots open toward the axis for inner-rotor machines and away from it for outer-rotor machines.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "slot_count",
+     "type": "integer",
+     "description": "Number of slots (and teeth)",
+     "required": true,
+     "minimum": 3
+    },
+    {
+     "name": "bore_radius",
+     "type": "number",
+     "description": "Radius of the tooth tips facing the air gap",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "opening_width",
+     "type": "number",
+     "description": "Slot opening width (chord at the bore)",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "opening_height",
+     "type": "number",
+     "description": "Slot opening height from the bore",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "slot_width_top",
+     "type": "number",
+     "description": "Slot width at the end nearest the air gap",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "slot_width_bottom",
+     "type": "number",
+     "description": "Slot width at the slot bottom",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "slot_height",
+     "type": "number",
+     "description": "Height of the straight-sided slot body",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "wedge_height",
+     "type": "number",
+     "description": "Height of the wedge between the opening and the slot body",
+     "required": false,
+     "unit": "model length",
+     "minimum": 0,
+     "default": 0
+    },
+    {
+     "name": "rotor_side",
+     "type": "string",
+     "description": "Which side the rotor is on: inner or outer",
+     "required": false,
+     "choices": [
+      "inner",
+      "outer"
+     ],
+     "default": "inner"
+    },
+    {
+     "name": "slot_bottom",
+     "type": "string",
+     "description": "flat or arc (centred on the axis)",
+     "required": false,
+     "choices": [
+      "flat",
+      "arc"
+     ],
+     "default": "flat"
+    },
+    {
+     "name": "first_tooth_angle",
+     "type": "number",
+     "description": "Angle of tooth 0; slot k is centred half a pitch after tooth k",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "close_slot_openings",
+     "type": "boolean",
+     "description": "Draw the chord separating each opening from its slot body",
+     "required": false,
+     "default": true
+    },
+    {
+     "name": "slot_divider",
+     "type": "boolean",
+     "description": "Split each slot along its centreline (double layers)",
+     "required": false,
+     "default": false
+    },
+    {
+     "name": "bore_max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of the bore arcs",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
+    },
+    {
+     "name": "slot_bottom_max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of arc slot bottoms",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the stator contours and label",
+     "required": false,
+     "default": 0
+    },
+    {
+     "name": "slot_opening_group",
+     "type": "integer",
+     "description": "Group of the opening chords (default: the stator group)",
+     "required": false
+    },
+    {
+     "name": "iron_material",
+     "type": "string",
+     "description": "Material of the stator iron label placed in tooth 0",
+     "required": false
+    },
+    {
+     "name": "iron_mesh",
+     "type": "number",
+     "description": "Element size of the stator iron",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "addarc",
+    "selectsegment",
+    "setsegmentprop",
+    "selectarcsegment",
+    "setarcsegmentprop"
+   ],
+   "uses_components": [
+    "segment",
+    "arc",
+    "block_label"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": [
+    "Widths are chords across the slot centreline; 'top' is the end nearest the air gap.",
+    "The opening may not be wider than the slot top, and adjacent slots may not overlap at the bore, top or bottom.",
+    "The yoke circle and its boundary are separate components."
+   ]
+  },
+  {
    "id": "tooth_coil_winding",
    "layer": 2,
    "title": "Multi-phase winding by the star of slots",

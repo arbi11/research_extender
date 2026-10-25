@@ -662,6 +662,8 @@ def compute_metrics(case, raw):
         # Cases that declare steps name their metrics per step, even a single one.
         suffix = "@" + step if case.get("steps") else ""
         for metric in case["metrics"]:
+            if metric.get("steps") and step not in metric["steps"]:
+                continue
             value = raw[(step, metric["value"][0], metric["value"][1])]
             if metric.get("divide"):
                 value = value / raw[(step, metric["divide"][0], metric["divide"][1])]

@@ -40,10 +40,11 @@ def catalog_cases(catalog):
 def _target_row(result):
     target = result.get("target", {})
     if "assessor" in result:
-        row = {"assessor": result["assessor"], "status": result["status"], "acceptance": True}
+        row = {"assessor": result["assessor"], "status": result["status"], "acceptance": target.get("used_for_acceptance", True)}
         for key in ("rms_error_ratio", "maximum_rms_error_ratio", "published_rms_error_ratio", "applied_field_magnitude_T",
                     "measured_applied_field_T", "absolute_tolerance_N_m", "amplitude_imbalance", "winding_imbalance",
-                    "predicted_sequence_check", "measured_sequence_check", "expected_sequence", "rotor_positions", "error"):
+                    "predicted_sequence_check", "measured_sequence_check", "expected_sequence", "rotor_positions",
+                    "metric", "statistic", "observed", "expected", "relative_error", "absolute_tolerance", "samples", "error"):
             if key in result:
                 row[key] = result[key]
         if result.get("rows"):
@@ -153,6 +154,8 @@ def render_html(record):
                     extra = (f'RMS ratio {_format(t["rms_error_ratio"])}' if "rms_error_ratio" in t else
                              f'largest phase error {_format(max(r["phase_error_deg"] for r in t["rows"]))} deg, imbalance '
                              f'{_format(t["amplitude_imbalance"])}' if "amplitude_imbalance" in t else
+                             f'{html.escape(t["metric"])} {_format(t["observed"])} vs {_format(t["expected"])}'
+                             + ('' if t["acceptance"] else ', comparator') if "statistic" in t else
                              f'|B| {_format(t.get("applied_field_magnitude_T"))} T')
                     items.append(f'<li class="s-{t["status"]}">{html.escape(t["assessor"])}: {t["status"]} ({extra})</li>')
                 else:
@@ -228,7 +231,7 @@ def audit(record, registry_path, catalog="reproductions"):
             for target in result.get("targets", []):
                 if not target["acceptance"] or target["status"] == "passed":
                     continue
-                name = target["metric"] or target.get("assessor")
+                name = target.get("metric") or target.get("assessor")
                 key = (identifier, level, name)
                 observed_failures.add(key)
                 if key not in reviewed:

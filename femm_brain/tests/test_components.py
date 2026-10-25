@@ -240,6 +240,48 @@ class MachineGeometryTests(unittest.TestCase):
             half = step["tooth_width"] / 2
             self.assertEqual(sum(1 for x, y in points if math.isclose(abs(y), half) and x > 0), 4)
 
+    profile = {"use": "trapezoidal_slot_stator", "slot_count": 36, "bore_radius": 102.6, "opening_width": 2, "opening_height": 3,
+               "slot_width_top": 10, "slot_width_bottom": 14.6, "slot_height": 25.4}
+
+    def test_slot_profiles_are_built_to_their_tabulated_widths(self):
+        for step in (self.profile, dict(self.profile, rotor_side="outer", bore_radius=140, slot_bottom="arc", slot_divider=True)):
+            model = self.build([step])
+            points = [(n["x"], n["y"]) for n in model["nodes"]]
+            pitch = math.radians(10)
+            for x, y in points:
+                turned = (x * math.cos(pitch) - y * math.sin(pitch), x * math.sin(pitch) + y * math.cos(pitch))
+                self.assertTrue(any(math.dist(turned, other) < 1e-9 for other in points), (x, y))
+            sign = 1 if step.get("rotor_side", "inner") == "inner" else -1
+            centre = math.radians(5)  # slot 0, half a pitch after tooth 0
+            local = [(x * math.cos(centre) + y * math.sin(centre), -x * math.sin(centre) + y * math.cos(centre)) for x, y in points]
+            for x_end, width in ((step["bore_radius"] + sign * 3, 10), (step["bore_radius"] + sign * 28.4, 14.6), (None, 2)):
+                if x_end is None:
+                    near = [p for p in local if abs(math.hypot(*p) - step["bore_radius"]) < 1e-9 and abs(p[1]) < 5]
+                else:
+                    near = [p for p in local if abs(p[0] - x_end) < 1e-9 and abs(p[1]) < 10]
+                self.assertAlmostEqual(max(p[1] for p in near) - min(p[1] for p in near), width, places=9)
+
+    def test_profiled_slots_hold_a_winding_in_closed_regions(self):
+        steps = [{"use": "material", "name": "Iron", "values": {"Mu_x": 1000, "Mu_y": 1000}}, {"use": "material", "name": "Cu"},
+                 *({"use": "circuit", "name": name, "current": 0} for name in "ABC"),
+                 dict(self.profile, iron_material="Iron"), {"use": "circle", "radius": 140},
+                 {"use": "tooth_coil_winding", "slot_count": 36, "pole_pairs": 15, "turns": 18, "material": "Cu",
+                  "label_radius": 118.3, "layers": "single"},
+                 {"use": "block_label", "at": [102.1, 0], "material": "Cu"}]
+        model = self.build(steps)
+        self.assertEqual(check_regions(model), [])
+        self.assertEqual(sum(1 for label in model["labels"] if label.get("circuit")), 36)
+
+    def test_impossible_slot_profiles_are_refused(self):
+        with self.assertRaisesRegex(ValueError, "overlap"):
+            self.build([dict(self.profile, slot_width_bottom=30)])
+        with self.assertRaisesRegex(ValueError, "not be wider"):
+            self.build([dict(self.profile, opening_width=12)])
+        with self.assertRaisesRegex(ValueError, "divider"):
+            self.build([dict(self.profile, slot_divider=True, close_slot_openings=False)])
+        with self.assertRaisesRegex(ValueError, "axis"):
+            self.build([dict(self.profile, rotor_side="outer", bore_radius=20)])
+
     def test_impossible_stators_are_refused(self):
         with self.assertRaisesRegex(ValueError, "overlap"):
             self.build([dict(self.stator, tooth_width=40)])

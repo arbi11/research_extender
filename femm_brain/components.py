@@ -426,18 +426,24 @@ def slotted_stator(m, slot_count, slot_bottom_radius, tip_radius, tooth_width, t
         raise ValueError("The shoe underside must be on the tip side of the slot bottom")
     tip_point = (tip_radius * math.cos(math.radians(tip_half)), tip_radius * math.sin(math.radians(tip_half)))
     opening_group = group if slot_opening_group is None else slot_opening_group
+    # Points shared by neighbouring teeth are computed once, so a slot never
+    # joins two copies of a corner that differ in the last bits.
+    teeth = []
     for k in range(slot_count):
         angle = first_tooth_angle + k * pitch
-        at = lambda p: _rotated(p, angle)
+        teeth.append({(name, sign): _rotated((x, sign * y), angle) for sign in (-1, 1)
+                      for name, x, y in (("bottom", bottom_x, half), ("side", shoe_axial_distance, half),
+                                         ("corner", shoe_axial_distance, corner_y), ("tip", tip_point[0], tip_point[1]))})
+    for k in range(slot_count):
+        angle = first_tooth_angle + k * pitch
+        tooth, following = teeth[k], teeth[(k + 1) % slot_count]
         for sign in (-1, 1):
-            m.segment(at((bottom_x, sign * half)), at((shoe_axial_distance, sign * half)), group=group)
-            m.segment(at((shoe_axial_distance, sign * half)), at((shoe_axial_distance, sign * corner_y)), group=group)
-            m.segment(at((shoe_axial_distance, sign * corner_y)), at((tip_point[0], sign * tip_point[1])), group=group)
-        m.arc(at((tip_point[0], -tip_point[1])), at(tip_point), 2 * tip_half, tip_max_segment, group=group)
-        start = _rotated((bottom_x, half), angle)
-        end = _rotated((bottom_x, -half), angle + pitch)
-        corner = _rotated((shoe_axial_distance, corner_y), angle)
-        next_corner = _rotated((shoe_axial_distance, -corner_y), angle + pitch)
+            m.segment(tooth["bottom", sign], tooth["side", sign], group=group)
+            m.segment(tooth["side", sign], tooth["corner", sign], group=group)
+            m.segment(tooth["corner", sign], tooth["tip", sign], group=group)
+        m.arc(tooth["tip", -1], tooth["tip", 1], 2 * tip_half, tip_max_segment, group=group)
+        start, end = tooth["bottom", 1], following["bottom", -1]
+        corner, next_corner = tooth["corner", 1], following["corner", -1]
         if slot_divider:
             middle = _rotated((slot_bottom_radius, 0), angle + pitch / 2)
             opening_middle = ((corner[0] + next_corner[0]) / 2, (corner[1] + next_corner[1]) / 2)
@@ -453,6 +459,82 @@ def slotted_stator(m, slot_count, slot_bottom_radius, tip_radius, tooth_width, t
                 m.segment(corner, next_corner, group=opening_group)
     if iron_material:
         m.label(*_rotated(((bottom_x + shoe_axial_distance) / 2, 0), first_tooth_angle), iron_material, mesh=iron_mesh, group=group)
+
+
+def trapezoidal_slot_stator(m, slot_count, bore_radius, opening_width, opening_height, slot_width_top, slot_width_bottom,
+                            slot_height, wedge_height=0, rotor_side="inner", slot_bottom="flat", first_tooth_angle=0,
+                            close_slot_openings=True, slot_divider=False, bore_max_segment=1, slot_bottom_max_segment=1,
+                            group=0, slot_opening_group=None, iron_material=None, iron_mesh=None):
+    """Slots of the profile papers tabulate, repeated around the axis; the teeth are what lies between.
+
+    From the bore, each slot has a parallel-sided opening (width and height),
+    an optional wedge that tapers to the top width, straight sides from the top
+    width to the bottom width over the slot height, and a flat or arc bottom.
+    "Top" is the end nearest the air gap and widths are chords across the slot
+    centerline. Slots open toward the axis for inner rotors and away from it
+    for outer rotors. Slot k is centred half a pitch after tooth k.
+    """
+    if rotor_side not in ("inner", "outer") or slot_bottom not in ("flat", "arc"):
+        raise ValueError("The rotor side is inner or outer, and the slot bottom flat or arc")
+    if opening_width > slot_width_top:
+        raise ValueError("The slot opening must not be wider than the slot top")
+    if slot_divider and not close_slot_openings:
+        raise ValueError("A slot divider needs closed slot openings")
+    sign = 1 if rotor_side == "inner" else -1
+    pitch = 360 / slot_count
+    if opening_width >= 2 * bore_radius:
+        raise ValueError("The slot opening is wider than the bore")
+    bore_x = math.sqrt(bore_radius ** 2 - (opening_width / 2) ** 2)
+    top_x = bore_radius + sign * opening_height
+    side_x = top_x + sign * wedge_height
+    bottom_x = top_x + sign * (wedge_height + slot_height)
+    if min(top_x, side_x, bottom_x) <= max(slot_width_top, slot_width_bottom) / 2:
+        raise ValueError("The slot reaches the axis: check the radii and slot heights")
+    widest = max(math.degrees(math.asin(opening_width / (2 * bore_radius))),
+                 math.degrees(math.atan2(slot_width_top / 2, side_x)), math.degrees(math.atan2(slot_width_bottom / 2, bottom_x)))
+    if widest >= pitch / 2:
+        raise ValueError("Adjacent slots overlap: reduce the slot widths or the slot count")
+    corner_radius = math.hypot(bottom_x, slot_width_bottom / 2)
+    bottom_half = math.degrees(math.atan2(slot_width_bottom / 2, bottom_x))
+    opening_half = math.degrees(math.asin(opening_width / (2 * bore_radius)))
+    opening_group = group if slot_opening_group is None else slot_opening_group
+    profile = {("bore", -1): (bore_x, -opening_width / 2), ("bore", 1): (bore_x, opening_width / 2),
+               ("top", -1): (top_x, -opening_width / 2), ("top", 1): (top_x, opening_width / 2), ("top", 0): (top_x, 0),
+               ("side", -1): (side_x, -slot_width_top / 2), ("side", 1): (side_x, slot_width_top / 2),
+               ("bottom", -1): (bottom_x, -slot_width_bottom / 2), ("bottom", 1): (bottom_x, slot_width_bottom / 2),
+               ("bottom", 0): (bottom_x, 0) if slot_bottom == "flat" else (corner_radius, 0)}
+    # Each slot's points are computed once; neighbouring slots share the bore points.
+    slots = [{key: _rotated(point, first_tooth_angle + (k + 0.5) * pitch) for key, point in profile.items()}
+             for k in range(slot_count)]
+    for k, slot in enumerate(slots):
+        for s in (-1, 1):
+            m.segment(slot["bore", s], slot["top", s], group=group)
+            if wedge_height or slot_width_top != opening_width:
+                m.segment(slot["top", s], slot["side", s], group=group)
+            m.segment(slot["side", s], slot["bottom", s], group=group)
+        # An arc bottom is centred on the axis and runs counterclockwise for either rotor side.
+        low, high, middle = slot["bottom", -1], slot["bottom", 1], slot["bottom", 0]
+        if slot_bottom == "flat":
+            if slot_divider:
+                m.segment(low, middle, group=group)
+                m.segment(middle, high, group=group)
+            else:
+                m.segment(low, high, group=group)
+        elif slot_divider:
+            m.arc(low, middle, bottom_half, slot_bottom_max_segment, group=group)
+            m.arc(middle, high, bottom_half, slot_bottom_max_segment, group=group)
+        else:
+            m.arc(low, high, 2 * bottom_half, slot_bottom_max_segment, group=group)
+        if close_slot_openings:
+            if slot_divider:
+                m.segment(slot["top", -1], slot["top", 0], group=opening_group)
+                m.segment(slot["top", 0], slot["top", 1], group=opening_group)
+                m.segment(slot["top", 0], middle, group=group)
+            else:
+                m.segment(slot["top", -1], slot["top", 1], group=opening_group)
+        m.arc(slot["bore", 1], slots[(k + 1) % slot_count]["bore", -1], pitch - 2 * opening_half, bore_max_segment, group=group)
+    if iron_material:
+        m.label(*_rotated(((top_x + bottom_x) / 2, 0), first_tooth_angle), iron_material, mesh=iron_mesh, group=group)
 
 
 def winding_layout(slot_count, pole_pairs, phases, layout="tooth_coils", layers="single", phase_sequence="forward"):
@@ -541,6 +623,7 @@ def surface_magnet_rotor(m, pole_count, magnet_material, thickness, magnet_shape
     if magnetization not in ("radial", "parallel"):
         raise ValueError("Magnetization is radial or parallel")
     pitch = 360 / pole_count
+    seat_corners = []
     for k in range(pole_count):
         axis = first_pole_angle + rotor_angle + k * pitch
         outward = (k % 2 == 0) == (first_pole_polarity == "outward")
@@ -568,6 +651,7 @@ def surface_magnet_rotor(m, pole_count, magnet_material, thickness, magnet_shape
             m.arc(ends[2], ends[3], arc_angle, arc_max_segment, group=group)
             m.segment(ends[0], ends[2], group=group)
             m.segment(ends[1], ends[3], group=group)
+            seat_corners.append((ends[0], ends[1]) if air_gap_side == "outer" else (ends[2], ends[3]))
             center = (inner_radius + thickness / 2, 0)
             function = ("theta" if outward else "theta+180") if magnetization == "radial" else None
         else:
@@ -578,17 +662,16 @@ def surface_magnet_rotor(m, pole_count, magnet_material, thickness, magnet_shape
     if seat_arcs:
         if magnet_shape != "arc":
             raise ValueError("Seat arcs join arc magnets; block magnets sit on their own faces")
-        seat = inner_radius if air_gap_side == "outer" else inner_radius + thickness
+        # Each seat arc joins the very corner points its two magnets were drawn with.
         for k in range(pole_count):
-            axis = first_pole_angle + rotor_angle + k * pitch
-            m.arc(_rotated((seat, 0), axis + arc_angle / 2), _rotated((seat, 0), axis + pitch - arc_angle / 2),
-                  pitch - arc_angle, arc_max_segment, group=group)
+            m.arc(seat_corners[k][1], seat_corners[(k + 1) % pole_count][0], pitch - arc_angle, arc_max_segment, group=group)
 
 
 IMPLEMENTATIONS = {function.__name__: function for function in (
     segment, polyline, arc, circle, point, block_label, hole, material, library_material, circuit, conductor, boundary,
     fixed_potential_boundary, mixed_boundary, convection_boundary, iabc_open_boundary, axisymmetric_coil_section,
-    bar_magnet, air_gap_element, kelvin_periodic_exterior, slotted_stator, tooth_coil_winding, surface_magnet_rotor)}
+    bar_magnet, air_gap_element, kelvin_periodic_exterior, slotted_stator, trapezoidal_slot_stator, tooth_coil_winding,
+    surface_magnet_rotor)}
 
 
 def _finite(value):
