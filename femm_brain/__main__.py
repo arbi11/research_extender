@@ -171,7 +171,7 @@ def main(argv=None):
         problems = paper_tools.check_index()
         for identifier, case in cases.items():
             problems += [f"{identifier}: {problem}" for problem in paper_tools.check(case, build=False)["problems"]]
-        print(json.dumps({"papers": [{k: e.get(k) for k in ("id", "set", "status", "family")} for e in index["papers"]],
+        print(json.dumps({"papers": [{k: e.get(k) for k in ("id", "set", "status", "family", "geometry")} for e in index["papers"]],
                           "problems": problems}, indent=2))
         return 0 if not problems else 1
     if args.command == "replicate":

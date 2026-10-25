@@ -56,6 +56,15 @@ class IndexTests(unittest.TestCase):
         self.assertEqual((sets.count("development"), sets.count("held_out")), (6, 4))
         self.assertTrue(all(entry["set"] in ("development", "held_out", "unassigned") for entry in entries))
 
+    def test_index_entries_need_planning_fields_and_the_screening_vocabulary(self):
+        entry = dict(papers.load_index()["papers"][-1], id="test-2026-entry", status="candidate",
+                     geometry="mostly", target_sources=["measured", "rumour"])
+        del entry["teaches"]
+        found = [p for p in papers.check_index({"papers": [entry]}) if p.startswith("test-2026-entry")]
+        self.assertTrue(any("missing teaches" in p for p in found))
+        self.assertTrue(any("geometry must be one of" in p for p in found))
+        self.assertTrue(any("unknown target sources rumour" in p for p in found))
+
     def test_every_case_file_passes_its_checks(self):
         for case in load_papers():
             with self.subTest(case["id"]):

@@ -5,7 +5,17 @@ recording a replication (stage 8 of `SKILL.md`), make these updates in the same
 branch, then run `python3 -m femm_brain validate` and the host tests.
 
 1. **Paper index** (`femm_brain/data/papers.json`): set the paper's `status`
-   and `case` path. Add new papers here before starting them.
+   and `case` path. Add new papers here before starting them, with what a
+   replication is planned from:
+   - `id`, `set` and `status`;
+   - `family`;
+   - a `title` (or a `topic` until the exact title is checked);
+   - `citation`, `url` and `access`;
+   - `machine`, `teaches`, `known_gaps` and `targets`.
+
+   Add the screening fields once the full text has been read: `geometry`,
+   `target_sources`, and `software` when the paper names its tool.
+   `python3 -m femm_brain papers` checks them.
 2. **Case** (`femm_brain/data/papers/<id>.json`): the frozen inputs and targets
    stay as frozen; append `findings`, `geometry_checks`, `coverage` and the
    `retrospective`. If an input had to change after a solve because it was

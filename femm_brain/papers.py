@@ -25,6 +25,12 @@ TARGET_KINDS = ("analytic", "2d_fea", "3d_fea", "measured", "digitized")
 STATUSES = ("candidate", "extracting", "frozen", "replicated", "partial", "failed")
 FROZEN = STATUSES[2:]
 GAP_DECISIONS = ("ask", "figure", "assumed", "out_of_scope", "resolved")
+# The paper index: what every entry must say to be planned from, and the screening vocabulary
+# (how much of the drawable geometry the source gives, and where its published numbers come from).
+INDEX_SETS = ("development", "held_out", "unassigned")
+INDEX_FIELDS = ("id", "set", "status", "family", "citation", "url", "access", "machine", "teaches", "known_gaps", "targets")
+GEOMETRY = ("complete", "minor gaps", "major gaps")
+TARGET_SOURCES = TARGET_KINDS[:4]
 
 
 def load_index():
@@ -167,20 +173,33 @@ def check(case, cache=PAPER_CACHE, build=True):
     return {"problems": problems, "notes": notes}
 
 
-def check_index():
-    """The index and the case files must agree."""
-    index, problems = load_index(), []
+def check_index(index=None):
+    """Every entry must be complete enough to plan from, and the index and the case files must agree."""
+    index, problems = index or load_index(), []
     cases = {case["id"]: case for case in load_papers()}
     seen = set()
     for entry in index["papers"]:
-        if entry["id"] in seen:
-            problems.append(f"{entry['id']}: listed twice")
-        seen.add(entry["id"])
-        case = cases.get(entry["id"])
-        if entry["status"] != "candidate" and case is None:
-            problems.append(f"{entry['id']}: status {entry['status']} but no case file")
-        if case is not None and (case["status"] != entry["status"] or case["set"] != entry["set"]):
-            problems.append(f"{entry['id']}: index and case disagree on status or set")
+        identifier = entry.get("id", "?")
+        if identifier in seen:
+            problems.append(f"{identifier}: listed twice")
+        seen.add(identifier)
+        problems += [f"{identifier}: missing {field}" for field in INDEX_FIELDS if not entry.get(field)]
+        if not (entry.get("title") or entry.get("topic")):
+            problems.append(f"{identifier}: needs a title, or a topic until the title is checked")
+        if entry.get("set") not in INDEX_SETS:
+            problems.append(f"{identifier}: set must be one of {', '.join(INDEX_SETS)}")
+        if entry.get("status") not in STATUSES:
+            problems.append(f"{identifier}: status must be one of {', '.join(STATUSES)}")
+        if "geometry" in entry and entry["geometry"] not in GEOMETRY:
+            problems.append(f"{identifier}: geometry must be one of {', '.join(GEOMETRY)}")
+        unknown = sorted(set(entry.get("target_sources", [])) - set(TARGET_SOURCES))
+        if unknown:
+            problems.append(f"{identifier}: unknown target sources {', '.join(unknown)} (use {', '.join(TARGET_SOURCES)})")
+        case = cases.get(identifier)
+        if entry.get("status") != "candidate" and case is None:
+            problems.append(f"{identifier}: status {entry.get('status')} but no case file")
+        if case is not None and (case["status"] != entry.get("status") or case["set"] != entry.get("set")):
+            problems.append(f"{identifier}: index and case disagree on status or set")
     problems += [f"{identifier}: case file not in the index" for identifier in set(cases) - seen]
     return problems
 

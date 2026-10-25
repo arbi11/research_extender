@@ -431,7 +431,12 @@ the repository's `AGENTS.md`. Each paper becomes one case,
    feed back into the skill and the brain.
 
 `data/papers.json` lists ten selected papers: six for developing the skill and
-four held out to measure it with the skill frozen, plus alternates.
+four held out to measure it with the skill frozen. A growing pool of unassigned
+candidates covers more machine families; each was screened by opening its full
+text and checking its citation. Screening fields record how complete the
+geometry is (`geometry`), where the published numbers come from
+(`target_sources`) and the paper's FEA tool (`software`). `papers` checks every
+entry for the fields a replication is planned from.
 
 ```bash
 python3 -m femm_brain papers                                  # index and case checks
