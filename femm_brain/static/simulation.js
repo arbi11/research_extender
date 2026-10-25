@@ -68,8 +68,8 @@
       }));
       const list = el("ul"); [...plan.assumptions, ...plan.limits].forEach(s => list.append(el("li", s)));
       $("study-assumptions").replaceChildren(list);
-      const ref = plan.frozen_reference;
-      $("study-reference").textContent = ref.applicable ? "Frozen reference: " + ref.value + " · " + ref.metric + " · " + ref.kind + ". Acceptance tolerance: " + (ref.relative_tolerance * 100) + "%." : "Reference unassessed: " + ref.reason;
+      const references = plan.frozen_references || [plan.frozen_reference];
+      $("study-reference").replaceChildren(...references.map(ref => el("p", ref.applicable ? "Frozen reference: " + Number(ref.value).toPrecision(8) + " · " + ref.metric + " · " + ref.kind + ". Acceptance tolerance: " + (ref.relative_tolerance * 100) + "%." : "Reference unassessed: " + ref.reason)));
       for (const fmt of ["lua", "json"]) {
         const a = $("study-" + fmt); a.hidden = false;
         a.href = "/api/simulation-download?case=" + encodeURIComponent(plan.case_id) + "&parameters=" + encodeURIComponent(JSON.stringify(plan.parameters)) + "&plan_sha256=" + encodeURIComponent(plan.plan_sha256) + "&format=" + fmt;
@@ -84,20 +84,38 @@
     $("study-checks").replaceChildren(...Object.entries(report.checks).map(([name, value]) => {
       const p = el("p", name + ": " + value.status + (value.error ? " · " + value.error : ""), value.status === "failed" ? "error" : ""); return p;
     }));
+    const targets = report.checks.target?.targets || (report.checks.target?.metric ? [report.checks.target] : []);
+    if (targets.length) {
+      const comparisons = el("table", null, "study-comparisons");
+      const heading = el("tr"); ["Published output", "FEMM", "Reference", "Error", "Check"].forEach(value => heading.append(el("th", value))); comparisons.append(heading);
+      targets.forEach(target => {
+        const row = el("tr");
+        [target.metric, target.observed == null ? "—" : Number(target.observed).toPrecision(8), target.expected == null ? "—" : Number(target.expected).toPrecision(8), target.relative_error == null ? "—" : (100 * target.relative_error).toFixed(4) + "%", target.status].forEach(value => row.append(el("td", value)));
+        comparisons.append(row);
+      });
+      $("study-checks").append(comparisons);
+    }
+    const consistency = report.checks.target?.consistency;
+    if (consistency?.status) $("study-checks").append(el("p", "Physical cross-checks: " + consistency.status));
     const table = el("table");
     Object.entries(report.metrics || {}).forEach(([name, value]) => { const row = el("tr"); row.append(el("th", name), el("td", Number(value).toPrecision(8))); table.append(row); });
     $("study-metrics").replaceChildren(table);
     const base = "/api/simulation-artifacts/" + job.id + "/";
     $("study-native-images").replaceChildren(...["mesh.svg", "field.svg"].filter(name => report.artifacts?.some(a => a.filename === name)).map(name => {
       const figure = el("figure"), img = el("img"); img.src = base + name; img.alt = "Native " + name.replace(".svg", "") + " for " + report.case_id;
-      figure.append(img, el("figcaption", name === "mesh.svg" ? "Actual native mesh" : "Solved field samples")); return figure;
+      figure.append(img, el("figcaption", name === "mesh.svg" ? "Native mesh preview (up to 100,000 actual triangles; full mesh in model.ele)" : "Solved field samples")); return figure;
     }));
     const available = new Set((report.artifacts || []).map(a => a.filename));
     available.add("report.json"); available.add("job.json"); if (report.execution) available.add("execution.json");
-    $("study-artifacts").replaceChildren(...["model.fem", "model.ans", "model.lua", "plan.json", "report.json", "metrics.csv", "execution.json", "job.json"].filter(name => available.has(name)).map(name => {
+    $("study-artifacts").replaceChildren(...["model.fem", "model.ans", "model.node", "model.ele", "model.lua", "plan.json", "report.json", "metrics.csv", "execution.json", "job.json"].filter(name => available.has(name)).map(name => {
       const a = el("a", name, "download-button"); a.href = base + name; a.download = name; return a;
     }));
-    message("Native study: " + report.status.replaceAll("_", " ") + ". Target and convergence scope are recorded in the report.", report.status === "failed");
+    const solved = ["geometry", "mesh", "solve"].every(stage => report.checks[stage]?.status === "passed");
+    const text = solved && report.checks.target?.status === "failed" ? "FEMM solved successfully. Some reference outputs did not match; see the comparison table."
+      : report.status === "passed" ? "FEMM solved successfully. All assessed reference checks passed."
+      : report.status === "solved_unassessed" ? "FEMM solved successfully. The published reference does not apply to these edited inputs."
+      : "Native study failed. Inspect the stage checks and retained evidence below.";
+    message(text, report.status === "failed");
   }
   async function poll(id) {
     try {

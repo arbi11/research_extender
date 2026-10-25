@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "purpose": "Narrow audit of independently reproduced original-source results. This registry never changes a published target or converts an individual failure to a pass.",
+  "discrepancies": [
+    {
+      "id": "ei-original-source-current-engine-20261025",
+      "case_id": "gapped-ei-core",
+      "source_model_sha256": "cea7acd3ed0296ea4531f7d8b6693adfa87683dd5c6857f4d76231042963cabb",
+      "source_file": "induct1a.fem",
+      "source_url": "https://www.femm.info/examples/induct1a/induct1a.fem",
+      "article_urls": [
+        "https://www.femm.info/wiki/InductanceExample",
+        "https://www.femm.info/wiki/ACForceExample"
+      ],
+      "parameters": {
+        "current": 1,
+        "mesh_scale": 1
+      },
+      "protocol_sha256": "9d34e0ded59dc3f65d96d4d502e5dd2099da12233276651d53f1ed71aeaa77e5",
+      "protocol_targets_unchanged": true,
+      "control": {
+        "method": "Solve the unmodified original native source FEMM model independently of the source-reconstruction compiler; use a locally authored postprocessor script. No downloaded script was executed.",
+        "source_model_sha256": "cea7acd3ed0296ea4531f7d8b6693adfa87683dd5c6857f4d76231042963cabb",
+        "original_source_file_sha256": "53e24d8f0ade89196c43ba8bfe46ddcd07aedcff6489e68e9ccb7e64115f26f3",
+        "engine_version": "FEMM headless engine v5.0 23Oct2026",
+        "image_id": "sha256:85f07dce379bff58dc539f8ed49ffba53a94eba332fbf81d4c9fd6c3df94725d",
+        "network": "none",
+        "read_only": true,
+        "metrics": {
+          "inductance_H": 0.0017560682796706,
+          "energy_J": 0.00087803413983534,
+          "force_I_y_N": 1.108276659203,
+          "force_I_x_N": -0.0010695610743749
+        },
+        "evidence_sha256": {
+          "original.node": "a56e53570d94a3da1606cc6aca2dd63ce09c5b2bf700aa544e9a605839da0a4e",
+          "control.lua": "55c71a2c52cd7371ce7fc3a1011b92b24ecead8ff913b2cfb48bd60659d976fa",
+          "original.ans": "6e45c6488acea871b9a9e9345f0260a0f300c7cd6f14d8d6745b3f6f0a2287f5",
+          "original.fem": "53e24d8f0ade89196c43ba8bfe46ddcd07aedcff6489e68e9ccb7e64115f26f3",
+          "receipt.json": "3f684db989075ba444e818af20febc3646d949cb32181b62bdc99ec2ba47c654",
+          "metrics.csv": "445cd77bcfa7c846296f37fc1fafd5f94f3a7f543cb9691ac93fb460a4a79ad6",
+          "native.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "execution.json": "a465f547075fbe1de808d8a8ac688845fb8d225868dd0695fd6394e193e9ca18",
+          "original.ele": "797f7d642fbd85ff67c6b68c99ed11bb042b61d591dc6f2435345811ee9cc4ca"
+        },
+        "local_evidence_folder": "work/next-benchmark-validation/source-control"
+      },
+      "allowed_reference_failures": [
+        {
+          "metric": "inductance_H",
+          "kind": "published_femm_result",
+          "value": 0.00173,
+          "relative_tolerance": 0.01,
+          "regression_relative_tolerance": 0.005,
+          "control_comparison_kind": "original_source_current_engine_regression"
+        },
+        {
+          "metric": "energy_J",
+          "kind": "published_femm_result",
+          "value": 0.000865042,
+          "relative_tolerance": 0.01,
+          "regression_relative_tolerance": 0.005,
+          "control_comparison_kind": "original_source_current_engine_regression"
+        }
+      ],
+      "required_pass_metrics": [
+        "force_I_y_N"
+      ],
+      "causal_status": "Unresolved. Original-source and reconstructed models agree on the current native engine, but both differ from the article energy and inductance. Possible engine, meshing, or source-model/version differences need further study; the evidence does not establish which cause is responsible.",
+      "presentation": "Individual EI reports retain failed published inductance and energy checks. A green audit means native checks and the reviewed original-source regression passed, not that every paper target passed."
+    }
+  ]
+}

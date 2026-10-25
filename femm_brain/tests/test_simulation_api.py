@@ -79,12 +79,18 @@ class SimulationApiTests(unittest.TestCase):
 
     def test_catalog_and_local_language_plan_export_match(self):
         catalog = self.get_json('/api/simulations')
-        self.assertEqual(len(catalog['cases']), 6)
+        self.assertTrue({'gapped-ei-core', 'radial-bearing'} <= {case['id'] for case in catalog['cases']})
+        self.assertGreaterEqual(len(catalog['cases']), 8)
         self.assertEqual(catalog['llm_calls'], 0)
         verified = self.get_json('/api/verification')['native_simulations']
         self.assertEqual(len(verified['cases']), 6)
         self.assertEqual(verified['llm_calls'], 0)
         self.assertTrue(all(case['status'] == 'passed' for case in verified['cases']))
+        engineering = self.get_json('/api/verification')['engineering_benchmarks']
+        self.assertFalse(engineering['audit']['all_published_targets_passed'])
+        ei = next(case for case in engineering['cases'] if case['case_id'] == 'gapped-ei-core')
+        self.assertEqual(ei['checks']['solve']['status'], 'passed')
+        self.assertEqual(ei['checks']['target']['status'], 'failed')
         selection = self.get_json('/api/simulation-request?' + urlencode({'q': 'AirCore short solenoid at 2 A'}))
         self.assertEqual(selection['status'], 'ready')
         query = urlencode({'case': selection['selected_case_id'], 'parameters': json.dumps(selection['parameters'])})

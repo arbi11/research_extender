@@ -18,8 +18,8 @@ current or analysis assumptions.
 
 ## Bundled source snapshot
 
-The current bundle contains **45 curated study profiles**, **1,151 knowledge
-nodes**, and **1,931 relationships**, including **654 documented API functions**
+The current bundle contains **45 curated study profiles**, **1,154 knowledge
+nodes**, and **1,960 relationships**, including **654 documented API functions**
 and **eight parameterized construction recipes**. These profiles describe
 source-backed methods; they do not mean 45 numerical studies were reproduced.
 
@@ -58,11 +58,11 @@ change that assistant's settings, jobs, development instance or deployment.
 
 ## Generate and solve from the knowledge base
 
-Six registered studies now generate fresh geometry, assign physics, mesh and
+Eight registered studies now generate fresh geometry, assign physics, mesh and
 solve with native FEMM. Selection, parameter conversion, construction and
 assessment use local code and cited knowledge records. **No AI credential or
 external model call is used.** The eight teaching construction recipes and these
-six executable studies have separate catalogs and verification evidence.
+eight executable studies have separate catalogs and verification evidence.
 
 | Case ID | Physical problem | Frozen comparison |
 |---|---|---|
@@ -72,6 +72,8 @@ six executable studies have separate catalogs and verification evidence.
 | `uniform-planar` | Magnetized IABC shells around a circular planar region | Analytic interior field magnitude 0.5 T |
 | `uniform-axisymmetric` | Magnetized IABC shells around a spherical region | Analytic interior field magnitude 2/3 T |
 | `parallel-wires` | Opposite 1 A currents in two circular wires, radius 0.2 m, centers 1 m apart | Analytic repulsive force 2×10⁻⁷ N/m |
+| `gapped-ei-core` | Gapped EI iron core, signed 66-turn winding, linear µr=2500 | Published 1.73 mH, 0.000865042 J and 1.11347 N; force agrees, L/energy mismatch retained |
+| `radial-bearing` | Eight-pole nonlinear M-19 magnetic bearing, four circuits and 16 winding sections | Published rounded upward rotor force ≈400 N |
 
 The five FEMM cases follow [AirCore](https://www.femm.info/wiki/AirCore) and
 [UniformField](https://www.femm.info/wiki/UniformField). Uniform-field shell
@@ -89,6 +91,36 @@ monotone convergence. FEMM weighted stress and volumetric Lorentz force are
 reported separately. The planar depth is exactly 1 m, so native force in N equals
 force per length in N/m numerically. This is an independently implemented method
 transfer, not execution or certification of a COMSOL model.
+
+The [gapped EI source](https://www.femm.info/wiki/InductanceExample) and its
+[force companion](https://www.femm.info/wiki/ACForceExample) supply three
+independent published outputs. The 1% comparison remains **failed** for
+inductance and energy: the supplied source model in the current engine gives
+1.756068 mH and 0.000878034 J. A control loading the original FEM file as passive
+data gives exactly the same values as our fresh reconstruction. Force is
+1.108277 N, within 0.47% of 1.11347 N; linkage and all-domain energy agree
+internally. This rules out reconstruction drift for the retained run, while the
+historical engine/model/article cause remains unresolved. Targets and tolerances
+were not changed to make the result pass.
+
+The [nonlinear bearing](https://www.femm.info/wiki/RadialMagneticBearing) retains
+its 13-point M-19 B-H curve and signed 80-turn winding sections. The native file
+uses 1.6 inches of depth and unit lamination fill, while the prose gives nominal
+4 cm and 0.98; the inherited difference is shown explicitly. Current edits do
+not inherit the source's ≈400 N target or an assumed quadratic force law.
+
+`verify-solves` keeps a nonzero exit when a published target fails. CI then runs
+`python3 -m femm_brain.benchmark_audit --summary RESULTS/summary.json --output RESULTS/audit.json`.
+Only the reviewed EI discrepancy may receive `passed_with_reference_mismatch`,
+requiring agreement with the independent source control, a passing force check,
+physical cross-checks and every construction/mesh/solver check. Individual failed
+targets remain failed. CI success therefore means the audit passed; it does not
+mean every published output was reproduced. The discrepancy registry is
+`data/verification/reference_discrepancies.json`.
+
+Mesh previews show at most 100,000 actual native triangles to keep the browser
+responsive. Full native connectivity remains in the downloadable `.node` and
+`.ele` files. No model geometry or solver mesh is decimated.
 
 List studies and prepare a reviewable plan without installing FEMM or Docker:
 

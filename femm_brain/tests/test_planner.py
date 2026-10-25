@@ -172,3 +172,27 @@ class LocalPlannerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EngineeringPlannerTests(unittest.TestCase):
+    def test_ei_source_force_energy_and_signed_current_selection(self):
+        result = plan_request('gapped EI core force and inductance at 2 A')
+        self.assertEqual(result['status'], 'ready', result)
+        self.assertEqual(result['selected_case_id'], 'gapped-ei-core')
+        self.assertEqual(result['parameters']['current'], 2)
+        self.assertEqual(plan_request('gapped EI core current=-1 A')['status'], 'ready')
+        self.assertEqual(plan_request('gapped EI core current=0 A')['status'], 'needs_input')
+
+    def test_nonlinear_profile_and_explicit_excitation_scale(self):
+        result = plan_request('nonlinear radial bearing current_scale=0.5')
+        self.assertEqual(result['status'], 'ready', result)
+        self.assertEqual(result['parameters']['current_scale'], .5)
+        self.assertEqual(plan_request('eight pole magnetic bearing force')['selected_case_id'], 'radial-bearing')
+        self.assertEqual(plan_request('radial-bearing current=12 A')['status'], 'needs_input')
+
+    def test_material_laws_coordinate_modes_and_metrics_are_not_ignored(self):
+        for text in ('gapped EI core nonlinear steel', 'radial bearing permanent magnets',
+                     'aircore-short iron', 'uniform-planar energy', 'uniform-planar inductance',
+                     'gapped EI core axisymmetric', 'radial bearing at 60 Hz'):
+            with self.subTest(text=text):
+                self.assertEqual(plan_request(text)['status'], 'unsupported')

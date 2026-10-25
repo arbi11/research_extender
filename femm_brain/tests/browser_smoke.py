@@ -141,7 +141,9 @@ def exercise_browser(url, graph, folder):
 
         # The executable studies are separate from construction-only recipes.
         expect(page.locator("#study-preview img")).to_be_visible()
-        expect(page.locator("#study-select option")).to_have_count(6)
+        study_ids = page.locator("#study-select option").evaluate_all("nodes => nodes.map(node => node.value)")
+        assert {'gapped-ei-core', 'radial-bearing'} <= set(study_ids)
+        assert len(study_ids) >= 8
         expect(page.locator("#study-solve")).to_be_disabled()
         expect(page.locator("#study-engine")).to_contain_text("--enable-solver")
         page.locator("#study-request").fill("AirCore short solenoid at 2 A")
@@ -210,6 +212,15 @@ def exercise_browser(url, graph, folder):
         page.locator("#study-search-form button").click()
         expect(page.locator("#study-selection")).to_contain_text("unsupported")
         expect(page.locator("#study-preview img")).to_have_count(0)
+        page.locator("#study-request").fill("gapped EI core force and inductance at 2 A")
+        page.locator("#study-search-form button").click()
+        expect(page.locator("#study-select")).to_have_value("gapped-ei-core")
+        expect(page.locator("#study-reference p")).to_have_count(3)
+        expect(page.locator("#study-message")).to_contain_text("Model ready")
+        page.locator("#study-request").fill("nonlinear radial bearing current_scale=0.5")
+        page.locator("#study-search-form button").click()
+        expect(page.locator("#study-select")).to_have_value("radial-bearing")
+        expect(page.locator("#study-reference")).to_contain_text("unassessed")
 
         artifact_directory = os.getenv("BROWSER_SMOKE_ARTIFACTS")
         if artifact_directory:

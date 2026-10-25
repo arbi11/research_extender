@@ -1,0 +1,597 @@
+{
+  "schema_version": 1,
+  "nodes": [
+    {
+      "id": "method:benchmark_source_reconstruction",
+      "layer": 2,
+      "kind": "method",
+      "title": "Reconstruct complete passive native source data",
+      "description": "Read the curated native model as geometry and physical data, then emit allowlisted native FEMM calls. Retain source units, depth, connectivity, circular arcs, material coefficients and B-H points, circuits, signed winding turns and every boundary attachment. Compare the saved native model with the intended source assignments before mesh and solve.",
+      "parameters": [],
+      "inputs": [
+        "Hash-bound passive native source model",
+        "Supported editable current and mesh parameters"
+      ],
+      "outputs": [
+        "Generated editable Lua and native FEMM model",
+        "Independent saved-physics assignment verification"
+      ],
+      "constraints": [
+        "Downloaded code is not executed.",
+        "Unsupported source properties must fail explicitly rather than being omitted.",
+        "Changing currents or mesh does not permit altering source geometry or constitutive data."
+      ],
+      "capabilities": [
+        "source_model_reconstruction",
+        "numerical_reference_checks"
+      ],
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "tags": [
+        "documented_benchmark",
+        "source_reconstruction"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Source-backed method and predeclared checks. Numerical verification belongs to each generated run report; this graph record does not assert that all source studies were reproduced."
+      }
+    },
+    {
+      "id": "method:benchmark_ei_output_checks",
+      "layer": 2,
+      "kind": "method",
+      "title": "EI core: linkage, energy and actuator force checks",
+      "description": "Compare linkage inductance with the published 1.73 mH result, all-domain magnetic energy with 0.000865042 J and upward weighted-stress force on the lower I-return with 1.11347 N. For this linear finite A=0 model, cross-check L=psi/I and L=2W/I\u00b2, retain force direction and inspect transverse force.",
+      "parameters": [],
+      "inputs": [
+        "Solved exact source EI model at 1 A DC",
+        "All-domain energy selection",
+        "Lower I-return body selection at (0,-0.125) in"
+      ],
+      "outputs": [
+        "Published-output comparisons for L,W,Fy",
+        "Linkage-energy agreement and force direction checks"
+      ],
+      "constraints": [
+        "The 1.39 mH circuit approximation is a sanity check, not the numerical reproduction target.",
+        "Strict published values apply only to source geometry, materials and matching excitation.",
+        "Current reversal preserves L,W,F; linear doubling of current gives 4 times W and F."
+      ],
+      "capabilities": [
+        "source_model_reconstruction",
+        "numerical_reference_checks"
+      ],
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "manual5"
+      ],
+      "tags": [
+        "documented_benchmark",
+        "source_reconstruction"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Source-backed method and predeclared checks. Numerical verification belongs to each generated run report; this graph record does not assert that all source studies were reproduced."
+      },
+      "source_model_sha256": "cea7acd3ed0296ea4531f7d8b6693adfa87683dd5c6857f4d76231042963cabb",
+      "published_targets": [
+        {
+          "metric": "inductance_mH",
+          "value": 1.73,
+          "unit": "mH",
+          "relative_tolerance": 0.01,
+          "source_id": "inductanceexample"
+        },
+        {
+          "metric": "energy_J",
+          "value": 0.000865042,
+          "unit": "J",
+          "relative_tolerance": 0.01,
+          "source_id": "inductanceexample"
+        },
+        {
+          "metric": "force_y_N",
+          "value": 1.11347,
+          "unit": "N",
+          "relative_tolerance": 0.01,
+          "source_id": "acforceexample"
+        }
+      ]
+    },
+    {
+      "id": "method:benchmark_bearing_output_checks",
+      "layer": 2,
+      "kind": "method",
+      "title": "Eight-pole bearing: nonlinear rotor-force checks",
+      "description": "Retain the source 13-point M19 B-H curve and source 6/12/6/0 A quadrant currents, then compare upward rotor weighted-stress force with the rounded published 400 N result. Inspect transverse force and saturation; global current reversal must preserve force, while nonlinear current scaling has no exact quadratic force law.",
+      "parameters": [],
+      "inputs": [
+        "Exact nonlinear source bearing model",
+        "Rotor iron selection at (0.287013,0.69291) in"
+      ],
+      "outputs": [
+        "Published rounded 400 N rotor force comparison",
+        "Force direction, symmetry and nonlinear-excitation diagnostics"
+      ],
+      "constraints": [
+        "The preliminary 460 N circuit estimate is not the finite-element reproduction target.",
+        "Native depth 1.6 in and LamFill 1 differ from nominal prose 4 cm and 0.98 packing; preserve and disclose native values.",
+        "Reported upper-leg 1.59 T and airgap 1.1 T lack unique point coordinates and are diagnostic references, not strict pointwise targets.",
+        "A static field study does not establish bearing control stability or rotor dynamics."
+      ],
+      "capabilities": [
+        "source_model_reconstruction",
+        "numerical_reference_checks"
+      ],
+      "source_ids": [
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "tags": [
+        "documented_benchmark",
+        "source_reconstruction"
+      ],
+      "verification": {
+        "status": "documented",
+        "note": "Source-backed method and predeclared checks. Numerical verification belongs to each generated run report; this graph record does not assert that all source studies were reproduced."
+      },
+      "source_model_sha256": "85069a0505f8e430f345ea74271def0f8f322f78db8dd9fa8d11a46c3413851e",
+      "published_targets": [
+        {
+          "metric": "force_y_N",
+          "value": 400,
+          "unit": "N",
+          "relative_tolerance": 0.05,
+          "source_id": "radialmagneticbearing",
+          "precision": "rounded narrative reference"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "benchmark:method:benchmark_source_reconstruction:implemented_by:primitive:mi_addnode",
+      "source": "method:benchmark_source_reconstruction",
+      "target": "primitive:mi_addnode",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 0
+    },
+    {
+      "id": "benchmark:method:benchmark_source_reconstruction:implemented_by:primitive:mi_addsegment",
+      "source": "method:benchmark_source_reconstruction",
+      "target": "primitive:mi_addsegment",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 1
+    },
+    {
+      "id": "benchmark:method:benchmark_source_reconstruction:implemented_by:primitive:mi_addarc",
+      "source": "method:benchmark_source_reconstruction",
+      "target": "primitive:mi_addarc",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 2
+    },
+    {
+      "id": "benchmark:method:benchmark_source_reconstruction:implemented_by:primitive:mi_addblocklabel",
+      "source": "method:benchmark_source_reconstruction",
+      "target": "primitive:mi_addblocklabel",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 3
+    },
+    {
+      "id": "benchmark:method:benchmark_source_reconstruction:implemented_by:primitive:mi_addmaterial",
+      "source": "method:benchmark_source_reconstruction",
+      "target": "primitive:mi_addmaterial",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 4
+    },
+    {
+      "id": "benchmark:method:benchmark_source_reconstruction:implemented_by:primitive:mi_addbhpoint",
+      "source": "method:benchmark_source_reconstruction",
+      "target": "primitive:mi_addbhpoint",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 5
+    },
+    {
+      "id": "benchmark:method:benchmark_source_reconstruction:implemented_by:primitive:mi_addcircprop",
+      "source": "method:benchmark_source_reconstruction",
+      "target": "primitive:mi_addcircprop",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 6
+    },
+    {
+      "id": "benchmark:method:benchmark_source_reconstruction:implemented_by:primitive:mi_addboundprop",
+      "source": "method:benchmark_source_reconstruction",
+      "target": "primitive:mi_addboundprop",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 7
+    },
+    {
+      "id": "benchmark:method:benchmark_source_reconstruction:implemented_by:primitive:mi_setblockprop",
+      "source": "method:benchmark_source_reconstruction",
+      "target": "primitive:mi_setblockprop",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 8
+    },
+    {
+      "id": "benchmark:method:benchmark_source_reconstruction:implemented_by:primitive:mi_setsegmentprop",
+      "source": "method:benchmark_source_reconstruction",
+      "target": "primitive:mi_setsegmentprop",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 9
+    },
+    {
+      "id": "benchmark:method:benchmark_source_reconstruction:implemented_by:primitive:mi_setarcsegmentprop",
+      "source": "method:benchmark_source_reconstruction",
+      "target": "primitive:mi_setarcsegmentprop",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 10
+    },
+    {
+      "id": "benchmark:method:benchmark_source_reconstruction:implemented_by:primitive:mi_setnodeprop",
+      "source": "method:benchmark_source_reconstruction",
+      "target": "primitive:mi_setnodeprop",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 11
+    },
+    {
+      "id": "benchmark:method:benchmark_ei_output_checks:implemented_by:primitive:mo_getcircuitproperties",
+      "source": "method:benchmark_ei_output_checks",
+      "target": "primitive:mo_getcircuitproperties",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "manual5"
+      ],
+      "order": 0
+    },
+    {
+      "id": "benchmark:method:benchmark_ei_output_checks:implemented_by:primitive:mo_groupselectblock",
+      "source": "method:benchmark_ei_output_checks",
+      "target": "primitive:mo_groupselectblock",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "manual5"
+      ],
+      "order": 1
+    },
+    {
+      "id": "benchmark:method:benchmark_ei_output_checks:implemented_by:primitive:mo_selectblock",
+      "source": "method:benchmark_ei_output_checks",
+      "target": "primitive:mo_selectblock",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "manual5"
+      ],
+      "order": 2
+    },
+    {
+      "id": "benchmark:method:benchmark_ei_output_checks:implemented_by:primitive:mo_blockintegral",
+      "source": "method:benchmark_ei_output_checks",
+      "target": "primitive:mo_blockintegral",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "manual5"
+      ],
+      "order": 3
+    },
+    {
+      "id": "benchmark:method:benchmark_ei_output_checks:implemented_by:primitive:mo_clearblock",
+      "source": "method:benchmark_ei_output_checks",
+      "target": "primitive:mo_clearblock",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample",
+        "manual5"
+      ],
+      "order": 4
+    },
+    {
+      "id": "benchmark:method:benchmark_bearing_output_checks:implemented_by:primitive:mo_selectblock",
+      "source": "method:benchmark_bearing_output_checks",
+      "target": "primitive:mo_selectblock",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 0
+    },
+    {
+      "id": "benchmark:method:benchmark_bearing_output_checks:implemented_by:primitive:mo_blockintegral",
+      "source": "method:benchmark_bearing_output_checks",
+      "target": "primitive:mo_blockintegral",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 1
+    },
+    {
+      "id": "benchmark:method:benchmark_bearing_output_checks:implemented_by:primitive:mo_clearblock",
+      "source": "method:benchmark_bearing_output_checks",
+      "target": "primitive:mo_clearblock",
+      "relation": "implemented_by",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "radialmagneticbearing",
+        "manual5"
+      ],
+      "order": 2
+    },
+    {
+      "id": "benchmark:workflow:inductanceexample:reuses:method:benchmark_source_reconstruction",
+      "source": "workflow:inductanceexample",
+      "target": "method:benchmark_source_reconstruction",
+      "relation": "reuses",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample"
+      ]
+    },
+    {
+      "id": "benchmark:workflow:inductanceexample:decomposes_into:method:benchmark_ei_output_checks",
+      "source": "workflow:inductanceexample",
+      "target": "method:benchmark_ei_output_checks",
+      "relation": "decomposes_into",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample"
+      ]
+    },
+    {
+      "id": "benchmark:method:benchmark_ei_output_checks:reuses:method:methods_weighted_stress_force",
+      "source": "method:benchmark_ei_output_checks",
+      "target": "method:methods_weighted_stress_force",
+      "relation": "reuses",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample"
+      ]
+    },
+    {
+      "id": "benchmark:workflow:acforceexample:reuses:method:benchmark_source_reconstruction",
+      "source": "workflow:acforceexample",
+      "target": "method:benchmark_source_reconstruction",
+      "relation": "reuses",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample"
+      ]
+    },
+    {
+      "id": "benchmark:workflow:acforceexample:decomposes_into:method:benchmark_ei_output_checks",
+      "source": "workflow:acforceexample",
+      "target": "method:benchmark_ei_output_checks",
+      "relation": "decomposes_into",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample"
+      ]
+    },
+    {
+      "id": "benchmark:workflow:radialmagneticbearing:reuses:method:benchmark_source_reconstruction",
+      "source": "workflow:radialmagneticbearing",
+      "target": "method:benchmark_source_reconstruction",
+      "relation": "reuses",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "radialmagneticbearing"
+      ]
+    },
+    {
+      "id": "benchmark:workflow:radialmagneticbearing:decomposes_into:method:benchmark_bearing_output_checks",
+      "source": "workflow:radialmagneticbearing",
+      "target": "method:benchmark_bearing_output_checks",
+      "relation": "decomposes_into",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "radialmagneticbearing"
+      ]
+    },
+    {
+      "id": "benchmark:method:benchmark_bearing_output_checks:reuses:method:methods_weighted_stress_force",
+      "source": "method:benchmark_bearing_output_checks",
+      "target": "method:methods_weighted_stress_force",
+      "relation": "reuses",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "radialmagneticbearing"
+      ]
+    },
+    {
+      "id": "benchmark:method:benchmark_bearing_output_checks:reuses:method:machine_bearing_nonlinear_iron",
+      "source": "method:benchmark_bearing_output_checks",
+      "target": "method:machine_bearing_nonlinear_iron",
+      "relation": "reuses",
+      "when": "The selected documented source study, native command contract and physical preconditions apply.",
+      "parameter_bindings": {},
+      "source_ids": [
+        "radialmagneticbearing"
+      ]
+    }
+  ],
+  "example_bindings": [
+    {
+      "example_id": "inductanceexample",
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample"
+      ],
+      "node_ids": [
+        "method:benchmark_source_reconstruction",
+        "method:benchmark_ei_output_checks",
+        "method:methods_weighted_stress_force"
+      ],
+      "limitations": [
+        "Published-output agreement and mesh independence are separate measured checks; retain per-run evidence for each."
+      ]
+    },
+    {
+      "example_id": "acforceexample",
+      "source_ids": [
+        "inductanceexample",
+        "acforceexample"
+      ],
+      "node_ids": [
+        "method:benchmark_source_reconstruction",
+        "method:benchmark_ei_output_checks",
+        "method:methods_weighted_stress_force"
+      ],
+      "limitations": [
+        "Published-output agreement and mesh independence are separate measured checks; retain per-run evidence for each."
+      ]
+    },
+    {
+      "example_id": "radialmagneticbearing",
+      "source_ids": [
+        "radialmagneticbearing"
+      ],
+      "node_ids": [
+        "method:benchmark_source_reconstruction",
+        "method:benchmark_bearing_output_checks",
+        "method:methods_weighted_stress_force"
+      ],
+      "limitations": [
+        "Published-output agreement and mesh independence are separate measured checks; retain per-run evidence for each."
+      ]
+    }
+  ]
+}

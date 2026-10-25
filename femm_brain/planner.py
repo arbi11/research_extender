@@ -40,6 +40,7 @@ _ALIASES = {
     "wire_radius": ["wire radius", "conductor radius"],
     "center_distance": ["center distance", "centre distance", "wire spacing", "center spacing", "centre spacing"],
     "domain_radius": ["domain radius", "outer domain radius", "exterior radius"],
+    "current_scale": ["current scale", "current multiplier", "excitation scale", "excitation multiplier"],
 }
 _CASE_ALIASES = {
     "aircore-short": ["aircore short", "short aircore", "aircore square", "square aircore coil", "square cross section"],
@@ -48,6 +49,9 @@ _CASE_ALIASES = {
     "uniform-planar": ["uniform planar", "planar uniform field", "uniform 2d", "2d uniform field", "uniformfield planar"],
     "uniform-axisymmetric": ["uniform axisymmetric", "axisymmetric uniform field", "uniform axial field", "uniformfield axisymmetric"],
     "parallel-wires": ["parallel wires", "parallel wire force", "comsol parallel wires", "comsol parallel wire force"],
+    "gapped-ei-core": ["gapped EI core", "EI core", "EI inductor", "EI actuator", "gapped iron core"],
+    "radial-bearing": ["radial bearing", "magnetic bearing", "eight pole magnetic bearing", "8-pole magnetic bearing", "nonlinear bearing"],
+    "ansys-vm270": ["VM270", "TEAM23", "TEAM 23", "ANSYS VM270", "SmCo magnet and coil"],
 }
 _FAMILIES = {
     "aircore": ["air core", "aircore", "air cored", "solenoid"],
@@ -55,6 +59,7 @@ _FAMILIES = {
 }
 _FILLER = set("a an the please can could you i want would like to create build generate model solve run calculate compute reproduce replicate benchmark example study using use with of and for at in is are as this that from source official femm documented baseline published geometry magnetic magnetics dc magnetostatic magnetostatics axisymmetric axi planar two dimensional 2d air core cored coil solenoid inductance uniform field applied axial turn turns amperes amps ampere amp tesla millimeters millimeter millimetres millimetre centimeters centimeter meters meter inches inch count mesh boundary scale multiplier number inner outer inside outside radius axial length circuit current target strength flux density tall thin short fat square cross section pancake n ri ro z".split())
 _FILLER.update("comsol parallel wire wires repulsive force conductor center centre distance spacing domain exterior opposite signed equal currents meter per length".split())
+_FILLER.update("gapped ei iron core inductor actuator radial bearing eight pole nonlinear steel magnetic energy force current excitation multiplier ansys team samarium cobalt smco permanent magnet coil".split())
 
 
 def _phrase(value):
@@ -174,17 +179,31 @@ def plan_request(text, graph=None, *, catalog=None):
     if len(family_hits) > 1 or (len(exact) > 1):
         return _blank("ambiguous", "Select one study per request.", candidates=[{"id": identifier, "title": indexed[identifier].get("title", identifier)} for identifier in sorted(selected)])
     # Catalog support, rather than FEMM's global capabilities, defines this route.
-    unsupported = re.search(r"\b(ac|harmonic|frequency|hz|nonlinear|saturat\w*|permanent\s+magnet\w*|ferromagnetic|steel|iron|ipm|motor|torque|eddy|transient|ellip\w*|oval|polygon|c\s+shaped)\b", normalized)
+    unsupported = re.search(r"\b(ac|harmonic|frequency|hz|ipm|motor|torque|eddy|transient|ellip\w*|oval|polygon|c\s+shaped)\b", normalized)
     if unsupported:
         return _blank("unsupported", "The requested " + unsupported.group(0) + " behavior is outside these executable catalog profiles.")
+    if re.search(r"\b(nonlinear|saturat\w*)\b", normalized) and selected != {"radial-bearing"}:
+        return _blank("unsupported", "Nonlinear steel is supported by the radial-bearing profile; the selected profile retains its source material law.")
+    if re.search(r"\b(ferromagnetic|steel|iron)\b", normalized) and not selected <= {"gapped-ei-core", "radial-bearing"}:
+        return _blank("unsupported", "Iron or steel is outside the selected executable profile's material definition.")
+    if re.search(r"\b(permanent\s+magnet\w*|magnet|samarium|smco)\b", normalized) and selected != {"ansys-vm270"}:
+        return _blank("unsupported", "Permanent magnets require an executable permanent-magnet profile.")
     if all(identifier.startswith("aircore-") for identifier in selected) and re.search(r"\bplanar\b", normalized):
         return _blank("unsupported", "The catalog air-core coil profiles are axisymmetric. A planar coil requires a different executable study.")
     if selected == {"parallel-wires"} and re.search(r"\b(axisymmetric|axi|axial)\b", normalized):
         return _blank("unsupported", "The parallel-wire transfer is a planar model of straight wires with explicit out-of-plane depth.")
     if selected == {"parallel-wires"} and re.search(r"\b(same\s+direction|equal\s+currents|attract\w*)\b", normalized):
         return _blank("unsupported", "This transfer profile fixes opposite current directions and repulsive force. Same-direction currents require a separate profile.")
-    if selected != {"parallel-wires"} and re.search(r"\bforce\b", normalized):
+    if not selected <= {"parallel-wires", "gapped-ei-core", "radial-bearing", "ansys-vm270"} and re.search(r"\bforce\b", normalized):
         return _blank("unsupported", "Force is not evaluated by the selected executable catalog profile.")
+    if re.search(r"\binductance\b", normalized) and not selected <= {"aircore-short", "aircore-long", "aircore-flat", "gapped-ei-core"}:
+        return _blank("unsupported", "Inductance is not evaluated by the selected executable catalog profile.")
+    if re.search(r"\benergy\b", normalized) and selected != {"gapped-ei-core"}:
+        return _blank("unsupported", "An energy comparison is not evaluated by the selected executable catalog profile.")
+    if selected <= {"gapped-ei-core", "radial-bearing"} and re.search(r"\b(axisymmetric|axi|axial)\b", normalized):
+        return _blank("unsupported", "The selected source geometry is planar; an axisymmetric study needs a different executable profile.")
+    if selected == {"ansys-vm270"} and re.search(r"\bplanar\b", normalized):
+        return _blank("unsupported", "The VM270 magnet and coil are axisymmetric.")
     if all(identifier.startswith("uniform-") for identifier in selected):
         if re.search(r"\b(axisymmetric|axi|axial)\b", normalized):
             selected &= {"uniform-axisymmetric"}
@@ -259,6 +278,10 @@ def plan_request(text, graph=None, *, catalog=None):
                       parameters=parameters, parsed_values=parsed, candidates=candidates,
                       missing_inputs=["Select one candidate case ID."])
     identifier = next(iter(selected))
+    if identifier == "gapped-ei-core":
+        current = parameters.get("current", _schemas(indexed[identifier])["current"]["default"])
+        if abs(current) < 1e-6:
+            return _blank("needs_input", "Use a nonzero EI current to define linkage/current inductance.", candidates=candidates, parsed_values=parsed)
     if identifier.startswith("aircore-"):
         schema = _schemas(indexed[identifier])
         inner = parameters.get("inner_radius", schema["inner_radius"]["default"])

@@ -85,8 +85,10 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/verification":
                 report = DATA / "verification/native_geometry.json"
                 simulations = DATA / "verification/native_simulations.json"
+                engineering = DATA / "verification/engineering_benchmarks.json"
                 self._send({"graph": self.graph["validation"], "native": json.loads(report.read_text()) if report.is_file() else None,
-                            "native_simulations": json.loads(simulations.read_text()) if simulations.is_file() else None})
+                            "native_simulations": json.loads(simulations.read_text()) if simulations.is_file() else None,
+                            "engineering_benchmarks": json.loads(engineering.read_text()) if engineering.is_file() else None})
             elif path == "/api/recipes":
                 self._send({"recipes": recipe_catalog()})
             elif path == "/api/sources":

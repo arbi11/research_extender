@@ -130,8 +130,8 @@ def load_graph(data_dir=None):
                 values[item["id"]] = item
         manifest[collection] = list(values.values())
     nodes, edges = _common()
-    examples = []
-    for name in ("functions.json", "machines.json", "methods.json", "recipes.json", "transfer_cases.json"):
+    examples, example_bindings = [], []
+    for name in ("functions.json", "machines.json", "methods.json", "recipes.json", "transfer_cases.json", "benchmark_methods.json"):
         path = directory / name
         if not path.exists():
             continue
@@ -139,6 +139,18 @@ def load_graph(data_dir=None):
         nodes.extend(data.get("nodes", []))
         edges.extend(data.get("edges", []))
         examples.extend(data.get("examples", []))
+        example_bindings.extend(data.get("example_bindings", []))
+    # New checked execution methods extend an existing study without duplicating
+    # its workflow or silently replacing its original source interpretation.
+    example_index = {example["id"]: example for example in examples}
+    for binding in example_bindings:
+        example = example_index.get(binding["example_id"])
+        if example is None:
+            source_conflicts.append({"id": binding["example_id"], "code": "benchmark_example_unknown",
+                                     "message": "Benchmark method binding references an unknown study."})
+            continue
+        for field in ("source_ids", "node_ids", "assumptions", "limitations"):
+            example[field] = list(dict.fromkeys(example.get(field, []) + binding.get(field, [])))
     # Identical shared concepts are consolidated with an evidence union. Layer
     # and title conflicts remain visible rather than being silently overwritten.
     merged, conflicts = {}, source_conflicts

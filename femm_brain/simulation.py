@@ -22,10 +22,19 @@ import time
 from .core import load_graph
 from .geometry import _Drawing, _svg, arc_geometry, parse_fem
 from .native_check import _run, _version, geometry_signature
+from .source_recipe import compile_source, load_source, verify_source_physics
 
 DATA = Path(__file__).parent / "data"
 MU0 = 4e-7 * math.pi
 PARAMETERS = {
+    "gapped_ei": [
+        {"name":"current", "unit":"A", "description":"Signed DC series winding current; zero is excluded because linkage/current defines inductance", "minimum":-1000, "maximum":1000},
+        {"name":"mesh_scale", "unit":"ratio", "description":"Multiplier on source block/contour mesh lengths; smaller values refine the mesh", "minimum":0.25, "maximum":4}
+    ],
+    "radial_bearing": [
+        {"name":"current_scale", "unit":"ratio", "description":"Multiplier on all four source circuits (6,12,6,0 A); nonlinear force is not assumed to scale quadratically", "minimum":-2, "maximum":2},
+        {"name":"mesh_scale", "unit":"ratio", "description":"Multiplier on source block/contour mesh lengths; smaller values refine the mesh", "minimum":0.25, "maximum":4}
+    ],
     "aircore": [
         {"name":"inner_radius", "unit":"in", "description":"Inner winding radius", "minimum":0.001, "maximum":100},
         {"name":"outer_radius", "unit":"in", "description":"Outer winding radius", "minimum":0.002, "maximum":100},
@@ -84,10 +93,10 @@ def simulation_catalog(graph=None):
         if any(ident not in node_ids for ident in item["knowledge_node_ids"]):
             raise ValueError("Simulation references an unavailable knowledge node")
         item["parameters"] = [dict(p, default=case["defaults"][p["name"]], integer=p.get("integer", False))
-                              for p in PARAMETERS[case["family"]]]
+                              for p in PARAMETERS[case.get("parameter_family",case["family"])]]
         item["physics"] = list(example.get("physics", []))
         item["requires_ai"] = False
-        item["dimension_source"] = "normalized_source_construction" if case["family"] == "uniform" else "published_parameters"
+        item["dimension_source"] = "curated_original_native_model" if case["family"] == "native_source" else "normalized_source_construction" if case["family"] == "uniform" else "published_parameters"
         result.append(item)
     return result
 
@@ -116,6 +125,8 @@ def _validate_parameters(case, overrides):
             raise ValueError("Parallel wires must not touch or overlap")
         if parameters['domain_radius'] < 2*(parameters['center_distance']/2+parameters['wire_radius']):
             raise ValueError("Exterior domain must enclose the wires with at least their bounding radius of clearance")
+    if case["id"] == "gapped-ei-core" and abs(parameters["current"]) < 1e-6:
+        raise ValueError("EI current magnitude must be at least 1e-6 A to define linkage/current inductance")
     return parameters
 
 
@@ -241,6 +252,25 @@ def _parallel_wires(case,p):
     extent=(-distance*1.5,distance*1.5,-distance*1.5,distance*1.5)
     return geometry,lines,probes,extent,domain,1.
 
+
+def _native_source(case, p):
+    source = load_source(DATA / "models" / (case["source_model_sha256"] + ".json"),
+                         case["source_model_sha256"], case["source_model_data_sha256"])
+    currents = ({"icoil": p["current"]} if case["id"] == "gapped-ei-core" else
+                {c["name"]: float(c["properties"]["TotalAmps_re"]) * p["current_scale"] for c in source["circuits"]})
+    geometry, lines, expected, metres = compile_source(source, mesh_scale=p["mesh_scale"], circuit_currents=currents)
+    geometry["expected_source_physics"] = expected
+    if case["id"] == "gapped-ei-core":
+        probes = [(0, -.0125), (0, .5)]
+        extent = (-1.2, 1.2, -.7, 1.2)
+    else:
+        # Visual diagnostics only; no point-value targets are claimed without
+        # source-specified locations. Rotor iron is not the center air region.
+        probes = [(0, 0), (.287013, .69291)]
+        extent = (-2.45, 2.45, -2.45, 2.45)
+    radius = max(math.hypot(n["x"], n["y"]) for n in geometry["nodes"]) * 1.01
+    return geometry, lines, probes, extent, radius, metres
+
 def _finish_script(lines, case, p, probes, extent, radius):
     lines += ['mi_saveas("model.fem")', 'out=openfile("geometry-completed.txt","w")',
               'write(out,"geometry saved\\n")', 'closefile(out)', 'mi_createmesh()',
@@ -250,6 +280,24 @@ def _finish_script(lines, case, p, probes, extent, radius):
         lines += ['amps,volts,linkage=mo_getcircuitproperties("icoil")',
                   'write(out,"current_A,",amps,",A\\n")', 'write(out,"flux_linkage_Wb_turn,",linkage,",Wb-turn\\n")',
                   'write(out,"inductance_H,",linkage/amps,",H\\n")']
+    elif case['id']=='gapped-ei-core':
+        lines += ['amps,volts,linkage=mo_getcircuitproperties("icoil")',
+                  'write(out,"current_A,",amps,",A\\n")', 'write(out,"flux_linkage_Wb_turn,",linkage,",Wb-turn\\n")',
+                  'write(out,"inductance_H,",linkage/amps,",H\\n")',
+                  'mo_groupselectblock()', 'energy=mo_blockintegral(2)', 'mo_clearblock()',
+                  'write(out,"energy_J,",energy,",J\\n")',
+                  'write(out,"energy_inductance_H,",2*energy/(amps*amps),",H\\n")',
+                  _call('mo_selectblock',0,-.125), 'fx=mo_blockintegral(18)', 'fy=mo_blockintegral(19)', 'mo_clearblock()',
+                  'write(out,"force_I_x_N,",fx,",N\\n")', 'write(out,"force_I_y_N,",fy,",N\\n")']
+    elif case['id']=='radial-bearing':
+        lines += [_call('mo_selectblock',.287013,.69291), 'fx=mo_blockintegral(18)', 'fy=mo_blockintegral(19)', 'mo_clearblock()',
+                  'write(out,"force_rotor_x_N,",fx,",N\\n")', 'write(out,"force_rotor_y_N,",fy,",N\\n")',
+                  'mo_groupselectblock()', 'energy=mo_blockintegral(2)', 'mo_clearblock()',
+                  'write(out,"energy_J,",energy,",J\\n")']
+        for circuit in ('i1','i2','i3','i4'):
+            lines += [_call('amps,volts,linkage=mo_getcircuitproperties',circuit),
+                      f'write(out,"{circuit}_current_A,",amps,",A\\n")',
+                      f'write(out,"{circuit}_flux_linkage_Wb_turn,",linkage,",Wb-turn\\n")']
     elif case['family']=='parallel_wires':
         distance=p['center_distance']
         lines += [_call('mo_selectblock',-distance/2,0),'left_fx=mo_blockintegral(18)','left_fy=mo_blockintegral(19)',
@@ -287,12 +335,12 @@ def plan_simulation(case_id, parameters=None, graph=None):
         raise ValueError("Unknown simulation: " + str(case_id))
     case = cases[case_id]
     p = _validate_parameters(case,parameters)
-    builder={'aircore':_aircore,'uniform':_uniform,'parallel_wires':_parallel_wires}[case['family']]
+    builder={'aircore':_aircore,'uniform':_uniform,'parallel_wires':_parallel_wires,'native_source':_native_source}[case['family']]
     geometry,lines,probes,extent,radius,metres_per_unit = builder(case,p)
     reference = deepcopy(case["reference"])
     reference["applicable"] = True
     reference["tolerance_origin"] = "Predeclared benchmark acceptance tolerance; not a tolerance certified by the source"
-    assumptions = ["DC magnetostatics; source linear material laws are retained.", "No external model or downloaded source script is executed."]
+    assumptions = ["DC magnetostatics; source material laws are retained.", "No external model or downloaded source script is executed."]
     limits = ["A passing target check is not a general convergence study or certification of a machine design."]
     comparators = []
     if case["family"] == "aircore":
@@ -314,6 +362,21 @@ def plan_simulation(case_id, parameters=None, graph=None):
                         'COMSOL reports Maxwell surface stress and volumetric Lorentz force. This transfer reports FEMM weighted stress as its primary estimator and FEMM Lorentz integration as a separate cross-check.',
                         case['boundary_adaptation']]
         limits += ['Transfer validation requires domain-radius and mesh-size sensitivity; this individual run does not establish infinite-domain convergence.']
+    elif case['family']=='native_source':
+        assumptions += ['All geometry, signed winding assignments, material properties, B-H points and boundary attachments are reconstructed from pinned passive native model data.',
+                        'The original source model is never opened or executed; a fresh FEMM model is generated from typed entities.',
+                        'Source coordinates and planar depth are inches; reported force and energy are SI quantities.']
+        if case['id']=='gapped-ei-core':
+            assumptions += ['Constant relative permeability 2500 and the source 66-turn series winding are retained.',
+                            'Linear current scaling preserves inductance and scales stored energy and force by current squared.',
+                            'Stored energy is integrated over every domain region; I-section force uses weighted stress tensor integrals 18/19 on label (0,-0.125) inches.']
+        else:
+            if p['current_scale'] != case['defaults']['current_scale']:
+                reference.update(applicable=False,reason='The published nonlinear bearing force applies only to the original four circuit currents; no quadratic scaling is assumed.')
+            assumptions += [case['source_discrepancy'],
+                            'The 13-point source M-19 B-H curve is retained; no linear force or inductance scaling is assumed.',
+                            'Rotor force selects the M-19 label (0.287013,0.69291) inches. The center (0,0) is air and is not used as the rotor selection.']
+            limits += ['The source gives rounded force and field results. Only rotor force is an assessed published target because precise field-probe locations are not specified.']
     else:
         reference["value"] *= abs(p["applied_field_scale"])
         assumptions += ["Seven IABC shell permeabilities are read as data from the graph's cited original FEMM model.",
@@ -324,23 +387,36 @@ def plan_simulation(case_id, parameters=None, graph=None):
                         "used_for_acceptance":False,"note":"Published rounded numerical magnitude, separate from the analytic target."}]
     geometry["parameters"] = p
     geometry["source_ids"] = case["source_ids"]
+    references=[reference]
+    for item in case.get('additional_references',[]):
+        extra=deepcopy(item)
+        extra.update(applicable=reference['applicable'],tolerance_origin=reference['tolerance_origin'])
+        if case['id']=='gapped-ei-core':
+            extra['value'] *= (p['current']/case['defaults']['current'])**2
+            extra['scaling'] = 'Linear source material law: baseline value multiplied by (current / baseline_current)^2'
+        references.append(extra)
     plan = {"schema_version":1,"case_id":case_id,"title":case["title"],"family":case["family"],"parameters":p,
             "parameter_definitions":case["parameters"],"physics":case["physics"],"source_ids":case["source_ids"],
             "source_url":case["source_url"],"knowledge_node_ids":case["knowledge_node_ids"],
             "knowledge_sources":case["knowledge_sources"],"knowledge_artifacts":case["knowledge_artifacts"],
             "recipe_bindings":{"geometry":"method:methods_axisymmetric_coil_section" if case["family"]=="aircore" else
+                              "method:methods_gapped_ei_core" if case_id=='gapped-ei-core' else
+                              "method:machine_bearing_geometry" if case_id=='radial-bearing' else
                               "method:parallel_wire_cross_sections" if case['family']=='parallel_wires' else
                               "method:methods_uniform_field_iabc_axi" if case_id=="uniform-axisymmetric" else "method:methods_uniform_field_iabc_planar",
                               "solve":"method:methods_magnetic_solve_snapshot",
-                              "postprocess":"method:methods_weighted_stress_force" if case["family"]=="parallel_wires" else "method:methods_linear_flux_inductance" if case["family"]=="aircore" else "method:methods_field_probe_or_contour"},
+                              "postprocess":"method:methods_weighted_stress_force" if case["family"]=="parallel_wires" or case_id=='radial-bearing' else "method:methods_linear_flux_inductance" if case["family"]=="aircore" or case_id=='gapped-ei-core' else "method:methods_field_probe_or_contour"},
             "source_model_sha256":case.get("source_model_sha256"),
             "source_model_data_sha256":hashlib.sha256((DATA/"models"/(case["source_model_sha256"]+".json")).read_bytes()).hexdigest() if case.get("source_model_sha256") else None,
             "assumptions":assumptions,"limits":limits,
-            "frozen_reference":reference,"comparators":comparators,"geometry":geometry,"preview_svg":_svg(geometry),
+            "frozen_reference":reference,"frozen_references":references,"comparators":comparators,"geometry":geometry,"preview_svg":_svg(geometry),
             "lua":_finish_script(lines,case,p,probes,extent,radius),"probes":probes,"metres_per_coordinate_unit":metres_per_unit,
             "requires_ai":False,"numerical_convergence_verified":False,
             "compiler_sha256":hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
             "catalog_sha256":hashlib.sha256((DATA/"simulations.json").read_bytes()).hexdigest()}
+    if case['family']=='native_source':
+        plan['source_recipe_sha256']=hashlib.sha256(Path(__file__).with_name('source_recipe.py').read_bytes()).hexdigest()
+        plan['expected_source_physics']=geometry.pop('expected_source_physics')
     plan["plan_sha256"] = hashlib.sha256(json.dumps(plan,sort_keys=True,separators=(",",":"),allow_nan=False).encode()).hexdigest()
     return plan
 
@@ -379,16 +455,21 @@ def read_native_mesh(folder, metres_per_unit):
             "area_note":"Geometric cross-section area, not axisymmetric revolved volume", "nodes":nodes,"elements":elements}
 
 
-def _mesh_svg(mesh):
+def _mesh_svg(mesh, max_elements=100000):
     nodes=mesh["nodes"]
     xmin,xmax=min(p[0] for p in nodes.values()),max(p[0] for p in nodes.values())
     ymin,ymax=min(p[1] for p in nodes.values()),max(p[1] for p in nodes.values())
     span=max(xmax-xmin,ymax-ymin)
     paths=[]
-    for v in mesh["elements"]:
+    if not isinstance(max_elements, int) or max_elements < 1:
+        raise ValueError("Mesh preview limit must be a positive integer")
+    stride=max(1,math.ceil(len(mesh["elements"])/max_elements))
+    shown=mesh["elements"][::stride]
+    for v in shown:
         a,b,c=(nodes[i] for i in v)
         paths.append(f'M{a[0]:.7g},{-a[1]:.7g}L{b[0]:.7g},{-b[1]:.7g}L{c[0]:.7g},{-c[1]:.7g}Z')
-    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{xmin} {-ymax} {xmax-xmin} {ymax-ymin}"><title>Actual native triangular mesh</title><path d="'+''.join(paths)+f'" fill="none" stroke="#457d79" stroke-width="{span/1800}"/></svg>'
+    title=f'Native mesh preview: {len(shown)} of {len(mesh["elements"])} actual triangles. Full connectivity is retained in model.ele.'
+    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{xmin} {-ymax} {xmax-xmin} {ymax-ymin}"><title>{title}</title><path d="'+''.join(paths)+f'" fill="none" stroke="#457d79" stroke-width="{span/1800}"/></svg>'
 
 
 def _field_svg(folder,geometry):
@@ -446,11 +527,9 @@ def _field_svg(folder,geometry):
             f'<text x="{plot_x+pad*.4:.12g}" y="{plot_y+plot_height+font*2.6:.12g}" font-size="{font*.75:.12g}">{note}</text></g></svg>')
 
 
-def assess_target(plan,metrics):
-    """Compare actual native values only against the already frozen criterion."""
-    ref=plan["frozen_reference"]
+def _compare_reference(ref, metrics):
     if not ref["applicable"]:
-        return {"status":"unassessed","reason":ref.get("reason"),"reference":ref}
+        return {"status":"unassessed","metric":ref['metric'],"reason":ref.get("reason"),"reference":ref}
     observed=metrics.get(ref["metric"])
     if observed is None or not math.isfinite(observed):
         raise ValueError("Native target metric is missing or nonfinite")
@@ -458,9 +537,38 @@ def assess_target(plan,metrics):
     # Zero-source runs have a strict absolute residual check instead of division by zero.
     relative_error=absolute_error/abs(ref["value"]) if ref["value"] else None
     tolerance=abs(ref["value"])*ref["relative_tolerance"] if ref["value"] else 1e-10
-    result={"status":"passed" if absolute_error<=tolerance else "failed","metric":ref["metric"],
+    return {"status":"passed" if absolute_error<=tolerance else "failed","metric":ref["metric"],
             "observed":observed,"expected":ref["value"],"absolute_error":absolute_error,
             "relative_error":relative_error,"absolute_tolerance":tolerance,"reference":ref}
+
+
+def assess_target(plan,metrics):
+    """Compare actual native values only against the already frozen criteria."""
+    ref=plan["frozen_reference"]
+    result=_compare_reference(ref,metrics)
+    if plan['family']=='native_source':
+        targets=[_compare_reference(item,metrics) for item in plan['frozen_references']]
+        consistency={}
+        if plan['case_id']=='gapped-ei-core':
+            linkage=metrics['inductance_H'];energy_l=metrics['energy_inductance_H']
+            if linkage<=0 or energy_l<=0 or metrics['energy_J']<=0:
+                raise ValueError('Native EI energy and inductances must be positive')
+            mismatch=abs(linkage-energy_l)/abs(linkage)
+            cross=abs(metrics['force_I_x_N'])/max(abs(metrics['force_I_y_N']),1e-30)
+            consistency={'status':'passed' if mismatch<=.001 and cross<=.001 and metrics['force_I_y_N']>0 else 'failed',
+                         'linkage_energy_relative_difference':mismatch,'linkage_energy_relative_tolerance':.001,
+                         'transverse_force_ratio':cross,'transverse_force_ratio_tolerance':.001,
+                         'force_direction':'upward' if metrics['force_I_y_N']>0 else 'unexpected'}
+        elif plan['parameters']['current_scale']==plan['parameter_definitions'][0]['default']:
+            cross=abs(metrics['force_rotor_x_N'])/max(abs(metrics['force_rotor_y_N']),1e-30)
+            consistency={'status':'passed' if cross<=.01 and metrics['force_rotor_y_N']>0 else 'failed',
+                         'transverse_force_ratio':cross,'transverse_force_ratio_tolerance':.01,
+                         'force_direction':'upward' if metrics['force_rotor_y_N']>0 else 'unexpected'}
+        if any(t['status']=='failed' for t in targets) or consistency.get('status')=='failed':result['status']='failed'
+        result.update(targets=targets,consistency=consistency)
+        return result
+    if result['status']=='unassessed':return result
+    tolerance=result['absolute_tolerance'];observed=result['observed']
     if plan["family"]=="uniform":
         axis='y' if plan['case_id']=='uniform-axisymmetric' else 'x'
         transverse='x' if axis=='y' else 'y'
@@ -493,6 +601,8 @@ def verify_boundary_attachments(plan, actual):
     only. Coil contours, IABC interfaces and axis segments remain unassigned.
     Coordinate keys make the check independent of native entity ordering.
     """
+    if plan['family']=='native_source':
+        return verify_source_physics(plan['expected_source_physics'],actual)['boundary_attachments']
     if len(actual.get('boundaries',[]))!=1:
         raise ValueError("Native recipe requires exactly one exterior boundary property")
     p=plan['parameters']
@@ -535,6 +645,8 @@ def verify_boundary_attachments(plan, actual):
 
 def verify_native_physics(plan, actual):
     """Inspect the saved native physical assignments, independently of Lua success."""
+    if plan['family']=='native_source':
+        return verify_source_physics(plan['expected_source_physics'],actual)
     attachments=verify_boundary_attachments(plan,actual)
     expected=plan['geometry']['metadata']
     if any(actual['metadata'].get(k)!=v for k,v in expected.items()) or float(actual['metadata'].get('Frequency',-1))!=0:
@@ -611,6 +723,7 @@ def run_simulation(case_id, output, parameters=None, command=None, timeout=180, 
             "plan_sha256":plan["plan_sha256"],"source_ids":plan["source_ids"],"source_url":plan["source_url"],
             "knowledge_node_ids":plan["knowledge_node_ids"],"knowledge_sources":plan["knowledge_sources"],
             "knowledge_artifacts":plan["knowledge_artifacts"],"frozen_reference":plan["frozen_reference"],
+            "frozen_references":plan['frozen_references'],
             "started_at":datetime.now(timezone.utc).isoformat(),"engine":_version(executable),
             "checks":{name:{"status":"not_run"} for name in ("geometry","mesh","solve","target")},
             "requires_ai":False,"numerical_convergence_verified":False,"status":"failed","metrics":{}}
@@ -637,7 +750,7 @@ def run_simulation(case_id, output, parameters=None, command=None, timeout=180, 
                 if row['metric'] in metrics or not math.isfinite(value):raise ValueError("Duplicate or nonfinite native metric")
                 metrics[row['metric']]=value
         if not metrics:raise ValueError("Native metrics are empty")
-        if plan['family']=='aircore' and metrics.get('inductance_H',0)<=0:raise ValueError("Native winding inductance is not positive")
+        if (plan['family']=='aircore' or plan['case_id']=='gapped-ei-core') and metrics.get('inductance_H',0)<=0:raise ValueError("Native winding inductance is not positive")
         (folder/'field.svg').write_text(_field_svg(folder,plan['geometry']))
         report['metrics']=metrics
         report['checks']['solve']={"status":"passed","solution_bytes":(folder/'model.ans').stat().st_size}
