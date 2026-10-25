@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A source-backed, three-layer engineering atlas for FEMM.">
+  <title>FEMM Second Brain · Engineering Atlas</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/vendor/cytoscape.min.js"></script>
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="FEMM Second Brain home"><span class="brand-icon" aria-hidden="true">⌘</span><span>FEMM <strong>Second Brain</strong><small>ENGINEERING ATLAS</small></span></a>
+    <div class="header-note">From engineering intent to exact construction.</div>
+    <a class="source-link" href="https://www.femm.info/doku/doku.php?id=examples" target="_blank" rel="noopener noreferrer">Official FEMM examples ↗</a>
+  </header>
+  <div class="summary-bar" id="summary"><span class="loading-dot"></span> Loading the engineering atlas…</div>
+  <main class="workspace">
+    <aside class="library panel" aria-label="Example library">
+      <div class="panel-heading"><span class="eyebrow">01 / LIBRARY</span><h1>Explore the examples</h1><p>Choose a problem. Follow its methods down to the operations.</p></div>
+      <label for="case-search" class="field-label">Search examples and methods</label>
+      <div class="search-wrap"><span aria-hidden="true">⌕</span><input id="case-search" type="search" placeholder="Induction motor, air gap…" autocomplete="off"></div>
+      <label for="family-filter" class="field-label">Problem family</label><select id="family-filter"><option value="">All families</option></select>
+      <div class="list-heading"><span id="case-count">Examples</span><button id="overview" type="button" class="text-button">Overview</button></div>
+      <div id="case-list" class="case-list"></div>
+      <details class="coverage"><summary>Source coverage <span id="coverage-count"></span></summary><div id="coverage-details"></div></details>
+      <div class="library-note">Sources and verification are attached evidence. The graph has exactly three abstraction layers.</div>
+    </aside>
+    <section class="explorer" aria-label="Knowledge graph and construction explorer">
+      <div class="graph-panel panel">
+        <div class="graph-heading"><div><span class="eyebrow">02 / RELATIONSHIPS</span><h2 id="graph-title">The shared engineering workflow</h2></div><button id="fit-graph" class="small-button" type="button">Fit graph</button></div>
+        <div class="graph-controls"><label class="visually-hidden" for="view-mode">Graph view</label><select id="view-mode"><option value="hierarchy">Abstraction hierarchy</option><option value="execution">Execution dependencies</option><option value="reuse">Cross-example reuse</option></select><label class="check-label"><input type="checkbox" id="relations">Show alternatives & dependencies</label></div>
+        <div class="layer-legend" aria-label="Visible abstraction layers"><label><input type="checkbox" id="layer-1" checked><span class="legend-dot level-1"></span>1 · Workflow</label><label><input type="checkbox" id="layer-2" checked><span class="legend-dot level-2"></span>2 · Components & methods</label><label><input type="checkbox" id="layer-3" checked><span class="legend-dot level-3"></span>3 · Exact operations</label></div>
+        <details class="node-browser"><summary>Browse visible nodes with the keyboard</summary><div id="graph-node-list"></div></details>
+        <div id="graph" role="region" aria-label="Interactive three-layer knowledge graph" tabindex="0"></div>
+        <div id="graph-empty" class="empty-state" hidden>No nodes match these layers. Enable a layer or choose an example.</div>
+        <div class="graph-footer"><span id="graph-summary"><span id="graph-caption">Select a node to inspect its knowledge and sources.</span></span><div><button id="expand-node" class="small-button" type="button" disabled>Expand selected</button><button id="collapse-node" class="small-button" type="button" disabled>Collapse</button></div></div>
+      </div>
+      <section class="construction-panel panel" aria-label="Exact geometry construction">
+        <div class="graph-heading"><div><span class="eyebrow">03 / CONSTRUCTION</span><h2>See how the shape is made</h2></div><span class="pill reconstructed">Parameterized recipes</span></div>
+        <label for="recipe-select" class="field-label">Construction recipe</label><select id="recipe-select"><option value="">Choose a construction recipe…</option></select>
+        <form id="recipe-form"><div id="recipe-parameters" class="parameter-grid"></div><button type="submit" id="generate-recipe" class="primary-button" disabled>Regenerate construction →</button></form>
+        <div class="artifact-row"><label for="artifact-select">Or inspect a source model</label><select id="artifact-select"><option value="">Available native FEMM files…</option></select></div>
+        <p id="geometry-note" class="scope-note">Recipes show an explicit construction. Example-model previews preserve source geometry. Neither preview alone verifies a numerical solution.</p>
+        <div id="geometry-sources" class="geometry-sources" hidden></div>
+        <details id="construction-steps" class="construction-steps" open hidden><summary>How this construction works</summary><ol id="construction-step-list"></ol></details>
+        <div class="construction-body"><div id="geometry-preview" class="geometry-preview"><div class="empty-state">Choose a recipe or source model to inspect its lines, arcs and operations.</div></div><div class="operations-panel"><div class="list-heading"><span>Construction operations</span><span id="operation-count"></span></div><div id="operations-list" class="operations-list"></div></div></div>
+        <div id="geometry-validation" class="validation-note"></div>
+        <div class="download-row"><span>Take the construction with you</span><a id="download-python" class="download-button" hidden>Python</a><a id="download-lua" class="download-button" hidden>Lua</a><a id="download-fem" class="download-button" hidden>FEMM model</a><a id="download-svg" class="download-button" hidden>SVG</a></div>
+      </section>
+    </section>
+    <aside class="inspector panel" aria-label="Selected knowledge and evidence">
+      <div class="inspector-heading"><span class="eyebrow">KNOWLEDGE CARD</span><span id="node-layer" class="pill">Select a node</span></div>
+      <h2 id="node-title">A connected engineering library</h2>
+      <div id="node-verification"></div>
+      <p id="node-description">Explore a workflow, a component or an exact operation. Each card retains its source and the conditions under which it applies.</p>
+      <div id="node-details"></div>
+      <section class="sources-section"><h3>Source evidence</h3><div id="source-list"><p class="muted">Source references will appear here.</p></div></section>
+      <section id="related-section" hidden><h3>Related knowledge</h3><div id="related-list"></div></section>
+      <div class="inspector-bottom"><strong>Read the verification level.</strong><p>Documented, reconstructed, geometry checked and numerically checked describe different kinds of evidence.</p></div>
+    </aside>
+  </main>
+  <div id="status" class="status" role="status" aria-live="polite">Loading…</div>
+  <noscript><p class="noscript">Enable JavaScript to explore the graph. The JSON graph and source inventory are also available through <a href="/api/graph">the API</a>.</p></noscript>
+</body>
+</html>
