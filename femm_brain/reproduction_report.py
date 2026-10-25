@@ -241,7 +241,8 @@ def audit(record, registry_path, catalog="reproductions"):
                 frozen = targets.get(name)
                 if failure.get("case_binding_sha256") != case_binding_digest(case):
                     problems.append(f"{identifier}: reviewed failure is bound to a different case definition.")
-                elif frozen is None or frozen["value"] != metric["target"] or frozen.get("relative_tolerance") != metric["relative_tolerance"]:
+                elif frozen is None or frozen["value"] != metric["target"] or any(
+                        frozen.get(key) != metric.get(key) for key in ("relative_tolerance", "absolute_tolerance")):
                     problems.append(f"{identifier}/{name}: the frozen target differs from the reviewed one.")
                 elif target.get("observed") is None or abs(target["observed"] - metric["observed"]) > \
                         metric["regression_relative_tolerance"] * abs(metric["observed"]):

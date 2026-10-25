@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "hamouda-2019-srm-8-6",
  "set": "development",
- "status": "frozen",
+ "status": "partial",
  "skill_version": null,
  "title": "Accurate magnetic characterization based model development for switched reluctance machine",
  "source": {
@@ -2169,6 +2169,14 @@
     "steel_grade": "Hot rolled low-carbon steel"
    },
    "purpose": "Another Metals Handbook low-carbon steel from the FEMM library."
+  },
+  {
+   "id": "air-gap-0p42",
+   "level": "article",
+   "parameters": {
+    "air_gap_mm": 0.42
+   },
+   "purpose": "A 5% longer air gap. Added after the first run to investigate the aligned excess: it shows the signature a gap difference leaves (a larger change at low current than in saturation), against the excess's constant ratio across current."
   }
  ],
  "coverage": {
@@ -2272,6 +2280,23 @@
    "note": "The 0.642 ohm phase resistance would need thicker wire (about 15 AWG, fill near 0.7); a static solve does not depend on it."
   }
  ],
- "findings": [],
- "retrospective": []
+ "findings": [
+  "Unaligned and partly aligned flux linkage pass: at 0 degrees the model is within 0.0003 Wb (0.2%) of the paper's FEM at every current, and at 10 degrees within 0.0043 Wb (1.2%). Nine of the 20 acceptance targets pass: all at 0 and 10 degrees, and 15 degrees at 6 A.",
+  "Where the poles overlap the model is high: by 0.012-0.013 Wb at 15 degrees (10-18 A), 0.015-0.024 Wb at 20 degrees and 0.026-0.036 Wb aligned, against a 0.01 Wb tolerance. The excess is a ratio constant across current: the paper's FEM is 1.000, 0.989, 0.973, 0.967 and 0.961 times the model at 0, 10, 15, 20 and 30 degrees, varying by at most 0.7% between 4 A (unsaturated) and 18 A (saturated), and by 0.24% aligned. Fig. 9 confirms the paper's value independently: 105.3 mH aligned at 6 A, against 105.2 mH from Fig. 8 and the model's 109.5 mH.",
+  "The mesh is converged: at 0.6 times the mesh (134,000 elements against 62,000) flux linkage moves by at most +0.34% (+0.03% aligned), away from the paper.",
+  "No varied input explains the excess, because each leaves a different signature. The conventional reading of Table 1 lowers aligned flux linkage 0.8% and raises the unaligned 1.25%; Table 1's rotor pole height, parallel rotor poles and the other coil reading move aligned values by under 0.9%. A 5% longer air gap lowers aligned flux linkage 4.0% at 2 A but 0.24% at 18 A, and the hot-rolled steel raises it 8.8% at 2 A and 0.4% at 18 A: a gap or a material changes where the curves bend, while the paper's curves have the model's shape, scaled by an amount that depends on position only. A diagnostic outside the case (probes of the vector potential across pole A in a scratch copy) rules out a pole-flux evaluation: 2 x 88 times the flux through the pole near its face is 0.58 of the circuit linkage unaligned, where the paper agrees with the circuit linkage. The cause stays open; the case keeps its inputs and records the eleven failures as reviewed.",
+  "The unaligned agreement supports the reading of Fig. 13: 0.2% with the figure's rotor diameter, root radius and pole taper, against +1.25% with the conventional reading of Table 1 and -0.9% with parallel rotor poles.",
+  "Measured comparators: the model is 16% below the measured flux linkage unaligned, where end effects (absent in 2D, as in the paper's FEM) are largest, and 3-6% above it aligned; the paper's FEM shows the same pattern with a smaller aligned excess.",
+  "Torque comparators: the model's static torque is 6.0-7.1% above Fig. 10 at 15 degrees and 6.4-6.9% at 20 degrees from 8 to 18 A (more at 2-6 A, where the curves are small), consistent with the higher flux linkage where the poles overlap.",
+  "Mutual flux linkage: the neighbouring phase B links up to 0.046 Wb at 18 A, 6% of phase A's, and the opposite phase C under 0.003 Wb; Fig. 14 calls the mutuals small (not digitized).",
+  "Digitization: Fig. 8's frame lies above its 0.9 Wb gridline, so calibrating on the frame would have read every value 2.2% low. Calibrated on all gridlines (misfit under 0.001 Wb), the readings agree across line and quadratic fits and three windows within 0.001 Wb; the stated uncertainty is 0.005 Wb.",
+  "Runs reproduce bit for bit: three runs of the article level and two of each frozen control gave identical values."
+ ],
+ "retrospective": [
+  "Longest: the geometry, read from the authors' FE rendering (Fig. 13) by fitting circles and lines at the scale of the stator diameter, which showed Table 1's bore diameter as the rotor's; then the axis calibration of Fig. 8, and the investigation of the aligned excess.",
+  "Added generically because this paper needed them: salient_poles (stator or rotor, parallel or tapered, arc or flat roots, coil blocks sharing the pole sides), salient_pole_winding (phase by pole, polarity alternating between a phase's poles or given per pole), digitized targets with an absolute uncertainty, and reviewed failures bound to both tolerance kinds.",
+  "Work tools that should move into the brain: a figure digitizer (gridline calibration, curve tracking with local fits, counting stacked curves) and an overlay of a built model on a paper's rendering at a fitted scale. All three development papers so far needed figure readings.",
+  "Skill proposal: let quotes come from cached related sources, so a fact a companion source states (here the chapter naming the steel) can be quoted rather than assumed.",
+  "Lessons added: calibrate plot axes on gridlines; a rendering of the authors' FE model shows what they solved; read a discrepancy's signature across current before blaming an input; how salient-pole machines are built."
+ ]
 }

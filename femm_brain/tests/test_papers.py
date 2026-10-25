@@ -1,6 +1,7 @@
 """Paper replications: the index, case rules, the skill files and model drawings."""
 from copy import deepcopy
 import json
+import tempfile
 from pathlib import Path
 import unittest
 
@@ -159,6 +160,16 @@ class PaperAuditTests(unittest.TestCase):
         record = self.record()
         record["cases"] = [c for c in record["cases"] if c["case_id"] != "elrefaie-2006-fscw-spm"]
         self.assertIn("elrefaie-2006-fscw-spm: missing from the record.", self.audit(record)["problems"])
+
+    def test_a_reviewed_failure_is_bound_to_its_frozen_tolerances(self):
+        registry = json.loads((Path(__file__).parents[1] / "data" / "verification" / "reviewed_paper_failures.json").read_text())
+        registry["failures"][0]["metrics"][0]["absolute_tolerance"] = 1e-5
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "reviewed.json"
+            path.write_text(json.dumps(registry))
+            from femm_brain.reproduction_report import audit
+            problems = audit(self.record(), path, "papers")["problems"]
+        self.assertTrue(any("frozen target differs from the reviewed one" in p for p in problems))
 
     def test_a_case_that_newly_passes_or_fails_differently_is_caught(self):
         record = self.record()

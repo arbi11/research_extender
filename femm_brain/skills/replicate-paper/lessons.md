@@ -23,6 +23,13 @@ contradicts it.
 - **The engine container's 2 GB limit** kills FEMM at roughly 470,000 elements.
   Scale mesh controls to fit (0.75 rather than 0.5 for a full machine).
   (`lrkanalysis-flux-sweep`)
+- **Read a discrepancy's signature before blaming an input.** A gap or a
+  material changes where a flux-linkage curve bends: a 5% longer gap lowered
+  an SRM's aligned flux linkage 4% at low current but 0.24% in saturation, and
+  a more permeable steel raised it 8.8% and 0.4%. A ratio that stays constant
+  across current at each rotor position (0.961 aligned, within 0.25% from 4 to
+  18 A) is not either; look at how the result was evaluated, and record the
+  failure when no input explains it. (`hamouda-2019-srm-8-6`)
 - **FEMM solves one frequency at a time.** A slip-frequency induction model
   captures the fundamental only; space harmonics (5th, 7th) need their own solves
   at the frequencies they see. (research for TEAM 30)
@@ -54,6 +61,13 @@ contradicts it.
   the same arithmetic.** A faithful rebuild can still mesh differently, so
   compare region by region rather than entity by entity.
   (`lrkanalysis-flux-sweep`)
+
+- **Salient-pole machines** (switched reluctance, wound-field rotors) are
+  `salient_poles` for the stator and the rotor (coil blocks share the pole
+  sides, so no sliver of air separates them) and `salient_pole_winding`. A
+  switched-reluctance phase's opposite poles carry opposite polarity: one
+  series circuit with ±turns. Build the rotor unaligned and turn it toward
+  alignment counterclockwise, so motoring torque is positive. (`hamouda-2019-srm-8-6`)
 
 - **Tubular and linear machines are one period with periodic ends.** Build the
   armature with `magnet_array`, pair the two end edges of each region with a
@@ -90,6 +104,25 @@ contradicts it.
 - **"Top" and "bottom" of a slot are ambiguous.** Decide which end each width
   belongs to from a figure and from whether the teeth come out parallel.
   (`elrefaie-2006-fscw-spm`)
+- **Calibrate plot axes on every gridline, never on the frame.** Hamouda's
+  Fig. 8 frame sits above its 0.9 Wb gridline; a frame calibration read every
+  flux linkage 2.2% low. Fit all gridlines, report the misfit, and check one
+  reading against another figure of the same quantity (an inductance plot
+  against flux linkage over current). (`hamouda-2019-srm-8-6`)
+- **Track curves rather than threshold columns.** Follow each curve from a
+  guess with local line and quadratic fits over several windows (their spread
+  is part of the uncertainty); count stacked curves from the bottom in columns
+  clear of marker symbols; expect a curve hidden under another where they
+  coincide. State the uncertainty in the target's unit when it does not scale
+  with the value. (`hamouda-2019-srm-8-6`)
+- **A rendering of the authors' FE model shows what they solved.** Scale it by
+  a tabulated diameter, check the scale with a second one, and fit circles and
+  lines to its outlines. Hamouda's Fig. 13 showed Table 1's 96.7 mm "bore
+  diameter" as the rotor's diameter, rotor pole roots 0.6 mm from the tabulated
+  pole height, and tapered rotor poles; with that geometry the unaligned flux
+  linkage matched the paper's FEM within 0.2%, against 1.25% for the
+  conventional reading. Build FE targets from the rendering and give the
+  table's reading a control. (`hamouda-2019-srm-8-6`)
 - **Rounded tables need an absolute allowance.** Harmonics given to three
   decimals carry up to 0.0005 T of rounding, over 1% of a 0.047 T harmonic;
   use 1% or 0.001 T, whichever is larger. (`wang-2005-tubular-halbach`)

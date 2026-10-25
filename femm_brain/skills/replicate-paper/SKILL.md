@@ -5,8 +5,9 @@ description: Replicate an electric machine from a paper, report or PDF in FEMM w
 
 # Replicate a machine from a paper
 
-Version 0.2 (0.1 plus OCR at intake, the waveform_statistic assessor and numerical provenance,
-from the first replication). Work through the stages in order; each stage writes part of one
+Version 0.3 (0.2 plus digitized targets with an absolute uncertainty and geometry read from the
+authors' own FE renderings, from the third replication; 0.2 added OCR at intake, the
+waveform_statistic assessor and numerical provenance). Work through the stages in order; each stage writes part of one
 case file, `femm_brain/data/papers/<id>.json`, whose structure is described in
 [`spec.schema.json`](spec.schema.json). Read [`lessons.md`](lessons.md) first:
 it holds what earlier replications taught. Rules that override everything here
@@ -74,6 +75,9 @@ which targets it affects and roughly how much, and the decision:
 - `ask`: the gap decides the outcome (a magnet grade, a winding layout, turns).
   Stop and ask the user.
 - `figure`: measure it from a dimensioned or to-scale figure, with uncertainty.
+  A rendering of the authors' own FE model shows what they solved: scale it by a
+  tabulated diameter, check the scale with a second one, and fit circles and
+  lines to its outlines. Calibrate plot axes on every gridline, not the frame.
 - `assumed`: take a documented default (see `lessons.md`), and add a control
   that varies it across its plausible range.
 - `out_of_scope`: the targets that need it are dropped from acceptance, and the
