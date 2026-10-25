@@ -472,3 +472,21 @@ class VariantTests(unittest.TestCase):
             step["modify"][0]["value"] = f"={k}*step_deg"
         self.assertEqual([s["modify"][0]["value"] for s in plan_level(case, "article")["resolved_steps"]], [7.5 * k for k in range(24)])
         self.assertNotIn("resolved_steps", plan_level(original, "article"))
+
+
+class FemmStorageTests(unittest.TestCase):
+    """The build check compares the plan with what FEMM saves, which follows FEMM's own storage rules."""
+
+    def model(self, curve, max_segment):
+        return {"physics": "magnetics", "problem": {"units": "millimeters", "type": "planar"},
+                "materials": [{"name": "Steel", "props": {"Mu_x": 1}, "curve": curve}],
+                "boundaries": [], "circuits": [], "point_properties": [],
+                "nodes": [{"x": 1, "y": 0}, {"x": 0, "y": 1}], "segments": [], "labels": [], "holes": [],
+                "arcs": [{"n0": 0, "n1": 1, "angle": 90, "max_segment": max_segment}]}
+
+    def test_curves_gain_the_origin_and_arc_segments_stop_at_ten_degrees(self):
+        curve = [[0.5, 100.0], [1.0, 300.0]]
+        self.assertEqual(compare_models(self.model(curve, 28.6), self.model([[0, 0]] + curve, 10)), [])
+        # Anything else still differs: another curve, or a segment below the limit that FEMM kept.
+        self.assertTrue(compare_models(self.model(curve, 28.6), self.model([[0, 0], [0.5, 100.0], [1.0, 310.0]], 10)))
+        self.assertTrue(compare_models(self.model(curve, 5), self.model([[0, 0]] + curve, 10)))

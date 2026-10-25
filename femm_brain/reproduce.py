@@ -539,6 +539,9 @@ def compare_models(expected, actual):
             for key, value in wanted[name]["props"].items():
                 compare(f"{collection}.{name}.{key}", value, seen[name]["props"].get(key))
             a, b = wanted[name].get("curve", []), seen[name].get("curve", [])
+            # FEMM's addbhpoint starts every curve at the origin, so a curve given from its first nonzero point is saved with (0, 0).
+            if a and b and list(b[0]) == [0, 0] and list(a[0]) != [0, 0]:
+                b = b[1:]
             if len(a) != len(b) or any(not close(x, y) for pa, pb in zip(a, b) for x, y in zip(pa, pb)):
                 differences.append({"where": f"{collection}.{name}.curve", "expected": a, "observed": b})
 
@@ -571,7 +574,11 @@ def compare_models(expected, actual):
                                 "unexpected": [list(k) for k in sorted(set(b) - set(a))][:20]})
         for key in set(a) & set(b):
             for field, value in a[key].items():
-                compare(f"{section}.{list(key)}.{field}", value, b[key].get(field))
+                observed = b[key].get(field)
+                # FEMM's addarc stores at most 10 degrees as an arc's maximum segment.
+                if section == "arcs" and field == "max_segment" and isinstance(value, (int, float)) and value > 10:
+                    value = 10
+                compare(f"{section}.{list(key)}.{field}", value, observed)
     return differences
 
 
