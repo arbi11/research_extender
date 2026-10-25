@@ -23,6 +23,12 @@ contradicts it.
 - **The engine container's 2 GB limit** kills FEMM at roughly 470,000 elements.
   Scale mesh controls to fit (0.75 rather than 0.5 for a full machine).
   (`lrkanalysis-flux-sweep`)
+- **FEMM's memory grows with every solve in one process**, by about 360 bytes
+  per mesh element per solve: TEAM 30's 79k-element model filled the 2 GB
+  container after 125 solves. For long sweeps set `engine.solves_per_process`
+  (elements times solves times 360 B well under 2 GB); the engine restarts FEMM
+  and replays earlier modifications, and results reproduce bit for bit across
+  the restarts. (`team-30-induction`)
 - **Read a discrepancy's signature before blaming an input.** A gap or a
   material changes where a flux-linkage curve bends: a 5% longer gap lowered
   an SRM's aligned flux linkage 4% at low current but 0.24% in saturation, and
@@ -30,9 +36,33 @@ contradicts it.
   across current at each rotor position (0.961 aligned, within 0.25% from 4 to
   18 A) is not either; look at how the result was evaluated, and record the
   failure when no input explains it. (`hamouda-2019-srm-8-6`)
-- **FEMM solves one frequency at a time.** A slip-frequency induction model
-  captures the fundamental only; space harmonics (5th, 7th) need their own solves
-  at the frequencies they see. (research for TEAM 30)
+- **FEMM solves one frequency at a time and has no velocity term.** For a
+  rotationally uniform moving conductor in a linear problem, solve each spatial
+  order m of the excitation at its own slip frequency, omega - m Omega
+  (conjugating the excitation when that is negative), take order m out of
+  circle samples, and superpose (`harmonic_superposition`). Torque comes from
+  two gap circles, rotor loss from each order's slip power. In a single-phase
+  machine the net torque is a near-cancellation of counter-rotating waves, so
+  higher orders carry 40-230% of it: never stop at the fundamental.
+  (`team-30-induction`, `design-rotating-cylinder-belt-winding`)
+
+- **FEMM stores what it is given by its own rules.** `addbhpoint` starts every
+  B-H curve at the origin, and `addarc` keeps at most 10 degrees as an arc's
+  maximum segment, so a 0.2 mm fillet asked for in 29 degree pieces is meshed in
+  10 degree ones. The build check applies both rules; count elements with them
+  in mind. (`gierczynski-2024-prius-gen4-ipm`)
+- **Estimate the element count before freezing.** Fillets and short arcs in a
+  supplied drawing multiply elements: the Prius cross-section first meshed to
+  3.35 million elements. A minimum arc piece (`min_segment_length`) and a model
+  of one pole (antiperiodic ends, `sector_air_gap`) brought it to 109k; check
+  such a model against the full machine at one operating point first (psi_d
+  0.072890 against 0.072896 Wb). (`gierczynski-2024-prius-gen4-ipm`)
+
+- **Measure a target the way the paper defines it.** The gear's stall torque is
+  "the maximum point" of a curve with a 3% third harmonic; read as the
+  fundamental it came out 3% low. Do not substitute a statistic on an untested
+  assumption (a sinusoidal curve); if the definition needs the peak, make sure
+  the sweep puts a sample on it. (`zhang-2014-coaxial-magnetic-gear`)
 
 ## Construction
 
@@ -79,6 +109,12 @@ contradicts it.
   arrow from the figure, then confirm with an independent sign in the paper's
   results before trusting the reading. (`wang-2005-tubular-halbach`)
 
+- **Drawings supplied as DXF need joining.** Endpoints that should meet can
+  miss by 1-8 micrometres, and a magnet corner can rest on a pocket edge without
+  a node there. Snap endpoints within a stated distance and split contours at
+  T-junctions (`entity_pattern`), then confirm every region has one label.
+  (`gierczynski-2024-prius-gen4-ipm`)
+
 ## Materials
 
 - FEMM needs a coercivity, not a remanence: `H_c = B_r / (mu0 * mu_r)`. Sintered
@@ -88,6 +124,10 @@ contradicts it.
   named grade first; if the grade is absent, ask before downloading a datasheet,
   or take the nearest library grade as an assumption with a sensitivity control.
   Library names repeat across folders; give the folder.
+- **A lamination stacking factor can decide a saturated map.** Building the
+  Prius steel solid instead of at Motor-CAD's 0.97 fill raised psi_q by 3-4%
+  and failed half the targets; read whether the reference applies the factor
+  and give it a control. (`gierczynski-2024-prius-gen4-ipm`)
 - A 33-point library curve read back natively within 0.06% in B
   (`design-nonlinear-ring-bh`), so library B-H transfer is trustworthy.
 
@@ -123,6 +163,20 @@ contradicts it.
   linkage matched the paper's FEM within 0.2%, against 1.25% for the
   conventional reading. Build FE targets from the rendering and give the
   table's reading a control. (`hamouda-2019-srm-8-6`)
+- **Stated masses and areas decide ambiguous dimensions.** Where a paper leaves
+  open at which radius a ratio is taken, compare its stated masses across its
+  designs: the right reading gives one density for all of them (the gear's PM
+  masses: 0.36% spread at one radius, 1.3-2.6% at the others), whatever the
+  density is. Areas do the same for drawing details (four rounded corners in
+  the double-cage bar). (`zhang-2014-coaxial-magnetic-gear`, `nemeth-2001-double-cage-bar`)
+- **Know what a quoted number is before freezing it.** Nemeth's text gives
+  skin factors "in this case" for an approximate circuit; the FE values are in
+  its Fig. 8 (k_ri 4.8, not 2.36). Find the same quantity in the paper's tables
+  or plots and freeze the one that is the FE (or analytic) result.
+  (`nemeth-2001-double-cage-bar`)
+- **Tabulated optimum designs are rounded.** Before blaming the rounding, solve
+  the rounded variables' neighbours once each: in the gear it moved the torque
+  by at most 0.3%, too little to explain 1.3%. (`zhang-2014-coaxial-magnetic-gear`)
 - **Rounded tables need an absolute allowance.** Harmonics given to three
   decimals carry up to 0.0005 T of rounding, over 1% of a 0.047 T harmonic;
   use 1% or 0.001 T, whichever is larger. (`wang-2005-tubular-halbach`)
@@ -134,10 +188,27 @@ contradicts it.
   positions per cogging period, and still treat it as a comparator.
   (`elrefaie-2006-fscw-spm`)
 
+- **A commercial tool's model file is data for what the paper leaves out.** The
+  Prius Motor-CAD file gave region materials, magnet directions and remanence,
+  B-H tables, the stacking factor and the shaft material; read it as text and
+  run none of its scripts. Its maps are interpolations between a few FE points
+  (`ModelBuildPoints_*`), and dq maps from such tools are consistent with
+  averages over rotor position: compare averages, not one position.
+  (`gierczynski-2024-prius-gen4-ipm`)
 - Text extraction scrambles tables, Greek letters and superscripts; read tables
   from page images and quote the text verbatim.
-- Papers often leave rms or peak unstated (TEAM 30's 310 A/cm2). Resolve it
-  from a second source or the paper's own numbers, and record which you chose.
+- **Conventions can differ between columns of one table.** TEAM 30 states
+  310 A/cm^2 without saying rms or peak; its torques and losses (and the
+  analysis's Fourier strengths) fix it as rms, and its voltages and fields are
+  rms as well, so a model that reports phasor peaks is exactly sqrt 2 high in
+  those columns only. Decide each column's convention from evidence, record it,
+  and freeze a comparator in the other convention where it is inferred.
+  (`team-30-induction`)
+- **A drawing and a table can be mirror images.** Reflecting a machine in the
+  x-axis reverses B_r on that axis and keeps H_theta, while torque, loss and
+  voltage do not change. TEAM 30's field table follows Fig. 1's drawing, its
+  analysis the mirror image; signed field values need the drawing they belong
+  to. (`team-30-induction`)
 - Many publishers block automated fetchers; the built-in browser can read
   landing pages. Author copies under IEEE copyright are for reading only: keep
   them in the cache, never in the repository.

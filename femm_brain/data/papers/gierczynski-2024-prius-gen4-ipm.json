@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "gierczynski-2024-prius-gen4-ipm",
  "set": "development",
- "status": "frozen",
+ "status": "partial",
  "skill_version": null,
  "title": "Modeling of the Fourth-Generation Toyota Prius Traction Machine as the Reference for Future Designs",
  "source": {
@@ -11195,6 +11195,19 @@
    "location": "the model's winding and Motor-CAD's north pole at 22.5 degrees"
   }
  ],
- "findings": [],
- "retrospective": []
+ "findings": [
+  "22 of the 24 acceptance targets pass. Away from no load the d- and q-axis flux linkages agree with Motor-CAD's maps (File S5) within 1% or 0.002 Wb at all twelve points; psi_q is within 0.25-1.01% at eight of the nine points where it exceeds 0.01 Wb.",
+  "Two fail narrowly: psi_d at no load is 0.07300 Wb against 0.07515 (-2.86%, 0.00215 Wb against a 0.002 Wb tolerance), and psi_q at (0, 100 A) is 0.16724 against 0.16520 (+1.23%, 0.00204 Wb). psi_d is low by 1.1-2.2 mWb at (0, 0), (0, 100 A) and (-50 A, 50 A), within 0.03 mWb at (0, 200 A), and low by 0.2-1.2 mWb at the eight points with id <= -100 A; it is never high by more than 0.03 mWb, so the magnet flux reaching the winding is slightly low.",
+  "Torque from the model's own flux linkages, 3/2 p (psi_d iq - psi_q id), is within -1.5% to +0.5% of File S5's torque map, and the whole machine's air-gap (sliding band) torque within -0.3% to +2.1%; both are comparators.",
+  "Rotor position matters and the maps are averages. The dq linkages ripple by up to 14 mWb (psi_d) and 27 mWb (psi_q) over 60 electrical degrees; at the first position alone they are off by up to 4.4 mWb (0.6-7%), against at most 2.2 mWb for the six-position mean, so Motor-CAD's maps are consistent with position-averaged values.",
+  "Controls. 0.7 times the mesh changes every linkage by under 0.15 mWb (psi_q at (0, 200 A) then reads +1.07% and also fails). A non-magnetic shaft changes nothing above 1e-5 Wb. Solid steel (stacking factor 1 instead of Motor-CAD's 0.97) raises psi_q by 3-4% and lowers psi_d at no load to -4%: only 12 targets then pass, so the 0.97 lamination fill is what Motor-CAD's maps used. Magnets at Motor-CAD's 20 C reference (control magnet-20C, added after the first diagnostic solves) pass all 24 targets but move the errors rather than remove them: psi_d at no load becomes +0.42% while at (0, 200 A) it goes from +0.04% to +2.83%. No single magnet temperature fits the whole map, so the frozen 40 C stays and the two failures are kept as reviewed findings.",
+  "The sector model (one pole, antiperiodic ends, sliding band; 109k elements) gives psi_d 0.072890 Wb at no load and the full cross-section (937k elements) 0.072896 Wb at the same position: the representation change after the freeze changes nothing measurable. Run2's article level failed its build check only because FEMM stores B-H curves from the origin and caps arc segments at 10 degrees (commit bb6a44c); run3 repeats the article level with the corrected check, and all 432 of its metrics equal run2's bit for bit.",
+  "File S5's maps are Motor-CAD Lab interpolations: its Lqq is constant over the first rows of low current and the model file asks for 6 current and 5 angle points per map (ModelBuildPoints_Current_Lab, ModelBuildPoints_Gamma_Lab). Points between those FE solutions carry interpolation error the paper does not state; the no-load point is a grid corner."
+ ],
+ "retrospective": [
+  "Longest: the drawing. File S3's contours close only once endpoints within 10 micrometres are joined and contours are split where a magnet corner rests on a pocket edge; its 0.2 mm conductor fillets cut into 1 degree pieces gave a 3.35-million-element mesh, and even with a 0.1 mm minimum piece the full machine had 0.62-0.94 million elements, so the model became one pole with a sliding band after the freeze, checked against a full-machine solve first.",
+  "The skill lacked an element-count estimate before freezing and a rule for checking a partial model against the full one; skill 0.4 asks for both.",
+  "Lessons that held: read a commercial tool's model file as data for what the paper leaves out (regions, magnet directions, B-H tables, stacking factor, shaft material); keep diagnostic controls that were added late and say so.",
+  "Added generically: DXF reading (LINE, ARC, CIRCLE, LWPOLYLINE with bulges, INSERT/BLOCK), entity_pattern (contours as data, snapping, T-junction splitting, minimum arc pieces), sector_air_gap and arc_boundary for models of some poles, and the dq_linkage assessor with flux_scale and torque_scale. A synthetic design (one SPM pole turned by a sector band) checks the drawing and sector components; entity_pattern's split search, which never ended at its default snap distance, was fixed on the way."
+ ]
 }

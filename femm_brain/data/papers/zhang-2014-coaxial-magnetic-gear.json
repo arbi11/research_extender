@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "zhang-2014-coaxial-magnetic-gear",
  "set": "development",
- "status": "frozen",
+ "status": "partial",
  "skill_version": null,
  "title": "Analysis and Design Optimization of a Coaxial Surface-Mounted Permanent-Magnet Magnetic Gear",
  "source": {
@@ -42,7 +42,7 @@
   },
   {
    "part": "stall torque",
-   "component": "waveform_statistic assessor (fundamental over the inner rotor's period)"
+   "component": "waveform_statistic assessor (maximum over the inner rotor's period)"
   }
  ],
  "article": {
@@ -1457,6 +1457,18 @@
    "note": "Masses to 0.1 kg (up to 2.5% for 4.0 kg). Design 2 implies 4% less than the others under every reading of the radii; its stated PM thickness or mass is inconsistent with the rest."
   }
  ],
- "findings": [],
- "retrospective": []
+ "findings": [
+  "The initial design passes: the outer rotor's stall torque is 874.6 N m against the analytic 873 (+0.19%) and the inner rotor's 152.5 against 151 (+0.98%); their ratio is 5.74 against the gear ratio 5.75 (the paper's 873/151 = 5.78).",
+  "Table 2: four of the five other pole-pair combinations pass, 11/2 at 500.3 N m (+0.86%), 21/4 at 839.6 (+0.31%), 26/5 at 951.6 (+0.17%) and 28/5 at 976.7 (+0.38%). 16/3 fails at 693.1 against 715 (-3.07%). Against the paper's own FEM column the model is 1.2-2.3% higher for every combination except 16/3 (-1.55%), so 16/3 is the odd one in both columns; its cause is open.",
+  "Table 3: Design 3 passes at 1001.8 N m against 1001 (+0.08%). Designs 1, 4 and 5 are 1.29%, 1.38% and 1.30% low (1247.7, 644.0, 546.8 against 1264, 653, 554) and Design 2 2.39% high (1253.2 against 1224); Design 2 is also the design whose stated PM mass is 4% off the others (geometry check 3). The rounding of Table 3's variables does not explain them: in single-position solves at the peak (scratch, not evidence), Design 1's torque moves by +-0.29% for tau_m/tau_p +-0.005, under 0.01% for tau_l/tau_p +-0.005, and Design 2's by -0.06% for t_o 0.05 mm thinner. The causes are open.",
+  "The torque curves are not sinusoidal: their third harmonic is 2.3-4.4% of the fundamental, and in every build the maximum falls on the quarter-period sample. Read as the fundamental (run1, frozen first) the initial design gave 846.5 N m (-3.0%) and 147.2 N m for the inner rotor (-2.5%); read as the maximum the paper defines, 874.6 and 152.5.",
+  "Controls on the initial design, as changes of the outer and inner stall torques: 0.7 times the mesh -0.10% and -0.09%; iron ten times more permeable +0.07% and +0.07% (the inner rotor then reads +1.04% against 151 and fails narrowly); tau_p at the pole pieces' mean radius +0.53% and +0.52% (+0.71% and +1.50% against the analytic values, the inner one failing), so the R4 reading chosen from the masses also agrees better with the torques; the arc width at the yoke face -0.20% and -0.21% (-0.01% and +0.77% against the analytic values: the yoke reading is not decisive). Nonlinear M-19 iron gives 843.2 N m, 2.4% below the paper's nonlinear FEM (864): the paper's steel or FEM settings make its iron more permeable than M-19.",
+  "The paper's FEM values (comparators) lie 1.2-2.3% below the linear model for the Table 2 combinations except 16/3 (1.6% above), and 4.35% below for Design 5 (524 N m, 5.4% under its own analytic value), consistent with the saturation the paper names."
+ ],
+ "retrospective": [
+  "Longest: the radial build. Table 1 leaves open where the pole-piece pitch and the PM arc width are measured; the paper's own PM and steel masses decided both, density-free, before any solve. Then the stall-torque statistic.",
+  "The skill lacked a rule to measure a target the way the paper defines it. The frozen statistic substituted the fundamental for the curve's maximum on an untested assumption (a sinusoidal curve); the correction after run1 is disclosed and run1 kept. Lessons gained both points.",
+  "Lessons that held: stated derived quantities (masses, areas) as a check of the dimensions; analytic targets reproduced by a model that adopts the analytic model's own assumptions.",
+  "Added generically: variants (further tabulated designs as acceptance levels of one case, with steps that follow each variant's parameters), ring_sectors with copies (closed magnet rings and pole-piece rings), and the waveform statistic maximum."
+ ]
 }

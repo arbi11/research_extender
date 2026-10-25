@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "team-30-induction",
  "set": "development",
- "status": "frozen",
+ "status": "partial",
  "skill_version": null,
  "title": "Induction Motor Analyses, International TEAM Workshop Problem 30",
  "source": {
@@ -18351,6 +18351,19 @@
    "note": "Computed as (6/pi)|sin(m 22.5 deg)|/m times the 438.4 A/cm^2 amplitude; with 310 A/cm^2 as the amplitude every value would be sqrt(2) smaller."
   }
  ],
- "findings": [],
- "retrospective": []
+ "findings": [
+  "Torque and rotor loss pass. The three-phase torque is within 0.041% of Table I at all seven speeds and the rotor loss within 0.028%; the single-phase rotor loss is within 0.025% of Table III and the single-phase torque within 0.35% from 79.6 to 358 rad/s. 34 of the 51 acceptance targets pass; the other 17 are the voltages (finding 3).",
+  "Single-phase torque at 39.8 rad/s is 0.0492 N/m against 0.0528 (6.8% low, 0.0036 N/m), inside its 0.005 N/m absolute tolerance. The net single-phase torque is the small difference of two counter-rotating waves' torques: orders other than +1 and -1 carry 37-58% of it at most speeds and 232% at 358 rad/s, where it changes sign, and there the model agrees within 0.35%. Table III's torque rises by 0.0528 N/m over the first 39.8 rad/s and 0.0434 over the next, where the model rises by 0.0492 and 0.0468; the cause is open.",
+  "Every voltage is high by the same factor, 1.4135-1.4138 (sqrt 2 = 1.4142): the model reports the peak magnitude of the per-turn voltage phasor and Tables I and III give its rms value. Control current-density-amplitude-310 (310 A/cm^2 as the amplitude) brings all 17 voltages within 0.05% but halves every torque and loss, so all 34 other targets then fail by 50%. No single reading of the current fits every column: the tables pair a 310 A/cm^2 rms current, as the analysis's Fig. 3 component strengths also imply (geometry check 2), with rms voltages. The frozen voltage assessors compare a peak with an rms value; the 17 failures are kept as reviewed findings and the targets are unchanged.",
+  "Field comparators (Table II', 200 rad/s): the model's B_r is -1.401 to -1.411 times the table and H_theta +1.407 to +1.419 times from x = 0.032 to 0.0498 m, with imaginary parts of the ratios below 0.009 (at 0.052 m, where H_theta falls to a ninth of its value at 0.032 m, the H_theta ratio is 1.27). The table is rms too, and its B_r has the opposite sign. Reflecting the machine in the x-axis reverses B_r on that axis and keeps H_theta; the model is Fig. 1's mirror image (gap 2), so Table II' follows Fig. 1's drawing, while torque, loss and voltage do not change under the reflection. One of the 40 comparators passes at 2% of the field; with the amplitude reading of the current, 19 do (the H_theta values).",
+  "Rotor steel loss (a comparator, from eddy-current samples on 8 rings) is within 0.079% of the tables for the three-phase motor and 0.076% for the single-phase one, and the whole rotor's loss from 14 rings agrees with the slip-power value within 0.017%.",
+  "Controls: 0.7 times the mesh changes every torque, loss and voltage by at most 0.097%, and doubling the open boundary's radius by at most 0.093% (both largest for the single-phase torque at 358 rad/s, the near-cancellation) and the voltages by at most 0.002%. Orders 19-25 contribute at most 3.8e-4 of any quantity; the single-phase stall torque, zero by symmetry, is 6e-6 N/m from order-1 torques of +-0.428 N/m.",
+  "The first run (run1) stopped at step 125 of 290: FEMM's memory grows by about 360 bytes per mesh element with each solve in one process, and the 79k-element model filled the 2 GB container. The engine now restarts FEMM every engine.solves_per_process solves (20 here) and replays the earlier modifications; run2 is the evidence, and run1 is kept. The 125 steps run1 completed reproduce bit for bit in run2 (all 352,225 values), across the restarts."
+ ],
+ "retrospective": [
+  "Longest: rotation without a velocity term. FEMM solves the rotor at one frequency, so each spatial order of the excitation is solved at its own slip frequency and taken out of circle samples by order, then superposed (the analysis's own method). After that, the out-of-memory run and the voltage convention.",
+  "The skill lacked a step for each target column's convention: a benchmark can state its excitation in one convention (rms current) and give some outputs in another, and its drawing and its tables can be mirror images. Skill 0.4 asks for each column's convention and orientation with the evidence for it, and a comparator in the other convention where it is inferred.",
+  "Lessons that held: a convention inferred from an independent statement (the analysis's Fig. 3 strengths gave rms current, which the torques confirm); keep a failed run (run1 explains the engine change).",
+  "Added generically: belt_winding (slotless belts with signed turns), set_frequency steps and complex circuit currents, circle_values samples, chunked engine processes (engine.solves_per_process), and the harmonic_superposition assessor (torque from two gap circles, slip power, ring eddy loss, winding voltage, point fields). A synthetic design checks belt_winding and the superposition against a new closed form (rotating_cylinder_torque, a conducting cylinder's Bessel reflection of each order): torque and losses within 0.09%. The audit now binds a reviewed failure of an assessor to the case's frozen assessor."
+ ]
 }

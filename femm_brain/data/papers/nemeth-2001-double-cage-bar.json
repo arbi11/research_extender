@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "nemeth-2001-double-cage-bar",
  "set": "development",
- "status": "frozen",
+ "status": "partial",
  "skill_version": null,
  "title": "Finite Element Calculation of Double-Cage Skin Factors",
  "source": {
@@ -1152,6 +1152,17 @@
    "location": "Table 1, p. 246"
   }
  ],
- "findings": [],
- "retrospective": []
+ "findings": [
+  "DC: the resistances agree with Table 1 within 0.05% (209.59 and 69.075 micro-ohm/m) and the outer bar's self-inductance and the mutual inductance within 0.66% and 0.61% (2.347 and 2.704 uH/m). The inner bar's self-inductance is 6.569 uH/m against 6.503 (+1.01%) and fails narrowly. All three inductances are 0.6-1.0% high and halving the mesh changes them by at most 0.05%, so the excess is not discretization; Fig. 1's dimensions are printed to 0.1 mm, and the leakage paths through the 4 mm neck and 5 mm opening are where such a reading matters most. The mutual inductance is the same from either bar to 1.5e-12.",
+  "The two bars in parallel at 0.1 V/m and 50 Hz draw an in-phase current of 43.17 A against Fig. 9's 43.1 A (+0.15%), computed from the two single-bar solves; the lagging part is 116.6 A against about 119 A read from Fig. 9 (a comparator, within its 4 A tolerance).",
+  "The outer bar's skin factors at 50 Hz pass: k_ro = 1.225 against 1.2 (inside its rounding) and k_xo = 0.983 against 0.98.",
+  "The inner bar's do not: k_ri = 4.81 against the text's 2.36 and k_xi = 0.932 against 0.955. Fig. 8, which plots the FE skin factors against frequency, reads at 50 Hz (600 dpi, against its gridlines) k_ri 4.77, k_xi 0.931, k_xo 0.984, k_xm 0.971, k_rm 2.27 and k_ro 1.19, against the model's 4.81, 0.932, 0.983, 0.971, 2.22 and 1.23. The text gives its four values for the approximate circuit 'taking the skin effect into account but ignoring R_m'; its k_ro and k_xo agree with Fig. 8, but its k_ri and k_xi are not the FE values at 50 Hz, and the paper itself calls k_ri 'too big' because of eddy currents in the outer bar. The case froze them as FE skin factors; they stay frozen and are kept as reviewed failures, and the model reproduces the paper's FE curves.",
+  "Halving the mesh changes every quantity by at most 0.054%."
+ ],
+ "retrospective": [
+  "Longest: reading the scanned paper. Its tables and figure labels are not in the extracted text; the parallel-bar current is printed only on Fig. 9's axis, and the FE skin factors only in Fig. 8.",
+  "The skill lacked a check of what a quoted number is: the text's skin factors 'in this case' belong to an approximate circuit, which the paper's own Fig. 8 shows before any solve. Lesson added: before freezing a number from a sentence, find the same quantity in the paper's tables or plots and freeze the one that is the FE result.",
+  "Lessons that held: derived quantities the paper states (areas, resistances) fix ambiguous drawing details (four rounded corners; the dimension chain).",
+  "Added generically: the parallel_branches assessor (coupled conductors in parallel across one voltage, from solves that each drive one branch), and skin factors as metric_relation ratios of AC to DC solves."
+ ]
 }
