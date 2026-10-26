@@ -34,8 +34,20 @@ contradicts it.
   an SRM's aligned flux linkage 4% at low current but 0.24% in saturation, and
   a more permeable steel raised it 8.8% and 0.4%. A ratio that stays constant
   across current at each rotor position (0.961 aligned, within 0.25% from 4 to
-  18 A) is not either; look at how the result was evaluated, and record the
-  failure when no input explains it. (`hamouda-2019-srm-8-6`)
+  18 A) is neither alone, but it can be two inputs together (next lesson); look
+  at how the result was evaluated as well, and record the failure when nothing
+  explains it. (`hamouda-2019-srm-8-6`)
+- **Inputs with opposing current signatures add up to a uniform scale.** A
+  lamination stacking factor lowers saturated flux and barely touches the
+  low-current, gap-dominated part; a longer gap does the reverse. Together
+  (FEMM fill 0.96 and 3.75% more gap reluctance) they gave the SRM's
+  position-dependent, current-independent ratio within 0.24% rms over 44
+  readings, where each alone left 1.2-2.6%. When one-at-a-time controls each
+  bend the curves, solve a small grid of such pairs over all positions and
+  currents, and confirm the best pair on a result not fitted (the static
+  torque came from 6-7% to 1-3%). A fitted pair is a likely cause, not a
+  reading: record it as a finding and keep the frozen inputs.
+  (`hamouda-2019-srm-8-6`)
 - **FEMM solves one frequency at a time and has no velocity term.** For a
   rotationally uniform moving conductor in a linear problem, solve each spatial
   order m of the excitation at its own slip frequency, omega - m Omega
@@ -218,7 +230,9 @@ contradicts it.
 - **A lamination stacking factor can decide a saturated map.** Building the
   Prius steel solid instead of at Motor-CAD's 0.97 fill raised psi_q by 3-4%
   and failed half the targets; read whether the reference applies the factor
-  and give it a control. (`gierczynski-2024-prius-gen4-ipm`)
+  and give it a control. A paper that names a FEMM library steel without a
+  fill may still have set one: the SRM's FE curves fit fill 0.96, not the
+  library's 1. (`gierczynski-2024-prius-gen4-ipm`, `hamouda-2019-srm-8-6`)
 - A 33-point library curve read back natively within 0.06% in B
   (`design-nonlinear-ring-bh`), so library B-H transfer is trustworthy.
 
@@ -257,6 +271,13 @@ contradicts it.
   clear of marker symbols; expect a curve hidden under another where they
   coincide. State the uncertainty in the target's unit when it does not scale
   with the value. (`hamouda-2019-srm-8-6`)
+- **Read a figure from the PDF's embedded image, not a page render.**
+  `pdfimages -list` gives each raster's native size: Hamouda's Fig. 13 is a
+  770 px lossless screenshot (4.10 px/mm, one exact outline colour), which the
+  page render read first had upsampled 2.5 times. Fit and quote
+  uncertainties at the native pixel size; a FEMM post-processor screenshot
+  carries no node markers, so its outlines are the evidence.
+  (`hamouda-2019-srm-8-6`)
 - **A rendering of the authors' FE model shows what they solved.** Scale it by
   a tabulated diameter, check the scale with a second one, and fit circles and
   lines to its outlines. Hamouda's Fig. 13 showed Table 1's 96.7 mm "bore
