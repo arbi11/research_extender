@@ -183,5 +183,8 @@ def primitives(entities, scale=1.0):
                 a0, a1 = math.degrees(math.atan2(y0 - cy, x0 - cx)), math.degrees(math.atan2(y1 - cy, x1 - cx))
                 # FEMM arcs run counterclockwise, so a clockwise (negative) bulge is drawn from its end to its start.
                 out += _arc_pieces(cx, cy, radius, a0, a1) if bulge > 0 else _arc_pieces(cx, cy, radius, a1, a0)
+        elif kind in ("SPLINE", "ELLIPSE"):
+            # Contours this reader cannot convert must not vanish from the model unnoticed.
+            raise ValueError(f"DXF {kind} entities are contours this reader cannot convert; redraw them as lines and arcs")
         # Other entity types (text, dimensions, hatches) carry no contours.
     return [[p[0]] + [v * scale for v in p[1:5]] + p[5:] for p in out]

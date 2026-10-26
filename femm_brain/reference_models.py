@@ -401,8 +401,10 @@ def _phase_linkage(assessor, case, raw, metrics, model):
     links = [abs(windings[name]) for name in sequence]
     winding_balance = (max(links) - min(links)) / (sum(links) / len(links))
     step_angle = 360 / len(sequence)
-    # Counterclockwise rotation brings each phase to its peak one phase step after the previous one.
-    predicted_order = all(_angle_difference(predicted[name] - predicted[sequence[0]], k * step_angle) <= 1e-6
+    # Counterclockwise rotation brings each phase to its peak one phase step after the previous one. The prediction
+    # comes from region centroids, which a drawing's coordinate noise moves (0.1 micrometre in the IEEJ D model's DXF
+    # moved them by 5e-5 degrees), so its order is checked to 1e-3 degrees.
+    predicted_order = all(_angle_difference(predicted[name] - predicted[sequence[0]], k * step_angle) <= 1e-3
                           for k, name in enumerate(sequence))
     measured_order = all(_angle_difference(measured[name][0] - measured[sequence[0]][0], k * step_angle)
                          <= assessor["phase_tolerance_deg"] for k, name in enumerate(sequence))

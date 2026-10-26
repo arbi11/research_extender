@@ -719,6 +719,9 @@ class DrawingTests(unittest.TestCase):
             dxf.read(_dxf(["0", "POLYLINE", "70", 8], ["0", "VERTEX", "10", 0, "20", 0], ["0", "SEQEND"]))
         with self.assertRaises(ValueError):
             dxf.read(_dxf(["0", "POLYLINE", "70", 0], ["0", "VERTEX", "10", 0, "20", 0]))
+        # Contours the reader cannot convert are refused, never dropped.
+        with self.assertRaises(ValueError):
+            dxf.primitives(dxf.read(_dxf(["0", "SPLINE", "10", 0, "20", 0])))
 
     def test_patterns_join_copies_snap_noise_and_split_t_junctions(self):
         problem = {"physics": "magnetics", "units": "millimeters", "type": "planar", "frequency": 0, "depth": 1}
