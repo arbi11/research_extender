@@ -792,6 +792,11 @@ class RingSectorTests(unittest.TestCase):
         self.assertEqual(len(model["holes"]), 5)
         self.assertEqual(sorted(l["material"] for l in model["labels"]), ["Air"] * 5)
         self.assertEqual(check_regions(model), [])
+        # Slots that carry circuits are left for block labels of their own.
+        teeth = self.ring([[60 * k + 15, 60 * k + 45, None, None] for k in range(6)], label_gaps=False)
+        self.assertEqual((len(teeth["holes"]), len(teeth["labels"])), (6, 0))
+        with self.assertRaises(ValueError):
+            self.ring([[0, 20, "Iron", None]])
 
     def test_one_period_repeated_by_a_pole_count_parameter(self):
         steps = [{"use": "material", "name": "PM", "values": {"H_c": 900000}},

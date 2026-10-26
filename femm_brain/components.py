@@ -958,7 +958,7 @@ def belt_winding(m, inner_radius, outer_radius, belts, material, gap_material, m
 
 
 def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0, gap_material=None, max_segment=1, mesh=None,
-                 gap_mesh=None, group=0):
+                 gap_mesh=None, group=0, label_gaps=True):
     """An annulus divided into angular sectors, each a block of its own material and magnetization.
 
     ``sectors`` lists [start, end, material, magnetization] with angles in
@@ -968,7 +968,9 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0,
     or "inward" (radial, through FEMM's direction function) or a number (a
     parallel direction in degrees). Contiguous sectors make a closed ring of
     magnets (a magnetic gear's or Halbach rotor's); sectors with gaps between
-    them make pole pieces or teeth, and the gaps take ``gap_material``. The
+    them make pole pieces or teeth, and the gaps take ``gap_material`` (or, with
+    ``label_gaps`` false, are left for other steps to label, as slots that carry
+    circuits). The
     sectors may describe one period, repeated ``copies`` times by ``angle_step``
     degrees (a parallel direction turns with its copy), so a pole count can be a
     parameter. Arcs are split at every sector edge and wherever they would exceed
@@ -1003,8 +1005,8 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0,
             raise ValueError("Sectors overlap")
     radial = sorted({round(s % 360, 12) for s, _, _, _ in spans} | {round((s + w) % 360, 12) for s, w, _, _ in spans})
     covered = abs(sum(w for _, w, _, _ in spans) - 360) < 1e-9
-    if not covered and gap_material is None:
-        raise ValueError("Sectors leave gaps: give a gap material")
+    if not covered and gap_material is None and label_gaps:
+        raise ValueError("Sectors leave gaps: give a gap material, or leave them to other steps with label_gaps false")
     edges = []
     for a, b in zip(radial, radial[1:] + [radial[0] + 360]):
         pieces = max(1, math.ceil((b - a) / 180 - 1e-12))
@@ -1021,7 +1023,8 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0,
         centre = (a + b) / 2
         owner = next((sector for sector in spans if (centre - sector[0]) % 360 < sector[1]), None)
         if owner is None:
-            m.label(*point(middle, centre), gap_material, mesh=gap_mesh, group=group)
+            if label_gaps:
+                m.label(*point(middle, centre), gap_material, mesh=gap_mesh, group=group)
         elif owner[2] is None:
             # Ideal iron (infinitely permeable) is left unmeshed: its surfaces are natural boundaries.
             m.hole(*point(middle, centre))
