@@ -1,9 +1,9 @@
 """Geometry from DXF drawings that papers supply as data.
 
 Supplementary vector files are read, never executed. ASCII DXF entities LINE,
-ARC, CIRCLE and LWPOLYLINE (straight and bulged vertices) are turned into
-contour primitives, and INSERTs place the BLOCKs they name (with insertion
-point, scale and rotation). Primitives are segments [x0, y0, x1, y1] and
+ARC, CIRCLE, LWPOLYLINE and the older POLYLINE with its VERTEX sequence
+(straight and bulged vertices) are turned into contour primitives, and INSERTs
+place the BLOCKs they name (with insertion point, scale and rotation). Primitives are segments [x0, y0, x1, y1] and
 counterclockwise arcs [x0, y0, x1, y1, angle] no wider than 180 degrees, the
 form the entity_pattern component draws.
 """
@@ -16,7 +16,13 @@ def _pairs(text):
 
 
 def _entities(pairs):
-    """Split group-code pairs into entities: [(type, [(code, value), ...]), ...]."""
+    """Split group-code pairs into entities: [(type, [(code, value), ...]), ...].
+
+    An R12 POLYLINE is followed by VERTEX entities and a SEQEND; the sequence
+    becomes one LWPOLYLINE-shaped entity (its vertices' coordinates and bulges
+    in order, the polyline's closed flag), so both forms are read alike. 3D
+    polylines and polygon meshes carry no planar contour and are refused.
+    """
     out, current = [], None
     for code, value in pairs:
         if code == "0":
@@ -27,7 +33,24 @@ def _entities(pairs):
             current[1].append((code, value))
     if current:
         out.append(current)
-    return out
+    merged, polyline = [], None
+    for kind, fields in out:
+        if kind == "POLYLINE":
+            flags = int(dict(fields).get("70", "0"))
+            if flags & (8 | 16 | 64):
+                raise ValueError("3D polylines and polygon meshes are not planar contours")
+            polyline = ("LWPOLYLINE", [("70", str(flags & 1))])
+        elif kind == "VERTEX" and polyline is not None:
+            vertex = dict(fields)
+            polyline[1].extend([("10", vertex.get("10", "0")), ("20", vertex.get("20", "0")), ("42", vertex.get("42", "0"))])
+        elif kind == "SEQEND" and polyline is not None:
+            merged.append(polyline)
+            polyline = None
+        else:
+            merged.append((kind, fields))
+    if polyline is not None:
+        raise ValueError("A DXF POLYLINE has no SEQEND")
+    return merged
 
 
 def read(text):

@@ -5,7 +5,9 @@ description: Replicate an electric machine from a paper, report or PDF in FEMM w
 
 # Replicate a machine from a paper
 
-Version 0.4 (0.3 plus each target column's convention and orientation, variants for the further
+Version 0.5 (0.4 plus EMF harmonics from flux linkage, inductances from single-axis currents,
+power-invariant dq values and assessor labels, from the IEEJ D model; 0.4 was 0.3 plus each
+target column's convention and orientation, variants for the further
 designs a paper tabulates, and assessors for moving conductors, dq maps and symmetry relations,
 from TEAM 30, the Prius and the magnetic gear; 0.3 added digitized targets with an absolute
 uncertainty and geometry from the authors' FE renderings; 0.2 added OCR at intake, the
@@ -116,17 +118,23 @@ sweep can follow each variant's pole count.
 Write the measurement plan (`measurements`, `metrics`, `steps` for rotor
 positions or current sweeps) and the assessors: `phase_linkage` checks winding
 signs and phase order against the construction, and `waveform_statistic`
-compares a statistic over the rotor sweep (fundamental rms or peak,
-peak-to-peak, mean) with a paper value under the same target rules (its
-`value_kind` plays the role of a target's `kind`); `spatial_harmonic` does the
+compares a statistic over the rotor sweep (fundamental rms or peak, the peak of
+any harmonic `order`, peak-to-peak, mean) with a paper value under the same
+target rules (its `value_kind` plays the role of a target's `kind`); a
+harmonic of a flux linkage becomes the EMF's with
+`time_derivative_frequency_hz`, and `scale` applies a stated convention factor;
+`spatial_harmonic` does the
 same for one harmonic of a field sampled evenly along one spatial period;
 `harmonic_superposition` sums a linear problem with a rotationally uniform
 moving conductor over spatial orders solved at their slip frequencies (torque,
 slip power, eddy loss, voltage, fields); `dq_linkage` takes d- and q-axis flux
 linkage and torque from phase linkages at frozen dq currents and rotor
 positions (`flux_scale` and `torque_scale` take a model of some poles to the
-machine); `metric_relation` checks values a symmetry of the construction makes
-equal. Then set `status` to
+machine; `L_d` and `L_q` against a `reference_point` give inductances from
+single-axis currents, and `transform: power_invariant` states flux linkage on
+that scale); `metric_relation` checks values a symmetry of the construction makes
+equal. A `label` names an assessor apart from others of the same quantity (a
+paper's FE value and its measurement). Then set `status` to
 `frozen`. **Commit the frozen case before the first native
 solve**, so the history shows the targets came first.
 

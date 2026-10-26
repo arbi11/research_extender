@@ -289,18 +289,32 @@ def _waveform_statistic(assessor, case, raw, metrics, model):
 
     ``fundamental_rms`` and ``fundamental_peak`` take the component at
     pole_pairs times the rotor angle (extending a half period by the declared
-    half-wave symmetry); ``peak_to_peak``, ``mean`` and ``maximum`` (the largest
-    sample, as a paper's "maximum of the curve") use the samples as they are, so
-    a maximum needs the peak on a sample or dense samples near it.
+    half-wave symmetry), and ``harmonic_peak`` the component of electrical
+    ``order`` n at n times that; ``peak_to_peak``, ``mean`` and ``maximum`` (the
+    largest sample, as a paper's "maximum of the curve") use the samples as they
+    are, so a maximum needs the peak on a sample or dense samples near it.
+
+    A harmonic can be reported as the time derivative of the waveform at a given
+    electrical frequency (``time_derivative_frequency_hz``: an EMF's harmonic from
+    a flux linkage's, n times 2 pi f times its amplitude), and any statistic times
+    a stated ``scale`` (a convention factor, such as the square root of 3/2 that
+    takes a phase flux-linkage amplitude to a power-invariant d-axis value).
     """
     statistic = assessor["statistic"]
     samples, span = _rotor_samples(assessor, case)
     p = assessor["pole_pairs"]
     values = [(a, metrics[assessor["metric"] + "@" + label]) for a, label in samples]
-    if statistic in ("fundamental_rms", "fundamental_peak"):
+    order = assessor.get("order", 1) if statistic == "harmonic_peak" else 1
+    if assessor.get("time_derivative_frequency_hz") and statistic not in ("fundamental_rms", "fundamental_peak", "harmonic_peak"):
+        raise ValueError("A time derivative applies to a harmonic statistic")
+    if statistic in ("fundamental_rms", "fundamental_peak", "harmonic_peak"):
+        if not (isinstance(order, int) and order >= 1):
+            raise ValueError("A harmonic order is a positive integer")
         points = values + ([(a + span, -v) for a, v in values] if assessor.get("half_wave_symmetry") else [])
-        amplitude = abs(2 / len(points) * sum(v * cmath.exp(1j * math.radians(p * a)) for a, v in points))
+        amplitude = abs(2 / len(points) * sum(v * cmath.exp(1j * math.radians(order * p * a)) for a, v in points))
         observed = amplitude / math.sqrt(2) if statistic == "fundamental_rms" else amplitude
+        if assessor.get("time_derivative_frequency_hz"):
+            observed *= 2 * math.pi * assessor["time_derivative_frequency_hz"] * order
     elif statistic == "peak_to_peak":
         observed = max(v for _, v in values) - min(v for _, v in values)
     elif statistic == "mean":
@@ -309,6 +323,7 @@ def _waveform_statistic(assessor, case, raw, metrics, model):
         observed = max(v for _, v in values)
     else:
         raise ValueError("Unknown waveform statistic: " + statistic)
+    observed *= assessor.get("scale", 1)
     target = {key: assessor[key] for key in ("value", "relative_tolerance", "absolute_tolerance", "quote", "location",
                                               "used_for_acceptance", "allowance") if key in assessor}
     target.update(kind=assessor.get("value_kind"), metric=assessor_metric(assessor))
@@ -316,7 +331,8 @@ def _waveform_statistic(assessor, case, raw, metrics, model):
     error = abs(observed - assessor["value"])
     tolerance = max(abs(assessor["value"]) * assessor.get("relative_tolerance", 0), assessor.get("absolute_tolerance", 0))
     return {"status": "passed" if error <= tolerance else "failed", "assessor": "waveform_statistic",
-            "metric": assessor_metric(assessor), "statistic": statistic, "observed": observed,
+            "metric": assessor_metric(assessor), "statistic": statistic + (f" {order}" if statistic == "harmonic_peak" else ""),
+            "observed": observed,
             "expected": assessor["value"], "absolute_error": error,
             "relative_error": error / abs(assessor["value"]) if assessor["value"] else None,
             "absolute_tolerance": tolerance, "samples": len(values), "target": target}
@@ -543,33 +559,59 @@ def _dq_linkage(assessor, case, raw, metrics, model):
     flux linkages and the measured torque up to the machine (flux_scale,
     torque_scale). Values are averaged over the point's rotor positions, or
     taken at its first position.
+
+    ``L_d`` and ``L_q`` are inductances from single-axis currents, as benchmarks
+    separate them: (mean psi_d at the point - mean psi_d at ``reference_point``,
+    usually no load) / i_d, and the same for q; they do not depend on the
+    transform's scaling. ``transform: power_invariant`` reports psi_d and psi_q
+    on the power-invariant scale (the square root of 3/2 times the
+    amplitude-invariant values), as some benchmarks state magnet flux.
     """
     point, quantity = assessor["point"], assessor["quantity"]
-    steps = [s for s in case.get("steps") or [] if (s.get("dq") or {}).get("point") == point]
-    if not steps:
-        raise ValueError(f"No steps carry the operating point {point}")
-    if assessor.get("average", "positions") == "first":
-        steps = steps[:1]
-    phases = assessor["phases"]
+    if assessor.get("transform", "amplitude_invariant") not in ("amplitude_invariant", "power_invariant"):
+        raise ValueError("The dq transform is amplitude_invariant or power_invariant")
+
+    def point_rows(name):
+        steps = [s for s in case.get("steps") or [] if (s.get("dq") or {}).get("point") == name]
+        if not steps:
+            raise ValueError(f"No steps carry the operating point {name}")
+        if assessor.get("average", "positions") == "first":
+            steps = steps[:1]
+        phases, out = assessor["phases"], []
+        for step in steps:
+            dq = step["dq"]
+            theta = math.radians(dq["electrical_angle_deg"])
+            psi = [assessor.get("flux_scale", 1) * raw[(step["label"], phases[k], 2)].real for k in range(3)]
+            d = 2 / 3 * sum(psi[k] * math.cos(theta - 2 * math.pi * k / 3) for k in range(3))
+            q = -2 / 3 * sum(psi[k] * math.sin(theta - 2 * math.pi * k / 3) for k in range(3))
+            out.append((step, dq, d, q))
+        return out
+
+    scale = math.sqrt(1.5) if assessor.get("transform") == "power_invariant" else 1
     rows = []
-    for step in steps:
-        dq = step["dq"]
-        theta = math.radians(dq["electrical_angle_deg"])
-        psi = [assessor.get("flux_scale", 1) * raw[(step["label"], phases[k], 2)].real for k in range(3)]
-        d = 2 / 3 * sum(psi[k] * math.cos(theta - 2 * math.pi * k / 3) for k in range(3))
-        q = -2 / 3 * sum(psi[k] * math.sin(theta - 2 * math.pi * k / 3) for k in range(3))
+    for step, dq, d, q in point_rows(point):
         if quantity == "psi_d":
-            value = d
+            value = scale * d
         elif quantity == "psi_q":
-            value = q
+            value = scale * q
         elif quantity == "torque":
             value = 1.5 * assessor["pole_pairs"] * (d * dq["iq"] - q * dq["id"])
         elif quantity == "stress_torque":
             value = assessor["sequence_direction"] * assessor.get("torque_scale", 1) * raw[(step["label"], assessor["torque_measurement"], 0)].real
+        elif quantity in ("L_d", "L_q"):
+            value = d if quantity == "L_d" else q
         else:
             raise ValueError("Unknown dq quantity: " + str(quantity))
         rows.append({"step": step["label"], "electrical_angle_deg": dq["electrical_angle_deg"], "psi_d": d, "psi_q": q, "value": value})
     observed = sum(r["value"] for r in rows) / len(rows)
+    if quantity in ("L_d", "L_q"):
+        axis = "id" if quantity == "L_d" else "iq"
+        currents = {dq[axis] for _, dq, _, _ in point_rows(point)}
+        if len(currents) != 1 or not next(iter(currents)):
+            raise ValueError(f"{quantity} needs one nonzero {axis} at every position of the point")
+        reference = point_rows(assessor["reference_point"])
+        base = sum(d if quantity == "L_d" else q for _, _, d, q in reference) / len(reference)
+        observed = (observed - base) / next(iter(currents))
     metric = assessor_metric(assessor)
     target = {key: assessor[key] for key in ("value", "relative_tolerance", "absolute_tolerance", "quote", "location",
                                               "used_for_acceptance", "allowance") if key in assessor}
@@ -660,10 +702,13 @@ def _parallel_branches(assessor, case, raw, metrics, model):
 def assessor_metric(assessor):
     """The metric name an assessor reports its result under, or None for kinds that report only their kind."""
     kind = assessor.get("kind")
+    # A label names an assessor apart from others of the same quantity (a paper's FE value and its measurement).
+    label = f":{assessor['label']}" if assessor.get("label") else ""
     if kind == "waveform_statistic":
-        return f"{assessor['metric']}:{assessor['statistic']}"
+        order = f":h{assessor.get('order', 1)}" if assessor["statistic"] == "harmonic_peak" else ""
+        return f"{assessor['metric']}:{assessor['statistic']}{order}{label}"
     if kind == "spatial_harmonic":
-        return f"{assessor['measurement']}:{assessor['field']}:h{assessor['order']}"
+        return f"{assessor['measurement']}:{assessor['field']}:h{assessor['order']}{label}"
     if kind == "harmonic_superposition":
         quantity = assessor["quantity"]
         part = assessor.get("part", "abs" if quantity == "voltage" else "re")
@@ -672,7 +717,7 @@ def assessor_metric(assessor):
     if kind in ("metric_relation", "parallel_branches"):
         return assessor["name"]
     if kind == "dq_linkage":
-        return f"{assessor['point']}:{assessor['quantity']}" + (":first_position" if assessor.get("average") == "first" else "")
+        return f"{assessor['point']}:{assessor['quantity']}" + (":first_position" if assessor.get("average") == "first" else "") + label
     return None
 
 

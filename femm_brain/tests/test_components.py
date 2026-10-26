@@ -597,6 +597,47 @@ class PartialModelAndSymmetryTests(unittest.TestCase):
         self.assertAlmostEqual(run_assessor(dict(assessor, statistic="maximum"), {"steps": steps}, {}, metrics, {})["observed"], 871.8)
         self.assertAlmostEqual(run_assessor(dict(assessor, statistic="fundamental_peak"), {"steps": steps}, {}, metrics, {})["observed"], 846.5)
 
+    def test_waveform_harmonics_emfs_and_scales(self):
+        # A flux linkage over half an electrical period (2 pole pairs), half-wave symmetric, with orders 1, 3 and 9.
+        band = lambda angle: {"function": "modifyboundprop", "name": "AGE", "property": 10, "value": angle}
+        steps = [{"label": f"p{k:02d}", "modify": [band(k)]} for k in range(90)]
+        amplitudes = {1: 0.1309, 3: 0.0089, 9: 0.0017}
+        flux = lambda a: sum(v * math.cos(math.radians(n * 2 * a) + 0.3 * n) for n, v in amplitudes.items())
+        metrics = {f"psi@p{k:02d}": flux(k) for k in range(90)}
+        base = {"kind": "waveform_statistic", "metric": "psi", "pole_pairs": 2, "rotor_group": 1, "rotor_band": "AGE",
+                "half_wave_symmetry": True, "value": 1, "absolute_tolerance": 1e9}
+        observe = lambda **extra: run_assessor(dict(base, **extra), {"steps": steps}, {}, metrics, {})["observed"]
+        for order, amplitude in amplitudes.items():
+            self.assertAlmostEqual(observe(statistic="harmonic_peak", order=order), amplitude, places=12)
+            # The EMF of order n at 50 Hz is n 2 pi 50 times the flux-linkage amplitude.
+            self.assertAlmostEqual(observe(statistic="harmonic_peak", order=order, time_derivative_frequency_hz=50),
+                                   order * 2 * math.pi * 50 * amplitude, places=9)
+        self.assertAlmostEqual(observe(statistic="harmonic_peak", order=2), 0, places=12)
+        self.assertAlmostEqual(observe(statistic="fundamental_peak", scale=math.sqrt(1.5)), math.sqrt(1.5) * 0.1309, places=12)
+        self.assertIn("error", run_assessor(dict(base, statistic="mean", time_derivative_frequency_hz=50), {"steps": steps}, {}, metrics, {}))
+        self.assertIn("error", run_assessor(dict(base, statistic="harmonic_peak", order=0), {"steps": steps}, {}, metrics, {}))
+
+    def test_dq_inductances_from_single_axis_currents(self):
+        psi_m, l_d, l_q = 0.131, 0.0107, 0.0263
+        steps, raw = [], {}
+        for point, i_d, i_q in (("NL", 0, 0), ("D", -4.2, 0), ("Q", 0, 4.2)):
+            for k, angle in enumerate((0, 20, 40)):
+                label = f"{point}{k}"
+                steps.append({"label": label, "dq": {"point": point, "id": i_d, "iq": i_q, "electrical_angle_deg": angle}})
+                d, q = psi_m + l_d * i_d, l_q * i_q
+                for phase in range(3):
+                    shift = math.radians(angle) - 2 * math.pi * phase / 3
+                    raw[(label, "ph" + "ABC"[phase], 2)] = complex(d * math.cos(shift) - q * math.sin(shift), 0)
+        base = {"kind": "dq_linkage", "phases": ["phA", "phB", "phC"], "pole_pairs": 2, "value": 0, "absolute_tolerance": 1e9}
+        observe = lambda **extra: run_assessor(dict(base, **extra), {"steps": steps}, raw, {}, {})
+        self.assertAlmostEqual(observe(point="D", quantity="L_d", reference_point="NL")["observed"], l_d, places=12)
+        self.assertAlmostEqual(observe(point="Q", quantity="L_q", reference_point="NL")["observed"], l_q, places=12)
+        # The power-invariant scale multiplies flux linkages by sqrt(3/2) and leaves inductances alone.
+        self.assertAlmostEqual(observe(point="NL", quantity="psi_d", transform="power_invariant")["observed"], math.sqrt(1.5) * psi_m, places=12)
+        self.assertAlmostEqual(observe(point="D", quantity="L_d", reference_point="NL", transform="power_invariant")["observed"], l_d, places=12)
+        self.assertIn("error", observe(point="NL", quantity="L_d", reference_point="NL"))
+        self.assertIn("error", observe(point="D", quantity="psi_d", transform="other"))
+
     def test_bessel_series_satisfies_its_recurrence_at_high_order(self):
         from femm_brain.reference_models import bessel_i
         for z in (0.7, 4 * cmath.exp(0.25j * math.pi), 18 * cmath.exp(-0.25j * math.pi)):
@@ -663,6 +704,21 @@ class DrawingTests(unittest.TestCase):
         self.assertAlmostEqual(math.hypot(half[1] / 2 - 1, half[2] / 2), 1)
         # The block's line, turned 90 degrees and moved to (5, 5), then scaled by 2.
         self.assertEqual([round(v, 9) for v in segments[-1][1:]], [10, 10, 10, 12])
+
+    def test_r12_polylines_read_like_lwpolylines(self):
+        from femm_brain import dxf
+        # The older form: a POLYLINE header, VERTEX entities (one with a bulge) and a SEQEND, inside a block.
+        polyline = [["0", "POLYLINE", "8", "0", "66", 1, "70", 1, "10", 0, "20", 0],
+                    ["0", "VERTEX", "8", "0", "10", 0, "20", 0, "42", 1], ["0", "VERTEX", "8", "0", "10", 2, "20", 0],
+                    ["0", "VERTEX", "8", "0", "10", 2, "20", 2], ["0", "SEQEND", "8", "0"]]
+        lw = ["0", "LWPOLYLINE", "90", 3, "70", 1, "10", 0, "20", 0, "42", 1, "10", 2, "20", 0, "10", 2, "20", 2]
+        old = dxf.primitives(dxf.read(_dxf(["0", "INSERT", "2", "P", "10", 0, "20", 0], blocks=[("P", polyline)])))
+        self.assertEqual(old, dxf.primitives(dxf.read(_dxf(lw))))
+        self.assertEqual([p[0] for p in old], ["arc", "segment", "segment"])
+        with self.assertRaises(ValueError):
+            dxf.read(_dxf(["0", "POLYLINE", "70", 8], ["0", "VERTEX", "10", 0, "20", 0], ["0", "SEQEND"]))
+        with self.assertRaises(ValueError):
+            dxf.read(_dxf(["0", "POLYLINE", "70", 0], ["0", "VERTEX", "10", 0, "20", 0]))
 
     def test_patterns_join_copies_snap_noise_and_split_t_junctions(self):
         problem = {"physics": "magnetics", "units": "millimeters", "type": "planar", "frequency": 0, "depth": 1}
@@ -794,6 +850,9 @@ class AssessorMetricTests(unittest.TestCase):
                                           "point": {"label": "x0.05"}, "part": "im"}), "s@200:point_field:x0.05:im")
         self.assertEqual(assessor_metric({"kind": "dq_linkage", "point": "p", "quantity": "psi_d"}), "p:psi_d")
         self.assertEqual(assessor_metric({"kind": "dq_linkage", "point": "p", "quantity": "psi_d", "average": "first"}), "p:psi_d:first_position")
+        self.assertEqual(assessor_metric({"kind": "waveform_statistic", "metric": "psi", "statistic": "harmonic_peak", "order": 9}), "psi:harmonic_peak:h9")
+        self.assertEqual(assessor_metric({"kind": "dq_linkage", "point": "p", "quantity": "stress_torque", "label": "measured"}),
+                         "p:stress_torque:measured")
         self.assertIsNone(assessor_metric({"kind": "tube_bessel"}))
 
 
