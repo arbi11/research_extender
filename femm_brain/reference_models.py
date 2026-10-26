@@ -781,6 +781,110 @@ def _step_statistic(assessor, case, raw, metrics, model):
             **({"at_step": labels[index]} if statistic != "mean" else {}), "target": target}
 
 
+def _compare(assessor, kind, observed, statistic, samples, **extra):
+    """A frozen value's verdict for an assessor that computes one number."""
+    metric = assessor_metric(assessor)
+    target = {key: assessor[key] for key in ("value", "relative_tolerance", "absolute_tolerance", "quote", "location",
+                                              "used_for_acceptance", "allowance") if key in assessor}
+    target.update(kind=assessor.get("value_kind"), metric=metric)
+    target.setdefault("used_for_acceptance", True)
+    error = abs(observed - assessor["value"])
+    tolerance = max(abs(assessor["value"]) * assessor.get("relative_tolerance", 0), assessor.get("absolute_tolerance", 0))
+    return {"status": "passed" if error <= tolerance else "failed", "assessor": kind, "metric": metric, "statistic": statistic,
+            "observed": observed, "expected": assessor["value"], "absolute_error": error,
+            "relative_error": error / abs(assessor["value"]) if assessor["value"] else None,
+            "absolute_tolerance": tolerance, "samples": samples, **extra, "target": target}
+
+
+SERIES_STATISTICS = ("fundamental_peak", "fundamental_rms", "harmonic_peak", "harmonic_rms", "harmonic_ratio", "harmonic_phase",
+                     "rms", "peak", "maximum", "minimum")
+
+
+def _metric_series(assessor, case, raw, metrics, model):
+    """A statistic of a series of metrics from one step, taken as samples evenly spread over one period.
+
+    A field solved once can give a whole waveform: a winding's flux linkage
+    collected with its zones moved slot by slot over the frozen field (one
+    metric per position) is that winding's flux linkage over the field's
+    period, as the field turns past it. ``metrics`` lists the samples in order
+    of position (half a period with ``half_wave_symmetry``, the other half then
+    being their negatives), each read at ``step``. Statistics: the
+    fundamental's or harmonic ``order``'s peak or rms, its ratio to the
+    fundamental, its phase in degrees (v = A cos(n theta + phase), theta
+    advancing 360/N per sample), and the rms or peak of the band-limited
+    waveform; ``time_derivative_frequency_hz`` gives them for the time
+    derivative at that frequency (an EMF from flux linkage: n 2 pi f times each
+    amplitude). ``maximum`` and ``minimum`` read the samples as they are, and
+    ``scale`` multiplies any statistic except a phase.
+    """
+    statistic, step = assessor["statistic"], assessor["step"]
+    if statistic not in SERIES_STATISTICS:
+        raise ValueError("Unknown series statistic: " + str(statistic))
+    names = assessor["metrics"]
+    if len(names) < 4:
+        raise ValueError("A series needs at least four samples")
+    samples = [metrics[name + "@" + step] for name in names]
+    half_wave = bool(assessor.get("half_wave_symmetry"))
+    count = len(samples)
+    span = 180.0 if half_wave else 360.0
+    values = [(span * k / count, v) for k, v in enumerate(samples)]
+    frequency = assessor.get("time_derivative_frequency_hz")
+    order = assessor.get("order", 1) if statistic.startswith("harmonic") else 1
+    if not (isinstance(order, int) and order >= 1):
+        raise ValueError("A harmonic order is a positive integer")
+    if statistic in ("maximum", "minimum", "harmonic_phase") and frequency:
+        raise ValueError("A time derivative applies to amplitudes, rms and peak")
+    points = values + ([(a + span, -v) for a, v in values] if half_wave else [])
+    if order > len(points) // 2:
+        raise ValueError("The harmonic order exceeds what the samples resolve")
+
+    def coefficient(n):
+        return 2 / len(points) * sum(v * cmath.exp(-1j * n * math.radians(a)) for a, v in points)
+
+    if statistic in ("rms", "peak"):
+        observed = _band_limited_statistic(statistic, values, span, 1, half_wave, frequency)
+    elif statistic in ("maximum", "minimum"):
+        observed = (max if statistic == "maximum" else min)(samples)
+    elif statistic == "harmonic_phase":
+        observed = math.degrees(cmath.phase(coefficient(order)))
+    else:
+        derivative = (lambda n: 2 * math.pi * frequency * n) if frequency else (lambda n: 1)
+        amplitude = abs(coefficient(order)) * derivative(order)
+        if statistic == "harmonic_ratio":
+            observed = amplitude / (abs(coefficient(1)) * derivative(1))
+        else:
+            observed = amplitude / math.sqrt(2) if statistic.endswith("rms") else amplitude
+    if statistic != "harmonic_phase":
+        observed *= assessor.get("scale", 1)
+    label = statistic + (f" {order}" if statistic.startswith("harmonic") else "")
+    return _compare(assessor, "metric_series", observed, label, count)
+
+
+def _field_statistic(assessor, case, raw, metrics, model):
+    """The largest, smallest or peak-to-peak value of one field over a point_values or circle_values measurement.
+
+    For a quantity defined at a field's extremes, such as the flux per pole
+    from the vector potential's largest and smallest values on a gap circle
+    (times the depth: ``scale``), read at ``step``.
+    """
+    measurement = next(m for m in case["measurements"] if m["id"] == assessor["measurement"])
+    if measurement["op"] not in ("point_values", "circle_values"):
+        raise ValueError("A field statistic reads a point_values or circle_values measurement")
+    count = len(measurement["points"]) if measurement["op"] == "point_values" else int(measurement["count"])
+    step = assessor["step"]
+    values = [raw[(step, f"{measurement['id']}:{assessor['field']}", k)].real for k in range(count)]
+    statistic = assessor["statistic"]
+    if statistic == "maximum":
+        observed = max(values)
+    elif statistic == "minimum":
+        observed = min(values)
+    elif statistic == "peak_to_peak":
+        observed = max(values) - min(values)
+    else:
+        raise ValueError("Unknown field statistic: " + str(statistic))
+    return _compare(assessor, "field_statistic", observed * assessor.get("scale", 1), statistic, count)
+
+
 def assessor_metric(assessor):
     """The metric name an assessor reports its result under, or None for kinds that report only their kind."""
     kind = assessor.get("kind")
@@ -800,6 +904,12 @@ def assessor_metric(assessor):
         return f"{assessor['sweep']}@{assessor['speed_rad_s']:g}:{quantity}{label}:{part}"
     if kind in ("metric_relation", "parallel_branches"):
         return assessor["name"]
+    if kind == "metric_series":
+        order = f":h{assessor.get('order', 1)}" if assessor["statistic"].startswith("harmonic") else ""
+        derivative = ":ddt" if assessor.get("time_derivative_frequency_hz") else ""
+        return f"{assessor['name']}@{assessor['step']}:{assessor['statistic']}{order}{derivative}{label}"
+    if kind == "field_statistic":
+        return f"{assessor['measurement']}:{assessor['field']}@{assessor['step']}:{assessor['statistic']}{label}"
     if kind == "dq_linkage":
         return f"{assessor['point']}:{assessor['quantity']}" + (":first_position" if assessor.get("average") == "first" else "") + label
     return None
@@ -808,7 +918,8 @@ def assessor_metric(assessor):
 ASSESSORS = {"tube_bessel": _tube, "dipole_torque": _dipole_torque, "applied_field": _applied_field,
              "phase_linkage": _phase_linkage, "waveform_statistic": _waveform_statistic, "spatial_harmonic": _spatial_harmonic,
              "harmonic_superposition": _harmonic_superposition, "dq_linkage": _dq_linkage,
-             "metric_relation": _metric_relation, "parallel_branches": _parallel_branches, "step_statistic": _step_statistic}
+             "metric_relation": _metric_relation, "parallel_branches": _parallel_branches, "step_statistic": _step_statistic,
+             "metric_series": _metric_series, "field_statistic": _field_statistic}
 
 
 def run_assessor(assessor, case, raw, metrics, model):

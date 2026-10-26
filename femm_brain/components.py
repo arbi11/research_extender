@@ -652,6 +652,102 @@ def trapezoidal_slot_stator(m, slot_count, bore_radius, opening_width, opening_h
         m.label(*_rotated(((top_x + bottom_x) / 2, 0), first_tooth_angle), iron_material, mesh=iron_mesh, group=group)
 
 
+def cage_rotor(m, slot_count, outer_radius, top_radius, bottom_radius, centre_distance, bridge, neck_width=0, neck_height=0,
+               first_slot_angle=0, surface_max_segment=1, slot_max_segment=5, bar_material=None, circuits=None, bar_mesh=None,
+               group=0, iron_material=None, iron_mesh=None):
+    """Round-ended bar slots of a squirrel-cage rotor, repeated around the axis, with the rotor surface.
+
+    Each slot is two round ends on its centre line joined by their common
+    tangents (the pear or teardrop slot of cast cages): the end nearest the gap
+    has ``top_radius``, the other ``bottom_radius``, their centres
+    ``centre_distance`` apart. A parallel-sided neck of ``neck_width`` rises
+    ``neck_height`` above the top end's apex; ``bridge`` is the iron left
+    between the slot and the surface (closed slots: the neck belongs to the
+    bar), and zero opens the neck through the surface (the neck then joins the
+    gap and a chord closes the bar below it). Slot k is centred at ``first_slot_angle`` plus k
+    pitches; ``circuits`` names each bar's circuit (one turn), in slot order.
+    """
+    if not 0 <= bridge < outer_radius or neck_width < 0 or neck_height < 0:
+        raise ValueError("The bridge, neck width and neck height must be nonnegative")
+    if bridge == 0 and neck_width == 0:
+        raise ValueError("An open slot (no bridge) needs a neck through the surface")
+    if neck_height > 0 and neck_width == 0:
+        raise ValueError("A neck height needs a neck width")
+    if neck_width >= 2 * top_radius:
+        raise ValueError("The neck must be narrower than the top end")
+    if not abs(top_radius - bottom_radius) < centre_distance:
+        raise ValueError("The round ends must not contain one another: increase the centre distance")
+    if circuits is not None and (len(circuits) != slot_count or not all(isinstance(c, str) and c for c in circuits)):
+        raise ValueError("Give one circuit name per bar")
+    if circuits is not None and bar_material is None:
+        raise ValueError("Bars in circuits need a bar material")
+    pitch = 360 / slot_count
+    apex = outer_radius - bridge - neck_height
+    top_centre = apex - top_radius
+    bottom_centre = top_centre - centre_distance
+    if bottom_centre - bottom_radius <= 0:
+        raise ValueError("The slot reaches the axis: check the radii and the centre distance")
+    neck_top = outer_radius - bridge
+    if bridge == 0:
+        neck_top = math.sqrt(outer_radius ** 2 - (neck_width / 2) ** 2)
+    # A convex slot spans its widest angle at a round end or at the neck top.
+    widest = max(math.degrees(math.asin(min(1.0, top_radius / top_centre))), math.degrees(math.asin(min(1.0, bottom_radius / bottom_centre))),
+                 math.degrees(math.atan2(neck_width / 2, neck_top)))
+    if top_radius >= top_centre or widest >= pitch / 2:
+        raise ValueError("Adjacent slots overlap: reduce the slot widths or the slot count")
+    # The common tangents' outward normals lean toward the smaller end: (-tilt, +-across) in (along, across) the slot axis.
+    tilt = (top_radius - bottom_radius) / centre_distance
+    across = math.sqrt(1 - tilt * tilt)
+    rise = math.degrees(math.acos(-tilt))  # angle of the tangent points from each centre, measured from the slot axis
+    neck_half = math.degrees(math.asin(neck_width / (2 * top_radius))) if neck_width else 0.0
+    if neck_half >= rise:
+        raise ValueError("The neck must rise from the top end above its tangent points: narrow the neck")
+    neck_root = top_centre + math.sqrt(top_radius ** 2 - (neck_width / 2) ** 2)
+    profile = {("tangent_top", s): (top_centre - top_radius * tilt, s * top_radius * across) for s in (-1, 1)}
+    profile.update({("tangent_bottom", s): (bottom_centre - bottom_radius * tilt, s * bottom_radius * across) for s in (-1, 1)})
+    profile[("bottom", 0)] = (bottom_centre - bottom_radius, 0.0)
+    if neck_width:
+        profile.update({("neck_root", s): (neck_root, s * neck_width / 2) for s in (-1, 1)})
+        profile.update({("neck_top", s): (neck_top, s * neck_width / 2) for s in (-1, 1)})
+    else:
+        profile[("apex", 0)] = (apex, 0.0)
+    slots = [{key: _rotated(point, first_slot_angle + k * pitch) for key, point in profile.items()} for k in range(slot_count)]
+    for k, slot in enumerate(slots):
+        for s in (-1, 1):
+            m.segment(slot["tangent_top", s], slot["tangent_bottom", s], group=group)
+        # Arcs run counterclockwise: the bottom end from the + tangent through the bottom apex to the - tangent.
+        m.arc(slot["tangent_bottom", 1], slot["bottom", 0], 180 - rise, slot_max_segment, group=group)
+        m.arc(slot["bottom", 0], slot["tangent_bottom", -1], 180 - rise, slot_max_segment, group=group)
+        if neck_width:
+            m.arc(slot["tangent_top", -1], slot["neck_root", -1], rise - neck_half, slot_max_segment, group=group)
+            m.arc(slot["neck_root", 1], slot["tangent_top", 1], rise - neck_half, slot_max_segment, group=group)
+            for s in (-1, 1):
+                m.segment(slot["neck_root", s], slot["neck_top", s], group=group)
+            # A closed slot's neck is part of the bar; an open one's joins the gap, so a chord closes the bar below it.
+            if bridge:
+                m.segment(slot["neck_top", -1], slot["neck_top", 1], group=group)
+            else:
+                m.segment(slot["neck_root", -1], slot["neck_root", 1], group=group)
+        else:
+            m.arc(slot["tangent_top", -1], slot["apex", 0], rise, slot_max_segment, group=group)
+            m.arc(slot["apex", 0], slot["tangent_top", 1], rise, slot_max_segment, group=group)
+        if bar_material:
+            m.label(*_rotated(((top_centre + bottom_centre) / 2, 0), first_slot_angle + k * pitch), bar_material, mesh=bar_mesh,
+                    group=group, circuit=circuits[k] if circuits else None)
+    # The surface: one arc per pitch between closed slots, or between the necks of open ones.
+    if bridge:
+        corners = [_rotated((outer_radius, 0), first_slot_angle + (k + 0.5) * pitch) for k in range(slot_count)]
+        for k in range(slot_count):
+            m.arc(corners[k], corners[(k + 1) % slot_count], pitch, surface_max_segment, group=group)
+    else:
+        neck_angle = math.degrees(math.atan2(neck_width / 2, neck_top))
+        for k in range(slot_count):
+            m.arc(slots[k]["neck_top", 1], slots[(k + 1) % slot_count]["neck_top", -1], pitch - 2 * neck_angle, surface_max_segment,
+                  group=group)
+    if iron_material:
+        m.label(*_rotated(((top_centre + bottom_centre) / 2, 0), first_slot_angle + pitch / 2), iron_material, mesh=iron_mesh, group=group)
+
+
 def winding_layout(slot_count, pole_pairs, phases, layout="tooth_coils", layers="single", phase_sequence="forward"):
     """Star-of-slots phase and polarity for each coil (tooth coils) or slot (distributed single layer).
 
@@ -1209,7 +1305,7 @@ IMPLEMENTATIONS = {function.__name__: function for function in (
     segment, polyline, arc, circle, point, block_label, hole, material, library_material, circuit, conductor, boundary,
     fixed_potential_boundary, mixed_boundary, convection_boundary, iabc_open_boundary, axisymmetric_coil_section,
     bar_magnet, air_gap_element, kelvin_periodic_exterior, segment_boundary, fixed_point_potential, magnet_array,
-    slotted_stator, trapezoidal_slot_stator, tooth_coil_winding, surface_magnet_rotor, salient_poles, salient_pole_winding,
+    slotted_stator, trapezoidal_slot_stator, cage_rotor, tooth_coil_winding, surface_magnet_rotor, salient_poles, salient_pole_winding,
     belt_winding, entity_pattern, sector_air_gap, arc_boundary, ring_sectors, flux_barrier_rotor)}
 
 

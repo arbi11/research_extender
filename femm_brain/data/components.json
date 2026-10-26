@@ -1869,6 +1869,174 @@
    ]
   },
   {
+   "id": "cage_rotor",
+   "layer": 2,
+   "title": "Squirrel-cage rotor with round-ended bar slots",
+   "description": "Bar slots of a squirrel-cage rotor repeated around the axis, with the rotor surface: each slot is two round ends on its centre line joined by their common tangents (the pear or teardrop slot of cast cages), with an optional parallel-sided neck above the end nearest the gap. A bridge of iron closes the slot under the surface; with no bridge the neck opens through it. Each bar is a block of the bar material, optionally in a circuit of its own (one turn), so prescribed bar currents or eddy currents can be set bar by bar.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "slot_count",
+     "type": "integer",
+     "description": "Number of rotor slots (bars)",
+     "required": true,
+     "minimum": 3
+    },
+    {
+     "name": "outer_radius",
+     "type": "number",
+     "description": "Radius of the rotor surface",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "top_radius",
+     "type": "number",
+     "description": "Radius of the slot's round end nearest the air gap",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "bottom_radius",
+     "type": "number",
+     "description": "Radius of the slot's round end nearest the axis",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "centre_distance",
+     "type": "number",
+     "description": "Distance between the centres of the two round ends",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "bridge",
+     "type": "number",
+     "description": "Iron between the slot (its neck, or its top end without a neck) and the surface; 0 opens the slot",
+     "required": true,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "neck_width",
+     "type": "number",
+     "description": "Width of the parallel-sided neck above the top end (0: no neck)",
+     "required": false,
+     "unit": "model length",
+     "minimum": 0,
+     "default": 0
+    },
+    {
+     "name": "neck_height",
+     "type": "number",
+     "description": "Height of the neck above the top end's apex",
+     "required": false,
+     "unit": "model length",
+     "minimum": 0,
+     "default": 0
+    },
+    {
+     "name": "first_slot_angle",
+     "type": "number",
+     "description": "Angle of slot 0's centre line; slot k lies k pitches counterclockwise",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "surface_max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of the surface arcs",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
+    },
+    {
+     "name": "slot_max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of the round ends",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 5
+    },
+    {
+     "name": "bar_material",
+     "type": "string",
+     "description": "Material of the bars; without it the slots get no labels",
+     "required": false
+    },
+    {
+     "name": "circuits",
+     "type": "list",
+     "description": "One circuit name per bar, in slot order (one turn each)",
+     "required": false
+    },
+    {
+     "name": "bar_mesh",
+     "type": "number",
+     "description": "Mesh size in the bars",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the rotor contours and labels",
+     "required": false,
+     "default": 0
+    },
+    {
+     "name": "iron_material",
+     "type": "string",
+     "description": "Material of the rotor iron (one label between slots 0 and 1)",
+     "required": false
+    },
+    {
+     "name": "iron_mesh",
+     "type": "number",
+     "description": "Mesh size in the rotor iron",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "addarc",
+    "addblocklabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "segment",
+    "arc",
+    "block_label"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": [
+    "The two round ends must not contain one another, the slot must not reach the axis, and adjacent slots may not overlap (the widest angle of a convex slot is at a round end or the neck top).",
+    "A neck needs a width narrower than the top end and must rise above the top end's tangent points; an open slot (no bridge) needs a neck.",
+    "The shaft or rotor yoke inner boundary is a separate component; the iron label sits between slots 0 and 1 at the slots' mid-depth."
+   ]
+  },
+  {
    "id": "tooth_coil_winding",
    "layer": 2,
    "title": "Multi-phase winding by the star of slots",

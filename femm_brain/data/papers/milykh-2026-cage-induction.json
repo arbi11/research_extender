@@ -1,0 +1,8458 @@
+{
+ "schema_version": 1,
+ "id": "milykh-2026-cage-induction",
+ "set": "held_out",
+ "status": "frozen",
+ "skill_version": "713906e",
+ "title": "Theory and practice of numerical-field analysis and refinement of electromagnetic and energy parameters in the designs of three-phase induction motors",
+ "source": {
+  "citation": "V.I. Milykh, Electrical Engineering & Electromechanics 2026, no. 1, pp. 3-14",
+  "doi": "10.20998/2074-272X.2026.1.01",
+  "url": "https://eie.khpi.edu.ua/article/download/347595/334566",
+  "access": "open access; PDF supplied by the user",
+  "licence": "CC BY-NC 4.0",
+  "pdf_sha256": "05454c118f356a2b01b6755568f06b4b20832865fb01d68f9c513b462e3cff30",
+  "pages": 12,
+  "accessed": "2026-10-26",
+  "related": [
+   {
+    "citation": "V.I. Milykh, Numerical-field analysis of active and reactive winding parameters and mechanical characteristics of a squirrel-cage induction motor, Electrical Engineering & Electromechanics 2023, no. 4, pp. 3-13",
+    "url": "https://eie.khpi.edu.ua/article/download/281060/276517",
+    "use": "Likely holds the slot dimensions and the full B-H data. Not cached and not downloaded (downloads need the user's approval); nothing is taken from it."
+   }
+  ]
+ },
+ "machine": {
+  "family": "induction",
+  "topology": "inner rotor, squirrel cage with closed pear-shaped slots, semi-closed trapezoidal stator slots with wedges",
+  "problem": "planar",
+  "slots": 48,
+  "rotor_slots": 38,
+  "poles": 4,
+  "phases": 3,
+  "symmetry": "Full cross-section, as the paper's model; A = 0 on the stator's outer circle. Magnetostatic, nonlinear, instantaneous currents at t = 0."
+ },
+ "components_map": [
+  {
+   "part": "stator: 48 semi-closed slots (opening, 45-degree wedge, trapezoidal conductive part, flat bottom), parallel teeth",
+   "component": "trapezoidal_slot_stator"
+  },
+  {
+   "part": "line between each slot's wedge and its conductive part",
+   "component": "entity_pattern"
+  },
+  {
+   "part": "single-layer winding: 48 slot circuits of 14 conductors, currents of eq. (1) at t = 0",
+   "component": "circuit, block_label"
+  },
+  {
+   "part": "rotor: 38 closed pear-shaped bar slots with a neck under a bridge, each bar a circuit (eq. (26))",
+   "component": "cage_rotor (new, generic)"
+  },
+  {
+   "part": "air gap split by a mid-gap circle, shaft, outer boundary",
+   "component": "circle, block_label, fixed_potential_boundary"
+  }
+ ],
+ "article": {
+  "parameters": {
+   "rated_power_kW": {
+    "value": 15,
+    "unit": "kW",
+    "provenance": "quoted",
+    "quote": "which has a nominal power PN = 15 kW",
+    "location": "p. 5"
+   },
+   "rated_phase_voltage_V": {
+    "value": 220,
+    "unit": "V",
+    "provenance": "quoted",
+    "quote": "UsN = 220 V, the nominal phase current of the stator",
+    "location": "p. 5"
+   },
+   "frequency_hz": {
+    "value": 50,
+    "unit": "Hz",
+    "provenance": "quoted",
+    "quote": "the frequency fs = 50 Hz",
+    "location": "p. 5"
+   },
+   "pole_pairs": {
+    "value": 2,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "motor has the number of pole pairs p = 2",
+    "location": "p. 5"
+   },
+   "phases": {
+    "value": 3,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "phases ms = 3",
+    "location": "p. 5",
+    "note": "The text reads 'the number of phases ms = 3' across a line break."
+   },
+   "rotor_diameter_mm": {
+    "value": 184,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "cores diameters of the rotor dr =184 mm and the stator",
+    "location": "p. 5"
+   },
+   "stator_outer_diameter_mm": {
+    "value": 272,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "dse = 272 mm and their length la =130 mm, air gap",
+    "location": "p. 5"
+   },
+   "core_length_mm": {
+    "value": 130,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "dse = 272 mm and their length la =130 mm, air gap",
+    "location": "p. 5"
+   },
+   "air_gap_mm": {
+    "value": 0.5,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "= 0.5 mm. The stator has Qs = 48 slots, the rotor",
+    "location": "p. 5",
+    "note": "The symbol delta is lost in the text extraction."
+   },
+   "stator_slots": {
+    "value": 48,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "= 0.5 mm. The stator has Qs = 48 slots, the rotor",
+    "location": "p. 5"
+   },
+   "rotor_slots": {
+    "value": 38,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Qr = 38 slots. The stator winding is single-layer,",
+    "location": "p. 5"
+   },
+   "series_turns": {
+    "value": 112,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Ns = 112 – the number of consecutive",
+    "location": "p. 10",
+    "note": "Turns in series per phase. The single-layer winding (16 slots per phase) then has 14 conductors per slot (derived)."
+   },
+   "winding_factor_stated": {
+    "value": 0.959,
+    "unit": "fraction",
+    "provenance": "quoted",
+    "quote": "KWs = 0.959 – its",
+    "location": "p. 10",
+    "note": "Recorded; a diametrical single layer with 4 slots per pole and phase has 0.9577 (geometry check). The model needs no winding factor: it sums slots."
+   },
+   "steel_bh": {
+    "value": [
+     [
+      1.54,
+      1000
+     ],
+     [
+      1.65,
+      2500
+     ],
+     [
+      1.75,
+      5000
+     ],
+     [
+      1.85,
+      10000
+     ],
+     [
+      2.05,
+      30000
+     ]
+    ],
+    "unit": "[T, A/m]",
+    "provenance": "quoted",
+    "quote": "1,54 1,65 1,75 1,85 2,05",
+    "location": "Table 1, p. 6, main magnetization curve (B row; H row 'Main 1000 2500 5000 10000 30000')",
+    "note": "Steel 2013, GOST 21427-83's five reference points, which the paper uses ('It is logical to use MMC'). FEMM starts every curve at the origin (lessons), so below 1.54 T the curve is FEMM's interpolation from the origin, about 1225 relative permeability; the paper gives nothing there (gap; control bh-low-field)."
+   },
+   "sim_current_A": {
+    "value": 7.75,
+    "unit": "A",
+    "provenance": "quoted",
+    "quote": "magnetizing current of the stator winding Iμ = 7.75 A,",
+    "location": "p. 6",
+    "note": "The design magnetizing current, rms, substituted in eq. (1) for Is: isA = sqrt(2) 7.75 A, isB = isC = -isA/2."
+   },
+   "sim_refined_current_A": {
+    "value": 8.09,
+    "unit": "A",
+    "provenance": "quoted",
+    "quote": "this current Iμ = 8.09 A was determined, and the values of",
+    "location": "p. 9",
+    "note": "The refined SIM current."
+   },
+   "load_stator_current_A": {
+    "value": 28.8,
+    "unit": "A",
+    "provenance": "quoted",
+    "quote": "Is = 28.8 A;",
+    "location": "p. 10",
+    "note": "Rated-load stator current, rms, initial phase zero (beta = 0)."
+   },
+   "load_rotor_current_A": {
+    "value": 446,
+    "unit": "A",
+    "provenance": "quoted",
+    "quote": "KIrs = 16.9; Ir = 446",
+    "location": "p. 10",
+    "note": "Bar current, rms; eq. (26) gives the bars' instantaneous currents."
+   },
+   "load_angle_deg": {
+    "value": -82.49,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "sr = –82.49°.",
+    "location": "p. 10",
+    "note": "alpha_sr = phi_sr / p = -164.98/2 degrees, the geometric angle in eq. (26) (alpha symbol lost in extraction). See gap 'sign of alpha_sr'."
+   },
+   "final_stator_current_A": {
+    "value": 29.9,
+    "unit": "A",
+    "provenance": "quoted",
+    "quote": "IsN = 29.9 A; Ir = 469.5 A; αsr = 83.41○; Mem = 100 N∙m;",
+    "location": "p. 13",
+    "note": "The third iteration's operating point."
+   },
+   "final_rotor_current_A": {
+    "value": 469.5,
+    "unit": "A",
+    "provenance": "quoted",
+    "quote": "IsN = 29.9 A; Ir = 469.5 A; αsr = 83.41○; Mem = 100 N∙m;",
+    "location": "p. 13"
+   },
+   "final_angle_magnitude_deg": {
+    "value": 83.41,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "IsN = 29.9 A; Ir = 469.5 A; αsr = 83.41○; Mem = 100 N∙m;",
+    "location": "p. 13",
+    "note": "Printed positive here (and 83.10 for the intermediate point) though the first load point's -82.49 is negative; the equivalent circuit gives phi_sr = -(180 - phi_s + phi_r) = -166.8 degrees for this point, so the model takes -83.41 (final_angle_deg; gap)."
+   },
+   "stator_opening_width_mm": {
+    "value": 3.73,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 6 (SIM) and Fig. 5, p. 9 (rated load): renderings of the author's FEMM model, its outlines drawn in pure blue on flat colours",
+    "scale_reference": "The outer outline circle is the stated 272 mm stator diameter: 0.44750 mm per pixel in Fig. 1 and 0.45596 in Fig. 5 (circle residuals 0.36 and 0.35 px). The rotor and bore outlines (184 and 185 mm) merge into one band fitted at 92.305 mm radius (their mean 92.25 mm), with histogram peaks at 92.0 and 92.5 mm. Outline pixels of all slots pooled in each slot's own frame.",
+    "uncertainty": 0.1,
+    "note": "Parallel-sided slot opening at the bore: half-widths 1.868 (Fig. 1) and 1.866 mm (Fig. 5)."
+   },
+   "stator_opening_top_radius_mm": {
+    "value": 93.524,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 6 (SIM) and Fig. 5, p. 9 (rated load): renderings of the author's FEMM model, its outlines drawn in pure blue on flat colours",
+    "scale_reference": "The outer outline circle is the stated 272 mm stator diameter: 0.44750 mm per pixel in Fig. 1 and 0.45596 in Fig. 5 (circle residuals 0.36 and 0.35 px). The rotor and bore outlines (184 and 185 mm) merge into one band fitted at 92.305 mm radius (their mean 92.25 mm), with histogram peaks at 92.0 and 92.5 mm. Outline pixels of all slots pooled in each slot's own frame.",
+    "uncertainty": 0.15,
+    "note": "Where the wedge's 45-degree sides (slopes 0.93, 0.97) meet the opening's width: 93.531 and 93.518 mm from the axis."
+   },
+   "stator_body_bottom_radius_mm": {
+    "value": 95.533,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 6 (SIM) and Fig. 5, p. 9 (rated load): renderings of the author's FEMM model, its outlines drawn in pure blue on flat colours",
+    "scale_reference": "The outer outline circle is the stated 272 mm stator diameter: 0.44750 mm per pixel in Fig. 1 and 0.45596 in Fig. 5 (circle residuals 0.36 and 0.35 px). The rotor and bore outlines (184 and 185 mm) merge into one band fitted at 92.305 mm radius (their mean 92.25 mm), with histogram peaks at 92.0 and 92.5 mm. Outline pixels of all slots pooled in each slot's own frame.",
+    "uncertainty": 0.1,
+    "note": "The line between wedge and conductor (the conductive part's edge nearest the gap): 95.556 and 95.511 mm."
+   },
+   "stator_body_top_radius_mm": {
+    "value": 114.343,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 6 (SIM) and Fig. 5, p. 9 (rated load): renderings of the author's FEMM model, its outlines drawn in pure blue on flat colours",
+    "scale_reference": "The outer outline circle is the stated 272 mm stator diameter: 0.44750 mm per pixel in Fig. 1 and 0.45596 in Fig. 5 (circle residuals 0.36 and 0.35 px). The rotor and bore outlines (184 and 185 mm) merge into one band fitted at 92.305 mm radius (their mean 92.25 mm), with histogram peaks at 92.0 and 92.5 mm. Outline pixels of all slots pooled in each slot's own frame.",
+    "uncertainty": 0.1,
+    "note": "The flat slot bottom: 114.351 and 114.335 mm from the axis."
+   },
+   "stator_body_width_gap_side_mm": {
+    "value": 7.69,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 6 (SIM) and Fig. 5, p. 9 (rated load): renderings of the author's FEMM model, its outlines drawn in pure blue on flat colours",
+    "scale_reference": "The outer outline circle is the stated 272 mm stator diameter: 0.44750 mm per pixel in Fig. 1 and 0.45596 in Fig. 5 (circle residuals 0.36 and 0.35 px). The rotor and bore outlines (184 and 185 mm) merge into one band fitted at 92.305 mm radius (their mean 92.25 mm), with histogram peaks at 92.0 and 92.5 mm. Outline pixels of all slots pooled in each slot's own frame.",
+    "uncertainty": 0.1,
+    "note": "Slot width (chord) at the conductor's gap-side edge, from straight-line fits to the pooled sides: 7.648 and 7.742 mm."
+   },
+   "stator_body_width_back_mm": {
+    "value": 10.19,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 6 (SIM) and Fig. 5, p. 9 (rated load): renderings of the author's FEMM model, its outlines drawn in pure blue on flat colours",
+    "scale_reference": "The outer outline circle is the stated 272 mm stator diameter: 0.44750 mm per pixel in Fig. 1 and 0.45596 in Fig. 5 (circle residuals 0.36 and 0.35 px). The rotor and bore outlines (184 and 185 mm) merge into one band fitted at 92.305 mm radius (their mean 92.25 mm), with histogram peaks at 92.0 and 92.5 mm. Outline pixels of all slots pooled in each slot's own frame.",
+    "uncertainty": 0.1,
+    "note": "Slot width at the slot bottom: 10.190 and 10.188 mm. The side slopes (0.0676, 0.0650) are within 3% of tan(3.75 deg) = 0.0655: parallel-sided teeth about 4.8 mm wide."
+   },
+   "rotor_top_radius_mm": {
+    "value": 3.937,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 6 (SIM) and Fig. 5, p. 9 (rated load): renderings of the author's FEMM model, its outlines drawn in pure blue on flat colours",
+    "scale_reference": "The outer outline circle is the stated 272 mm stator diameter: 0.44750 mm per pixel in Fig. 1 and 0.45596 in Fig. 5 (circle residuals 0.36 and 0.35 px). The rotor and bore outlines (184 and 185 mm) merge into one band fitted at 92.305 mm radius (their mean 92.25 mm), with histogram peaks at 92.0 and 92.5 mm. Outline pixels of all slots pooled in each slot's own frame.",
+    "uncertainty": 0.05,
+    "note": "Round end nearest the gap, a circle on the slot axis fitted to the pooled outline: radius 3.932 and 3.942 mm, centre 87.165 and 87.134 mm from the axis (residuals 0.14 mm)."
+   },
+   "rotor_top_centre_mm": {
+    "value": 87.149,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 6 (SIM) and Fig. 5, p. 9 (rated load): renderings of the author's FEMM model, its outlines drawn in pure blue on flat colours",
+    "scale_reference": "The outer outline circle is the stated 272 mm stator diameter: 0.44750 mm per pixel in Fig. 1 and 0.45596 in Fig. 5 (circle residuals 0.36 and 0.35 px). The rotor and bore outlines (184 and 185 mm) merge into one band fitted at 92.305 mm radius (their mean 92.25 mm), with histogram peaks at 92.0 and 92.5 mm. Outline pixels of all slots pooled in each slot's own frame.",
+    "uncertainty": 0.05,
+    "note": "Centre of the slot's top round end, from the axis (see rotor_top_radius_mm)."
+   },
+   "rotor_bottom_radius_mm": {
+    "value": 1.97,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 6 (SIM) and Fig. 5, p. 9 (rated load): renderings of the author's FEMM model, its outlines drawn in pure blue on flat colours",
+    "scale_reference": "The outer outline circle is the stated 272 mm stator diameter: 0.44750 mm per pixel in Fig. 1 and 0.45596 in Fig. 5 (circle residuals 0.36 and 0.35 px). The rotor and bore outlines (184 and 185 mm) merge into one band fitted at 92.305 mm radius (their mean 92.25 mm), with histogram peaks at 92.0 and 92.5 mm. Outline pixels of all slots pooled in each slot's own frame.",
+    "uncertainty": 0.05,
+    "note": "Round end nearest the axis: radius 1.946 and 1.994 mm, centre 62.013 and 62.034 mm. The straight sides (|v| = -3.009 + 0.0790 u) are tangent to both circles within 0.05 mm."
+   },
+   "rotor_bottom_centre_mm": {
+    "value": 62.024,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 6 (SIM) and Fig. 5, p. 9 (rated load): renderings of the author's FEMM model, its outlines drawn in pure blue on flat colours",
+    "scale_reference": "The outer outline circle is the stated 272 mm stator diameter: 0.44750 mm per pixel in Fig. 1 and 0.45596 in Fig. 5 (circle residuals 0.36 and 0.35 px). The rotor and bore outlines (184 and 185 mm) merge into one band fitted at 92.305 mm radius (their mean 92.25 mm), with histogram peaks at 92.0 and 92.5 mm. Outline pixels of all slots pooled in each slot's own frame.",
+    "uncertainty": 0.05,
+    "note": "Centre of the slot's bottom round end, from the axis."
+   },
+   "rotor_bridge_mm": {
+    "value": 0.45,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 6 (SIM) and Fig. 5, p. 9 (rated load): renderings of the author's FEMM model, its outlines drawn in pure blue on flat colours",
+    "scale_reference": "The outer outline circle is the stated 272 mm stator diameter: 0.44750 mm per pixel in Fig. 1 and 0.45596 in Fig. 5 (circle residuals 0.36 and 0.35 px). The rotor and bore outlines (184 and 185 mm) merge into one band fitted at 92.305 mm radius (their mean 92.25 mm), with histogram peaks at 92.0 and 92.5 mm. Outline pixels of all slots pooled in each slot's own frame.",
+    "uncertainty": 0.2,
+    "note": "Closed slots ('The rotor slots are made closed'): the slot's outline reaches about 91.55 mm, one pixel (0.45 mm) under the rotor surface at 92.0 mm; single slots on the y axis show the slot outline one pixel row below the surface outline in both figures. At the resolution limit (controls bridge-0p25 and bridge-0p65)."
+   },
+   "rotor_neck_width_mm": {
+    "value": 1.5,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 6 (SIM) and Fig. 5, p. 9 (rated load): renderings of the author's FEMM model, its outlines drawn in pure blue on flat colours",
+    "scale_reference": "The outer outline circle is the stated 272 mm stator diameter: 0.44750 mm per pixel in Fig. 1 and 0.45596 in Fig. 5 (circle residuals 0.36 and 0.35 px). The rotor and bore outlines (184 and 185 mm) merge into one band fitted at 92.305 mm radius (their mean 92.25 mm), with histogram peaks at 92.0 and 92.5 mm. Outline pixels of all slots pooled in each slot's own frame.",
+    "uncertainty": 0.4,
+    "note": "Above the top circle's apex (91.09 mm) the outline does not close as the circle would: from 91.0 to 91.5 mm its walls stay 0.67-0.8 mm either side of the axis (pooled medians), a neck about 1.5 mm wide up to the bridge."
+   },
+   "shaft_diameter_mm": {
+    "value": 59.9,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1, p. 6 (SIM) and Fig. 5, p. 9 (rated load): renderings of the author's FEMM model, its outlines drawn in pure blue on flat colours",
+    "scale_reference": "The outer outline circle is the stated 272 mm stator diameter: 0.44750 mm per pixel in Fig. 1 and 0.45596 in Fig. 5 (circle residuals 0.36 and 0.35 px). The rotor and bore outlines (184 and 185 mm) merge into one band fitted at 92.305 mm radius (their mean 92.25 mm), with histogram peaks at 92.0 and 92.5 mm. Outline pixels of all slots pooled in each slot's own frame.",
+    "uncertainty": 0.3,
+    "note": "The circle inside the rotor: radius 29.955 (Fig. 1) and 29.922 mm (Fig. 5). Not stated in the paper."
+   },
+   "shaft_material": {
+    "value": "Steel2013",
+    "unit": "material",
+    "provenance": "assumed",
+    "reason": "Flux lines cross the shaft circle in Fig. 1 and Fig. 5, so the shaft is magnetic; the paper names no shaft steel. Taken as the core steel.",
+    "sensitivity_control": "shaft-air"
+   },
+   "stacking_factor": {
+    "value": 1.0,
+    "unit": "fraction",
+    "provenance": "assumed",
+    "reason": "The paper states no lamination fill and applies the main curve to the cores as they are; FEMM's default fill of 1 is the model the text describes.",
+    "sensitivity_control": "stacking-0p97",
+    "note": "Kopylov-style designs use 0.97 for 0.5 mm steel 2013 (control)."
+   },
+   "final_angle_deg": {
+    "value": -83.41,
+    "unit": "deg",
+    "provenance": "assumed",
+    "reason": "The final point's alpha_sr in the first load point's convention (negative): the printed +83.41 equals phi_sr/p in magnitude, and the equivalent circuit gives phi_sr = -166.8 degrees there. Mirror symmetry of the model (gap 'sign of alpha_sr') makes every magnitude target independent of the sign; the step load1_mirror measures that.",
+    "sensitivity_control": "final-angle-positive"
+   },
+   "gap_max_segment_deg": {
+    "value": 0.25,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Rotor surface, bore and mid-gap arcs in 0.4 mm pieces."
+   },
+   "gap_mesh_mm": {
+    "value": 0.2,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Two element layers or more across each half of the 0.5 mm gap (a circle splits it at 92.25 mm)."
+   },
+   "stator_iron_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Stator iron."
+   },
+   "rotor_iron_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Rotor iron, bridges meshed by their thickness."
+   },
+   "conductor_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Stator conductors and rotor bars."
+   },
+   "wedge_mesh_mm": {
+    "value": 0.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Air in the slot wedges (the openings belong to the gap's outer layer)."
+   },
+   "shaft_mesh_mm": {
+    "value": 3.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Shaft."
+   },
+   "outer_max_segment_deg": {
+    "value": 2.0,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Outer boundary circle."
+   },
+   "slot_max_segment_deg": {
+    "value": 5.0,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Round ends of the rotor slots (3.94 and 1.97 mm radii)."
+   },
+   "shaft_max_segment_deg": {
+    "value": 3.0,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Shaft circle."
+   },
+   "rotor_radius_mm": {
+    "value": 92.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "rotor_diameter_mm/2",
+    "inputs": [
+     "rotor_diameter_mm"
+    ]
+   },
+   "bore_radius_mm": {
+    "value": 92.5,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "rotor_diameter_mm/2+air_gap_mm",
+    "inputs": [
+     "air_gap_mm",
+     "rotor_diameter_mm"
+    ]
+   },
+   "mid_gap_radius_mm": {
+    "value": 92.25,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "rotor_diameter_mm/2+air_gap_mm/2",
+    "inputs": [
+     "air_gap_mm",
+     "rotor_diameter_mm"
+    ]
+   },
+   "stator_outer_radius_mm": {
+    "value": 136.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "stator_outer_diameter_mm/2",
+    "inputs": [
+     "stator_outer_diameter_mm"
+    ]
+   },
+   "shaft_radius_mm": {
+    "value": 29.95,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "shaft_diameter_mm/2",
+    "inputs": [
+     "shaft_diameter_mm"
+    ]
+   },
+   "conductors_per_slot": {
+    "value": 14.0,
+    "unit": "count",
+    "provenance": "derived",
+    "expression": "2*series_turns*phases/stator_slots",
+    "inputs": [
+     "phases",
+     "series_turns",
+     "stator_slots"
+    ],
+    "note": "Single layer: 16 slots per phase, 112 turns in series, 14 conductors per slot."
+   },
+   "stator_opening_height_mm": {
+    "value": 1.024000000000001,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "stator_opening_top_radius_mm-(rotor_diameter_mm/2+air_gap_mm)",
+    "inputs": [
+     "air_gap_mm",
+     "rotor_diameter_mm",
+     "stator_opening_top_radius_mm"
+    ]
+   },
+   "stator_wedge_height_mm": {
+    "value": 2.0090000000000003,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "stator_body_bottom_radius_mm-stator_opening_top_radius_mm",
+    "inputs": [
+     "stator_body_bottom_radius_mm",
+     "stator_opening_top_radius_mm"
+    ]
+   },
+   "stator_body_height_mm": {
+    "value": 18.810000000000002,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "stator_body_top_radius_mm-stator_body_bottom_radius_mm",
+    "inputs": [
+     "stator_body_bottom_radius_mm",
+     "stator_body_top_radius_mm"
+    ]
+   },
+   "stator_label_radius_mm": {
+    "value": 104.938,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "(stator_body_bottom_radius_mm+stator_body_top_radius_mm)/2",
+    "inputs": [
+     "stator_body_bottom_radius_mm",
+     "stator_body_top_radius_mm"
+    ]
+   },
+   "rotor_centre_distance_mm": {
+    "value": 25.125,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "rotor_top_centre_mm-rotor_bottom_centre_mm",
+    "inputs": [
+     "rotor_bottom_centre_mm",
+     "rotor_top_centre_mm"
+    ]
+   },
+   "rotor_neck_height_mm": {
+    "value": 0.46399999999999864,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "rotor_diameter_mm/2-rotor_bridge_mm-(rotor_top_centre_mm+rotor_top_radius_mm)",
+    "inputs": [
+     "rotor_bridge_mm",
+     "rotor_diameter_mm",
+     "rotor_top_centre_mm",
+     "rotor_top_radius_mm"
+    ],
+    "note": "The neck rises from the top round end's apex to the bridge."
+   },
+   "depth_m": {
+    "value": 0.13,
+    "unit": "m",
+    "provenance": "derived",
+    "expression": "core_length_mm/1000",
+    "inputs": [
+     "core_length_mm"
+    ]
+   },
+   "pitch_deg": {
+    "value": 7.5,
+    "unit": "deg",
+    "provenance": "derived",
+    "expression": "360/stator_slots",
+    "inputs": [
+     "stator_slots"
+    ]
+   },
+   "rotor_pitch_deg": {
+    "value": 9.473684210526315,
+    "unit": "deg",
+    "provenance": "derived",
+    "expression": "360/rotor_slots",
+    "inputs": [
+     "rotor_slots"
+    ]
+   }
+  },
+  "assembly": {
+   "problem": {
+    "physics": "magnetics",
+    "units": "millimeters",
+    "type": "planar",
+    "frequency": 0,
+    "depth": "$core_length_mm"
+   },
+   "steps": [
+    {
+     "use": "material",
+     "name": "Air"
+    },
+    {
+     "use": "material",
+     "name": "Copper"
+    },
+    {
+     "use": "material",
+     "name": "Aluminium"
+    },
+    {
+     "use": "material",
+     "name": "Steel2013",
+     "values": {
+      "LamFill": "$stacking_factor",
+      "LamType": 0
+     },
+     "curve": "$steel_bh"
+    },
+    {
+     "use": "circuit",
+     "name": "s01",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s02",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s03",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s04",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s05",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s06",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s07",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s08",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s09",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s10",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s11",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s12",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s13",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s14",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s15",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s16",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s17",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s18",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s19",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s20",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s21",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s22",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s23",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s24",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s25",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s26",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s27",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s28",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s29",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s30",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s31",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s32",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s33",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s34",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s35",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s36",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s37",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s38",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s39",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s40",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s41",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s42",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s43",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s44",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s45",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s46",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s47",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "s48",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r01",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r02",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r03",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r04",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r05",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r06",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r07",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r08",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r09",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r10",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r11",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r12",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r13",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r14",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r15",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r16",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r17",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r18",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r19",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r20",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r21",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r22",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r23",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r24",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r25",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r26",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r27",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r28",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r29",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r30",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r31",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r32",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r33",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r34",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r35",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r36",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r37",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "r38",
+     "current": 0
+    },
+    {
+     "use": "fixed_potential_boundary",
+     "name": "A=0",
+     "value": 0
+    },
+    {
+     "use": "trapezoidal_slot_stator",
+     "slot_count": "$stator_slots",
+     "bore_radius": "$bore_radius_mm",
+     "opening_width": "$stator_opening_width_mm",
+     "opening_height": "$stator_opening_height_mm",
+     "slot_width_top": "$stator_body_width_gap_side_mm",
+     "slot_width_bottom": "$stator_body_width_back_mm",
+     "slot_height": "$stator_body_height_mm",
+     "wedge_height": "$stator_wedge_height_mm",
+     "first_tooth_angle": 90,
+     "close_slot_openings": true,
+     "bore_max_segment": "$gap_max_segment_deg",
+     "iron_material": "Steel2013",
+     "iron_mesh": "$stator_iron_mesh_mm"
+    },
+    {
+     "use": "entity_pattern",
+     "entities": [
+      [
+       "segment",
+       "=stator_body_bottom_radius_mm",
+       "=-stator_body_width_gap_side_mm/2",
+       "=stator_body_bottom_radius_mm",
+       "=stator_body_width_gap_side_mm/2"
+      ]
+     ],
+     "copies": "$stator_slots",
+     "angle_step": "$pitch_deg",
+     "first_angle": "=90+pitch_deg/2",
+     "snap": 1e-06
+    },
+    {
+     "use": "circle",
+     "radius": "$stator_outer_radius_mm",
+     "max_segment": "$outer_max_segment_deg",
+     "boundary": "A=0"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+0*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+0*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s01",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+1*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+1*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s02",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+2*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+2*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s03",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+3*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+3*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s04",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+4*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+4*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s05",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+5*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+5*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s06",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+6*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+6*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s07",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+7*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+7*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s08",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+8*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+8*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s09",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+9*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+9*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s10",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+10*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+10*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s11",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+11*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+11*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s12",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+12*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+12*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s13",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+13*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+13*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s14",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+14*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+14*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s15",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+15*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+15*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s16",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+16*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+16*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s17",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+17*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+17*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s18",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+18*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+18*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s19",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+19*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+19*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s20",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+20*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+20*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s21",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+21*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+21*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s22",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+22*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+22*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s23",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+23*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+23*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s24",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+24*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+24*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s25",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+25*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+25*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s26",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+26*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+26*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s27",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+27*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+27*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s28",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+28*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+28*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s29",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+29*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+29*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s30",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+30*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+30*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s31",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+31*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+31*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s32",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+32*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+32*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s33",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+33*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+33*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s34",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+34*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+34*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s35",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+35*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+35*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s36",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+36*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+36*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s37",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+37*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+37*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s38",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+38*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+38*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s39",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+39*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+39*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s40",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+40*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+40*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s41",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+41*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+41*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s42",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+42*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+42*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s43",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+43*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+43*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s44",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+44*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+44*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s45",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+45*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+45*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s46",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+46*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+46*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s47",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=stator_label_radius_mm*cos(radians(90+pitch_deg/2+47*pitch_deg))",
+      "=stator_label_radius_mm*sin(radians(90+pitch_deg/2+47*pitch_deg))"
+     ],
+     "material": "Copper",
+     "circuit": "s48",
+     "turns": "$conductors_per_slot",
+     "mesh": "$conductor_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+0*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+0*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+1*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+1*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+2*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+2*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+3*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+3*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+4*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+4*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+5*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+5*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+6*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+6*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+7*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+7*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+8*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+8*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+9*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+9*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+10*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+10*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+11*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+11*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+12*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+12*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+13*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+13*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+14*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+14*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+15*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+15*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+16*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+16*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+17*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+17*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+18*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+18*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+19*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+19*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+20*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+20*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+21*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+21*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+22*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+22*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+23*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+23*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+24*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+24*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+25*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+25*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+26*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+26*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+27*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+27*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+28*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+28*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+29*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+29*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+30*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+30*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+31*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+31*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+32*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+32*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+33*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+33*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+34*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+34*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+35*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+35*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+36*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+36*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+37*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+37*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+38*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+38*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+39*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+39*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+40*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+40*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+41*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+41*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+42*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+42*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+43*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+43*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+44*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+44*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+45*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+45*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+46*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+46*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*cos(radians(90+pitch_deg/2+47*pitch_deg))",
+      "=(stator_opening_top_radius_mm+stator_body_bottom_radius_mm)/2*sin(radians(90+pitch_deg/2+47*pitch_deg))"
+     ],
+     "material": "Air",
+     "mesh": "$wedge_mesh_mm"
+    },
+    {
+     "use": "circle",
+     "radius": "$mid_gap_radius_mm",
+     "max_segment": "$gap_max_segment_deg"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(mid_gap_radius_mm+bore_radius_mm)/2",
+      0
+     ],
+     "material": "Air",
+     "mesh": "$gap_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(mid_gap_radius_mm+rotor_radius_mm)/2",
+      0
+     ],
+     "material": "Air",
+     "mesh": "$gap_mesh_mm"
+    },
+    {
+     "use": "cage_rotor",
+     "slot_count": "$rotor_slots",
+     "outer_radius": "$rotor_radius_mm",
+     "top_radius": "$rotor_top_radius_mm",
+     "bottom_radius": "$rotor_bottom_radius_mm",
+     "centre_distance": "$rotor_centre_distance_mm",
+     "bridge": "$rotor_bridge_mm",
+     "neck_width": "$rotor_neck_width_mm",
+     "neck_height": "$rotor_neck_height_mm",
+     "first_slot_angle": 90,
+     "surface_max_segment": "$gap_max_segment_deg",
+     "slot_max_segment": "$slot_max_segment_deg",
+     "bar_material": "Aluminium",
+     "circuits": [
+      "r01",
+      "r02",
+      "r03",
+      "r04",
+      "r05",
+      "r06",
+      "r07",
+      "r08",
+      "r09",
+      "r10",
+      "r11",
+      "r12",
+      "r13",
+      "r14",
+      "r15",
+      "r16",
+      "r17",
+      "r18",
+      "r19",
+      "r20",
+      "r21",
+      "r22",
+      "r23",
+      "r24",
+      "r25",
+      "r26",
+      "r27",
+      "r28",
+      "r29",
+      "r30",
+      "r31",
+      "r32",
+      "r33",
+      "r34",
+      "r35",
+      "r36",
+      "r37",
+      "r38"
+     ],
+     "bar_mesh": "$conductor_mesh_mm",
+     "group": 1,
+     "iron_material": "Steel2013",
+     "iron_mesh": "$rotor_iron_mesh_mm"
+    },
+    {
+     "use": "circle",
+     "radius": "$shaft_radius_mm",
+     "max_segment": "$shaft_max_segment_deg",
+     "group": 1
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      0
+     ],
+     "material": "$shaft_material",
+     "mesh": "$shaft_mesh_mm",
+     "group": 1
+    }
+   ]
+  }
+ },
+ "gaps": [
+  {
+   "item": "slot geometry (stator opening, wedge, slot body; rotor slot shape, bridge, neck; shaft)",
+   "affects": "every target",
+   "decision": "figure",
+   "note": "The 2023 companion paper is not cached (downloads need approval); Fig. 1 and Fig. 5 are renderings of the author's FEMM model, read by pooling all slots' outlines (0.45 mm pixels; pooled edges within about 0.1 mm, both figures agree within 0.1 mm). The rotor bridge (0.45 mm) and neck (1.5 mm) are at the resolution limit: controls bridge-0p25 and bridge-0p65."
+  },
+  {
+   "item": "B-H curve below 1.54 T",
+   "affects": "every SIM and load flux (yokes, rotor core), a few percent",
+   "decision": "assumed",
+   "note": "Table 1 gives GOST's five reference points from 1.54 T; the paper says it uses this main curve. The model gives FEMM exactly those points (FEMM adds the origin), as the paper describes; control bh-low-field substitutes a typical lamination's low-field shape."
+  },
+  {
+   "item": "lamination stacking factor",
+   "affects": "iron reluctance",
+   "decision": "assumed",
+   "note": "1; control stacking-0p97."
+  },
+  {
+   "item": "shaft material",
+   "affects": "rotor-yoke flux",
+   "decision": "assumed",
+   "note": "Core steel (flux lines cross the shaft in Figs. 1 and 5); control shaft-air."
+  },
+  {
+   "item": "sign of alpha_sr",
+   "affects": "the torque's sign and gamma_psi1's sign",
+   "decision": "resolved",
+   "note": "Eq. (26) with alpha_sr = -82.49 (p. 10, and Fig. 8's arrow) and the text's later +83.10 and +83.41 disagree, and the text's gamma_psi1 = -56.55 disagrees with Fig. 3's curve. The model's stator teeth and one rotor slot sit on the y axis, so changing alpha_sr's sign is a mirror image with every current reversed: flux, flux linkage amplitudes, EMFs and |torque| are unchanged, the torque and the phase change sign. Magnitudes are the acceptance quantities; the step load1_mirror and the torque_mirror relation check the symmetry, and control final-angle-positive uses the printed sign."
+  },
+  {
+   "item": "where the flux points Az1, Az2 lie",
+   "affects": "Phi0 and Phi_l by eq. (3)",
+   "decision": "resolved",
+   "note": "Fig. 1 marks them on the air gap: A's extremes on the circle in the middle of the gap; comparators 0.05 mm from either side."
+  },
+  {
+   "item": "eq. (4)'s normalization",
+   "affects": "flux linkage",
+   "decision": "resolved",
+   "note": "As printed eq. (4) is twice the standard N la (A1 - A2) per turn; the paper's numbers follow the standard one (Es = 218.7 V from 0.9843 Wb; Ns kw Phi0 = 0.972 Wb). The model sums 14 conductors per slot."
+  },
+  {
+   "item": "the intermediate load point (Imu = 7.25 A, Is = 29.22 A)",
+   "affects": "its torque 95.45 N m and psi_m1 0.9101 Wb",
+   "decision": "out_of_scope",
+   "note": "Its bar current is not printed, and the equivalent-circuit formulas do not reproduce the first point's printed currents exactly (Ir 448-450 A against 446 A), so it is not derived."
+  },
+  {
+   "item": "teeth and back magnetization curves (Phi0 = 9.703 mWb)",
+   "affects": "one comparator value",
+   "decision": "out_of_scope",
+   "note": "The paper's alternative with separate curves for teeth and backs needs teeth/back regions and full curves the paper does not give."
+  },
+  {
+   "item": "end effects, skew",
+   "affects": "none",
+   "decision": "resolved",
+   "note": "The paper's model is 2D and the slots are not skewed (Ksr = 1)."
+  }
+ ],
+ "steps": [
+  {
+   "label": "sim775",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "s01",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s02",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s03",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s04",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s05",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s06",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s07",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s08",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s09",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s10",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s11",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s12",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s13",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s14",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s15",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s16",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s17",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s18",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s19",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s20",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s21",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s22",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s23",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s24",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s25",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s26",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s27",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s28",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s29",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s30",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s31",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s32",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s33",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s34",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s35",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s36",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s37",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s38",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s39",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s40",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s41",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s42",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s43",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s44",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s45",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s46",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s47",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s48",
+     "property": 1,
+     "value": "=sqrt(2)*sim_current_A*(-0.5)"
+    }
+   ]
+  },
+  {
+   "label": "sim809",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "s01",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s02",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s03",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s04",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s05",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s06",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s07",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s08",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s09",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s10",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s11",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s12",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s13",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s14",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s15",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s16",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s17",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s18",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s19",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s20",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s21",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s22",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s23",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s24",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s25",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s26",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s27",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s28",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s29",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s30",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s31",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s32",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s33",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s34",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s35",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s36",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s37",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s38",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s39",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s40",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s41",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s42",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s43",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s44",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s45",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s46",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s47",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s48",
+     "property": 1,
+     "value": "=sqrt(2)*sim_refined_current_A*(-0.5)"
+    }
+   ]
+  },
+  {
+   "label": "load1",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "s01",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s02",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s03",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s04",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s05",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s06",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s07",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s08",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s09",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s10",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s11",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s12",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s13",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s14",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s15",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s16",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s17",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s18",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s19",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s20",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s21",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s22",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s23",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s24",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s25",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s26",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s27",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s28",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s29",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s30",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s31",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s32",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s33",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s34",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s35",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s36",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s37",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s38",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s39",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s40",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s41",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s42",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s43",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s44",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s45",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s46",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s47",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s48",
+     "property": 1,
+     "value": "=sqrt(2)*load_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r01",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(0*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r02",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(1*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r03",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(2*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r04",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(3*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r05",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(4*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r06",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(5*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r07",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(6*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r08",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(7*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r09",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(8*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r10",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(9*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r11",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(10*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r12",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(11*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r13",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(12*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r14",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(13*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r15",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(14*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r16",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(15*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r17",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(16*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r18",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(17*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r19",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(18*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r20",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(19*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r21",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(20*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r22",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(21*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r23",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(22*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r24",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(23*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r25",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(24*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r26",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(25*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r27",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(26*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r28",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(27*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r29",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(28*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r30",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(29*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r31",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(30*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r32",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(31*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r33",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(32*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r34",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(33*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r35",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(34*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r36",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(35*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r37",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(36*rotor_pitch_deg+load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r38",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(37*rotor_pitch_deg+load_angle_deg)))"
+    }
+   ]
+  },
+  {
+   "label": "load1_mirror",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "r01",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(0*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r02",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(1*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r03",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(2*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r04",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(3*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r05",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(4*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r06",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(5*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r07",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(6*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r08",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(7*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r09",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(8*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r10",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(9*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r11",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(10*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r12",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(11*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r13",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(12*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r14",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(13*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r15",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(14*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r16",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(15*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r17",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(16*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r18",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(17*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r19",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(18*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r20",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(19*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r21",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(20*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r22",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(21*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r23",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(22*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r24",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(23*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r25",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(24*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r26",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(25*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r27",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(26*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r28",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(27*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r29",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(28*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r30",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(29*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r31",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(30*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r32",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(31*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r33",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(32*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r34",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(33*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r35",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(34*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r36",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(35*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r37",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(36*rotor_pitch_deg+-load_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r38",
+     "property": 1,
+     "value": "=sqrt(2)*load_rotor_current_A*sin(radians(pole_pairs*(37*rotor_pitch_deg+-load_angle_deg)))"
+    }
+   ]
+  },
+  {
+   "label": "loadN",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "s01",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s02",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s03",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s04",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s05",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s06",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s07",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s08",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s09",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s10",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s11",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s12",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s13",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s14",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s15",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s16",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s17",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s18",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s19",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s20",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s21",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s22",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s23",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s24",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s25",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s26",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s27",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s28",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s29",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s30",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s31",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s32",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s33",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s34",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s35",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s36",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s37",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s38",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s39",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s40",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s41",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s42",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s43",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s44",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-1.0)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s45",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s46",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s47",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "s48",
+     "property": 1,
+     "value": "=sqrt(2)*final_stator_current_A*(-0.5)"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r01",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(0*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r02",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(1*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r03",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(2*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r04",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(3*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r05",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(4*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r06",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(5*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r07",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(6*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r08",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(7*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r09",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(8*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r10",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(9*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r11",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(10*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r12",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(11*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r13",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(12*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r14",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(13*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r15",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(14*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r16",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(15*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r17",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(16*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r18",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(17*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r19",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(18*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r20",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(19*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r21",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(20*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r22",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(21*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r23",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(22*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r24",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(23*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r25",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(24*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r26",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(25*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r27",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(26*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r28",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(27*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r29",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(28*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r30",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(29*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r31",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(30*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r32",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(31*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r33",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(32*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r34",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(33*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r35",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(34*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r36",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(35*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r37",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(36*rotor_pitch_deg+final_angle_deg)))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "r38",
+     "property": 1,
+     "value": "=sqrt(2)*final_rotor_current_A*sin(radians(pole_pairs*(37*rotor_pitch_deg+final_angle_deg)))"
+    }
+   ]
+  }
+ ],
+ "engine": {
+  "solves_per_process": 2
+ },
+ "measurements": [
+  {
+   "id": "s01",
+   "op": "circuit",
+   "name": "s01"
+  },
+  {
+   "id": "s02",
+   "op": "circuit",
+   "name": "s02"
+  },
+  {
+   "id": "s03",
+   "op": "circuit",
+   "name": "s03"
+  },
+  {
+   "id": "s04",
+   "op": "circuit",
+   "name": "s04"
+  },
+  {
+   "id": "s05",
+   "op": "circuit",
+   "name": "s05"
+  },
+  {
+   "id": "s06",
+   "op": "circuit",
+   "name": "s06"
+  },
+  {
+   "id": "s07",
+   "op": "circuit",
+   "name": "s07"
+  },
+  {
+   "id": "s08",
+   "op": "circuit",
+   "name": "s08"
+  },
+  {
+   "id": "s09",
+   "op": "circuit",
+   "name": "s09"
+  },
+  {
+   "id": "s10",
+   "op": "circuit",
+   "name": "s10"
+  },
+  {
+   "id": "s11",
+   "op": "circuit",
+   "name": "s11"
+  },
+  {
+   "id": "s12",
+   "op": "circuit",
+   "name": "s12"
+  },
+  {
+   "id": "s13",
+   "op": "circuit",
+   "name": "s13"
+  },
+  {
+   "id": "s14",
+   "op": "circuit",
+   "name": "s14"
+  },
+  {
+   "id": "s15",
+   "op": "circuit",
+   "name": "s15"
+  },
+  {
+   "id": "s16",
+   "op": "circuit",
+   "name": "s16"
+  },
+  {
+   "id": "s17",
+   "op": "circuit",
+   "name": "s17"
+  },
+  {
+   "id": "s18",
+   "op": "circuit",
+   "name": "s18"
+  },
+  {
+   "id": "s19",
+   "op": "circuit",
+   "name": "s19"
+  },
+  {
+   "id": "s20",
+   "op": "circuit",
+   "name": "s20"
+  },
+  {
+   "id": "s21",
+   "op": "circuit",
+   "name": "s21"
+  },
+  {
+   "id": "s22",
+   "op": "circuit",
+   "name": "s22"
+  },
+  {
+   "id": "s23",
+   "op": "circuit",
+   "name": "s23"
+  },
+  {
+   "id": "s24",
+   "op": "circuit",
+   "name": "s24"
+  },
+  {
+   "id": "s25",
+   "op": "circuit",
+   "name": "s25"
+  },
+  {
+   "id": "s26",
+   "op": "circuit",
+   "name": "s26"
+  },
+  {
+   "id": "s27",
+   "op": "circuit",
+   "name": "s27"
+  },
+  {
+   "id": "s28",
+   "op": "circuit",
+   "name": "s28"
+  },
+  {
+   "id": "s29",
+   "op": "circuit",
+   "name": "s29"
+  },
+  {
+   "id": "s30",
+   "op": "circuit",
+   "name": "s30"
+  },
+  {
+   "id": "s31",
+   "op": "circuit",
+   "name": "s31"
+  },
+  {
+   "id": "s32",
+   "op": "circuit",
+   "name": "s32"
+  },
+  {
+   "id": "s33",
+   "op": "circuit",
+   "name": "s33"
+  },
+  {
+   "id": "s34",
+   "op": "circuit",
+   "name": "s34"
+  },
+  {
+   "id": "s35",
+   "op": "circuit",
+   "name": "s35"
+  },
+  {
+   "id": "s36",
+   "op": "circuit",
+   "name": "s36"
+  },
+  {
+   "id": "s37",
+   "op": "circuit",
+   "name": "s37"
+  },
+  {
+   "id": "s38",
+   "op": "circuit",
+   "name": "s38"
+  },
+  {
+   "id": "s39",
+   "op": "circuit",
+   "name": "s39"
+  },
+  {
+   "id": "s40",
+   "op": "circuit",
+   "name": "s40"
+  },
+  {
+   "id": "s41",
+   "op": "circuit",
+   "name": "s41"
+  },
+  {
+   "id": "s42",
+   "op": "circuit",
+   "name": "s42"
+  },
+  {
+   "id": "s43",
+   "op": "circuit",
+   "name": "s43"
+  },
+  {
+   "id": "s44",
+   "op": "circuit",
+   "name": "s44"
+  },
+  {
+   "id": "s45",
+   "op": "circuit",
+   "name": "s45"
+  },
+  {
+   "id": "s46",
+   "op": "circuit",
+   "name": "s46"
+  },
+  {
+   "id": "s47",
+   "op": "circuit",
+   "name": "s47"
+  },
+  {
+   "id": "s48",
+   "op": "circuit",
+   "name": "s48"
+  },
+  {
+   "id": "gap",
+   "op": "circle_values",
+   "radius": 92.25,
+   "count": 1440,
+   "fields": [
+    "A"
+   ]
+  },
+  {
+   "id": "gap_rotor_side",
+   "op": "circle_values",
+   "radius": 92.05,
+   "count": 1440,
+   "fields": [
+    "A"
+   ]
+  },
+  {
+   "id": "gap_stator_side",
+   "op": "circle_values",
+   "radius": 92.45,
+   "count": 1440,
+   "fields": [
+    "A"
+   ]
+  },
+  {
+   "id": "torque",
+   "op": "block_integral",
+   "select": {
+    "group": 1
+   },
+   "type": 22
+  }
+ ],
+ "metrics": [
+  {
+   "name": "psi_k01",
+   "terms": [
+    [
+     "s05",
+     2,
+     1
+    ],
+    [
+     "s06",
+     2,
+     1
+    ],
+    [
+     "s07",
+     2,
+     1
+    ],
+    [
+     "s08",
+     2,
+     1
+    ],
+    [
+     "s17",
+     2,
+     -1
+    ],
+    [
+     "s18",
+     2,
+     -1
+    ],
+    [
+     "s19",
+     2,
+     -1
+    ],
+    [
+     "s20",
+     2,
+     -1
+    ],
+    [
+     "s29",
+     2,
+     1
+    ],
+    [
+     "s30",
+     2,
+     1
+    ],
+    [
+     "s31",
+     2,
+     1
+    ],
+    [
+     "s32",
+     2,
+     1
+    ],
+    [
+     "s41",
+     2,
+     -1
+    ],
+    [
+     "s42",
+     2,
+     -1
+    ],
+    [
+     "s43",
+     2,
+     -1
+    ],
+    [
+     "s44",
+     2,
+     -1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k02",
+   "terms": [
+    [
+     "s06",
+     2,
+     1
+    ],
+    [
+     "s07",
+     2,
+     1
+    ],
+    [
+     "s08",
+     2,
+     1
+    ],
+    [
+     "s09",
+     2,
+     1
+    ],
+    [
+     "s18",
+     2,
+     -1
+    ],
+    [
+     "s19",
+     2,
+     -1
+    ],
+    [
+     "s20",
+     2,
+     -1
+    ],
+    [
+     "s21",
+     2,
+     -1
+    ],
+    [
+     "s30",
+     2,
+     1
+    ],
+    [
+     "s31",
+     2,
+     1
+    ],
+    [
+     "s32",
+     2,
+     1
+    ],
+    [
+     "s33",
+     2,
+     1
+    ],
+    [
+     "s42",
+     2,
+     -1
+    ],
+    [
+     "s43",
+     2,
+     -1
+    ],
+    [
+     "s44",
+     2,
+     -1
+    ],
+    [
+     "s45",
+     2,
+     -1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k03",
+   "terms": [
+    [
+     "s07",
+     2,
+     1
+    ],
+    [
+     "s08",
+     2,
+     1
+    ],
+    [
+     "s09",
+     2,
+     1
+    ],
+    [
+     "s10",
+     2,
+     1
+    ],
+    [
+     "s19",
+     2,
+     -1
+    ],
+    [
+     "s20",
+     2,
+     -1
+    ],
+    [
+     "s21",
+     2,
+     -1
+    ],
+    [
+     "s22",
+     2,
+     -1
+    ],
+    [
+     "s31",
+     2,
+     1
+    ],
+    [
+     "s32",
+     2,
+     1
+    ],
+    [
+     "s33",
+     2,
+     1
+    ],
+    [
+     "s34",
+     2,
+     1
+    ],
+    [
+     "s43",
+     2,
+     -1
+    ],
+    [
+     "s44",
+     2,
+     -1
+    ],
+    [
+     "s45",
+     2,
+     -1
+    ],
+    [
+     "s46",
+     2,
+     -1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k04",
+   "terms": [
+    [
+     "s08",
+     2,
+     1
+    ],
+    [
+     "s09",
+     2,
+     1
+    ],
+    [
+     "s10",
+     2,
+     1
+    ],
+    [
+     "s11",
+     2,
+     1
+    ],
+    [
+     "s20",
+     2,
+     -1
+    ],
+    [
+     "s21",
+     2,
+     -1
+    ],
+    [
+     "s22",
+     2,
+     -1
+    ],
+    [
+     "s23",
+     2,
+     -1
+    ],
+    [
+     "s32",
+     2,
+     1
+    ],
+    [
+     "s33",
+     2,
+     1
+    ],
+    [
+     "s34",
+     2,
+     1
+    ],
+    [
+     "s35",
+     2,
+     1
+    ],
+    [
+     "s44",
+     2,
+     -1
+    ],
+    [
+     "s45",
+     2,
+     -1
+    ],
+    [
+     "s46",
+     2,
+     -1
+    ],
+    [
+     "s47",
+     2,
+     -1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k05",
+   "terms": [
+    [
+     "s09",
+     2,
+     1
+    ],
+    [
+     "s10",
+     2,
+     1
+    ],
+    [
+     "s11",
+     2,
+     1
+    ],
+    [
+     "s12",
+     2,
+     1
+    ],
+    [
+     "s21",
+     2,
+     -1
+    ],
+    [
+     "s22",
+     2,
+     -1
+    ],
+    [
+     "s23",
+     2,
+     -1
+    ],
+    [
+     "s24",
+     2,
+     -1
+    ],
+    [
+     "s33",
+     2,
+     1
+    ],
+    [
+     "s34",
+     2,
+     1
+    ],
+    [
+     "s35",
+     2,
+     1
+    ],
+    [
+     "s36",
+     2,
+     1
+    ],
+    [
+     "s45",
+     2,
+     -1
+    ],
+    [
+     "s46",
+     2,
+     -1
+    ],
+    [
+     "s47",
+     2,
+     -1
+    ],
+    [
+     "s48",
+     2,
+     -1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k06",
+   "terms": [
+    [
+     "s01",
+     2,
+     -1
+    ],
+    [
+     "s10",
+     2,
+     1
+    ],
+    [
+     "s11",
+     2,
+     1
+    ],
+    [
+     "s12",
+     2,
+     1
+    ],
+    [
+     "s13",
+     2,
+     1
+    ],
+    [
+     "s22",
+     2,
+     -1
+    ],
+    [
+     "s23",
+     2,
+     -1
+    ],
+    [
+     "s24",
+     2,
+     -1
+    ],
+    [
+     "s25",
+     2,
+     -1
+    ],
+    [
+     "s34",
+     2,
+     1
+    ],
+    [
+     "s35",
+     2,
+     1
+    ],
+    [
+     "s36",
+     2,
+     1
+    ],
+    [
+     "s37",
+     2,
+     1
+    ],
+    [
+     "s46",
+     2,
+     -1
+    ],
+    [
+     "s47",
+     2,
+     -1
+    ],
+    [
+     "s48",
+     2,
+     -1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k07",
+   "terms": [
+    [
+     "s01",
+     2,
+     -1
+    ],
+    [
+     "s02",
+     2,
+     -1
+    ],
+    [
+     "s11",
+     2,
+     1
+    ],
+    [
+     "s12",
+     2,
+     1
+    ],
+    [
+     "s13",
+     2,
+     1
+    ],
+    [
+     "s14",
+     2,
+     1
+    ],
+    [
+     "s23",
+     2,
+     -1
+    ],
+    [
+     "s24",
+     2,
+     -1
+    ],
+    [
+     "s25",
+     2,
+     -1
+    ],
+    [
+     "s26",
+     2,
+     -1
+    ],
+    [
+     "s35",
+     2,
+     1
+    ],
+    [
+     "s36",
+     2,
+     1
+    ],
+    [
+     "s37",
+     2,
+     1
+    ],
+    [
+     "s38",
+     2,
+     1
+    ],
+    [
+     "s47",
+     2,
+     -1
+    ],
+    [
+     "s48",
+     2,
+     -1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k08",
+   "terms": [
+    [
+     "s01",
+     2,
+     -1
+    ],
+    [
+     "s02",
+     2,
+     -1
+    ],
+    [
+     "s03",
+     2,
+     -1
+    ],
+    [
+     "s12",
+     2,
+     1
+    ],
+    [
+     "s13",
+     2,
+     1
+    ],
+    [
+     "s14",
+     2,
+     1
+    ],
+    [
+     "s15",
+     2,
+     1
+    ],
+    [
+     "s24",
+     2,
+     -1
+    ],
+    [
+     "s25",
+     2,
+     -1
+    ],
+    [
+     "s26",
+     2,
+     -1
+    ],
+    [
+     "s27",
+     2,
+     -1
+    ],
+    [
+     "s36",
+     2,
+     1
+    ],
+    [
+     "s37",
+     2,
+     1
+    ],
+    [
+     "s38",
+     2,
+     1
+    ],
+    [
+     "s39",
+     2,
+     1
+    ],
+    [
+     "s48",
+     2,
+     -1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k09",
+   "terms": [
+    [
+     "s01",
+     2,
+     -1
+    ],
+    [
+     "s02",
+     2,
+     -1
+    ],
+    [
+     "s03",
+     2,
+     -1
+    ],
+    [
+     "s04",
+     2,
+     -1
+    ],
+    [
+     "s13",
+     2,
+     1
+    ],
+    [
+     "s14",
+     2,
+     1
+    ],
+    [
+     "s15",
+     2,
+     1
+    ],
+    [
+     "s16",
+     2,
+     1
+    ],
+    [
+     "s25",
+     2,
+     -1
+    ],
+    [
+     "s26",
+     2,
+     -1
+    ],
+    [
+     "s27",
+     2,
+     -1
+    ],
+    [
+     "s28",
+     2,
+     -1
+    ],
+    [
+     "s37",
+     2,
+     1
+    ],
+    [
+     "s38",
+     2,
+     1
+    ],
+    [
+     "s39",
+     2,
+     1
+    ],
+    [
+     "s40",
+     2,
+     1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k10",
+   "terms": [
+    [
+     "s02",
+     2,
+     -1
+    ],
+    [
+     "s03",
+     2,
+     -1
+    ],
+    [
+     "s04",
+     2,
+     -1
+    ],
+    [
+     "s05",
+     2,
+     -1
+    ],
+    [
+     "s14",
+     2,
+     1
+    ],
+    [
+     "s15",
+     2,
+     1
+    ],
+    [
+     "s16",
+     2,
+     1
+    ],
+    [
+     "s17",
+     2,
+     1
+    ],
+    [
+     "s26",
+     2,
+     -1
+    ],
+    [
+     "s27",
+     2,
+     -1
+    ],
+    [
+     "s28",
+     2,
+     -1
+    ],
+    [
+     "s29",
+     2,
+     -1
+    ],
+    [
+     "s38",
+     2,
+     1
+    ],
+    [
+     "s39",
+     2,
+     1
+    ],
+    [
+     "s40",
+     2,
+     1
+    ],
+    [
+     "s41",
+     2,
+     1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k11",
+   "terms": [
+    [
+     "s03",
+     2,
+     -1
+    ],
+    [
+     "s04",
+     2,
+     -1
+    ],
+    [
+     "s05",
+     2,
+     -1
+    ],
+    [
+     "s06",
+     2,
+     -1
+    ],
+    [
+     "s15",
+     2,
+     1
+    ],
+    [
+     "s16",
+     2,
+     1
+    ],
+    [
+     "s17",
+     2,
+     1
+    ],
+    [
+     "s18",
+     2,
+     1
+    ],
+    [
+     "s27",
+     2,
+     -1
+    ],
+    [
+     "s28",
+     2,
+     -1
+    ],
+    [
+     "s29",
+     2,
+     -1
+    ],
+    [
+     "s30",
+     2,
+     -1
+    ],
+    [
+     "s39",
+     2,
+     1
+    ],
+    [
+     "s40",
+     2,
+     1
+    ],
+    [
+     "s41",
+     2,
+     1
+    ],
+    [
+     "s42",
+     2,
+     1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k12",
+   "terms": [
+    [
+     "s04",
+     2,
+     -1
+    ],
+    [
+     "s05",
+     2,
+     -1
+    ],
+    [
+     "s06",
+     2,
+     -1
+    ],
+    [
+     "s07",
+     2,
+     -1
+    ],
+    [
+     "s16",
+     2,
+     1
+    ],
+    [
+     "s17",
+     2,
+     1
+    ],
+    [
+     "s18",
+     2,
+     1
+    ],
+    [
+     "s19",
+     2,
+     1
+    ],
+    [
+     "s28",
+     2,
+     -1
+    ],
+    [
+     "s29",
+     2,
+     -1
+    ],
+    [
+     "s30",
+     2,
+     -1
+    ],
+    [
+     "s31",
+     2,
+     -1
+    ],
+    [
+     "s40",
+     2,
+     1
+    ],
+    [
+     "s41",
+     2,
+     1
+    ],
+    [
+     "s42",
+     2,
+     1
+    ],
+    [
+     "s43",
+     2,
+     1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k13",
+   "terms": [
+    [
+     "s05",
+     2,
+     -1
+    ],
+    [
+     "s06",
+     2,
+     -1
+    ],
+    [
+     "s07",
+     2,
+     -1
+    ],
+    [
+     "s08",
+     2,
+     -1
+    ],
+    [
+     "s17",
+     2,
+     1
+    ],
+    [
+     "s18",
+     2,
+     1
+    ],
+    [
+     "s19",
+     2,
+     1
+    ],
+    [
+     "s20",
+     2,
+     1
+    ],
+    [
+     "s29",
+     2,
+     -1
+    ],
+    [
+     "s30",
+     2,
+     -1
+    ],
+    [
+     "s31",
+     2,
+     -1
+    ],
+    [
+     "s32",
+     2,
+     -1
+    ],
+    [
+     "s41",
+     2,
+     1
+    ],
+    [
+     "s42",
+     2,
+     1
+    ],
+    [
+     "s43",
+     2,
+     1
+    ],
+    [
+     "s44",
+     2,
+     1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k14",
+   "terms": [
+    [
+     "s06",
+     2,
+     -1
+    ],
+    [
+     "s07",
+     2,
+     -1
+    ],
+    [
+     "s08",
+     2,
+     -1
+    ],
+    [
+     "s09",
+     2,
+     -1
+    ],
+    [
+     "s18",
+     2,
+     1
+    ],
+    [
+     "s19",
+     2,
+     1
+    ],
+    [
+     "s20",
+     2,
+     1
+    ],
+    [
+     "s21",
+     2,
+     1
+    ],
+    [
+     "s30",
+     2,
+     -1
+    ],
+    [
+     "s31",
+     2,
+     -1
+    ],
+    [
+     "s32",
+     2,
+     -1
+    ],
+    [
+     "s33",
+     2,
+     -1
+    ],
+    [
+     "s42",
+     2,
+     1
+    ],
+    [
+     "s43",
+     2,
+     1
+    ],
+    [
+     "s44",
+     2,
+     1
+    ],
+    [
+     "s45",
+     2,
+     1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k15",
+   "terms": [
+    [
+     "s07",
+     2,
+     -1
+    ],
+    [
+     "s08",
+     2,
+     -1
+    ],
+    [
+     "s09",
+     2,
+     -1
+    ],
+    [
+     "s10",
+     2,
+     -1
+    ],
+    [
+     "s19",
+     2,
+     1
+    ],
+    [
+     "s20",
+     2,
+     1
+    ],
+    [
+     "s21",
+     2,
+     1
+    ],
+    [
+     "s22",
+     2,
+     1
+    ],
+    [
+     "s31",
+     2,
+     -1
+    ],
+    [
+     "s32",
+     2,
+     -1
+    ],
+    [
+     "s33",
+     2,
+     -1
+    ],
+    [
+     "s34",
+     2,
+     -1
+    ],
+    [
+     "s43",
+     2,
+     1
+    ],
+    [
+     "s44",
+     2,
+     1
+    ],
+    [
+     "s45",
+     2,
+     1
+    ],
+    [
+     "s46",
+     2,
+     1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k16",
+   "terms": [
+    [
+     "s08",
+     2,
+     -1
+    ],
+    [
+     "s09",
+     2,
+     -1
+    ],
+    [
+     "s10",
+     2,
+     -1
+    ],
+    [
+     "s11",
+     2,
+     -1
+    ],
+    [
+     "s20",
+     2,
+     1
+    ],
+    [
+     "s21",
+     2,
+     1
+    ],
+    [
+     "s22",
+     2,
+     1
+    ],
+    [
+     "s23",
+     2,
+     1
+    ],
+    [
+     "s32",
+     2,
+     -1
+    ],
+    [
+     "s33",
+     2,
+     -1
+    ],
+    [
+     "s34",
+     2,
+     -1
+    ],
+    [
+     "s35",
+     2,
+     -1
+    ],
+    [
+     "s44",
+     2,
+     1
+    ],
+    [
+     "s45",
+     2,
+     1
+    ],
+    [
+     "s46",
+     2,
+     1
+    ],
+    [
+     "s47",
+     2,
+     1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k17",
+   "terms": [
+    [
+     "s09",
+     2,
+     -1
+    ],
+    [
+     "s10",
+     2,
+     -1
+    ],
+    [
+     "s11",
+     2,
+     -1
+    ],
+    [
+     "s12",
+     2,
+     -1
+    ],
+    [
+     "s21",
+     2,
+     1
+    ],
+    [
+     "s22",
+     2,
+     1
+    ],
+    [
+     "s23",
+     2,
+     1
+    ],
+    [
+     "s24",
+     2,
+     1
+    ],
+    [
+     "s33",
+     2,
+     -1
+    ],
+    [
+     "s34",
+     2,
+     -1
+    ],
+    [
+     "s35",
+     2,
+     -1
+    ],
+    [
+     "s36",
+     2,
+     -1
+    ],
+    [
+     "s45",
+     2,
+     1
+    ],
+    [
+     "s46",
+     2,
+     1
+    ],
+    [
+     "s47",
+     2,
+     1
+    ],
+    [
+     "s48",
+     2,
+     1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k18",
+   "terms": [
+    [
+     "s01",
+     2,
+     1
+    ],
+    [
+     "s10",
+     2,
+     -1
+    ],
+    [
+     "s11",
+     2,
+     -1
+    ],
+    [
+     "s12",
+     2,
+     -1
+    ],
+    [
+     "s13",
+     2,
+     -1
+    ],
+    [
+     "s22",
+     2,
+     1
+    ],
+    [
+     "s23",
+     2,
+     1
+    ],
+    [
+     "s24",
+     2,
+     1
+    ],
+    [
+     "s25",
+     2,
+     1
+    ],
+    [
+     "s34",
+     2,
+     -1
+    ],
+    [
+     "s35",
+     2,
+     -1
+    ],
+    [
+     "s36",
+     2,
+     -1
+    ],
+    [
+     "s37",
+     2,
+     -1
+    ],
+    [
+     "s46",
+     2,
+     1
+    ],
+    [
+     "s47",
+     2,
+     1
+    ],
+    [
+     "s48",
+     2,
+     1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k19",
+   "terms": [
+    [
+     "s01",
+     2,
+     1
+    ],
+    [
+     "s02",
+     2,
+     1
+    ],
+    [
+     "s11",
+     2,
+     -1
+    ],
+    [
+     "s12",
+     2,
+     -1
+    ],
+    [
+     "s13",
+     2,
+     -1
+    ],
+    [
+     "s14",
+     2,
+     -1
+    ],
+    [
+     "s23",
+     2,
+     1
+    ],
+    [
+     "s24",
+     2,
+     1
+    ],
+    [
+     "s25",
+     2,
+     1
+    ],
+    [
+     "s26",
+     2,
+     1
+    ],
+    [
+     "s35",
+     2,
+     -1
+    ],
+    [
+     "s36",
+     2,
+     -1
+    ],
+    [
+     "s37",
+     2,
+     -1
+    ],
+    [
+     "s38",
+     2,
+     -1
+    ],
+    [
+     "s47",
+     2,
+     1
+    ],
+    [
+     "s48",
+     2,
+     1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k20",
+   "terms": [
+    [
+     "s01",
+     2,
+     1
+    ],
+    [
+     "s02",
+     2,
+     1
+    ],
+    [
+     "s03",
+     2,
+     1
+    ],
+    [
+     "s12",
+     2,
+     -1
+    ],
+    [
+     "s13",
+     2,
+     -1
+    ],
+    [
+     "s14",
+     2,
+     -1
+    ],
+    [
+     "s15",
+     2,
+     -1
+    ],
+    [
+     "s24",
+     2,
+     1
+    ],
+    [
+     "s25",
+     2,
+     1
+    ],
+    [
+     "s26",
+     2,
+     1
+    ],
+    [
+     "s27",
+     2,
+     1
+    ],
+    [
+     "s36",
+     2,
+     -1
+    ],
+    [
+     "s37",
+     2,
+     -1
+    ],
+    [
+     "s38",
+     2,
+     -1
+    ],
+    [
+     "s39",
+     2,
+     -1
+    ],
+    [
+     "s48",
+     2,
+     1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k21",
+   "terms": [
+    [
+     "s01",
+     2,
+     1
+    ],
+    [
+     "s02",
+     2,
+     1
+    ],
+    [
+     "s03",
+     2,
+     1
+    ],
+    [
+     "s04",
+     2,
+     1
+    ],
+    [
+     "s13",
+     2,
+     -1
+    ],
+    [
+     "s14",
+     2,
+     -1
+    ],
+    [
+     "s15",
+     2,
+     -1
+    ],
+    [
+     "s16",
+     2,
+     -1
+    ],
+    [
+     "s25",
+     2,
+     1
+    ],
+    [
+     "s26",
+     2,
+     1
+    ],
+    [
+     "s27",
+     2,
+     1
+    ],
+    [
+     "s28",
+     2,
+     1
+    ],
+    [
+     "s37",
+     2,
+     -1
+    ],
+    [
+     "s38",
+     2,
+     -1
+    ],
+    [
+     "s39",
+     2,
+     -1
+    ],
+    [
+     "s40",
+     2,
+     -1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k22",
+   "terms": [
+    [
+     "s02",
+     2,
+     1
+    ],
+    [
+     "s03",
+     2,
+     1
+    ],
+    [
+     "s04",
+     2,
+     1
+    ],
+    [
+     "s05",
+     2,
+     1
+    ],
+    [
+     "s14",
+     2,
+     -1
+    ],
+    [
+     "s15",
+     2,
+     -1
+    ],
+    [
+     "s16",
+     2,
+     -1
+    ],
+    [
+     "s17",
+     2,
+     -1
+    ],
+    [
+     "s26",
+     2,
+     1
+    ],
+    [
+     "s27",
+     2,
+     1
+    ],
+    [
+     "s28",
+     2,
+     1
+    ],
+    [
+     "s29",
+     2,
+     1
+    ],
+    [
+     "s38",
+     2,
+     -1
+    ],
+    [
+     "s39",
+     2,
+     -1
+    ],
+    [
+     "s40",
+     2,
+     -1
+    ],
+    [
+     "s41",
+     2,
+     -1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k23",
+   "terms": [
+    [
+     "s03",
+     2,
+     1
+    ],
+    [
+     "s04",
+     2,
+     1
+    ],
+    [
+     "s05",
+     2,
+     1
+    ],
+    [
+     "s06",
+     2,
+     1
+    ],
+    [
+     "s15",
+     2,
+     -1
+    ],
+    [
+     "s16",
+     2,
+     -1
+    ],
+    [
+     "s17",
+     2,
+     -1
+    ],
+    [
+     "s18",
+     2,
+     -1
+    ],
+    [
+     "s27",
+     2,
+     1
+    ],
+    [
+     "s28",
+     2,
+     1
+    ],
+    [
+     "s29",
+     2,
+     1
+    ],
+    [
+     "s30",
+     2,
+     1
+    ],
+    [
+     "s39",
+     2,
+     -1
+    ],
+    [
+     "s40",
+     2,
+     -1
+    ],
+    [
+     "s41",
+     2,
+     -1
+    ],
+    [
+     "s42",
+     2,
+     -1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "psi_k24",
+   "terms": [
+    [
+     "s04",
+     2,
+     1
+    ],
+    [
+     "s05",
+     2,
+     1
+    ],
+    [
+     "s06",
+     2,
+     1
+    ],
+    [
+     "s07",
+     2,
+     1
+    ],
+    [
+     "s16",
+     2,
+     -1
+    ],
+    [
+     "s17",
+     2,
+     -1
+    ],
+    [
+     "s18",
+     2,
+     -1
+    ],
+    [
+     "s19",
+     2,
+     -1
+    ],
+    [
+     "s28",
+     2,
+     1
+    ],
+    [
+     "s29",
+     2,
+     1
+    ],
+    [
+     "s30",
+     2,
+     1
+    ],
+    [
+     "s31",
+     2,
+     1
+    ],
+    [
+     "s40",
+     2,
+     -1
+    ],
+    [
+     "s41",
+     2,
+     -1
+    ],
+    [
+     "s42",
+     2,
+     -1
+    ],
+    [
+     "s43",
+     2,
+     -1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "torque_Nm",
+   "value": [
+    "torque",
+    0
+   ],
+   "unit": "N*m"
+  },
+  {
+   "name": "torque_magnitude_Nm",
+   "value": [
+    "torque",
+    0
+   ],
+   "part": "abs",
+   "unit": "N*m"
+  }
+ ],
+ "targets": [
+  {
+   "metric": "psi_k01@sim775",
+   "value": 0.9843,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Ψms = 0.9843 Wb was obtained.",
+   "location": "p. 7 and Table 2 (k = 1)",
+   "note": "Phase A's flux linkage at the zones of Fig. 1, eq. (4) with Ns = 112 over the conductive slot areas, at Imu = 7.75 A. Eq. (4) as printed lacks a factor 1/2 against Ns la (A1 - A2) per turn; the number follows the standard sum (14 conductors per slot), as Es = 218.7 V = sqrt(2) pi 50 x 0.9843 and Ns kw Phi0 = 0.972 Wb confirm."
+  },
+  {
+   "metric": "psi_k02@sim775",
+   "value": 0.943,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "0,9843 0,9430 0,8337 0,6685 0,4617 0,2349",
+   "location": "Table 2, p. 7, k = 2",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k03@sim775",
+   "value": 0.8337,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "0,9843 0,9430 0,8337 0,6685 0,4617 0,2349",
+   "location": "Table 2, p. 7, k = 3",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k04@sim775",
+   "value": 0.6685,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "0,9843 0,9430 0,8337 0,6685 0,4617 0,2349",
+   "location": "Table 2, p. 7, k = 4",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k05@sim775",
+   "value": 0.4617,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "0,9843 0,9430 0,8337 0,6685 0,4617 0,2349",
+   "location": "Table 2, p. 7, k = 5",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k06@sim775",
+   "value": 0.2349,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "0,9843 0,9430 0,8337 0,6685 0,4617 0,2349",
+   "location": "Table 2, p. 7, k = 6",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k07@sim775",
+   "value": 0.0001,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "0,0001 –0,2347 –0,4614 –0,6683 –0,8335 –0,9428",
+   "location": "Table 2, p. 7, k = 7",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k08@sim775",
+   "value": -0.2347,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "0,0001 –0,2347 –0,4614 –0,6683 –0,8335 –0,9428",
+   "location": "Table 2, p. 7, k = 8",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k09@sim775",
+   "value": -0.4614,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "0,0001 –0,2347 –0,4614 –0,6683 –0,8335 –0,9428",
+   "location": "Table 2, p. 7, k = 9",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k10@sim775",
+   "value": -0.6683,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "0,0001 –0,2347 –0,4614 –0,6683 –0,8335 –0,9428",
+   "location": "Table 2, p. 7, k = 10",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k11@sim775",
+   "value": -0.8335,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "0,0001 –0,2347 –0,4614 –0,6683 –0,8335 –0,9428",
+   "location": "Table 2, p. 7, k = 11",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k12@sim775",
+   "value": -0.9428,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "0,0001 –0,2347 –0,4614 –0,6683 –0,8335 –0,9428",
+   "location": "Table 2, p. 7, k = 12",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k13@sim775",
+   "value": -0.9843,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "–0,9843 –0,9430 –0,8337 –0,6685 –0,4617 –0,2349",
+   "location": "Table 2, p. 7, k = 13",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k14@sim775",
+   "value": -0.943,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "–0,9843 –0,9430 –0,8337 –0,6685 –0,4617 –0,2349",
+   "location": "Table 2, p. 7, k = 14",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k15@sim775",
+   "value": -0.8337,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "–0,9843 –0,9430 –0,8337 –0,6685 –0,4617 –0,2349",
+   "location": "Table 2, p. 7, k = 15",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k16@sim775",
+   "value": -0.6685,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "–0,9843 –0,9430 –0,8337 –0,6685 –0,4617 –0,2349",
+   "location": "Table 2, p. 7, k = 16",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k17@sim775",
+   "value": -0.4617,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "–0,9843 –0,9430 –0,8337 –0,6685 –0,4617 –0,2349",
+   "location": "Table 2, p. 7, k = 17",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k18@sim775",
+   "value": -0.2349,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "–0,9843 –0,9430 –0,8337 –0,6685 –0,4617 –0,2349",
+   "location": "Table 2, p. 7, k = 18",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k19@sim775",
+   "value": -0.0001,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "–0,0001 0,2347 0,4614 0,6683 0,8335 0,9428",
+   "location": "Table 2, p. 7, k = 19",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k20@sim775",
+   "value": 0.2347,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "–0,0001 0,2347 0,4614 0,6683 0,8335 0,9428",
+   "location": "Table 2, p. 7, k = 20",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k21@sim775",
+   "value": 0.4614,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "–0,0001 0,2347 0,4614 0,6683 0,8335 0,9428",
+   "location": "Table 2, p. 7, k = 21",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k22@sim775",
+   "value": 0.6683,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "–0,0001 0,2347 0,4614 0,6683 0,8335 0,9428",
+   "location": "Table 2, p. 7, k = 22",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k23@sim775",
+   "value": 0.8335,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "–0,0001 0,2347 0,4614 0,6683 0,8335 0,9428",
+   "location": "Table 2, p. 7, k = 23",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "psi_k24@sim775",
+   "value": 0.9428,
+   "unit": "Wb",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.005,
+   "used_for_acceptance": false,
+   "quote": "–0,0001 0,2347 0,4614 0,6683 0,8335 0,9428",
+   "location": "Table 2, p. 7, k = 24",
+   "note": "The mask moved k-1 slots counterclockwise over the SIM field. A comparator: the table's fundamental and EMF are acceptance checks."
+  },
+  {
+   "metric": "torque_magnitude_Nm@load1",
+   "value": 97.72,
+   "unit": "N*m",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "energy parameters of TIM were obtained: Mem = 97.72 N∙m;",
+   "location": "p. 11, eq. (25)",
+   "note": "Electromagnetic torque from the gap's Maxwell stress tensor (eq. (25)); the model's weighted stress tensor on the rotor, its magnitude (the sign follows alpha_sr's convention: gap). Rated load: Is = 28.8 A, Ir = 446 A, alpha_sr = -82.49 deg, Imu = 7.75 A design point."
+  },
+  {
+   "metric": "torque_magnitude_Nm@loadN",
+   "value": 100,
+   "unit": "N*m",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "IsN = 29.9 A; Ir = 469.5 A; αsr = 83.41○; Mem = 100 N∙m;",
+   "location": "p. 13",
+   "note": "The third iteration's torque (Is = 29.9 A, Ir = 469.5 A, |alpha_sr| = 83.41 deg). Printed to three figures: the 1% tolerance covers its rounding."
+  },
+  {
+   "metric": "torque_Nm@load1",
+   "value": -97.72,
+   "unit": "N*m",
+   "kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "energy parameters of TIM were obtained: Mem = 97.72 N∙m;",
+   "location": "p. 11",
+   "note": "The signed prediction (counterclockwise positive; see torque_mirror): a comparator."
+  }
+ ],
+ "assessors": [
+  {
+   "kind": "field_statistic",
+   "measurement": "gap",
+   "field": "A",
+   "step": "sim775",
+   "statistic": "peak_to_peak",
+   "scale": 0.13,
+   "value": 0.009063,
+   "unit": "Wb",
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Az2 = –34.857 mWb/m and by (3) Φ0 = 9.063 mWb.",
+   "location": "p. 7, eq. (3)",
+   "note": "Eq. (3): the depth times the span of A between its largest and smallest values; Fig. 1 marks both points on the air gap, so A is sampled at 1440 points on the circle in the middle of the gap (comparators on circles 0.05 mm from either side)."
+  },
+  {
+   "kind": "field_statistic",
+   "measurement": "gap",
+   "field": "A",
+   "step": "sim775",
+   "statistic": "maximum",
+   "scale": 1,
+   "value": 0.034859,
+   "unit": "Wb/m",
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "In this way, we obtained Аz1 = 34.859 mWb/m;",
+   "location": "p. 7",
+   "note": "Az1, a comparator."
+  },
+  {
+   "kind": "field_statistic",
+   "measurement": "gap",
+   "field": "A",
+   "step": "sim775",
+   "statistic": "minimum",
+   "scale": 1,
+   "value": -0.034857,
+   "unit": "Wb/m",
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "Az2 = –34.857 mWb/m and by (3) Φ0 = 9.063 mWb.",
+   "location": "p. 7",
+   "note": "Az2, a comparator."
+  },
+  {
+   "kind": "field_statistic",
+   "measurement": "gap_rotor_side",
+   "field": "A",
+   "step": "sim775",
+   "statistic": "peak_to_peak",
+   "scale": 0.13,
+   "value": 0.009063,
+   "unit": "Wb",
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "Az2 = –34.857 mWb/m and by (3) Φ0 = 9.063 mWb.",
+   "location": "p. 7, eq. (3)",
+   "label": "rotor_side",
+   "note": "The same flux on a circle 0.05 mm outside the rotor: a comparator for where on the gap the author's points lie."
+  },
+  {
+   "kind": "field_statistic",
+   "measurement": "gap_stator_side",
+   "field": "A",
+   "step": "sim775",
+   "statistic": "peak_to_peak",
+   "scale": 0.13,
+   "value": 0.009063,
+   "unit": "Wb",
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "Az2 = –34.857 mWb/m and by (3) Φ0 = 9.063 mWb.",
+   "location": "p. 7, eq. (3)",
+   "label": "stator_side",
+   "note": "The same flux on a circle 0.05 mm inside the bore: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "fundamental_peak",
+   "value": 0.963,
+   "unit": "Wb",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": true,
+   "quote": "first harmonic of the MFL Ψm1= 0.9630 Wb;",
+   "location": "p. 8",
+   "relative_tolerance": 0.01,
+   "note": "Fundamental of Table 2's angular function over its period of 24 positions (eq. (7)), the paper's psi_m1."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "rms",
+   "value": 214.3,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": true,
+   "quote": "of the total EMF according to (13) Eseq = 214.3 V.",
+   "location": "p. 8, eq. (13)",
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.01,
+   "note": "Equivalent rms EMF over all harmonics the 24 positions resolve (orders 1-11; Ng = 11), from the flux linkage at 50 Hz."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "fundamental_rms",
+   "value": 213.9,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "the phase EMF Es = 213.9 V,",
+   "location": "p. 8",
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.01,
+   "note": "Es1 = sqrt(2) pi f psi_m1: the same number as psi_m1 up to a factor; a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "harmonic_phase",
+   "value": 0.0,
+   "unit": "deg",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "first harmonic of the MFL Ψm1= 0.9630 Wb;",
+   "location": "p. 8 (gamma_psi1 = 0)",
+   "order": 1,
+   "absolute_tolerance": 1.0,
+   "note": "Initial phase of the fundamental with cosine currents: zero, the mask's first position being the phase axis."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim809",
+   "statistic": "fundamental_peak",
+   "value": 0.9725,
+   "unit": "Wb",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": true,
+   "quote": "the remaining quantities mentioned were Ψm1 = 0.9725 Wb;",
+   "location": "p. 9",
+   "relative_tolerance": 0.01,
+   "note": "The refined magnetizing current's fundamental flux linkage."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim809",
+   "statistic": "fundamental_rms",
+   "value": 216,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Es = 216 V, URs = 3.3 V;",
+   "location": "p. 9",
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.01,
+   "note": "A comparator (the same number as psi_m1 at 8.09 A up to a factor)."
+  },
+  {
+   "kind": "field_statistic",
+   "measurement": "gap",
+   "field": "A",
+   "step": "load1",
+   "statistic": "peak_to_peak",
+   "scale": 0.13,
+   "value": 0.008781,
+   "unit": "Wb",
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "according to the formula (3) Φl = 8.781 mWb, i.e. it",
+   "location": "p. 10, eq. (3)",
+   "note": "Eq. (3): the depth times the span of A between its largest and smallest values; Fig. 1 marks both points on the air gap, so A is sampled at 1440 points on the circle in the middle of the gap (comparators on circles 0.05 mm from either side)."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "fundamental_peak",
+   "value": 0.9313,
+   "unit": "Wb",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": true,
+   "quote": "the MFL Ψm1 = 0.9313 Wb; γψ1 = –56.55○, effective value",
+   "location": "p. 11",
+   "relative_tolerance": 0.01
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "rms",
+   "value": 207.5,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": true,
+   "quote": "Es1 = 206.9 V; γE1 = 33.45○; full EMF by (13) Eseq = 207.5 V;",
+   "location": "p. 11, eq. (13)",
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.01
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "fundamental_rms",
+   "value": 206.9,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Es1 = 206.9 V; γE1 = 33.45○; full EMF by (13) Eseq = 207.5 V;",
+   "location": "p. 11",
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.01,
+   "note": "A comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "harmonic_phase",
+   "value": -56.55,
+   "unit": "deg",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "the MFL Ψm1 = 0.9313 Wb; γψ1 = –56.55○, effective value",
+   "location": "p. 11",
+   "order": 1,
+   "absolute_tolerance": 1.0,
+   "label": "text",
+   "note": "gamma_psi1 as printed. The sign depends on the direction the mask moves and on the sign of alpha_sr (gap); a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "harmonic_phase",
+   "value": 56.55,
+   "unit": "deg",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Fig. 3. Time function of the MFL of the stator phase winding",
+   "location": "Fig. 3, p. 7, curve 2",
+   "order": 1,
+   "absolute_tolerance": 3.0,
+   "label": "fig3",
+   "note": "Fig. 3's curve 2 starts at about 0.5 Wb at t = 0 and falls (minimum near 0.34 T): cos(wt + 57 deg), the opposite sign to the text's. A comparator."
+  },
+  {
+   "kind": "metric_relation",
+   "name": "torque_mirror",
+   "pairs": [
+    {
+     "metric": "torque_Nm@load1_mirror",
+     "reference": "torque_Nm@load1",
+     "factor": -1
+    }
+   ],
+   "value": 0,
+   "absolute_tolerance": 0.01,
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "multiphase system of",
+   "location": "p. 10, eq. (26)",
+   "note": "Turning alpha_sr's sign mirrors the load case (the stator's teeth and a rotor slot sit on the y axis): the torque must reverse. Prediction before solving: with eq. (26) as printed (alpha_sr = -82.49) the field turns counterclockwise (eq. (1), Fig. 1's n_s) and the bars' currents lead the stator's by 165 electrical degrees, so the counterclockwise torque comes out negative; the paper's 97.72 N m is its magnitude."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "harmonic_ratio",
+   "value": 0.0203,
+   "unit": "p.u.",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Ψmν p.u. 1,000 0,0203 0,0003 0,0010 0,0009 0,0002",
+   "location": "Table 3, p. 8, order 3",
+   "order": 3,
+   "absolute_tolerance": 0.002,
+   "note": "Harmonic content of the SIM flux linkage, sensitive to tooth saturation and the mesh: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "harmonic_rms",
+   "value": 13.04,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "E sν V 213,9 13,04 0,29 1,44 1,66 0,58",
+   "location": "Table 3, p. 8, order 3",
+   "order": 3,
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.05,
+   "absolute_tolerance": 0.3,
+   "note": "EMF harmonic, rms (eq. (11)): a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "harmonic_ratio",
+   "value": 0.0003,
+   "unit": "p.u.",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Ψmν p.u. 1,000 0,0203 0,0003 0,0010 0,0009 0,0002",
+   "location": "Table 3, p. 8, order 5",
+   "order": 5,
+   "absolute_tolerance": 0.002,
+   "note": "Harmonic content of the SIM flux linkage, sensitive to tooth saturation and the mesh: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "harmonic_rms",
+   "value": 0.29,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "E sν V 213,9 13,04 0,29 1,44 1,66 0,58",
+   "location": "Table 3, p. 8, order 5",
+   "order": 5,
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.05,
+   "absolute_tolerance": 0.3,
+   "note": "EMF harmonic, rms (eq. (11)): a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "harmonic_ratio",
+   "value": 0.001,
+   "unit": "p.u.",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Ψmν p.u. 1,000 0,0203 0,0003 0,0010 0,0009 0,0002",
+   "location": "Table 3, p. 8, order 7",
+   "order": 7,
+   "absolute_tolerance": 0.002,
+   "note": "Harmonic content of the SIM flux linkage, sensitive to tooth saturation and the mesh: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "harmonic_rms",
+   "value": 1.44,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "E sν V 213,9 13,04 0,29 1,44 1,66 0,58",
+   "location": "Table 3, p. 8, order 7",
+   "order": 7,
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.05,
+   "absolute_tolerance": 0.3,
+   "note": "EMF harmonic, rms (eq. (11)): a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "harmonic_ratio",
+   "value": 0.0009,
+   "unit": "p.u.",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Ψmν p.u. 1,000 0,0203 0,0003 0,0010 0,0009 0,0002",
+   "location": "Table 3, p. 8, order 9",
+   "order": 9,
+   "absolute_tolerance": 0.002,
+   "note": "Harmonic content of the SIM flux linkage, sensitive to tooth saturation and the mesh: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "harmonic_rms",
+   "value": 1.66,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "E sν V 213,9 13,04 0,29 1,44 1,66 0,58",
+   "location": "Table 3, p. 8, order 9",
+   "order": 9,
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.05,
+   "absolute_tolerance": 0.3,
+   "note": "EMF harmonic, rms (eq. (11)): a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "harmonic_ratio",
+   "value": 0.0002,
+   "unit": "p.u.",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Ψmν p.u. 1,000 0,0203 0,0003 0,0010 0,0009 0,0002",
+   "location": "Table 3, p. 8, order 11",
+   "order": 11,
+   "absolute_tolerance": 0.002,
+   "note": "Harmonic content of the SIM flux linkage, sensitive to tooth saturation and the mesh: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "sim775",
+   "statistic": "harmonic_rms",
+   "value": 0.58,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "E sν V 213,9 13,04 0,29 1,44 1,66 0,58",
+   "location": "Table 3, p. 8, order 11",
+   "order": 11,
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.05,
+   "absolute_tolerance": 0.3,
+   "note": "EMF harmonic, rms (eq. (11)): a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "harmonic_ratio",
+   "value": 0.0216,
+   "unit": "p.u.",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Ψmν p.u. 1,000 0,0216 0,0069 0,0031 0,0001 0,0011",
+   "location": "Table 4, p. 11, order 3",
+   "order": 3,
+   "absolute_tolerance": 0.002,
+   "note": "Harmonic content of the rated-load flux linkage: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "harmonic_rms",
+   "value": 13.41,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Esν V 206,9 13,41 7,18 4,49 0,23 2,42",
+   "location": "Table 4, p. 11, order 3",
+   "order": 3,
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.05,
+   "absolute_tolerance": 0.3,
+   "note": "EMF harmonic, rms: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "harmonic_ratio",
+   "value": 0.0069,
+   "unit": "p.u.",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Ψmν p.u. 1,000 0,0216 0,0069 0,0031 0,0001 0,0011",
+   "location": "Table 4, p. 11, order 5",
+   "order": 5,
+   "absolute_tolerance": 0.002,
+   "note": "Harmonic content of the rated-load flux linkage: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "harmonic_rms",
+   "value": 7.18,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Esν V 206,9 13,41 7,18 4,49 0,23 2,42",
+   "location": "Table 4, p. 11, order 5",
+   "order": 5,
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.05,
+   "absolute_tolerance": 0.3,
+   "note": "EMF harmonic, rms: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "harmonic_ratio",
+   "value": 0.0031,
+   "unit": "p.u.",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Ψmν p.u. 1,000 0,0216 0,0069 0,0031 0,0001 0,0011",
+   "location": "Table 4, p. 11, order 7",
+   "order": 7,
+   "absolute_tolerance": 0.002,
+   "note": "Harmonic content of the rated-load flux linkage: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "harmonic_rms",
+   "value": 4.49,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Esν V 206,9 13,41 7,18 4,49 0,23 2,42",
+   "location": "Table 4, p. 11, order 7",
+   "order": 7,
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.05,
+   "absolute_tolerance": 0.3,
+   "note": "EMF harmonic, rms: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "harmonic_ratio",
+   "value": 0.0001,
+   "unit": "p.u.",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Ψmν p.u. 1,000 0,0216 0,0069 0,0031 0,0001 0,0011",
+   "location": "Table 4, p. 11, order 9",
+   "order": 9,
+   "absolute_tolerance": 0.002,
+   "note": "Harmonic content of the rated-load flux linkage: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "harmonic_rms",
+   "value": 0.23,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Esν V 206,9 13,41 7,18 4,49 0,23 2,42",
+   "location": "Table 4, p. 11, order 9",
+   "order": 9,
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.05,
+   "absolute_tolerance": 0.3,
+   "note": "EMF harmonic, rms: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "harmonic_ratio",
+   "value": 0.0011,
+   "unit": "p.u.",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Ψmν p.u. 1,000 0,0216 0,0069 0,0031 0,0001 0,0011",
+   "location": "Table 4, p. 11, order 11",
+   "order": 11,
+   "absolute_tolerance": 0.002,
+   "note": "Harmonic content of the rated-load flux linkage: a comparator."
+  },
+  {
+   "kind": "metric_series",
+   "name": "psi_A",
+   "metrics": [
+    "psi_k01",
+    "psi_k02",
+    "psi_k03",
+    "psi_k04",
+    "psi_k05",
+    "psi_k06",
+    "psi_k07",
+    "psi_k08",
+    "psi_k09",
+    "psi_k10",
+    "psi_k11",
+    "psi_k12",
+    "psi_k13",
+    "psi_k14",
+    "psi_k15",
+    "psi_k16",
+    "psi_k17",
+    "psi_k18",
+    "psi_k19",
+    "psi_k20",
+    "psi_k21",
+    "psi_k22",
+    "psi_k23",
+    "psi_k24"
+   ],
+   "step": "load1",
+   "statistic": "harmonic_rms",
+   "value": 2.42,
+   "unit": "V",
+   "value_kind": "2d_fea",
+   "used_for_acceptance": false,
+   "quote": "Esν V 206,9 13,41 7,18 4,49 0,23 2,42",
+   "location": "Table 4, p. 11, order 11",
+   "order": 11,
+   "time_derivative_frequency_hz": 50,
+   "relative_tolerance": 0.05,
+   "absolute_tolerance": 0.3,
+   "note": "EMF harmonic, rms: a comparator."
+  }
+ ],
+ "controls": [
+  {
+   "id": "mesh-0p75",
+   "level": "article",
+   "mesh_scale": 0.75,
+   "purpose": "Every explicit mesh size and arc segment at 0.75 times."
+  },
+  {
+   "id": "bh-low-field",
+   "level": "article",
+   "parameters": {
+    "steel_bh": [
+     [
+      0.007,
+      8.61
+     ],
+     [
+      0.0086,
+      10.31
+     ],
+     [
+      0.0106,
+      12.33
+     ],
+     [
+      0.0131,
+      14.76
+     ],
+     [
+      0.0162,
+      17.66
+     ],
+     [
+      0.0202,
+      21.14
+     ],
+     [
+      0.0252,
+      25.3
+     ],
+     [
+      0.0315,
+      30.28
+     ],
+     [
+      0.0397,
+      36.23
+     ],
+     [
+      0.0509,
+      43.36
+     ],
+     [
+      0.0678,
+      51.89
+     ],
+     [
+      0.097,
+      62.1
+     ],
+     [
+      0.1531,
+      74.32
+     ],
+     [
+      0.2591,
+      88.94
+     ],
+     [
+      0.4286,
+      106.44
+     ],
+     [
+      0.6359,
+      127.39
+     ],
+     [
+      0.834,
+      152.45
+     ],
+     [
+      0.9975,
+      182.44
+     ],
+     [
+      1.1245,
+      218.33
+     ],
+     [
+      1.2222,
+      261.29
+     ],
+     [
+      1.2981,
+      312.7
+     ],
+     [
+      1.3582,
+      374.22
+     ],
+     [
+      1.4065,
+      447.84
+     ],
+     [
+      1.4461,
+      535.95
+     ],
+     [
+      1.4788,
+      641.4
+     ],
+     [
+      1.54,
+      1000
+     ],
+     [
+      1.65,
+      2500
+     ],
+     [
+      1.75,
+      5000
+     ],
+     [
+      1.85,
+      10000
+     ],
+     [
+      2.05,
+      30000
+     ]
+    ]
+   },
+   "purpose": "A realistic curve below 1.54 T: the library's M-47 18 mil points below 1.50 T with H times 0.8612 (meeting Table 1 at 1000 A/m), then Table 1."
+  },
+  {
+   "id": "stacking-0p97",
+   "level": "article",
+   "parameters": {
+    "stacking_factor": 0.97
+   },
+   "purpose": "A lamination fill of 0.97."
+  },
+  {
+   "id": "shaft-air",
+   "level": "article",
+   "parameters": {
+    "shaft_material": "Air"
+   },
+   "purpose": "A non-magnetic shaft."
+  },
+  {
+   "id": "bridge-0p25",
+   "level": "article",
+   "parameters": {
+    "rotor_bridge_mm": 0.25
+   },
+   "purpose": "Rotor bridges 0.25 mm thick (the neck 0.2 mm taller)."
+  },
+  {
+   "id": "bridge-0p65",
+   "level": "article",
+   "parameters": {
+    "rotor_bridge_mm": 0.65
+   },
+   "purpose": "Rotor bridges 0.65 mm thick (the neck 0.2 mm shorter)."
+  },
+  {
+   "id": "stator-slots-narrower",
+   "level": "article",
+   "parameters": {
+    "stator_body_width_gap_side_mm": 7.49,
+    "stator_body_width_back_mm": 9.99
+   },
+   "purpose": "Stator slot bodies 0.2 mm narrower (teeth 0.2 mm wider), twice the reading's uncertainty: the tooth saturation's sensitivity."
+  },
+  {
+   "id": "final-angle-positive",
+   "level": "article",
+   "parameters": {
+    "final_angle_deg": 83.41
+   },
+   "purpose": "The final point's alpha_sr with its printed sign (+83.41)."
+  }
+ ],
+ "coverage": {
+  "scope": "partial",
+  "reproduced": "SIM at 7.75 A: flux per pole (eq. (3)), phase flux linkage at Fig. 1's position and Table 2's angular function, its fundamental and the equivalent EMF (Table 3); SIM at 8.09 A: psi_m1; rated load (Is 28.8 A, Ir 446 A): flux per pole, psi_m1, equivalent EMF, Table 4 and the torque; the final point's torque (Is 29.9 A, Ir 469.5 A).",
+  "not_reproduced": "Quantities from the equivalent circuit and design losses (voltages, powers, efficiency, power factor, the iteration of Table 5); the intermediate load point (bar current not printed); the teeth/back-curve flux (9.703 mWb)."
+ },
+ "geometry_checks": [
+  {
+   "quantity": "scale: stator outer radius (mm)",
+   "paper_value": 136,
+   "model_value": 136,
+   "location": "p. 5; Figs. 1, 5",
+   "note": "Outer outline circle fitted at 303.91 px (Fig. 1) and 298.27 px (Fig. 5)."
+  },
+  {
+   "quantity": "shaft diameter (mm), not stated",
+   "paper_value": null,
+   "model_value": 59.9,
+   "location": "Figs. 1, 5",
+   "note": "59.91 and 59.84 mm."
+  },
+  {
+   "quantity": "rotor and bore outlines (mm), merged into one band",
+   "paper_value": 92.25,
+   "model_value": [
+    92.305,
+    92.292
+   ],
+   "location": "p. 5; Figs. 1, 5",
+   "note": "The two outline circles (92.0 and 92.5 mm) are a pixel apart; the band's fitted radius is their mean within 0.06 mm."
+  },
+  {
+   "quantity": "winding factor of a diametrical single layer, q = 4",
+   "paper_value": 0.959,
+   "model_value": 0.9577,
+   "location": "p. 10",
+   "note": "The stated 0.959 is 0.14% above the distribution factor; the model needs none (it sums slots)."
+  },
+  {
+   "quantity": "conductors per slot from Ns = 112, single layer, 48 slots",
+   "paper_value": null,
+   "model_value": 14,
+   "location": "p. 10"
+  },
+  {
+   "quantity": "stator tooth width (mm), parallel-sided",
+   "paper_value": null,
+   "model_value": [
+    4.82,
+    4.78
+   ],
+   "location": "Figs. 1, 5",
+   "note": "Arc pitch minus slot width at the conductor's two ends."
+  },
+  {
+   "quantity": "rotor tooth width (mm) at the round ends' centres",
+   "paper_value": null,
+   "model_value": [
+    6.54,
+    6.32
+   ],
+   "location": "Figs. 1, 5"
+  },
+  {
+   "quantity": "stator yoke (mm)",
+   "paper_value": null,
+   "model_value": 21.66,
+   "location": "Figs. 1, 5"
+  },
+  {
+   "quantity": "rotor equivalent-circuit check: Ir from the paper's formulas (17)-(21) at the first load point (A)",
+   "paper_value": 446,
+   "model_value": [
+    448.0,
+    449.5
+   ],
+   "location": "pp. 9-10",
+   "note": "With K_Irs = 16.9 and 16.96; the angle phi_s = 27.25 deg is reproduced exactly."
+  },
+  {
+   "quantity": "pre-solve estimate",
+   "paper_value": null,
+   "model_value": null,
+   "location": "estimate.py",
+   "note": "Magnetic-circuit estimate with the frozen inputs (estimate.py, Kopylov's procedure, Carter factor 1.22, the main curve through the origin): Phi0 = 9.063 mWb needs Imu = 7.4-8.6 A for calculated pole-arc coefficients 0.72-0.69 (tooth flux densities 1.68-1.75 T stator, 1.57-1.64 T rotor; yoke 1.61 T), against the paper's 7.75 A: the model should land within a few percent of the paper's flux. Torque: 3/2 p psi_m1 I_s,peak sin(56.55 deg) with the paper's own psi_m1 = 0.9313 Wb gives 94.9 N m against 97.72 (P_em/Omega_s)."
+  },
+  {
+   "quantity": "element count estimate before freezing",
+   "paper_value": null,
+   "model_value": [
+    150000,
+    180000
+   ],
+   "location": "region areas over mesh sizes",
+   "note": "Gap layers and openings 27k (0.2 mm), wedges 5k, stator conductors 19k, stator iron 52k, rotor iron 39k, bars 16k, shaft 1k, plus refinement at the bridges and corners; mesh-0p75 about 1.8 times. Two solves per FEMM process keep the container well under 2 GB (320k x 360 B x 2 = 0.23 GB of growth for the mesh control)."
+  }
+ ]
+}

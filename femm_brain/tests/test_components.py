@@ -272,6 +272,63 @@ class MachineGeometryTests(unittest.TestCase):
         self.assertEqual(check_regions(model), [])
         self.assertEqual(sum(1 for label in model["labels"] if label.get("circuit")), 36)
 
+    cage = {"use": "cage_rotor", "slot_count": 38, "outer_radius": 92, "top_radius": 3.9, "bottom_radius": 1.95, "centre_distance": 25.1,
+            "bridge": 0.45, "neck_width": 1.5, "neck_height": 0.45, "first_slot_angle": 90}
+
+    def test_cage_rotor_slots_are_tangent_round_ends_under_a_bridge(self):
+        model = self.build([self.cage])
+        points = [(n["x"], n["y"]) for n in model["nodes"]]
+        pitch = math.radians(360 / 38)
+        for x, y in points:
+            turned = (x * math.cos(pitch) - y * math.sin(pitch), x * math.sin(pitch) + y * math.cos(pitch))
+            self.assertTrue(any(math.dist(turned, other) < 1e-9 for other in points), (x, y))
+        # Slot 0 lies on the y axis: its round ends are centred there, and its straight sides touch both ends.
+        top, bottom = 92 - 0.45 - 0.45 - 3.9, 92 - 0.45 - 0.45 - 3.9 - 25.1
+        radii = set()
+        for arc in model["arcs"]:
+            a, b = model["nodes"][arc["n0"]], model["nodes"][arc["n1"]]
+            info = arc_geometry((a["x"], a["y"]), (b["x"], b["y"]), arc["angle"])
+            if abs(info["center"][0]) < 1e-9 and info["center"][1] > 50:
+                radii.add((round(info["center"][1], 9), round(info["radius"], 9)))
+        self.assertEqual(radii, {(round(top, 9), 3.9), (round(bottom, 9), 1.95)})
+        sides = [s for s in model["segments"] if all(abs(model["nodes"][s[n]]["x"]) < 4 and model["nodes"][s[n]]["y"] > 50 for n in ("n0", "n1"))]
+        tangents = 0
+        for s in sides:
+            (x0, y0), (x1, y1) = [(model["nodes"][s[n]]["x"], model["nodes"][s[n]]["y"]) for n in ("n0", "n1")]
+            length = math.hypot(x1 - x0, y1 - y0)
+            distance = lambda cy: abs((x1 - x0) * (y0 - cy) - (y1 - y0) * x0) / length
+            if math.isclose(distance(top), 3.9, abs_tol=1e-9) and math.isclose(distance(bottom), 1.95, abs_tol=1e-9):
+                tangents += 1
+        self.assertEqual(tangents, 2)
+        # The bridge: the neck top lies 0.45 below the surface; the neck is 1.5 wide.
+        neck = [p for p in points if math.isclose(p[1], 92 - 0.45, abs_tol=1e-9)]
+        self.assertEqual(sorted(round(x, 9) for x, _ in neck), [-0.75, 0.75])
+        self.assertEqual(sum(1 for arc in model["arcs"] if math.isclose(math.hypot(model["nodes"][arc["n0"]]["x"], model["nodes"][arc["n0"]]["y"]), 92)), 38)
+
+    def test_cage_bars_are_closed_regions_in_their_own_circuits(self):
+        names = [f"r{k:02d}" for k in range(38)]
+        steps = [{"use": "material", "name": "Iron", "values": {"Mu_x": 1000, "Mu_y": 1000}}, {"use": "material", "name": "Al"},
+                 {"use": "material", "name": "Air"}, *({"use": "circuit", "name": n, "current": 0} for n in names),
+                 dict(self.cage, bar_material="Al", circuits=names, iron_material="Iron", group=1),
+                 {"use": "circle", "radius": 30, "group": 1}, {"use": "block_label", "at": [0, 0], "material": "Iron", "group": 1},
+                 {"use": "circle", "radius": 95}, {"use": "block_label", "at": [93.5, 0], "material": "Air"}]
+        model = self.build(steps)
+        self.assertEqual(check_regions(model), [])
+        self.assertEqual([l["circuit"] for l in model["labels"] if l.get("circuit")], names)
+        # Without a bridge the neck opens into the gap and a chord closes each bar below it.
+        open_steps = [dict(s, bridge=0) if s.get("use") == "cage_rotor" else s for s in steps]
+        self.assertEqual(check_regions(self.build(open_steps)), [])
+        no_neck = [dict(s, neck_width=0, neck_height=0) if s.get("use") == "cage_rotor" else s for s in steps]
+        self.assertEqual(check_regions(self.build(no_neck)), [])
+
+    def test_impossible_cage_rotors_are_refused(self):
+        for change, message in (({"top_radius": 8}, "overlap"), ({"centre_distance": 1}, "contain"), ({"centre_distance": 90}, "axis"),
+                                ({"bridge": 0, "neck_width": 0, "neck_height": 0}, "open slot"), ({"neck_width": 0}, "neck height"),
+                                ({"neck_width": 8}, "narrower"),
+                                ({"circuits": ["a"], "bar_material": "Al"}, "one circuit"), ({"circuits": ["a"] * 38}, "bar material")):
+            with self.assertRaisesRegex(ValueError, message):
+                self.build([dict(self.cage, **change)])
+
     def test_impossible_slot_profiles_are_refused(self):
         with self.assertRaisesRegex(ValueError, "overlap"):
             self.build([dict(self.profile, slot_width_bottom=30)])
@@ -639,6 +696,48 @@ class PartialModelAndSymmetryTests(unittest.TestCase):
         sine = {f"psi@p{k:02d}": math.sin(math.radians(2 * k)) for k in range(90)}
         result = run_assessor(dict(base, statistic="peak"), {"steps": steps}, {}, sine, {})
         self.assertAlmostEqual(result["observed"], 1, places=9)
+
+    def test_metric_series_takes_a_waveform_from_one_solve(self):
+        # 24 positions of a winding over one period (a slot step of 15 electrical degrees), orders 1, 3 and 5.
+        amplitudes, phases = {1: 0.9630, 3: 0.0195, 5: 0.0003}, {1: -0.4, 3: 0.9, 5: 0.2}
+        flux = lambda theta: sum(v * math.cos(n * theta + phases[n]) for n, v in amplitudes.items())
+        metrics = {f"psi_{k:02d}@sim": flux(math.radians(15 * k)) for k in range(24)}
+        base = {"kind": "metric_series", "name": "psi", "metrics": [f"psi_{k:02d}" for k in range(24)], "step": "sim",
+                "value": 1, "absolute_tolerance": 1e9}
+        observe = lambda **extra: run_assessor(dict(base, **extra), {}, {}, metrics, {})["observed"]
+        self.assertAlmostEqual(observe(statistic="fundamental_peak"), 0.9630, places=12)
+        self.assertAlmostEqual(observe(statistic="harmonic_peak", order=3), 0.0195, places=12)
+        self.assertAlmostEqual(observe(statistic="harmonic_ratio", order=3), 0.0195 / 0.9630, places=12)
+        self.assertAlmostEqual(observe(statistic="harmonic_ratio", order=3, time_derivative_frequency_hz=50), 3 * 0.0195 / 0.9630, places=12)
+        self.assertAlmostEqual(observe(statistic="harmonic_phase", order=1), math.degrees(-0.4), places=9)
+        self.assertAlmostEqual(observe(statistic="harmonic_phase", order=3), math.degrees(0.9), places=9)
+        w = 2 * math.pi * 50
+        self.assertAlmostEqual(observe(statistic="fundamental_rms", time_derivative_frequency_hz=50), w * 0.9630 / math.sqrt(2), places=9)
+        self.assertAlmostEqual(observe(statistic="harmonic_rms", order=5, time_derivative_frequency_hz=50), 5 * w * 0.0003 / math.sqrt(2), places=9)
+        emf = math.sqrt(sum((n * w * v) ** 2 / 2 for n, v in amplitudes.items()))
+        self.assertAlmostEqual(observe(statistic="rms", time_derivative_frequency_hz=50), emf, places=8)
+        self.assertAlmostEqual(observe(statistic="maximum"), max(metrics.values()), places=12)
+        self.assertAlmostEqual(observe(statistic="fundamental_peak", scale=2), 2 * 0.9630, places=12)
+        # Half a period with half-wave symmetry gives the same harmonics.
+        half = dict(base, metrics=base["metrics"][:12], half_wave_symmetry=True)
+        self.assertAlmostEqual(run_assessor(dict(half, statistic="harmonic_peak", order=5), {}, {}, metrics, {})["observed"], 0.0003, places=12)
+        self.assertEqual(assessor_metric(dict(base, statistic="harmonic_peak", order=3, time_derivative_frequency_hz=50, label="t3")),
+                         "psi@sim:harmonic_peak:h3:ddt:t3")
+        self.assertIn("error", run_assessor(dict(base, statistic="harmonic_phase", time_derivative_frequency_hz=50), {}, {}, metrics, {}))
+        self.assertIn("error", run_assessor(dict(base, statistic="harmonic_peak", order=13), {}, {}, metrics, {}))
+        self.assertIn("error", run_assessor(dict(base, statistic="median"), {}, {}, metrics, {}))
+
+    def test_field_statistic_reads_extremes_of_sampled_fields(self):
+        case = {"measurements": [{"id": "gap", "op": "circle_values", "radius": 92.25, "count": 8, "fields": ["A"]}]}
+        values = [0.01, 0.0348, 0.02, -0.01, -0.0346, 0.0, 0.003, 0.004]
+        raw = {("sim", "gap:A", k): complex(v, 0) for k, v in enumerate(values)}
+        base = {"kind": "field_statistic", "measurement": "gap", "field": "A", "step": "sim", "value": 1, "absolute_tolerance": 1e9}
+        observe = lambda **extra: run_assessor(dict(base, **extra), case, raw, {}, {})["observed"]
+        self.assertAlmostEqual(observe(statistic="maximum"), 0.0348)
+        self.assertAlmostEqual(observe(statistic="minimum"), -0.0346)
+        self.assertAlmostEqual(observe(statistic="peak_to_peak", scale=0.13), 0.13 * 0.0694)
+        self.assertEqual(assessor_metric(dict(base, statistic="maximum")), "gap:A@sim:maximum")
+        self.assertIn("error", run_assessor(dict(base, statistic="mean"), case, raw, {}, {}))
 
     def test_step_statistic_reads_a_curve_at_the_steps_a_test_used(self):
         steps = [{"label": f"lr{amps}_a{angle}"} for amps in (50, 250) for angle in range(90, 136, 2)]
