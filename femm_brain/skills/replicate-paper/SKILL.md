@@ -5,7 +5,10 @@ description: Replicate an electric machine from a paper, report or PDF in FEMM w
 
 # Replicate a machine from a paper
 
-Version 0.6 (0.5 plus the reference angles of a sweep at fixed currents, from the Lubin SPM
+Version 0.7 (0.6 plus the held-out run's lessons: every source cached at intake, vector and
+FEMM-screenshot figures, assumed inputs bracketed before freezing, tabulated values checked
+against their figures, pre-solve estimates, overlapping arcs and a timed first solve; 0.6 was
+0.5 plus the reference angles of a sweep at fixed currents, from the Lubin SPM
 papers; 0.5 was 0.4 plus EMF harmonics from flux linkage, inductances from single-axis currents,
 power-invariant dq values and assessor labels, from the IEEJ D model; 0.4 was 0.3 plus each
 target column's convention and orientation, variants for the further
@@ -38,7 +41,11 @@ paper is already in `femm_brain/data/papers.json`, use its id.
    Read tables and figures from the page images too: extraction scrambles
    symbols, and OCR garbles Greek letters. Render a figure region at 600 dpi or
    more (`pdftoppm -r 600 -x -y -W -H`) to read it closely.
-4. Fill `source` in the case and set `status` to `extracting`. Ask before
+4. Check that every source the index entry relies on (companion papers,
+   reports holding dimensions, supplements) is in the cache before extracting.
+   List the missing ones with their size and ask the user for them; do not
+   discover the gap halfway through extraction.
+5. Fill `source` in the case and set `status` to `extracting`. Ask before
    downloading supplements, data files or datasheets.
 
 ## 1. Classify
@@ -66,6 +73,14 @@ exactly one provenance:
 | `assumed` | `reason`, `sensitivity_control` (a control id) | physical inputs the paper omits, with a control that varies each |
 | `numerical` | `reason` | mesh sizes and arc discretization; the case needs a mesh control |
 
+**Figures.** A drawing may be vector art inside the PDF (`pdfimages -list` shows
+no raster on its page): convert the page with `pdftocairo -svg` and read its
+strokes with `femm_brain/vector_figure.py`, fitting a drawn circle to detect
+unequal x and y scales. A screenshot of the authors' FEMM model carries node
+markers, which locate nodes within a pixel: prefer them to outline fits. On a
+coarse raster, pool the outline pixels of repeated features in each feature's
+own frame to read below the pixel size.
+
 Convert units with `derived` expressions, never by hand. Then cross-check: radial
 builds must add up to stated diameters; turns, coils, paths and phases must
 multiply out; areas and volumes the paper states must follow from the
@@ -84,14 +99,24 @@ which targets it affects and roughly how much, and the decision:
   tabulated diameter, check the scale with a second one, and fit circles and
   lines to its outlines. Calibrate plot axes on every gridline, not the frame.
 - `assumed`: take a documented default (see `lessons.md`), and add a control
-  that varies it across its plausible range.
+  that varies it across its plausible range. Before freezing, estimate the main
+  targets at both ends of that range (a magnetic-circuit or analytic estimate
+  that varies the input, not one that only evaluates it). If the spread exceeds
+  the tolerance several times, the gap decides the outcome: ask the user, or
+  freeze the physically typical reading as the base and the literal one as a
+  control. A magnetization curve that starts at the knee is such a gap: FEMM
+  joins its first point to the origin with an implausibly low permeability.
 - `out_of_scope`: the targets that need it are dropped from acceptance, and the
   case's `coverage` says so.
 
 ## 4. Freeze targets
 
 Choose the published results to reproduce, preferring tables to text and text
-to plots. Each target records the metric, value, unit, `kind`, tolerance,
+to plots. Before freezing a tabulated value, recompute it from the figure it
+summarizes where the paper has one (an average from the curve's integral, a
+ratio from the physics): a table can disagree with its own figure, and the one
+the paper's FE produced is the acceptance value, the other a comparator.
+Overlay digitized readings on their figure before freezing them. Each target records the metric, value, unit, `kind`, tolerance,
 verbatim quote and location, and whether it decides acceptance:
 
 | Kind | Default role and tolerance |
@@ -115,10 +140,15 @@ Papers often set both only implicitly. Derive them from two results that must
 agree (the back-EMF's phase, a no-load field plot, the torque's zero crossings)
 before freezing; where they stay implicit or disagree, record an `assumed` gap
 with a control that turns the current phasor 90 electrical degrees, and one
-that moves the slots, if their position is assumed.
+that moves the slots, if their position is assumed. A reference read from the measured
+curve's own zero crossings needs no such control once its slot ripple lines up
+with the model's after solving. Reproduce a test as it was run: a locked-rotor
+test holds the current vector and turns the rotor.
 
 **Variants.** When the paper tabulates further designs of the same machine
-(other pole counts, sizes or angle sets), list them in `variants`, each an `id`,
+(other pole counts, sizes or angle sets), or computes groups of results with
+different settings (a DC magnetization curve for torque, an AC one for
+inductance), list them in `variants`, each an `id`,
 a `purpose` and the article `parameters` it changes (inputs, never derived
 values). Targets and assessors that name a `variant` are assessed only in that
 variant's build; each variant is an acceptance level of its own in the
@@ -171,7 +201,11 @@ per-paper Python. A missing capability becomes a generic component:
 2. `python3 -m femm_brain papers --render <id> --output <file>.svg` draws the
    model. View it beside the paper's cross-section (`google-chrome --headless
    --screenshot=<png> --window-size=1400,1400 <svg>` or the built-in browser).
-   Record differences as findings.
+   Record differences as findings. `papers --check` refuses arcs that share a
+   stretch of one circle (two components drawing one circle with different
+   split points: use `share_circles`); never leave ideal iron as an unmeshed
+   region reaching out to a further circle. FEMM can stall on either, or solve
+   a wrong field without an error.
 3. Compute quantities the paper states (slot area, magnet area, air-gap length,
    winding factor) from the model and record them in `geometry_checks`.
 
@@ -182,13 +216,16 @@ python3 -m femm_brain replicate <id> --controls --output <dir> \
   --image research-extender-femm:dev-hierarchy-resumed-20261025
 ```
 
-Controls are diagnostics and never change acceptance. Include a mesh control,
+After freezing, solve one position of each level first and time it: a solve
+that takes minutes where a similar model takes seconds is a construction error,
+found before the sweep. Controls are diagnostics and never change acceptance. Include a mesh control,
 one control per assumed parameter, and, for quantities that look mesh
 sensitive, an entity-order or coordinate-jitter control. Keep the container
 within its 2 GB memory: halve explicit mesh sizes only for small models, and
 for long sweeps set `engine.solves_per_process` (FEMM grows by about 360 bytes
 per element with each solve in one process). Estimate the element count before
-freezing; a model of some poles (antiperiodic ends and `sector_air_gap`) is a
+freezing, counting the refinement along fine arcs and gap faces, which area
+estimates miss by 30-45%; a model of some poles (antiperiodic ends and `sector_air_gap`) is a
 representation choice to check against the full cross-section at one operating
 point before relying on it.
 

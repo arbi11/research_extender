@@ -75,7 +75,9 @@ contradicts it.
   the rotor by remeshing (stress-tensor torque), or meshing the iron at a high
   permeability, reproduced the paper; unmeshed pole pieces between two bands
   were fine. Check an idealized-iron model against meshed iron at one position
-  first. (`lubin-2011-spm-semi-closed-slots`, `lubin-2010-magnetic-gear`)
+  first. The build's overlapping arcs were present in the failing and the
+  working variants alike, so they were not the cause.
+  (`lubin-2011-spm-semi-closed-slots`, `lubin-2010-magnetic-gear`)
 
 - **A linear model's torque for any current phase follows from a few solves.**
   With ideal or linear iron and linear magnets, torque is quadratic in the
@@ -85,6 +87,22 @@ contradicts it.
   and two suffice when the rotor has no saliency. Use it to test whether any
   current reference reproduces a figure, as a diagnostic outside the frozen
   case. (`lubin-2011-spm-semi-closed-slots`, `lubin-2012-surface-inset-pm`)
+
+- **Overlapping arcs and free circles can fail silently.** In a Halbach gear,
+  ideal-iron yoke rings drawn as unmeshed sectors overlapped the magnet rings'
+  arcs and left circles of nodes no element uses: FEMM stalled for 25 minutes on
+  a 2 s solve, and with only the overlap left the inner torque was 7% wrong with
+  no error. Draw nothing beyond an ideal yoke's face, and let rings share a
+  circle (`share_circles`). Where FEMM saves only the split pieces the overlap
+  can be harmless (the Lubin SPMs moved by at most 0.5%), but check rather than
+  assume. (`tzouganakis-2024-halbach-gear`, `lubin-2012-surface-inset-pm`)
+- **Ideal-iron FEMM and subdomain models of a gear differ by about 1%.** Under
+  the same assumptions they differed by -1.05% and +0.8% (Tzouganakis) and
+  -1.2% (Lubin 2010), so 1% is tight for analytic gear torques; use the
+  agreement the paper reports. (`tzouganakis-2024-halbach-gear`)
+- **A step statistic's mean is arithmetic.** For an integral mean over an
+  interval, sample midpoints (or integrate); endpoints double-count.
+  (`przybylski-2022-srm-12-8`)
 
 - **Measure a target the way the paper defines it.** The gear's stall torque is
   "the maximum point" of a curve with a 3% third harmonic; read as the
@@ -254,6 +272,35 @@ contradicts it.
   fundamental and 3rd harmonic agreed within 0.2% while its points missed by
   -11% to +27%, alternating: the slot ripple was in antiphase. Point errors
   alone would have suggested a wrong amplitude. (`lubin-2010-magnetic-gear`)
+- **A uniform factor with the shape reproduced is a scale, and its kind can be
+  read.** Measured EMF and torque both 13-19% above a 2D model whose
+  inductances match point at the magnets (installed grade, 3D magnet effects),
+  not at turns or length: turns scale reluctance torque as N squared, and length
+  scales inductance too. Fit A sin(gamma) + B sin(2 gamma) to locked-rotor
+  curves to separate the magnet and reluctance terms; settle a test current's
+  convention from independent load tests. (`ornl-2006-prius-2004-ipm`)
+- **A uniform shortfall with weak saturation points at the iron's low-field
+  permeability.** A curve given from 1.54 T joined to FEMM's origin left every
+  flux 25% low while the saturation ratio came out 1.029 against the paper's
+  1.010; a typical low-field curve brought both within 2.5%.
+  (`milykh-2026-cage-induction`)
+- **A table can disagree with its own figure.** Table 2's average torques were
+  11% and 3.6% above the integrals of the paper's Fig. 11, which the model
+  reproduced; an analytic formula over published curves (eq. (1)) identified
+  which magnetization curve a figure used. (`przybylski-2022-srm-12-8`)
+- **A paper may use different magnetization curves for different results** (DC
+  for torque, AC amplitude for inductance); build each group with its own, as a
+  variant. (`przybylski-2022-srm-12-8`)
+- **Analytic tables can carry a model constant no field reproduces.** Table 3's
+  outer/inner torque ratio was 2.4954 for both drives to five digits; the field
+  gives 2.522 and 2.505. Compare tabulated ratios with the physics before
+  freezing; then no single unstated input can pass both columns.
+  (`tzouganakis-2024-halbach-gear`)
+- **When a paper's sign conventions disagree, freeze magnitudes a mirror
+  symmetry makes convention-free**, and check with a mirrored step that the
+  predicted sign follows. (`milykh-2026-cage-induction`)
+- **A stated core mass with the drawn lamination area bounds the stacking
+  factor.** (`ornl-2006-prius-2004-ipm`)
 - **Published FE points sit at k times range/N, rarely on round angles** (19 or
   39 intervals here). Find N from the digitized positions and put the sweep on
   them; find markers by eroding the image (filled diamonds) or by closing the
