@@ -110,6 +110,13 @@ contradicts it.
   assumption (a sinusoidal curve); if the definition needs the peak, make sure
   the sweep puts a sample on it. (`zhang-2014-coaxial-magnetic-gear`)
 
+- **FEMM meshes about 2.5 times the elements an area estimate gives.** Counting
+  one element per 0.433 h^2 of each region (h its mesh size) gave 95-110k for
+  the Vernier generator; FEMM made 266k, and scaling every size by 0.85 added
+  only 8% because arc pieces and small features set much of the mesh. Count
+  about 2.5 area / h^2, and size mesh controls and engine.solves_per_process
+  from the timed first solve's count. (`tlali-2020-vernier-wind-generator`)
+
 ## Construction
 
 - **Rotor positions** come from `rotate_group` steps on the rotor's group. With
@@ -180,6 +187,25 @@ contradicts it.
   T-junctions (`entity_pattern`), then confirm every region has one label.
   (`gierczynski-2024-prius-gen4-ipm`)
 
+- **Vernier (flux-modulation) PM machines need no new physics, only care with
+  phase order and periods.** With Ns = pr + ps the modulated ps-pole field turns
+  against the rotor, so a forward winding's phases peak in reverse order (A, C,
+  B) as the rotor turns counterclockwise; the star of slots at the rotor's pr-th
+  harmonic predicts each phase's flux-linkage phase (the slot harmonic's winding
+  factor equals the fundamental's, and the modulated term has the same phase),
+  within 0.001 electrical degrees natively. Balanced load torque repeats every
+  1/(6 pr) of a turn, so a short sweep gives its mean; a large lcm(Q, 2 pr)
+  leaves the ideal machine almost without cogging (under 1 N m against a
+  paper's 17 N m). An outer rotor outside a sliding band is turned by turning
+  the stator side through the band's inner angle (rotor_band_side outer).
+  (`tlali-2020-vernier-wind-generator`)
+- **Radially stacked double layers** (one coil side above the other, as FE
+  renderings of distributed windings often show) are slotted_stator's
+  layer_divider_radius with tooth_coil_winding's distributed double layer
+  (coil_pitch, return_layer_radius); read which layer holds the go sides from
+  the drawing: the lower layer repeats the upper one a slot or more along.
+  (`tlali-2020-vernier-wind-generator`)
+
 ## Materials
 
 - FEMM needs a coercivity, not a remanence: `H_c = B_r / (mu0 * mu_r)`. Sintered
@@ -195,6 +221,17 @@ contradicts it.
   and give it a control. (`gierczynski-2024-prius-gen4-ipm`)
 - A 33-point library curve read back natively within 0.06% in B
   (`design-nonlinear-ring-bh`), so library B-H transfer is trustworthy.
+
+- **A stated winding loss gives the current without the turns, but not without
+  the conductor temperature.** P = rho J^2 V with V the copper mass over its
+  density gives the copper's current density exactly; the temperature behind P
+  moves J by 15% between 20 and 120 C, which decides a 1% torque target. A
+  design code's rated losses use a working temperature: the Vernier
+  generator's torque matched at copper near 121 C (+0.08% for the 120 C
+  control) and missed by 13.8% at 20 C. Freeze the working (class) temperature
+  as the base and 20 C as the control, unless the paper says otherwise; a 2D
+  power factor already below a paper's (which includes end-winding reactance)
+  is a second sign of too much current. (`tlali-2020-vernier-wind-generator`)
 
 ## Sources and extraction
 
@@ -305,6 +342,25 @@ contradicts it.
   39 intervals here). Find N from the digitized positions and put the sweep on
   them; find markers by eroding the image (filled diamonds) or by closing the
   gap a plotted line cuts through a dot. (`lubin-2010-magnetic-gear`, `lubin-2011-spm-semi-closed-slots`)
+
+- **A FE mesh exported as vector art gives the geometry to micrometres.** Each
+  triangle is a filled path: classify mesh edges by the colours on their two
+  sides to get every region interface, find the centre where a sector's radial
+  edges meet, scale by a stated diameter (check with a second), and read teeth
+  in their own frames on every tooth. It settled a table's inconsistent radial
+  build (13.1 mm drawn against 13.6 tabulated) and an ambiguous angle ratio.
+  (`tlali-2020-vernier-wind-generator`)
+- **Recompute a table's ratios from its candidate values.** Table VII's FEA
+  average torque was 2.6% above its own FE waveform's mean, but its ripple %
+  was the waveform's peak to peak over the waveform's mean, not over the
+  table's value; the table held the shaft torque (mean plus core-loss torque,
+  which also reproduces its efficiency). Freeze the waveform's mean.
+  (`tlali-2020-vernier-wind-generator`)
+- **Published ripple waveforms can be aliased.** A torque curve's vertices lay
+  3.55 degrees apart for a ripple of 1.8 degrees: it drew 12 cycles per turn
+  of a 198-per-turn ripple. Its mean stands; its shape and peak-to-peak do not.
+  Read the vertex spacing of a digitized waveform before using its ripple.
+  (`tlali-2020-vernier-wind-generator`)
 
 - **Tabulated optimum designs are rounded.** Before blaming the rounding, solve
   the rounded variables' neighbours once each: in the gear it moved the torque
