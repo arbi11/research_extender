@@ -1,0 +1,6096 @@
+{
+ "schema_version": 1,
+ "id": "lubin-2012-surface-inset-pm",
+ "set": "unassigned",
+ "status": "frozen",
+ "skill_version": null,
+ "title": "Two-dimensional analytical calculation of magnetic field and electromagnetic torque for surface-inset permanent-magnet motors",
+ "source": {
+  "citation": "T. Lubin, S. Mezani, A. Rezzoug, IEEE Transactions on Magnetics 48(6):2080-2091, 2012",
+  "doi": "10.1109/TMAG.2011.2180918",
+  "url": "https://hal.science/hal-00673928",
+  "access": "author copy on HAL (IEEE copyright)",
+  "pdf_sha256": "f1fb320355f44d78ea19bb00c079d3faede48b9df8f7cda58717ccde2fa2dbb2",
+  "pages": 13,
+  "accessed": "2026-10-26",
+  "related": [
+   {
+    "id": "lubin2011",
+    "citation": "T. Lubin, S. Mezani, A. Rezzoug, IEEE Transactions on Magnetics 47(2):479-492, 2011 (the paper's reference [23])",
+    "doi": "10.1109/TMAG.2010.2095874",
+    "pdf_sha256": "b60502379886015d7f7ff0a5ea03f16c6ebe7a0527169955fbc7923bf1c5b5e7",
+    "use": "Slot positions (its eq. (1))."
+   }
+  ]
+ },
+ "machine": {
+  "family": "spm",
+  "topology": "inner rotor, four radially magnetized magnets inset between ideal-iron saliences, 15 semi-closed radial-sided slots with ideal iron, double-layer fractional-slot winding (coil pitch 3 slots)",
+  "problem": "planar",
+  "slots": 15,
+  "poles": 4,
+  "phases": 3,
+  "symmetry": "Full cross-section. Each slot is a one-turn circuit; phase quantities follow from the connecting matrix (eq. (35))."
+ },
+ "components_map": [
+  {
+   "part": "teeth and tooth tips (unmeshed), slot openings, slots",
+   "component": "ring_sectors (twice; slots labelled with circuits)"
+  },
+  {
+   "part": "inset magnets and ideal-iron saliences",
+   "component": "ring_sectors (saliences unmeshed)"
+  },
+  {
+   "part": "gap",
+   "component": "air_gap_element"
+  },
+  {
+   "part": "rotor core, gauge",
+   "component": "hole, fixed_point_potential"
+  },
+  {
+   "part": "phase flux linkage from slot flux linkages",
+   "component": "metric terms (the connecting matrix)"
+  }
+ ],
+ "article": {
+  "parameters": {
+   "r1_cm": {
+    "value": 3.2,
+    "unit": "cm",
+    "provenance": "quoted",
+    "quote": "Inner radius of the PMs 3.2 cm",
+    "location": "Table I, p. 5"
+   },
+   "r2_cm": {
+    "value": 4,
+    "unit": "cm",
+    "provenance": "quoted",
+    "quote": "Radius of the rotor surface 4 cm",
+    "location": "Table I, p. 5"
+   },
+   "r3_cm": {
+    "value": 4.1,
+    "unit": "cm",
+    "provenance": "quoted",
+    "quote": "Stator bore radius 4.1 cm",
+    "location": "Table I, p. 5"
+   },
+   "r4_cm": {
+    "value": 4.3,
+    "unit": "cm",
+    "provenance": "quoted",
+    "quote": "Outer radius of the slot-opening 4.3 cm",
+    "location": "Table I, p. 5"
+   },
+   "r5_cm": {
+    "value": 5.3,
+    "unit": "cm",
+    "provenance": "quoted",
+    "quote": "Outer radius of the slot 5.3 cm",
+    "location": "Table I, p. 5"
+   },
+   "axial_length_cm": {
+    "value": 20,
+    "unit": "cm",
+    "provenance": "quoted",
+    "quote": "Axial length 20 cm",
+    "location": "Table I, p. 5"
+   },
+   "slot_angle_deg": {
+    "value": 12,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "Slot-opening angle 12°",
+    "location": "Table I, p. 5",
+    "note": "Region j, the slot itself; the paper calls it the slot-opening angle."
+   },
+   "isthmus_angle_deg": {
+    "value": 6,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "Slot isthmus angle 6°",
+    "location": "Table I, p. 5",
+    "note": "Region i, the opening between tooth tips."
+   },
+   "magnet_angle_deg": {
+    "value": 45,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "PMs opening angle 45°",
+    "location": "Table I, p. 5"
+   },
+   "magnet_br_T": {
+    "value": 1.2,
+    "unit": "T",
+    "provenance": "quoted",
+    "quote": "Remanence of the permanent magnets 1.2 T",
+    "location": "Table I, p. 5"
+   },
+   "magnet_mu_r": {
+    "value": 1.05,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "Relative recoil permeability 1.05",
+    "location": "Table I, p. 5"
+   },
+   "pole_pairs": {
+    "value": 2,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Pole-pairs number 2",
+    "location": "Table I, p. 5"
+   },
+   "slots": {
+    "value": 15,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Number of stator slots 15",
+    "location": "Table I, p. 5"
+   },
+   "current_density_rms_A_per_mm2": {
+    "value": 4,
+    "unit": "A/mm2",
+    "provenance": "quoted",
+    "quote": "RMS current density 4 A/mm²",
+    "location": "Table I, p. 5"
+   },
+   "speed_rpm": {
+    "value": 1500,
+    "unit": "r/min",
+    "provenance": "quoted",
+    "quote": "The computation is done for a rotating speed Ω = 1500 rpm.",
+    "location": "Section V-B-1, p. 6"
+   },
+   "slot_centre_offset_deg": {
+    "value": 0.0,
+    "unit": "deg",
+    "provenance": "assumed",
+    "reason": "The paper takes its stator from its reference [23] (Lubin et al. 2011, eq. (1)), whose slot openings are centred at 2 i pi / Q; slot i of the connecting matrix is centred at 24 i degrees.",
+    "sensitivity_control": "stator-half-slot"
+   },
+   "peak_factor": {
+    "value": 1.4142135623730951,
+    "unit": "ratio",
+    "provenance": "assumed",
+    "reason": "Ia = I and Ib = Ic = -I/2 is phase A's peak in a sinusoidal set of 4 A/mm2 rms; a slot's two coil sides fill it, so one coil side carries sqrt(2) x 4 A/mm2 x half the slot area at that peak.",
+    "sensitivity_control": "rms-as-peak"
+   },
+   "band_margin_mm": {
+    "value": 0.3,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Thin air between the gap's sliding band and its two surfaces (the 1 mm gap keeps a 0.4 mm band)."
+   },
+   "gap_arc_deg": {
+    "value": 0.25,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc pieces along the gap (0.18 mm)."
+   },
+   "arc_deg": {
+    "value": 1.0,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc pieces elsewhere."
+   },
+   "thin_air_mesh_mm": {
+    "value": 0.1,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Thin air regions of the gap."
+   },
+   "magnet_mesh_mm": {
+    "value": 0.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Magnets."
+   },
+   "slot_mesh_mm": {
+    "value": 0.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Slots and slot openings."
+   },
+   "load_step_deg": {
+    "value": 3.103448275862069,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Rotor positions under load: Fig. 18's FEM points lie every 90/29 degrees."
+   },
+   "r1_mm": {
+    "value": 32.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r1_cm*10",
+    "inputs": [
+     "r1_cm"
+    ]
+   },
+   "r2_mm": {
+    "value": 40,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r2_cm*10",
+    "inputs": [
+     "r2_cm"
+    ]
+   },
+   "r3_mm": {
+    "value": 41.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r3_cm*10",
+    "inputs": [
+     "r3_cm"
+    ]
+   },
+   "r4_mm": {
+    "value": 43.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r4_cm*10",
+    "inputs": [
+     "r4_cm"
+    ]
+   },
+   "r5_mm": {
+    "value": 53.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r5_cm*10",
+    "inputs": [
+     "r5_cm"
+    ]
+   },
+   "axial_length_mm": {
+    "value": 200,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "axial_length_cm*10",
+    "inputs": [
+     "axial_length_cm"
+    ]
+   },
+   "magnet_coercivity_A_per_m": {
+    "value": 909456.8176679733,
+    "unit": "A/m",
+    "provenance": "derived",
+    "expression": "magnet_br_T/(mu0*magnet_mu_r)",
+    "inputs": [
+     "magnet_br_T",
+     "magnet_mu_r"
+    ]
+   },
+   "slot_area_mm2": {
+    "value": 100.53096491487338,
+    "unit": "mm2",
+    "provenance": "derived",
+    "expression": "slot_angle_deg*pi/360*(r5_mm*r5_mm-r4_mm*r4_mm)",
+    "inputs": [
+     "r4_mm",
+     "r5_mm",
+     "slot_angle_deg"
+    ]
+   },
+   "coil_side_current_A": {
+    "value": 284.34450804213543,
+    "unit": "A",
+    "provenance": "derived",
+    "expression": "current_density_rms_A_per_mm2*peak_factor*slot_area_mm2/2",
+    "inputs": [
+     "current_density_rms_A_per_mm2",
+     "peak_factor",
+     "slot_area_mm2"
+    ],
+    "note": "Phase A's ampere-turns per coil side at Ia = I."
+   },
+   "electrical_frequency_hz": {
+    "value": 50.0,
+    "unit": "Hz",
+    "provenance": "derived",
+    "expression": "speed_rpm/60*pole_pairs",
+    "inputs": [
+     "pole_pairs",
+     "speed_rpm"
+    ]
+   }
+  },
+  "assembly": {
+   "problem": {
+    "physics": "magnetics",
+    "units": "millimeters",
+    "type": "planar",
+    "frequency": 0,
+    "depth": "$axial_length_mm"
+   },
+   "steps": [
+    {
+     "use": "material",
+     "name": "Air"
+    },
+    {
+     "use": "material",
+     "name": "Coil"
+    },
+    {
+     "use": "material",
+     "name": "Magnet",
+     "values": {
+      "Mu_x": "$magnet_mu_r",
+      "Mu_y": "$magnet_mu_r",
+      "H_c": "$magnet_coercivity_A_per_m"
+     }
+    },
+    {
+     "use": "circuit",
+     "name": "S1",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S2",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S3",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S4",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S5",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S6",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S7",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S8",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S9",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S10",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S11",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S12",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S13",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S14",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "S15",
+     "current": 0
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$r4_mm",
+     "outer_radius": "$r5_mm",
+     "copies": "$slots",
+     "angle_step": "=360/slots",
+     "sectors": [
+      [
+       "=slot_centre_offset_deg+slot_angle_deg/2",
+       "=slot_centre_offset_deg+360/slots-slot_angle_deg/2",
+       null,
+       null
+      ]
+     ],
+     "label_gaps": false,
+     "max_segment": "$arc_deg"
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$r3_mm",
+     "outer_radius": "$r4_mm",
+     "copies": "$slots",
+     "angle_step": "=360/slots",
+     "sectors": [
+      [
+       "=slot_centre_offset_deg+isthmus_angle_deg/2",
+       "=slot_centre_offset_deg+360/slots-isthmus_angle_deg/2",
+       null,
+       null
+      ]
+     ],
+     "gap_material": "Air",
+     "gap_mesh": "$slot_mesh_mm",
+     "max_segment": "$gap_arc_deg"
+    },
+    {
+     "use": "air_gap_element",
+     "rotor_radius": "=r2_mm+band_margin_mm",
+     "stator_radius": "=r3_mm-band_margin_mm",
+     "max_segment": "$gap_arc_deg"
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$r1_mm",
+     "outer_radius": "$r2_mm",
+     "copies": "$pole_pairs",
+     "angle_step": "=360/pole_pairs",
+     "sectors": [
+      [
+       "=-magnet_angle_deg/2",
+       "=magnet_angle_deg/2",
+       "Magnet",
+       "outward"
+      ],
+      [
+       "=magnet_angle_deg/2",
+       "=180/pole_pairs-magnet_angle_deg/2",
+       null,
+       null
+      ],
+      [
+       "=180/pole_pairs-magnet_angle_deg/2",
+       "=180/pole_pairs+magnet_angle_deg/2",
+       "Magnet",
+       "inward"
+      ],
+      [
+       "=180/pole_pairs+magnet_angle_deg/2",
+       "=360/pole_pairs-magnet_angle_deg/2",
+       null,
+       null
+      ]
+     ],
+     "mesh": "$magnet_mesh_mm",
+     "max_segment": "$gap_arc_deg"
+    },
+    {
+     "use": "hole",
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r3_mm-band_margin_mm/2",
+      0.0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r2_mm+band_margin_mm/2",
+      0.0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((24.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((24.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S1",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((48.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((48.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S2",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((72.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((72.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S3",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((96.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((96.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S4",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((120.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((120.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S5",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((144.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((144.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S6",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((168.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((168.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S7",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((192.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((192.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S8",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((216.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((216.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S9",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((240.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((240.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S10",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((264.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((264.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S11",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((288.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((288.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S12",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((312.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((312.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S13",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((336.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((336.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S14",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=48*cos((360.0+slot_centre_offset_deg)*pi/180)",
+      "=48*sin((360.0+slot_centre_offset_deg)*pi/180)"
+     ],
+     "material": "Coil",
+     "circuit": "S15",
+     "turns": 1,
+     "mesh": "$slot_mesh_mm"
+    },
+    {
+     "use": "fixed_point_potential",
+     "at": [
+      "=r5_mm*cos((slot_centre_offset_deg+slot_angle_deg/2)*pi/180)",
+      "=r5_mm*sin((slot_centre_offset_deg+slot_angle_deg/2)*pi/180)"
+     ],
+     "name": "A0"
+    }
+   ]
+  }
+ },
+ "gaps": [
+  {
+   "item": "slot positions",
+   "affects": "position-dependent targets (Fig. 18's points)",
+   "decision": "assumed",
+   "note": "From reference [23]; control stator-half-slot. EMF amplitude and cogging do not depend on it."
+  },
+  {
+   "item": "whether I in Ia = I is a peak",
+   "affects": "the load torque",
+   "decision": "assumed",
+   "note": "Peak; control rms-as-peak."
+  },
+  {
+   "item": "the torque's sign convention",
+   "affects": "torque targets",
+   "decision": "resolved",
+   "note": "Magnitudes; Fig. 18's torque does not change sign."
+  },
+  {
+   "item": "the armature-reaction and reluctance-torque studies (magnets replaced by air), Fig. 19's sinusoidal currents and the nonlinear study (Figs. 20-21)",
+   "affects": "comparators",
+   "decision": "out_of_scope",
+   "note": "Not reproduced here; Fig. 19's current angle is not stated."
+  }
+ ],
+ "steps": [
+  {
+   "label": "nl000",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    }
+   ]
+  },
+  {
+   "label": "nl001",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.5
+    }
+   ]
+  },
+  {
+   "label": "nl002",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "nl003",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 1.5
+    }
+   ]
+  },
+  {
+   "label": "nl004",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.0
+    }
+   ]
+  },
+  {
+   "label": "nl005",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.5
+    }
+   ]
+  },
+  {
+   "label": "nl006",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.0
+    }
+   ]
+  },
+  {
+   "label": "nl007",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.5
+    }
+   ]
+  },
+  {
+   "label": "nl008",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 4.0
+    }
+   ]
+  },
+  {
+   "label": "nl009",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 4.5
+    }
+   ]
+  },
+  {
+   "label": "nl010",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
+    }
+   ]
+  },
+  {
+   "label": "nl011",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.5
+    }
+   ]
+  },
+  {
+   "label": "nl012",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.0
+    }
+   ]
+  },
+  {
+   "label": "nl013",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.5
+    }
+   ]
+  },
+  {
+   "label": "nl014",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.0
+    }
+   ]
+  },
+  {
+   "label": "nl015",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.5
+    }
+   ]
+  },
+  {
+   "label": "nl016",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 8.0
+    }
+   ]
+  },
+  {
+   "label": "nl017",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 8.5
+    }
+   ]
+  },
+  {
+   "label": "nl018",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 9.0
+    }
+   ]
+  },
+  {
+   "label": "nl019",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 9.5
+    }
+   ]
+  },
+  {
+   "label": "nl020",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
+    }
+   ]
+  },
+  {
+   "label": "nl021",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.5
+    }
+   ]
+  },
+  {
+   "label": "nl022",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 11.0
+    }
+   ]
+  },
+  {
+   "label": "nl023",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 11.5
+    }
+   ]
+  },
+  {
+   "label": "nl024",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.0
+    }
+   ]
+  },
+  {
+   "label": "nl025",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.5
+    }
+   ]
+  },
+  {
+   "label": "nl026",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 13.0
+    }
+   ]
+  },
+  {
+   "label": "nl027",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 13.5
+    }
+   ]
+  },
+  {
+   "label": "nl028",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 14.0
+    }
+   ]
+  },
+  {
+   "label": "nl029",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 14.5
+    }
+   ]
+  },
+  {
+   "label": "nl030",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 15.0
+    }
+   ]
+  },
+  {
+   "label": "nl031",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 15.5
+    }
+   ]
+  },
+  {
+   "label": "nl032",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 16.0
+    }
+   ]
+  },
+  {
+   "label": "nl033",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 16.5
+    }
+   ]
+  },
+  {
+   "label": "nl034",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 17.0
+    }
+   ]
+  },
+  {
+   "label": "nl035",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 17.5
+    }
+   ]
+  },
+  {
+   "label": "nl036",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 18.0
+    }
+   ]
+  },
+  {
+   "label": "nl037",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 18.5
+    }
+   ]
+  },
+  {
+   "label": "nl038",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 19.0
+    }
+   ]
+  },
+  {
+   "label": "nl039",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 19.5
+    }
+   ]
+  },
+  {
+   "label": "nl040",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 20.0
+    }
+   ]
+  },
+  {
+   "label": "nl041",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 20.5
+    }
+   ]
+  },
+  {
+   "label": "nl042",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 21.0
+    }
+   ]
+  },
+  {
+   "label": "nl043",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 21.5
+    }
+   ]
+  },
+  {
+   "label": "nl044",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 22.0
+    }
+   ]
+  },
+  {
+   "label": "nl045",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 22.5
+    }
+   ]
+  },
+  {
+   "label": "nl046",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 23.0
+    }
+   ]
+  },
+  {
+   "label": "nl047",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 23.5
+    }
+   ]
+  },
+  {
+   "label": "nl048",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 24.0
+    }
+   ]
+  },
+  {
+   "label": "nl049",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 24.5
+    }
+   ]
+  },
+  {
+   "label": "nl050",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 25.0
+    }
+   ]
+  },
+  {
+   "label": "nl051",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 25.5
+    }
+   ]
+  },
+  {
+   "label": "nl052",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 26.0
+    }
+   ]
+  },
+  {
+   "label": "nl053",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 26.5
+    }
+   ]
+  },
+  {
+   "label": "nl054",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 27.0
+    }
+   ]
+  },
+  {
+   "label": "nl055",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 27.5
+    }
+   ]
+  },
+  {
+   "label": "nl056",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 28.0
+    }
+   ]
+  },
+  {
+   "label": "nl057",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 28.5
+    }
+   ]
+  },
+  {
+   "label": "nl058",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 29.0
+    }
+   ]
+  },
+  {
+   "label": "nl059",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 29.5
+    }
+   ]
+  },
+  {
+   "label": "nl060",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "label": "nl061",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 30.5
+    }
+   ]
+  },
+  {
+   "label": "nl062",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 31.0
+    }
+   ]
+  },
+  {
+   "label": "nl063",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 31.5
+    }
+   ]
+  },
+  {
+   "label": "nl064",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 32.0
+    }
+   ]
+  },
+  {
+   "label": "nl065",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 32.5
+    }
+   ]
+  },
+  {
+   "label": "nl066",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 33.0
+    }
+   ]
+  },
+  {
+   "label": "nl067",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 33.5
+    }
+   ]
+  },
+  {
+   "label": "nl068",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 34.0
+    }
+   ]
+  },
+  {
+   "label": "nl069",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 34.5
+    }
+   ]
+  },
+  {
+   "label": "nl070",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 35.0
+    }
+   ]
+  },
+  {
+   "label": "nl071",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 35.5
+    }
+   ]
+  },
+  {
+   "label": "nl072",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 36.0
+    }
+   ]
+  },
+  {
+   "label": "nl073",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 36.5
+    }
+   ]
+  },
+  {
+   "label": "nl074",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 37.0
+    }
+   ]
+  },
+  {
+   "label": "nl075",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 37.5
+    }
+   ]
+  },
+  {
+   "label": "nl076",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 38.0
+    }
+   ]
+  },
+  {
+   "label": "nl077",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 38.5
+    }
+   ]
+  },
+  {
+   "label": "nl078",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 39.0
+    }
+   ]
+  },
+  {
+   "label": "nl079",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 39.5
+    }
+   ]
+  },
+  {
+   "label": "nl080",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 40.0
+    }
+   ]
+  },
+  {
+   "label": "nl081",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 40.5
+    }
+   ]
+  },
+  {
+   "label": "nl082",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 41.0
+    }
+   ]
+  },
+  {
+   "label": "nl083",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 41.5
+    }
+   ]
+  },
+  {
+   "label": "nl084",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 42.0
+    }
+   ]
+  },
+  {
+   "label": "nl085",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 42.5
+    }
+   ]
+  },
+  {
+   "label": "nl086",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 43.0
+    }
+   ]
+  },
+  {
+   "label": "nl087",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 43.5
+    }
+   ]
+  },
+  {
+   "label": "nl088",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 44.0
+    }
+   ]
+  },
+  {
+   "label": "nl089",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 44.5
+    }
+   ]
+  },
+  {
+   "label": "nl090",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 45.0
+    }
+   ]
+  },
+  {
+   "label": "nl091",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 45.5
+    }
+   ]
+  },
+  {
+   "label": "nl092",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 46.0
+    }
+   ]
+  },
+  {
+   "label": "nl093",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 46.5
+    }
+   ]
+  },
+  {
+   "label": "nl094",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 47.0
+    }
+   ]
+  },
+  {
+   "label": "nl095",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 47.5
+    }
+   ]
+  },
+  {
+   "label": "nl096",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 48.0
+    }
+   ]
+  },
+  {
+   "label": "nl097",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 48.5
+    }
+   ]
+  },
+  {
+   "label": "nl098",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 49.0
+    }
+   ]
+  },
+  {
+   "label": "nl099",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 49.5
+    }
+   ]
+  },
+  {
+   "label": "nl100",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "label": "nl101",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 50.5
+    }
+   ]
+  },
+  {
+   "label": "nl102",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 51.0
+    }
+   ]
+  },
+  {
+   "label": "nl103",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 51.5
+    }
+   ]
+  },
+  {
+   "label": "nl104",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 52.0
+    }
+   ]
+  },
+  {
+   "label": "nl105",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 52.5
+    }
+   ]
+  },
+  {
+   "label": "nl106",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 53.0
+    }
+   ]
+  },
+  {
+   "label": "nl107",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 53.5
+    }
+   ]
+  },
+  {
+   "label": "nl108",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 54.0
+    }
+   ]
+  },
+  {
+   "label": "nl109",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 54.5
+    }
+   ]
+  },
+  {
+   "label": "nl110",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 55.0
+    }
+   ]
+  },
+  {
+   "label": "nl111",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 55.5
+    }
+   ]
+  },
+  {
+   "label": "nl112",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 56.0
+    }
+   ]
+  },
+  {
+   "label": "nl113",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 56.5
+    }
+   ]
+  },
+  {
+   "label": "nl114",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 57.0
+    }
+   ]
+  },
+  {
+   "label": "nl115",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 57.5
+    }
+   ]
+  },
+  {
+   "label": "nl116",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 58.0
+    }
+   ]
+  },
+  {
+   "label": "nl117",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 58.5
+    }
+   ]
+  },
+  {
+   "label": "nl118",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 59.0
+    }
+   ]
+  },
+  {
+   "label": "nl119",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 59.5
+    }
+   ]
+  },
+  {
+   "label": "nl120",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 60.0
+    }
+   ]
+  },
+  {
+   "label": "nl121",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 60.5
+    }
+   ]
+  },
+  {
+   "label": "nl122",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 61.0
+    }
+   ]
+  },
+  {
+   "label": "nl123",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 61.5
+    }
+   ]
+  },
+  {
+   "label": "nl124",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 62.0
+    }
+   ]
+  },
+  {
+   "label": "nl125",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 62.5
+    }
+   ]
+  },
+  {
+   "label": "nl126",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 63.0
+    }
+   ]
+  },
+  {
+   "label": "nl127",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 63.5
+    }
+   ]
+  },
+  {
+   "label": "nl128",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 64.0
+    }
+   ]
+  },
+  {
+   "label": "nl129",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 64.5
+    }
+   ]
+  },
+  {
+   "label": "nl130",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 65.0
+    }
+   ]
+  },
+  {
+   "label": "nl131",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 65.5
+    }
+   ]
+  },
+  {
+   "label": "nl132",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 66.0
+    }
+   ]
+  },
+  {
+   "label": "nl133",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 66.5
+    }
+   ]
+  },
+  {
+   "label": "nl134",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 67.0
+    }
+   ]
+  },
+  {
+   "label": "nl135",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 67.5
+    }
+   ]
+  },
+  {
+   "label": "nl136",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 68.0
+    }
+   ]
+  },
+  {
+   "label": "nl137",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 68.5
+    }
+   ]
+  },
+  {
+   "label": "nl138",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 69.0
+    }
+   ]
+  },
+  {
+   "label": "nl139",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 69.5
+    }
+   ]
+  },
+  {
+   "label": "nl140",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 70.0
+    }
+   ]
+  },
+  {
+   "label": "nl141",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 70.5
+    }
+   ]
+  },
+  {
+   "label": "nl142",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 71.0
+    }
+   ]
+  },
+  {
+   "label": "nl143",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 71.5
+    }
+   ]
+  },
+  {
+   "label": "nl144",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 72.0
+    }
+   ]
+  },
+  {
+   "label": "nl145",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 72.5
+    }
+   ]
+  },
+  {
+   "label": "nl146",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 73.0
+    }
+   ]
+  },
+  {
+   "label": "nl147",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 73.5
+    }
+   ]
+  },
+  {
+   "label": "nl148",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 74.0
+    }
+   ]
+  },
+  {
+   "label": "nl149",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 74.5
+    }
+   ]
+  },
+  {
+   "label": "nl150",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 75.0
+    }
+   ]
+  },
+  {
+   "label": "nl151",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 75.5
+    }
+   ]
+  },
+  {
+   "label": "nl152",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 76.0
+    }
+   ]
+  },
+  {
+   "label": "nl153",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 76.5
+    }
+   ]
+  },
+  {
+   "label": "nl154",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 77.0
+    }
+   ]
+  },
+  {
+   "label": "nl155",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 77.5
+    }
+   ]
+  },
+  {
+   "label": "nl156",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 78.0
+    }
+   ]
+  },
+  {
+   "label": "nl157",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 78.5
+    }
+   ]
+  },
+  {
+   "label": "nl158",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 79.0
+    }
+   ]
+  },
+  {
+   "label": "nl159",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 79.5
+    }
+   ]
+  },
+  {
+   "label": "nl160",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 80.0
+    }
+   ]
+  },
+  {
+   "label": "nl161",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 80.5
+    }
+   ]
+  },
+  {
+   "label": "nl162",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 81.0
+    }
+   ]
+  },
+  {
+   "label": "nl163",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 81.5
+    }
+   ]
+  },
+  {
+   "label": "nl164",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 82.0
+    }
+   ]
+  },
+  {
+   "label": "nl165",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 82.5
+    }
+   ]
+  },
+  {
+   "label": "nl166",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 83.0
+    }
+   ]
+  },
+  {
+   "label": "nl167",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 83.5
+    }
+   ]
+  },
+  {
+   "label": "nl168",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 84.0
+    }
+   ]
+  },
+  {
+   "label": "nl169",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 84.5
+    }
+   ]
+  },
+  {
+   "label": "nl170",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 85.0
+    }
+   ]
+  },
+  {
+   "label": "nl171",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 85.5
+    }
+   ]
+  },
+  {
+   "label": "nl172",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 86.0
+    }
+   ]
+  },
+  {
+   "label": "nl173",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 86.5
+    }
+   ]
+  },
+  {
+   "label": "nl174",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 87.0
+    }
+   ]
+  },
+  {
+   "label": "nl175",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 87.5
+    }
+   ]
+  },
+  {
+   "label": "nl176",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 88.0
+    }
+   ]
+  },
+  {
+   "label": "nl177",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 88.5
+    }
+   ]
+  },
+  {
+   "label": "nl178",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 89.0
+    }
+   ]
+  },
+  {
+   "label": "nl179",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 89.5
+    }
+   ]
+  },
+  {
+   "label": "ld00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=0*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=1*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=2*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=3*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=4*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=5*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=6*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=7*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=8*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=9*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld10",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=10*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld11",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=11*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld12",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=12*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld13",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=13*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld14",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=14*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld15",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=15*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld16",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=16*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld17",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=17*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld18",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=18*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld19",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=19*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld20",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=20*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld21",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=21*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld22",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=22*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld23",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=23*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld24",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=24*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld25",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=25*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld26",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=26*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld27",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=27*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld28",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=28*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  },
+  {
+   "label": "ld29",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": "=29*load_step_deg"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S1",
+     "property": 1,
+     "value": "=2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S2",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S3",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S4",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S5",
+     "property": 1,
+     "value": "=-2*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S6",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S7",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S8",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S9",
+     "property": 1,
+     "value": "=1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S10",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S11",
+     "property": 1,
+     "value": "=-1*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S12",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S13",
+     "property": 1,
+     "value": "=-1.5*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S14",
+     "property": 1,
+     "value": "=0*coil_side_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "S15",
+     "property": 1,
+     "value": "=1*coil_side_current_A"
+    }
+   ]
+  }
+ ],
+ "engine": {
+  "solves_per_process": 25
+ },
+ "measurements": [
+  {
+   "id": "s1",
+   "op": "circuit",
+   "name": "S1"
+  },
+  {
+   "id": "s2",
+   "op": "circuit",
+   "name": "S2"
+  },
+  {
+   "id": "s3",
+   "op": "circuit",
+   "name": "S3"
+  },
+  {
+   "id": "s4",
+   "op": "circuit",
+   "name": "S4"
+  },
+  {
+   "id": "s5",
+   "op": "circuit",
+   "name": "S5"
+  },
+  {
+   "id": "s6",
+   "op": "circuit",
+   "name": "S6"
+  },
+  {
+   "id": "s7",
+   "op": "circuit",
+   "name": "S7"
+  },
+  {
+   "id": "s8",
+   "op": "circuit",
+   "name": "S8"
+  },
+  {
+   "id": "s9",
+   "op": "circuit",
+   "name": "S9"
+  },
+  {
+   "id": "s10",
+   "op": "circuit",
+   "name": "S10"
+  },
+  {
+   "id": "s11",
+   "op": "circuit",
+   "name": "S11"
+  },
+  {
+   "id": "s12",
+   "op": "circuit",
+   "name": "S12"
+  },
+  {
+   "id": "s13",
+   "op": "circuit",
+   "name": "S13"
+  },
+  {
+   "id": "s14",
+   "op": "circuit",
+   "name": "S14"
+  },
+  {
+   "id": "s15",
+   "op": "circuit",
+   "name": "S15"
+  },
+  {
+   "id": "tq",
+   "op": "gap_integral",
+   "boundary": "AGE",
+   "type": 0
+  }
+ ],
+ "metrics": [
+  {
+   "name": "flux_A_Wb",
+   "terms": [
+    [
+     "s1",
+     2,
+     2
+    ],
+    [
+     "s2",
+     2,
+     1
+    ],
+    [
+     "s4",
+     2,
+     -1
+    ],
+    [
+     "s5",
+     2,
+     -2
+    ],
+    [
+     "s8",
+     2,
+     1
+    ],
+    [
+     "s9",
+     2,
+     1
+    ],
+    [
+     "s12",
+     2,
+     -1
+    ],
+    [
+     "s13",
+     2,
+     -1
+    ]
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "torque_Nm",
+   "value": [
+    "tq",
+    0
+   ],
+   "unit": "N*m"
+  },
+  {
+   "name": "torque_abs_Nm",
+   "value": [
+    "tq",
+    0
+   ],
+   "unit": "N*m",
+   "part": "abs"
+  }
+ ],
+ "targets": [
+  {
+   "metric": "torque_abs_Nm@ld05",
+   "value": 7.34,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.2,
+   "absolute_digitization_uncertainty": 0.1,
+   "used_for_acceptance": true,
+   "quote": "Fig. 18. Static torque versus rotor position for Jrms=4A/mm².",
+   "location": "Fig. 18, p. 9 (FEM points)",
+   "note": "The FEM point at 5·90/29 = 15.517 degrees, read at 600 dpi (gridline calibration within 0.06 N m); magnitude."
+  },
+  {
+   "metric": "torque_abs_Nm@ld08",
+   "value": 13.58,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.2,
+   "absolute_digitization_uncertainty": 0.1,
+   "used_for_acceptance": true,
+   "quote": "Fig. 18. Static torque versus rotor position for Jrms=4A/mm².",
+   "location": "Fig. 18, p. 9 (FEM points)",
+   "note": "The FEM point at 8·90/29 = 24.828 degrees, read at 600 dpi (gridline calibration within 0.06 N m); magnitude."
+  },
+  {
+   "metric": "torque_abs_Nm@ld11",
+   "value": 19.02,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.2,
+   "absolute_digitization_uncertainty": 0.1,
+   "used_for_acceptance": true,
+   "quote": "Fig. 18. Static torque versus rotor position for Jrms=4A/mm².",
+   "location": "Fig. 18, p. 9 (FEM points)",
+   "note": "The FEM point at 11·90/29 = 34.138 degrees, read at 600 dpi (gridline calibration within 0.06 N m); magnitude."
+  },
+  {
+   "metric": "torque_abs_Nm@ld14",
+   "value": 23.25,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.2,
+   "absolute_digitization_uncertainty": 0.1,
+   "used_for_acceptance": true,
+   "quote": "Fig. 18. Static torque versus rotor position for Jrms=4A/mm².",
+   "location": "Fig. 18, p. 9 (FEM points)",
+   "note": "The FEM point at 14·90/29 = 43.448 degrees, read at 600 dpi (gridline calibration within 0.06 N m); magnitude."
+  },
+  {
+   "metric": "torque_abs_Nm@ld16",
+   "value": 26.31,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.2,
+   "absolute_digitization_uncertainty": 0.1,
+   "used_for_acceptance": true,
+   "quote": "Fig. 18. Static torque versus rotor position for Jrms=4A/mm².",
+   "location": "Fig. 18, p. 9 (FEM points)",
+   "note": "The FEM point at 16·90/29 = 49.655 degrees, read at 600 dpi (gridline calibration within 0.06 N m); magnitude."
+  },
+  {
+   "metric": "torque_abs_Nm@ld19",
+   "value": 28.34,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.2,
+   "absolute_digitization_uncertainty": 0.1,
+   "used_for_acceptance": true,
+   "quote": "Fig. 18. Static torque versus rotor position for Jrms=4A/mm².",
+   "location": "Fig. 18, p. 9 (FEM points)",
+   "note": "The FEM point at 19·90/29 = 58.966 degrees, read at 600 dpi (gridline calibration within 0.06 N m); magnitude."
+  },
+  {
+   "metric": "torque_abs_Nm@ld21",
+   "value": 24.65,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.2,
+   "absolute_digitization_uncertainty": 0.1,
+   "used_for_acceptance": true,
+   "quote": "Fig. 18. Static torque versus rotor position for Jrms=4A/mm².",
+   "location": "Fig. 18, p. 9 (FEM points)",
+   "note": "The FEM point at 21·90/29 = 65.172 degrees, read at 600 dpi (gridline calibration within 0.06 N m); magnitude."
+  },
+  {
+   "metric": "torque_abs_Nm@ld24",
+   "value": 16.91,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.2,
+   "absolute_digitization_uncertainty": 0.1,
+   "used_for_acceptance": true,
+   "quote": "Fig. 18. Static torque versus rotor position for Jrms=4A/mm².",
+   "location": "Fig. 18, p. 9 (FEM points)",
+   "note": "The FEM point at 24·90/29 = 74.483 degrees, read at 600 dpi (gridline calibration within 0.06 N m); magnitude."
+  },
+  {
+   "metric": "torque_abs_Nm@ld27",
+   "value": 8.84,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.2,
+   "absolute_digitization_uncertainty": 0.1,
+   "used_for_acceptance": true,
+   "quote": "Fig. 18. Static torque versus rotor position for Jrms=4A/mm².",
+   "location": "Fig. 18, p. 9 (FEM points)",
+   "note": "The FEM point at 27·90/29 = 83.793 degrees, read at 600 dpi (gridline calibration within 0.06 N m); magnitude."
+  }
+ ],
+ "assessors": [
+  {
+   "kind": "waveform_statistic",
+   "metric": "flux_A_Wb",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 2,
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "half_wave_symmetry": true,
+   "step_prefix": "nl",
+   "time_derivative_frequency_hz": 50.0,
+   "value_kind": "digitized",
+   "value": 9.07,
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.1,
+   "absolute_digitization_uncertainty": 0.05,
+   "used_for_acceptance": true,
+   "quote": "Fig. 8. Per turn phase back-EMF waveform.",
+   "location": "Fig. 8, p. 6 (FEM points)",
+   "note": "The fundamental of the 19 FEM points of one electrical period (every 180/19 degrees), read at 600 dpi (calibration within 0.07 V); per turn at 1500 r/min. The text: 'The maximum value of the back-EMF is around 10V.'"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "flux_A_Wb",
+   "statistic": "harmonic_peak",
+   "order": 3,
+   "pole_pairs": 2,
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "half_wave_symmetry": true,
+   "step_prefix": "nl",
+   "time_derivative_frequency_hz": 50.0,
+   "value_kind": "digitized",
+   "value": 1.461,
+   "absolute_tolerance": 0.15,
+   "used_for_acceptance": false,
+   "quote": "Fig. 8. Per turn phase back-EMF waveform.",
+   "location": "Fig. 8, p. 6 (FEM points)",
+   "note": "The 3rd harmonic of the same points, a comparator."
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_Nm",
+   "statistic": "peak_to_peak",
+   "pole_pairs": 2,
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "half_wave_symmetry": true,
+   "step_prefix": "nl",
+   "value_kind": "digitized",
+   "value": 0.921,
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Fig. 9. Cogging torque waveform.",
+   "location": "Fig. 9, p. 6 (FEM points)",
+   "note": "Cogging peak to peak from 30 FEM points over one 6 degree period; a comparator, as cogging is. The model samples 12 positions per period."
+  }
+ ],
+ "controls": [
+  {
+   "id": "mesh-0p7",
+   "level": "article",
+   "mesh_scale": 0.7,
+   "purpose": "Every element size and arc piece at 0.7 times."
+  },
+  {
+   "id": "rms-as-peak",
+   "level": "article",
+   "parameters": {
+    "peak_factor": 1.0
+   },
+   "purpose": "Ia = I read as 4 A/mm2."
+  },
+  {
+   "id": "stator-half-slot",
+   "level": "article",
+   "parameters": {
+    "slot_centre_offset_deg": 12.0
+   },
+   "purpose": "Slots centred half a slot pitch away."
+  }
+ ],
+ "coverage": {
+  "scope": "core",
+  "reproduced": "The per-turn back-EMF, the static torque under load against rotor position, and cogging as a comparator.",
+  "not_reproduced": "Armature reaction alone and reluctance torque (Figs. 10-14), field plots, Fig. 19's sinusoidal-current torque and the nonlinear study."
+ },
+ "geometry_checks": [],
+ "findings": [],
+ "retrospective": []
+}

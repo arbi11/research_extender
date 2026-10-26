@@ -772,7 +772,11 @@ def compute_metrics(case, raw):
         for metric in case["metrics"]:
             if metric.get("steps") and step not in metric["steps"]:
                 continue
-            value = raw[(step, metric["value"][0], metric["value"][1])]
+            if metric.get("terms"):
+                # A linear combination of raw values, as a phase's flux linkage summed over slots of its own circuits.
+                value = sum(coefficient * raw[(step, ident, index)] for ident, index, coefficient in metric["terms"])
+            else:
+                value = raw[(step, metric["value"][0], metric["value"][1])]
             if metric.get("divide"):
                 value = value / raw[(step, metric["divide"][0], metric["divide"][1])]
             value *= metric.get("scale", 1)
@@ -1172,7 +1176,8 @@ def acceptance_measurements(case):
         metric = definitions.get(metric_name.split("@")[0])
         if metric is None:
             return set()
-        return {metric["value"][0].split(":")[0]} | ({metric["divide"][0].split(":")[0]} if metric.get("divide") else set())
+        named = [term[0] for term in metric["terms"]] if metric.get("terms") else [metric["value"][0]]
+        return {name.split(":")[0] for name in named} | ({metric["divide"][0].split(":")[0]} if metric.get("divide") else set())
 
     used = set()
     for target in case["targets"]:

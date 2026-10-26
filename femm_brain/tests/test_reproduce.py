@@ -148,6 +148,15 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(assess({"metric": "charge_C@open", "value": 2.0, "relative_tolerance": .01}, metrics)["status"], "passed")
         self.assertEqual(assess({"metric": "charge_C@open", "value": 3.0, "relative_tolerance": .01}, metrics)["status"], "failed")
 
+    def test_metrics_can_sum_measurements_with_coefficients(self):
+        # A phase's flux linkage over slots that are circuits of their own: 2 psi_s1 + psi_s2 - psi_s4.
+        case = {"steps": [{"label": "a"}], "metrics": [{"name": "psi", "terms": [["s1", 2, 2], ["s2", 2, 1], ["s4", 2, -1]], "unit": "Wb", "scale": 10}],
+                "measurements": [], "targets": [{"metric": "psi@a", "used_for_acceptance": True}]}
+        raw = {("a", "s1", 2): 0.1 + 0j, ("a", "s2", 2): 0.05 + 0j, ("a", "s4", 2): -0.02 + 0j, ("a", "mesh_nodes", 0): 1 + 0j, ("a", "mesh_elements", 0): 1 + 0j}
+        self.assertAlmostEqual(compute_metrics(case, raw)["psi@a"], 10 * (0.2 + 0.05 + 0.02))
+        from femm_brain.reproduce import acceptance_measurements
+        self.assertEqual(acceptance_measurements(case), {"s1", "s2", "s4"})
+
     def test_frequency_steps_complex_values_and_circle_samples(self):
         case = {"id": "toy", "steps": [
                     {"label": "a", "modify": [{"function": "modifycircprop", "name": "C", "property": 1, "value": [3, -4]}]},
