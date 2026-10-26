@@ -1063,8 +1063,13 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0,
     degrees, counterclockwise from start to end; a null material leaves the sector
     unmeshed (ideal, infinitely permeable iron, whose surfaces are then natural
     boundaries, as analytic models assume). Magnetization is null, "outward"
-    or "inward" (radial, through FEMM's direction function) or a number (a
-    parallel direction in degrees). Contiguous sectors make a closed ring of
+    or "inward" (radial, through FEMM's direction function), a number (a
+    parallel direction in degrees) or {"from_radial": degrees}: a direction
+    fixed against the local radial one, counterclockwise from outward, through
+    the direction function theta+degrees (constant radial and tangential
+    components, as Halbach segments in analytic models). A sector of zero width
+    is left out, so a parametrized array whose some blocks vanish (a Halbach
+    array reduced to a radial one) needs no other assembly. Contiguous sectors make a closed ring of
     magnets (a magnetic gear's or Halbach rotor's); sectors with gaps between
     them make pole pieces or teeth, and the gaps take ``gap_material`` (or, with
     ``label_gaps`` false, are left for other steps to label, as slots that carry
@@ -1083,16 +1088,26 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0,
         for sector in sectors:
             if len(sector) != 4 or not (_finite(sector[0]) and _finite(sector[1])):
                 raise ValueError("Each sector is [start degrees, end degrees, material, magnetization]")
+            if sector[1] == sector[0]:
+                continue  # a block of zero width is left out
             turn = k * angle_step
             direction = sector[3] + turn if _finite(sector[3]) else sector[3]
             repeated.append([sector[0] + turn, sector[1] + turn, sector[2], direction])
+    if not repeated:
+        raise ValueError("A ring needs at least one sector of nonzero width")
     spans = []
     for sector in repeated:
         if len(sector) != 4 or not (_finite(sector[0]) and _finite(sector[1])) or not (sector[2] is None or isinstance(sector[2], str)):
             raise ValueError("Each sector is [start degrees, end degrees, material, magnetization]")
         magnetization = sector[3]
-        if magnetization is not None and magnetization not in ("outward", "inward") and not _finite(magnetization):
-            raise ValueError("Magnetization is null, outward, inward or a direction in degrees")
+        if isinstance(magnetization, dict):
+            if set(magnetization) != {"from_radial"} or not _finite(magnetization["from_radial"]):
+                raise ValueError("A relative magnetization is {\"from_radial\": degrees}")
+            magnetization = direction_function(magnetization["from_radial"])
+        elif magnetization is not None and magnetization not in ("outward", "inward") and not _finite(magnetization):
+            raise ValueError("Magnetization is null, outward, inward, a direction in degrees or {\"from_radial\": degrees}")
+        elif magnetization in ("outward", "inward"):
+            magnetization = direction_function(0 if magnetization == "outward" else 180)
         start, width = sector[0] % 360, (sector[1] - sector[0]) % 360
         if not 0 < width < 360:
             raise ValueError("A sector spans more than zero and less than 360 degrees")
@@ -1127,9 +1142,8 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0,
             # Ideal iron (infinitely permeable) is left unmeshed: its surfaces are natural boundaries.
             # The unmeshed label carries the group so it turns with the ring.
             m.hole(*point(middle, centre), group=group)
-        elif owner[3] in ("outward", "inward"):
-            m.label(*point(middle, centre), owner[2], mesh=mesh, group=group,
-                    magdir_function="theta" if owner[3] == "outward" else "theta+180")
+        elif isinstance(owner[3], str):
+            m.label(*point(middle, centre), owner[2], mesh=mesh, group=group, magdir_function=owner[3])
         else:
             m.label(*point(middle, centre), owner[2], mesh=mesh, magdir=(owner[3] or 0) % 360, group=group)
 
@@ -1307,6 +1321,31 @@ IMPLEMENTATIONS = {function.__name__: function for function in (
     bar_magnet, air_gap_element, kelvin_periodic_exterior, segment_boundary, fixed_point_potential, magnet_array,
     slotted_stator, trapezoidal_slot_stator, cage_rotor, tooth_coil_winding, surface_magnet_rotor, salient_poles, salient_pole_winding,
     belt_winding, entity_pattern, sector_air_gap, arc_boundary, ring_sectors, flux_barrier_rotor)}
+
+
+def direction_function(from_radial):
+    """FEMM's direction function for a magnetization at a fixed angle from the outward radial direction."""
+    if not _finite(from_radial):
+        raise ValueError("The angle from the radial direction must be a finite number of degrees")
+    offset = round(float(from_radial) % 360, 9) % 360
+    return "theta" if offset == 0 else "theta+" + format(offset, ".9g")
+
+
+def direction_function_offset(function):
+    """Degrees from the outward radial direction of a direction function theta or theta+X (None for no function)."""
+    text = (function or "").replace(" ", "")
+    if not text:
+        return None
+    if text == "theta":
+        return 0.0
+    if text.startswith("theta+"):
+        try:
+            value = float(text[6:])
+        except ValueError:
+            value = None
+        if value is not None and math.isfinite(value):
+            return value
+    raise ValueError("Unsupported magnetization function: " + str(function))
 
 
 def _finite(value):

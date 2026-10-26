@@ -3019,7 +3019,7 @@
    "id": "ring_sectors",
    "layer": 2,
    "title": "Annulus of material sectors",
-   "description": "An annulus divided into angular sectors, each a block of its own material and magnetization (radial outward or inward through FEMM's direction function, a parallel direction, or none), with an optional gap material between sectors: closed magnet rings of magnetic gears and Halbach rotors, and modulation pole pieces or teeth separated by air. The component draws the annulus arcs split at every sector edge, the radial edges once, and one label per region.",
+   "description": "An annulus divided into angular sectors, each a block of its own material and magnetization (radial outward or inward through FEMM's direction function, a fixed angle from the radial direction through the same function, a parallel direction, or none), with an optional gap material between sectors: closed magnet rings of magnetic gears and Halbach rotors, and modulation pole pieces or teeth separated by air. The component draws the annulus arcs split at every sector edge, the radial edges once, and one label per region.",
    "physics": [
     "magnetics"
    ],
@@ -3046,7 +3046,7 @@
     {
      "name": "sectors",
      "type": "list",
-     "description": "Sectors as [start degrees, end degrees, material, magnetization], counterclockwise from start to end; magnetization is null, \"outward\", \"inward\" or a direction in degrees; a null material leaves the sector unmeshed (ideal iron, natural boundaries); sectors may not overlap",
+     "description": "Sectors as [start degrees, end degrees, material, magnetization], counterclockwise from start to end; magnetization is null, \"outward\", \"inward\", a direction in degrees or {\"from_radial\": degrees} (counterclockwise from outward, constant radial and tangential components); a sector of zero width is left out; a null material leaves the sector unmeshed (ideal iron, natural boundaries); sectors may not overlap",
      "required": true
     },
     {
@@ -3129,9 +3129,9 @@
    "node_id": null,
    "stage": "geometry",
    "constraints": [
-    "Sectors span more than zero and less than 360 degrees and may not overlap; sectors that leave gaps need a gap material.",
+    "Sectors span less than 360 degrees and may not overlap; a sector of zero width is left out (a parametrized array whose blocks vanish), but at least one must remain; sectors that leave gaps need a gap material.",
     "The annulus circles are drawn by the component; do not draw circles at its radii as well.",
-    "Radial magnetization uses FEMM's theta and theta+180 direction functions, so it follows each element's angle."
+    "Radial magnetization uses FEMM's theta and theta+180 direction functions, and a fixed angle from the radial direction theta+degrees, so it follows each element's angle (Halbach segments with constant radial and tangential components)."
    ]
   },
   {

@@ -1,0 +1,1286 @@
+{
+ "schema_version": 1,
+ "id": "tzouganakis-2024-halbach-gear",
+ "set": "held_out",
+ "status": "frozen",
+ "skill_version": "713906e",
+ "title": "Torque calculation and dynamical response in Halbach array coaxial magnetic gears through a novel analytical 2D model",
+ "source": {
+  "citation": "P. Tzouganakis, V. Gakos, C. Kalligeros, C. Papalexis, A. Tsolakis, V. Spitas, Computation 12(5):88, 2024",
+  "doi": "10.3390/computation12050088",
+  "url": "https://www.mdpi.com/2079-3197/12/5/88",
+  "access": "open access",
+  "licence": "CC BY 4.0",
+  "pdf_sha256": "1c452b0201bb5f7d210a0d0aadf895dcbf393a575b232c02888c5c49b3ee9f72",
+  "pages": 12,
+  "accessed": "2026-10-26"
+ },
+ "machine": {
+  "family": "magnetic_gear",
+  "topology": "coaxial magnetic gear: inner Halbach (or radial) magnet ring and outer radial magnet ring on ideal iron yokes, a ring of 14 ideal-iron pole pieces between two 5 mm air gaps",
+  "problem": "planar",
+  "poles": 8,
+  "symmetry": "Full cross-section: 4, 10 and 14 share the factor 2, but the full machine is kept as the paper's analytic model is; two sliding bands, the outer one turns the outer rotor against the rest."
+ },
+ "components_map": [
+  {
+   "part": "outer radial magnet ring",
+   "component": "ring_sectors"
+  },
+  {
+   "part": "inner Halbach ring (blocks at fixed angles from the radial direction; the standard ring as the same array with beta_h = gamma_h = 0)",
+   "component": "ring_sectors (from_radial magnetization, zero-width blocks left out)"
+  },
+  {
+   "part": "pole pieces (ideal iron, unmeshed) with air between",
+   "component": "ring_sectors"
+  },
+  {
+   "part": "yokes (ideal iron, unmeshed; meshed linear iron in a control)",
+   "component": "ring_sectors, hole"
+  },
+  {
+   "part": "the two air gaps",
+   "component": "air_gap_element (the outer band's inner angle turns the outer rotor)"
+  },
+  {
+   "part": "gauge",
+   "component": "fixed_point_potential"
+  },
+  {
+   "part": "torque harmonics xi",
+   "component": "waveform_statistic assessor (fundamental and harmonics over one outer pole-pair pitch)"
+  }
+ ],
+ "article": {
+  "parameters": {
+   "inner_pole_pairs": {
+    "value": 4,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "pin 4",
+    "location": "Table 1, p. 7"
+   },
+   "outer_pole_pairs": {
+    "value": 10,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "pout 10",
+    "location": "Table 1, p. 7"
+   },
+   "r1_mm": {
+    "value": 80,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "r1 [mm] 80",
+    "location": "Table 1, p. 7",
+    "note": "Radius of the inner iron yoke (the inner magnets' inner face)."
+   },
+   "r2_mm": {
+    "value": 100,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "r2 [mm] 100",
+    "location": "Table 1, p. 7",
+    "note": "Outer radius of the inner magnets."
+   },
+   "r3_mm": {
+    "value": 105,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "r3 [mm] 105",
+    "location": "Table 1, p. 7",
+    "note": "Inner side of the modulator ring."
+   },
+   "r4_mm": {
+    "value": 125,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "r4 [mm] 125",
+    "location": "Table 1, p. 7",
+    "note": "Outer side of the modulator ring."
+   },
+   "r5_mm": {
+    "value": 130,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "r5 [mm] 130",
+    "location": "Table 1, p. 7",
+    "note": "Inner radius of the outer magnets."
+   },
+   "r6_mm": {
+    "value": 150,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "r6 [mm] 150",
+    "location": "Table 1, p. 7",
+    "note": "Outer iron yoke's inner face."
+   },
+   "rout_mm": {
+    "value": 170,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "rout [mm] 170",
+    "location": "Table 1, p. 7",
+    "note": "External side of the gear; with ideal iron the yoke beyond r6 is not part of the field problem."
+   },
+   "axial_length_mm": {
+    "value": 100,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "L [mm] 100",
+    "location": "Table 1, p. 7"
+   },
+   "piece_angle_deg": {
+    "value": 15,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "δ [deg] 15",
+    "location": "Table 1, p. 7",
+    "note": "The angle of each ferromagnetic segment (pole piece)."
+   },
+   "magnet_br_T": {
+    "value": 1.44,
+    "unit": "T",
+    "provenance": "quoted",
+    "quote": "Br [T] 1.44",
+    "location": "Table 1, p. 7",
+    "note": "N52 NdFeB ('PMs are NdFeB (N52 grade)', p. 6); Bm of Appendix A."
+   },
+   "alpha_h_deg": {
+    "value": 18,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "αh [deg] 18",
+    "location": "Table 2, p. 7, inner rotor",
+    "note": "Width of each radial block of the inner Halbach array."
+   },
+   "beta_h_deg": {
+    "value": 9,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "β h [deg] 9",
+    "location": "Table 2, p. 7, inner rotor",
+    "note": "Width of each block magnetized at psi."
+   },
+   "gamma_h_deg": {
+    "value": 9,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "γh [deg] 9",
+    "location": "Table 2, p. 7, inner rotor",
+    "note": "Width of each tangential block."
+   },
+   "psi_deg": {
+    "value": 60,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "ψ [deg] 60",
+    "location": "Table 2, p. 7, inner rotor",
+    "note": "Angle of the tilted blocks from the tangential direction (Fig. 2: Mr = Bm sin psi / mu0, Mtheta = Bm cos psi / mu0, Figs. 3-4)."
+   },
+   "outer_alpha_h_deg": {
+    "value": 18,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "αh [deg] 18",
+    "location": "Table 2, p. 7, outer rotor",
+    "note": "The outer rotor's optimum is the standard array ('the angles β h and γh of the outer rotor are equal to zero', p. 7): radial magnets of 18 degrees, 360/(2 p_out)."
+   },
+   "iron_material": {
+    "value": null,
+    "unit": "material",
+    "provenance": "quoted",
+    "quote": "infinite permeability of the iron yokes and the ferromagnetic segments is assumed",
+    "location": "Section 2.1, p. 2",
+    "note": "Null: the yokes and pole pieces are unmeshed ideal iron, their surfaces natural boundaries, as the analytic model assumes. Control meshed-iron builds them of linear iron of iron_mu_r."
+   },
+   "magnet_mu_r": {
+    "value": 1.05,
+    "unit": "ratio",
+    "provenance": "assumed",
+    "reason": "Not stated; equation (1) carries the magnets' relative permeability. Sintered NdFeB (N52) has a recoil permeability of about 1.05 (lessons.md, Materials).",
+    "sensitivity_control": "mu-r-1p0",
+    "note": "Brackets: controls mu-r-1p0 and mu-r-1p1. The pre-solve estimate moves xi_4 by +4.4% and -4.1% at those ends: the gap can decide the outcome against a 1.5% tolerance. The physically typical value is frozen."
+   },
+   "iron_mu_r": {
+    "value": 10000,
+    "unit": "ratio",
+    "provenance": "numerical",
+    "reason": "Relative permeability of the linear iron that stands for infinite permeability in control meshed-iron only."
+   },
+   "shaft_radius_mm": {
+    "value": 20,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Bore of the inner yoke (Fig. 1 shows a shaft hole, unstated); with ideal iron it is not part of the field problem, and in control meshed-iron it leaves a 60 mm deep yoke."
+   },
+   "positions_per_period": {
+    "value": 36,
+    "unit": "count",
+    "provenance": "numerical",
+    "reason": "Outer-rotor positions over one outer pole-pair pitch (1 degree apart): no harmonic below the 35th aliases onto the 1st or 3rd."
+   },
+   "band_margin_mm": {
+    "value": 0.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Thin air between each gap's sliding band and its two surfaces (the 5 mm gaps keep a 4 mm band)."
+   },
+   "gap_arc_deg": {
+    "value": 0.2,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc pieces of the sliding bands (0.35 mm at 100 mm, 0.45 mm at 130 mm)."
+   },
+   "ring_arc_deg": {
+    "value": 0.5,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc pieces elsewhere."
+   },
+   "thin_air_mesh_mm": {
+    "value": 0.3,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Thin air regions of the gaps."
+   },
+   "slot_air_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Air between the pole pieces."
+   },
+   "magnet_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Magnets."
+   },
+   "iron_mesh_mm": {
+    "value": 2.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Iron, when meshed (control meshed-iron)."
+   },
+   "pole_pieces": {
+    "value": 14,
+    "unit": "count",
+    "provenance": "derived",
+    "expression": "inner_pole_pairs+outer_pole_pairs",
+    "inputs": [
+     "inner_pole_pairs",
+     "outer_pole_pairs"
+    ],
+    "note": "Not stated for the case study (Fig. 1 is a schematic with other pole numbers). A coaxial gear couples p_in and p_out through N = p_in + p_out pieces with counter-rotating rotors, which is eq. (14)'s argument (2k-1)(p_in theta_in + p_out theta_out); Table 3's xi_10/xi_4 = 2.495 is p_out/p_in."
+   },
+   "magnet_coercivity_A_per_m": {
+    "value": 1091348.1812015679,
+    "unit": "A/m",
+    "provenance": "derived",
+    "expression": "magnet_br_T/(mu0*magnet_mu_r)",
+    "inputs": [
+     "magnet_br_T",
+     "magnet_mu_r"
+    ]
+   }
+  },
+  "assembly": {
+   "problem": {
+    "physics": "magnetics",
+    "units": "millimeters",
+    "type": "planar",
+    "frequency": 0,
+    "depth": "$axial_length_mm"
+   },
+   "steps": [
+    {
+     "use": "material",
+     "name": "Air"
+    },
+    {
+     "use": "material",
+     "name": "Magnet",
+     "values": {
+      "Mu_x": "$magnet_mu_r",
+      "Mu_y": "$magnet_mu_r",
+      "H_c": "$magnet_coercivity_A_per_m"
+     }
+    },
+    {
+     "use": "material",
+     "name": "IronLinear",
+     "values": {
+      "Mu_x": "$iron_mu_r",
+      "Mu_y": "$iron_mu_r"
+     }
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$r6_mm",
+     "outer_radius": "$rout_mm",
+     "sectors": [
+      [
+       0,
+       180,
+       "$iron_material",
+       null
+      ],
+      [
+       180,
+       360,
+       "$iron_material",
+       null
+      ]
+     ],
+     "max_segment": "$ring_arc_deg",
+     "mesh": "$iron_mesh_mm"
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$r5_mm",
+     "outer_radius": "$r6_mm",
+     "copies": "$outer_pole_pairs",
+     "angle_step": "=360/outer_pole_pairs",
+     "sectors": [
+      [
+       0,
+       "=outer_alpha_h_deg",
+       "Magnet",
+       "outward"
+      ],
+      [
+       "=outer_alpha_h_deg",
+       "=2*outer_alpha_h_deg",
+       "Magnet",
+       "inward"
+      ]
+     ],
+     "max_segment": "$ring_arc_deg",
+     "mesh": "$magnet_mesh_mm"
+    },
+    {
+     "use": "air_gap_element",
+     "rotor_radius": "=r4_mm+band_margin_mm",
+     "stator_radius": "=r5_mm-band_margin_mm",
+     "max_segment": "$gap_arc_deg",
+     "name": "AGE_out"
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$r3_mm",
+     "outer_radius": "$r4_mm",
+     "copies": "$pole_pieces",
+     "angle_step": "=360/pole_pieces",
+     "sectors": [
+      [
+       "=-piece_angle_deg/2",
+       "=piece_angle_deg/2",
+       "$iron_material",
+       null
+      ]
+     ],
+     "gap_material": "Air",
+     "max_segment": "$gap_arc_deg",
+     "mesh": "$iron_mesh_mm",
+     "gap_mesh": "$slot_air_mesh_mm"
+    },
+    {
+     "use": "air_gap_element",
+     "rotor_radius": "=r2_mm+band_margin_mm",
+     "stator_radius": "=r3_mm-band_margin_mm",
+     "max_segment": "$gap_arc_deg",
+     "name": "AGE_in"
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$r1_mm",
+     "outer_radius": "$r2_mm",
+     "copies": "$inner_pole_pairs",
+     "angle_step": "=360/inner_pole_pairs",
+     "sectors": [
+      [
+       0,
+       "=alpha_h_deg",
+       "Magnet",
+       {
+        "from_radial": 180
+       }
+      ],
+      [
+       "=alpha_h_deg",
+       "=alpha_h_deg+beta_h_deg",
+       "Magnet",
+       {
+        "from_radial": "=90+psi_deg"
+       }
+      ],
+      [
+       "=alpha_h_deg+beta_h_deg",
+       "=alpha_h_deg+beta_h_deg+gamma_h_deg",
+       "Magnet",
+       {
+        "from_radial": 90
+       }
+      ],
+      [
+       "=alpha_h_deg+beta_h_deg+gamma_h_deg",
+       "=alpha_h_deg+2*beta_h_deg+gamma_h_deg",
+       "Magnet",
+       {
+        "from_radial": "=90-psi_deg"
+       }
+      ],
+      [
+       "=alpha_h_deg+2*beta_h_deg+gamma_h_deg",
+       "=2*alpha_h_deg+2*beta_h_deg+gamma_h_deg",
+       "Magnet",
+       {
+        "from_radial": 0
+       }
+      ],
+      [
+       "=2*alpha_h_deg+2*beta_h_deg+gamma_h_deg",
+       "=2*alpha_h_deg+3*beta_h_deg+gamma_h_deg",
+       "Magnet",
+       {
+        "from_radial": "=psi_deg-90"
+       }
+      ],
+      [
+       "=2*alpha_h_deg+3*beta_h_deg+gamma_h_deg",
+       "=2*alpha_h_deg+3*beta_h_deg+2*gamma_h_deg",
+       "Magnet",
+       {
+        "from_radial": -90
+       }
+      ],
+      [
+       "=2*alpha_h_deg+3*beta_h_deg+2*gamma_h_deg",
+       "=2*alpha_h_deg+4*beta_h_deg+2*gamma_h_deg",
+       "Magnet",
+       {
+        "from_radial": "=-90-psi_deg"
+       }
+      ]
+     ],
+     "max_segment": "$ring_arc_deg",
+     "mesh": "$magnet_mesh_mm"
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$shaft_radius_mm",
+     "outer_radius": "$r1_mm",
+     "sectors": [
+      [
+       0,
+       180,
+       "$iron_material",
+       null
+      ],
+      [
+       180,
+       360,
+       "$iron_material",
+       null
+      ]
+     ],
+     "max_segment": "$ring_arc_deg",
+     "mesh": "$iron_mesh_mm"
+    },
+    {
+     "use": "hole",
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r5_mm-band_margin_mm/2",
+      0.0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r4_mm+band_margin_mm/2",
+      0.0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r3_mm-band_margin_mm/2",
+      0.0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r2_mm+band_margin_mm/2",
+      0.0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "fixed_point_potential",
+     "at": [
+      "$r6_mm",
+      0
+     ],
+     "name": "A0"
+    }
+   ]
+  }
+ },
+ "variants": [
+  {
+   "id": "standard",
+   "purpose": "The standard CMG of Table 3 and Fig. 5: radial inner magnets filling the pole pitch (45 degrees), the same array with its tilted and tangential blocks of zero width; geometry and magnets otherwise as the HAL-CMG ('the same geometrical and constitutive parameters of the PMs', p. 6).",
+   "parameters": {
+    "alpha_h_deg": 45,
+    "beta_h_deg": 0,
+    "gamma_h_deg": 0
+   }
+  }
+ ],
+ "gaps": [
+  {
+   "item": "the number of pole pieces",
+   "affects": "everything",
+   "decision": "resolved",
+   "note": "Not stated for the case study; N = p_in + p_out = 14 (derived parameter pole_pieces): eq. (14)'s argument p_in theta_in + p_out theta_out is the counter-rotating coupling of N = p_in + p_out pieces, and Table 3's xi_10/xi_4 = 2.4954 is close to p_out/p_in. Fig. 1 is a schematic (it shows more pole pairs), so it is not scaled."
+  },
+  {
+   "item": "the magnets' relative permeability",
+   "affects": "every torque, about 4% per 0.05 (pre-solve estimate)",
+   "decision": "assumed",
+   "note": "The analytic model carries mu_r (eq. (1)) but gives no value; N52 sintered NdFeB recoil permeability 1.05 is frozen, bracketed by controls mu-r-1p0 and mu-r-1p1. The pre-solve estimate puts Table 3 at mu_r about 1.075, between the brackets; the frozen value is estimated +2.0% (inner) and +1.2% (outer) from it, so the inner targets may fail. Not tuned: freezing the value that matches a target would make that target circular."
+  },
+  {
+   "item": "the Halbach blocks' magnetization",
+   "affects": "the HAL-CMG torques",
+   "decision": "resolved",
+   "note": "Figs. 3-4 and Appendix A give each block's radial and tangential components as constants (a direction at a fixed angle from the radial one), with Mr = -Bm/mu0 on the first alpha block and Mtheta = +Bm/mu0 on the first gamma block; Fig. 2's arrows turn counterclockwise along the array (field on the gap side). The model uses those components; parallel-magnetized blocks would differ slightly. The pre-solve estimate's HAL/standard ratio 1.1426 against Table 3's 1.1440 and its xi_12 1.08 against 1.09 confirm the reading."
+  },
+  {
+   "item": "the standard CMG's inner magnets",
+   "affects": "variant standard",
+   "decision": "resolved",
+   "note": "Radial magnets filling the pole pitch (45 degrees), as the outer rotor's standard array of Table 2 (alpha_h = 18 = 180/p_out, beta_h and gamma_h zero)."
+  },
+  {
+   "item": "the rotors' and pieces' starting positions and the torque signs",
+   "affects": "nothing measured",
+   "decision": "resolved",
+   "note": "Amplitudes over a whole period do not depend on them; magnitudes are compared."
+  },
+  {
+   "item": "the sweep: outer rotor or inner rotor turned",
+   "affects": "harmonics through cross-coupled higher orders",
+   "decision": "resolved",
+   "note": "Fig. 5's case is the inner rotor fixed and the outer turning, which the model follows; the pre-solve estimate gives the two sweeps' fundamentals within 0.15%."
+  },
+  {
+   "item": "the paper's FEA (Fig. 6, ANSYS Maxwell, pure iron) and the dynamic study (Tables 4, Figs. 7-8, transmission error)",
+   "affects": "comparators only",
+   "decision": "out_of_scope",
+   "note": "The FEA points are not digitized; the dynamics need no field solution beyond the torque amplitudes."
+  }
+ ],
+ "steps": [
+  {
+   "label": "p00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=0*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=1*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=2*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=3*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=4*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=5*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=6*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=7*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=8*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=9*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p10",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=10*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p11",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=11*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p12",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=12*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p13",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=13*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p14",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=14*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p15",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=15*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p16",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=16*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p17",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=17*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p18",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=18*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p19",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=19*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p20",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=20*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p21",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=21*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p22",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=22*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p23",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=23*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p24",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=24*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p25",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=25*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p26",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=26*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p27",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=27*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p28",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=28*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p29",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=29*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p30",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=30*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p31",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=31*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p32",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=32*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p33",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=33*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p34",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=34*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  },
+  {
+   "label": "p35",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_out",
+     "property": 10,
+     "value": "=35*360/outer_pole_pairs/positions_per_period"
+    }
+   ]
+  }
+ ],
+ "engine": {
+  "solves_per_process": 4
+ },
+ "measurements": [
+  {
+   "id": "tq_in",
+   "op": "gap_integral",
+   "boundary": "AGE_in",
+   "type": 0
+  },
+  {
+   "id": "tq_out",
+   "op": "gap_integral",
+   "boundary": "AGE_out",
+   "type": 0
+  }
+ ],
+ "metrics": [
+  {
+   "name": "torque_inner_Nm",
+   "value": [
+    "tq_in",
+    0
+   ],
+   "unit": "N*m"
+  },
+  {
+   "name": "torque_outer_Nm",
+   "value": [
+    "tq_out",
+    0
+   ],
+   "unit": "N*m"
+  }
+ ],
+ "targets": [],
+ "assessors": [
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_inner_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 10,
+   "rotor_group": 0,
+   "rotor_band": "AGE_out",
+   "half_wave_symmetry": false,
+   "value": 381.89,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.015,
+   "used_for_acceptance": true,
+   "quote": "333.81 381.89",
+   "location": "Table 3, p. 9",
+   "note": "Table 3's analytic amplitude, the coefficient of sin[(2k-1)(p_in theta_in + p_out theta_out)] in eqs. (14)-(15): the harmonic of the rotor's torque over one outer pole-pair pitch with the inner rotor fixed. Tolerance: the 1-1.5% the paper reports between its analytic model and its FEA (ANSYS Maxwell, pure iron), its upper end. The model takes the analytic model's assumptions: ideal iron, constant polar magnetization per block."
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 10,
+   "rotor_group": 0,
+   "rotor_band": "AGE_out",
+   "half_wave_symmetry": false,
+   "value": 952.95,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.015,
+   "used_for_acceptance": true,
+   "quote": "832.98 952.95",
+   "location": "Table 3, p. 9",
+   "note": "Table 3's analytic amplitude, the coefficient of sin[(2k-1)(p_in theta_in + p_out theta_out)] in eqs. (14)-(15): the harmonic of the rotor's torque over one outer pole-pair pitch with the inner rotor fixed. Tolerance: the 1-1.5% the paper reports between its analytic model and its FEA (ANSYS Maxwell, pure iron), its upper end. The model takes the analytic model's assumptions: ideal iron, constant polar magnetization per block."
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_inner_Nm",
+   "statistic": "harmonic_peak",
+   "pole_pairs": 10,
+   "rotor_group": 0,
+   "rotor_band": "AGE_out",
+   "half_wave_symmetry": false,
+   "value": 1.09,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.015,
+   "used_for_acceptance": false,
+   "quote": "1.25 1.09",
+   "location": "Table 3, p. 9",
+   "note": "A higher torque-contributing harmonic (Table 3), a comparator: small against the fundamental and sensitive to the mesh.",
+   "order": 3
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "harmonic_peak",
+   "pole_pairs": 10,
+   "rotor_group": 0,
+   "rotor_band": "AGE_out",
+   "half_wave_symmetry": false,
+   "value": 2.88,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.015,
+   "used_for_acceptance": false,
+   "quote": "3.26 2.88",
+   "location": "Table 3, p. 9",
+   "note": "A higher torque-contributing harmonic (Table 3), a comparator: small against the fundamental and sensitive to the mesh.",
+   "order": 3
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_inner_Nm",
+   "statistic": "harmonic_peak",
+   "pole_pairs": 10,
+   "rotor_group": 0,
+   "rotor_band": "AGE_out",
+   "half_wave_symmetry": false,
+   "value": 0.001,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.015,
+   "used_for_acceptance": false,
+   "quote": "0.02 0.001",
+   "location": "Table 3, p. 9",
+   "note": "A higher torque-contributing harmonic (Table 3), a comparator: small against the fundamental and sensitive to the mesh.",
+   "order": 5,
+   "absolute_tolerance": 0.01
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "harmonic_peak",
+   "pole_pairs": 10,
+   "rotor_group": 0,
+   "rotor_band": "AGE_out",
+   "half_wave_symmetry": false,
+   "value": 0.002,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.015,
+   "used_for_acceptance": false,
+   "quote": "0.05 0.002",
+   "location": "Table 3, p. 9",
+   "note": "A higher torque-contributing harmonic (Table 3), a comparator: small against the fundamental and sensitive to the mesh.",
+   "order": 5,
+   "absolute_tolerance": 0.01
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_inner_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 10,
+   "rotor_group": 0,
+   "rotor_band": "AGE_out",
+   "half_wave_symmetry": false,
+   "value": 333.81,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.015,
+   "used_for_acceptance": true,
+   "quote": "333.81 381.89",
+   "location": "Table 3, p. 9",
+   "note": "Table 3's analytic amplitude, the coefficient of sin[(2k-1)(p_in theta_in + p_out theta_out)] in eqs. (14)-(15): the harmonic of the rotor's torque over one outer pole-pair pitch with the inner rotor fixed. Tolerance: the 1-1.5% the paper reports between its analytic model and its FEA (ANSYS Maxwell, pure iron), its upper end. The model takes the analytic model's assumptions: ideal iron, constant polar magnetization per block.",
+   "variant": "standard"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "fundamental_peak",
+   "pole_pairs": 10,
+   "rotor_group": 0,
+   "rotor_band": "AGE_out",
+   "half_wave_symmetry": false,
+   "value": 832.98,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.015,
+   "used_for_acceptance": true,
+   "quote": "832.98 952.95",
+   "location": "Table 3, p. 9",
+   "note": "Table 3's analytic amplitude, the coefficient of sin[(2k-1)(p_in theta_in + p_out theta_out)] in eqs. (14)-(15): the harmonic of the rotor's torque over one outer pole-pair pitch with the inner rotor fixed. Tolerance: the 1-1.5% the paper reports between its analytic model and its FEA (ANSYS Maxwell, pure iron), its upper end. The model takes the analytic model's assumptions: ideal iron, constant polar magnetization per block.",
+   "variant": "standard"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_inner_Nm",
+   "statistic": "harmonic_peak",
+   "pole_pairs": 10,
+   "rotor_group": 0,
+   "rotor_band": "AGE_out",
+   "half_wave_symmetry": false,
+   "value": 1.25,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.015,
+   "used_for_acceptance": false,
+   "quote": "1.25 1.09",
+   "location": "Table 3, p. 9",
+   "note": "A higher torque-contributing harmonic (Table 3), a comparator: small against the fundamental and sensitive to the mesh.",
+   "order": 3,
+   "variant": "standard"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "harmonic_peak",
+   "pole_pairs": 10,
+   "rotor_group": 0,
+   "rotor_band": "AGE_out",
+   "half_wave_symmetry": false,
+   "value": 3.26,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.015,
+   "used_for_acceptance": false,
+   "quote": "3.26 2.88",
+   "location": "Table 3, p. 9",
+   "note": "A higher torque-contributing harmonic (Table 3), a comparator: small against the fundamental and sensitive to the mesh.",
+   "order": 3,
+   "variant": "standard"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_inner_Nm",
+   "statistic": "harmonic_peak",
+   "pole_pairs": 10,
+   "rotor_group": 0,
+   "rotor_band": "AGE_out",
+   "half_wave_symmetry": false,
+   "value": 0.02,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.015,
+   "used_for_acceptance": false,
+   "quote": "0.02 0.001",
+   "location": "Table 3, p. 9",
+   "note": "A higher torque-contributing harmonic (Table 3), a comparator: small against the fundamental and sensitive to the mesh.",
+   "order": 5,
+   "absolute_tolerance": 0.01,
+   "variant": "standard"
+  },
+  {
+   "kind": "waveform_statistic",
+   "metric": "torque_outer_Nm",
+   "statistic": "harmonic_peak",
+   "pole_pairs": 10,
+   "rotor_group": 0,
+   "rotor_band": "AGE_out",
+   "half_wave_symmetry": false,
+   "value": 0.05,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.015,
+   "used_for_acceptance": false,
+   "quote": "0.05 0.002",
+   "location": "Table 3, p. 9",
+   "note": "A higher torque-contributing harmonic (Table 3), a comparator: small against the fundamental and sensitive to the mesh.",
+   "order": 5,
+   "absolute_tolerance": 0.01,
+   "variant": "standard"
+  }
+ ],
+ "controls": [
+  {
+   "id": "mesh-0p75",
+   "level": "article",
+   "mesh_scale": 0.75,
+   "purpose": "Every element size and arc piece at 0.75 times."
+  },
+  {
+   "id": "mu-r-1p0",
+   "level": "article",
+   "parameters": {
+    "magnet_mu_r": 1.0
+   },
+   "purpose": "Magnets of unit recoil permeability: the low end of the assumption's range."
+  },
+  {
+   "id": "mu-r-1p1",
+   "level": "article",
+   "parameters": {
+    "magnet_mu_r": 1.1
+   },
+   "purpose": "Magnets of recoil permeability 1.1: the high end of the assumption's range."
+  },
+  {
+   "id": "meshed-iron",
+   "level": "article",
+   "parameters": {
+    "iron_material": "IronLinear"
+   },
+   "purpose": "Yokes and pole pieces meshed as linear iron of relative permeability 1e4: checks the unmeshed ideal-iron construction with its sliding bands (lessons: an air-gap element and unmeshed iron)."
+  }
+ ],
+ "coverage": {
+  "scope": "core",
+  "reproduced": "Table 3's analytic torque amplitudes of both rotors for the HAL-CMG and the standard CMG (fundamentals for acceptance, 3rd and 5th harmonics as comparators).",
+  "not_reproduced": "The FEA points of Fig. 6, the dynamic response (Table 4, Figs. 7-8, the 13.5% transmission error), the 0.3% torque ripple (its definition is not given)."
+ },
+ "geometry_checks": [],
+ "findings": [],
+ "retrospective": []
+}

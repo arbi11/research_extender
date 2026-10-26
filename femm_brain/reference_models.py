@@ -226,6 +226,7 @@ def linkage_prediction(model, pole_pairs, circuits, rotor_group):
     S = sum(turns e^(i p theta)) links Im(S e^(-i arg R)). Turning the rotor
     counterclockwise by alpha advances arg R by p alpha.
     """
+    from .components import direction_function_offset
     from .reproduce import _face_cycles, _region_of
     faces = _face_cycles(model)
     coercivity = {m["name"]: m["props"].get("H_c", 0) for m in model["materials"]}
@@ -244,10 +245,8 @@ def linkage_prediction(model, pole_pairs, circuits, rotor_group):
             windings[label["circuit"]] += label["turns"] * cmath.exp(1j * pole_pairs * centroid_angle(label))
         elif label.get("group") == rotor_group and coercivity.get(label["material"]):
             theta = centroid_angle(label)
-            function = (label.get("magdir_function") or "").replace(" ", "")
-            if function not in ("", "theta", "theta+180"):
-                raise ValueError("Unsupported magnetization function: " + function)
-            direction = (math.degrees(theta) + (180 if function == "theta+180" else 0)) if function else label["magdir"]
+            offset = direction_function_offset(label.get("magdir_function"))
+            direction = math.degrees(theta) + offset if offset is not None else label["magdir"]
             radial = math.cos(math.radians(direction) - theta)
             rotor += coercivity[label["material"]] * radial * cmath.exp(1j * pole_pairs * theta)
     if not rotor or not all(windings.values()):

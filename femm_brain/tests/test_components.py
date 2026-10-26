@@ -953,6 +953,56 @@ class RingSectorTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.ring([[0, 20, "Iron", None]], gap_material="Air", copies=2.5, angle_step=90)
 
+    def test_directions_against_the_radial_and_blocks_of_zero_width(self):
+        # One pole pair of a Halbach array: radial, tilted and tangential blocks at fixed angles from the radial direction.
+        widths = [18, 9, 9, 9, 18, 9, 9, 9]
+        offsets = [180, 150, 90, 30, 0, -30, -90, -150]
+        edges = [sum(widths[:k]) for k in range(9)]
+        sectors = [[edges[k], edges[k + 1], "PM", {"from_radial": offsets[k]}] for k in range(8)]
+        model = self.ring(sectors, copies=4, angle_step=90)
+        functions = [l["magdir_function"] for l in sorted(model["labels"], key=lambda l: math.atan2(l["y"], l["x"]) % (2 * math.pi))]
+        self.assertEqual(functions[:8], ["theta+180", "theta+150", "theta+90", "theta+30", "theta", "theta+330", "theta+270", "theta+210"])
+        self.assertEqual(functions[8:16], functions[:8])
+        by_angle = {round(math.degrees(math.atan2(l["y"], l["x"])) % 360, 6): l["magdir_function"] for l in model["labels"]}
+        self.assertEqual(by_angle[9.0], "theta+180")
+        self.assertEqual(by_angle[22.5], "theta+150")
+        self.assertEqual(by_angle[31.5], "theta+90")
+        self.assertEqual(by_angle[175.5], "theta+210")                # a copy keeps its angle from the radial direction
+        self.assertTrue(all(l["magdir"] == 0 for l in model["labels"]))
+        self.assertEqual(check_regions(model), [])
+        # outward and inward are the radial cases of the same function
+        self.assertEqual({l["magdir_function"] for l in self.ring([[0, 180, "PM", {"from_radial": 0}], [180, 360, "PM", "inward"]])["labels"]},
+                         {"theta", "theta+180"})
+        # Blocks of zero width (a Halbach array whose tilted and tangential blocks vanish) are left out: a radial ring remains.
+        radial = [[0, 45, "PM", "inward"], [45, 45, "PM", {"from_radial": 150}], [45, 45, "PM", {"from_radial": 90}],
+                  [45, 90, "PM", "outward"]]
+        reduced = self.ring(radial, copies=4, angle_step=90)
+        plain = self.ring([[0, 45, "PM", "inward"], [45, 90, "PM", "outward"]], copies=4, angle_step=90)
+        self.assertEqual((reduced["nodes"], reduced["segments"], reduced["arcs"], reduced["labels"]),
+                         (plain["nodes"], plain["segments"], plain["arcs"], plain["labels"]))
+        for bad in ({"from_radial": "north"}, {"from_radial": 30, "axis": 0}, {"to_radial": 30}, {"from_radial": float("nan")}):
+            with self.assertRaises(ValueError):
+                self.ring([[0, 180, "PM", bad], [180, 360, "PM", "outward"]])
+
+    def test_direction_functions_render_and_predict_at_their_angle(self):
+        from femm_brain.components import direction_function, direction_function_offset
+        from femm_brain.papers import render_svg
+        self.assertEqual([direction_function(a) for a in (0, 180, -90, 360, 450, 30.5)],
+                         ["theta", "theta+180", "theta+270", "theta", "theta+90", "theta+30.5"])
+        self.assertEqual([direction_function_offset(f) for f in (None, "", "theta", "theta + 90", "theta+180")], [None, None, 0, 90, 180])
+        for bad in ("x+theta", "theta*2", "theta+", "theta+nan"):
+            with self.assertRaises(ValueError):
+                direction_function_offset(bad)
+        # A tangential (theta+90) magnet at angle 0 is drawn pointing along +y.
+        model = self.ring([[-10, 10, "PM", {"from_radial": 90}], [10, 350, "PM", "outward"]])
+        svg = render_svg(model, "t")
+        label = next(l for l in model["labels"] if l["magdir_function"] == "theta+90")
+        x, y = label["x"], label["y"]
+        start = f'<line x1="{x:.9g}" y1="{-y:.9g}" x2="'
+        tail = svg[svg.index(start) + len(start):].split('"')
+        self.assertAlmostEqual(float(tail[0]), x, places=6)
+        self.assertLess(float(tail[2]), -y)                          # SVG y grows downward: the arrow points up
+
     def test_refusals(self):
         for sectors, extra in (([[0, 20, "Iron", None], [10, 30, "Iron", None]], {"gap_material": "Air"}),
                                ([[0, 20, "Iron", None]], {}),

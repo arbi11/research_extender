@@ -13,7 +13,7 @@ import json
 import math
 
 from .collect import DEFAULT_CACHE
-from .components import catalog as component_catalog, evaluate
+from .components import catalog as component_catalog, direction_function_offset, evaluate
 from .geometry import arc_geometry
 from .reproduce import DATA, check_regions, load_papers, plan_level
 
@@ -296,9 +296,9 @@ def render_svg(model, title=""):
         else:
             text, colour = (label.get("material") or "hole")[:14], "#333333"
         if label.get("material") in coercive:
-            function = label.get("magdir_function") or ""
+            offset = direction_function_offset(label.get("magdir_function"))
             theta = math.degrees(math.atan2(y, x))
-            direction = math.radians(theta + (180 if "180" in function else 0) if function else label["magdir"])
+            direction = math.radians(theta + offset if offset is not None else label["magdir"])
             length = font * 2.4
             parts.append(f'<line x1="{x:.9g}" y1="{-y:.9g}" x2="{x + length * math.cos(direction):.9g}" '
                          f'y2="{-(y + length * math.sin(direction)):.9g}" stroke="#c62828" stroke-width="{stroke * 2:.6g}"/>')
