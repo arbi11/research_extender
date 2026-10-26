@@ -617,6 +617,46 @@ class PartialModelAndSymmetryTests(unittest.TestCase):
         self.assertIn("error", run_assessor(dict(base, statistic="mean", time_derivative_frequency_hz=50), {"steps": steps}, {}, metrics, {}))
         self.assertIn("error", run_assessor(dict(base, statistic="harmonic_peak", order=0), {"steps": steps}, {}, metrics, {}))
 
+    def test_waveform_rms_and_peak_include_every_resolved_harmonic(self):
+        # Half an electrical period of a flux linkage with orders 1, 5 and 11 (odd: half-wave symmetric), 2 pole pairs.
+        band = lambda angle: {"function": "modifyboundprop", "name": "AGE", "property": 10, "value": angle}
+        steps = [{"label": f"p{k:02d}", "modify": [band(k)]} for k in range(90)]
+        amplitudes, phases = {1: 0.17, 5: 0.004, 11: 0.0015}, {1: 0.0, 5: 0.7, 11: -0.4}
+        flux = lambda theta: sum(v * math.sin(n * theta + phases[n]) for n, v in amplitudes.items())
+        metrics = {f"psi@p{k:02d}": flux(math.radians(2 * k)) for k in range(90)}
+        base = {"kind": "waveform_statistic", "metric": "psi", "pole_pairs": 2, "rotor_group": 1, "rotor_band": "AGE",
+                "half_wave_symmetry": True, "value": 1, "absolute_tolerance": 1e9}
+        observe = lambda **extra: run_assessor(dict(base, **extra), {"steps": steps}, {}, metrics, {})["observed"]
+        self.assertAlmostEqual(observe(statistic="rms"), math.sqrt(sum(v * v / 2 for v in amplitudes.values())), places=12)
+        f = 400
+        emf_rms = math.sqrt(sum((n * 2 * math.pi * f * v) ** 2 / 2 for n, v in amplitudes.items()))
+        self.assertAlmostEqual(observe(statistic="rms", time_derivative_frequency_hz=f), emf_rms, places=8)
+        fine = [sum(n * 2 * math.pi * f * v * math.cos(n * t + phases[n]) for n, v in amplitudes.items())
+                for t in (2 * math.pi * k / 20000 for k in range(20000))]
+        self.assertAlmostEqual(observe(statistic="peak", time_derivative_frequency_hz=f), max(abs(x) for x in fine), delta=1e-3 * max(fine))
+        self.assertAlmostEqual(observe(statistic="peak"), max(abs(flux(2 * math.pi * k / 20000)) for k in range(20000)), places=6)
+        # A sampled sine of order 1 only: rms is amplitude / sqrt 2 and the peak the amplitude.
+        sine = {f"psi@p{k:02d}": math.sin(math.radians(2 * k)) for k in range(90)}
+        result = run_assessor(dict(base, statistic="peak"), {"steps": steps}, {}, sine, {})
+        self.assertAlmostEqual(result["observed"], 1, places=9)
+
+    def test_step_statistic_reads_a_curve_at_the_steps_a_test_used(self):
+        steps = [{"label": f"lr{amps}_a{angle}"} for amps in (50, 250) for angle in range(90, 136, 2)]
+        curve = lambda amps, angle: amps * 1.3 * math.sin(math.radians(4 * (angle - 90.6))) - amps ** 2 * 0.002 * math.sin(math.radians(8 * (angle - 90.6)))
+        metrics = {f"torque@{s['label']}": curve(int(s["label"][2:].split("_")[0]), int(s["label"].split("_a")[1])) for s in steps}
+        assessor = {"kind": "step_statistic", "metric": "torque", "step_prefix": "lr250_", "statistic": "maximum", "value": 1,
+                    "absolute_tolerance": 1e9}
+        result = run_assessor(assessor, {"steps": steps}, {}, metrics, {})
+        expected = max(curve(250, angle) for angle in range(90, 136, 2))
+        self.assertAlmostEqual(result["observed"], expected)
+        self.assertEqual(result["at_step"], "lr250_a" + str(max(range(90, 136, 2), key=lambda a: curve(250, a))))
+        self.assertEqual(assessor_metric(assessor), "torque:maximum:lr250_")
+        self.assertEqual(assessor_metric(dict(assessor, label="fig")), "torque:maximum:lr250_:fig")
+        mean = run_assessor(dict(assessor, statistic="mean", step_prefix="lr50_"), {"steps": steps}, {}, metrics, {})["observed"]
+        self.assertAlmostEqual(mean, sum(curve(50, a) for a in range(90, 136, 2)) / 23)
+        self.assertIn("error", run_assessor(dict(assessor, step_prefix="nl_"), {"steps": steps}, {}, metrics, {}))
+        self.assertIn("error", run_assessor(dict(assessor, statistic="median"), {"steps": steps}, {}, metrics, {}))
+
     def test_dq_inductances_from_single_axis_currents(self):
         psi_m, l_d, l_q = 0.131, 0.0107, 0.0263
         steps, raw = [], {}

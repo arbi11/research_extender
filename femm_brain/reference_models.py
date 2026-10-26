@@ -299,15 +299,26 @@ def _waveform_statistic(assessor, case, raw, metrics, model):
     a flux linkage's, n times 2 pi f times its amplitude), and any statistic times
     a stated ``scale`` (a convention factor, such as the square root of 3/2 that
     takes a phase flux-linkage amplitude to a power-invariant d-axis value).
+
+    ``rms`` and ``peak`` describe the whole waveform, every harmonic the samples
+    resolve: the root mean square over a period and the largest absolute value
+    of the band-limited (trigonometric) interpolation through the samples. With
+    a time derivative they describe the derivative, as a measured EMF's rms and
+    peak (an oscilloscope's readings, harmonics included) follow from a sampled
+    flux linkage.
     """
     statistic = assessor["statistic"]
     samples, span = _rotor_samples(assessor, case)
     p = assessor["pole_pairs"]
     values = [(a, metrics[assessor["metric"] + "@" + label]) for a, label in samples]
     order = assessor.get("order", 1) if statistic == "harmonic_peak" else 1
-    if assessor.get("time_derivative_frequency_hz") and statistic not in ("fundamental_rms", "fundamental_peak", "harmonic_peak"):
-        raise ValueError("A time derivative applies to a harmonic statistic")
-    if statistic in ("fundamental_rms", "fundamental_peak", "harmonic_peak"):
+    if assessor.get("time_derivative_frequency_hz") and statistic not in ("fundamental_rms", "fundamental_peak", "harmonic_peak",
+                                                                           "rms", "peak"):
+        raise ValueError("A time derivative applies to a harmonic statistic, rms or peak")
+    if statistic in ("rms", "peak"):
+        observed = _band_limited_statistic(statistic, values, span, p, assessor.get("half_wave_symmetry"),
+                                           assessor.get("time_derivative_frequency_hz"))
+    elif statistic in ("fundamental_rms", "fundamental_peak", "harmonic_peak"):
         if not (isinstance(order, int) and order >= 1):
             raise ValueError("A harmonic order is a positive integer")
         points = values + ([(a + span, -v) for a, v in values] if assessor.get("half_wave_symmetry") else [])
@@ -336,6 +347,41 @@ def _waveform_statistic(assessor, case, raw, metrics, model):
             "expected": assessor["value"], "absolute_error": error,
             "relative_error": error / abs(assessor["value"]) if assessor["value"] else None,
             "absolute_tolerance": tolerance, "samples": len(values), "target": target}
+
+
+def _band_limited_statistic(statistic, values, span, pole_pairs, half_wave, frequency_hz=None):
+    """rms or peak of the trigonometric interpolation through samples evenly spread over one electrical period.
+
+    ``values`` are (mechanical angle, value) pairs over ``span`` (a period, or half
+    of one with ``half_wave`` symmetry, which supplies the negated other half).
+    With ``frequency_hz`` the statistic is of the time derivative at that
+    electrical frequency; the derivative drops the mean and the Nyquist term,
+    which a derivative of samples cannot resolve.
+    """
+    points = list(values) + ([(a + span, -v) for a, v in values] if half_wave else [])
+    count = len(points)
+    if count < 4:
+        raise ValueError("A waveform statistic needs at least four samples per period")
+    phases = [math.radians(pole_pairs * a) for a, _ in points]
+    top = count // 2
+    # Complex coefficients c_n of v(theta) = sum c_n exp(j n theta), for n = 0..top (negative orders are conjugates).
+    coefficients = [sum(v * cmath.exp(-1j * n * t) for (_, v), t in zip(points, phases)) / count for n in range(top + 1)]
+    weights = [1] + [2] * (top - 1) + ([1] if count % 2 == 0 else [2])
+    if frequency_hz:
+        omega = 2 * math.pi * frequency_hz
+        coefficients = [1j * n * omega * c for n, c in enumerate(coefficients)]
+        coefficients[0] = 0
+        if count % 2 == 0:
+            coefficients[top] = 0
+    if statistic == "rms":
+        return math.sqrt(sum(w * abs(c) ** 2 for w, c in zip(weights, coefficients)))
+    dense = 32 * count
+    peak = 0.0
+    for k in range(dense):
+        theta = 2 * math.pi * k / dense
+        value = sum((w * c * cmath.exp(1j * n * theta)).real for n, (w, c) in enumerate(zip(weights, coefficients)))
+        peak = max(peak, abs(value))
+    return peak
 
 
 def _spatial_harmonic(assessor, case, raw, metrics, model):
@@ -701,6 +747,40 @@ def _parallel_branches(assessor, case, raw, metrics, model):
             "rows": [{"circuit": c, "current_re": i.real, "current_im": i.imag} for c, i in zip(circuits, currents)], "target": target}
 
 
+def _step_statistic(assessor, case, raw, metrics, model):
+    """A statistic of one metric over the steps whose labels start with ``step_prefix``, against a frozen value.
+
+    For sweeps that are not an even rotor period, such as a locked-rotor test
+    at the angles the paper used: ``maximum`` (a curve's peak, as the paper
+    reads it from the same samples), ``minimum`` or ``mean``.
+    """
+    prefix, statistic = assessor["step_prefix"], assessor["statistic"]
+    labels = [step["label"] for step in case.get("steps") or [] if step["label"].startswith(prefix)]
+    if not prefix or not labels:
+        raise ValueError(f"No steps start with {prefix!r}")
+    values = [metrics[assessor["metric"] + "@" + label] for label in labels]
+    if statistic == "maximum":
+        index = max(range(len(values)), key=values.__getitem__)
+    elif statistic == "minimum":
+        index = min(range(len(values)), key=values.__getitem__)
+    elif statistic != "mean":
+        raise ValueError("Unknown step statistic: " + statistic)
+    observed = sum(values) / len(values) if statistic == "mean" else values[index]
+    observed *= assessor.get("scale", 1)
+    target = {key: assessor[key] for key in ("value", "relative_tolerance", "absolute_tolerance", "quote", "location",
+                                              "used_for_acceptance", "allowance") if key in assessor}
+    target.update(kind=assessor.get("value_kind"), metric=assessor_metric(assessor))
+    target.setdefault("used_for_acceptance", True)
+    error = abs(observed - assessor["value"])
+    tolerance = max(abs(assessor["value"]) * assessor.get("relative_tolerance", 0), assessor.get("absolute_tolerance", 0))
+    return {"status": "passed" if error <= tolerance else "failed", "assessor": "step_statistic",
+            "metric": assessor_metric(assessor), "statistic": f"{statistic} over {len(values)} steps",
+            "observed": observed, "expected": assessor["value"], "absolute_error": error,
+            "relative_error": error / abs(assessor["value"]) if assessor["value"] else None,
+            "absolute_tolerance": tolerance, "samples": len(values),
+            **({"at_step": labels[index]} if statistic != "mean" else {}), "target": target}
+
+
 def assessor_metric(assessor):
     """The metric name an assessor reports its result under, or None for kinds that report only their kind."""
     kind = assessor.get("kind")
@@ -709,6 +789,8 @@ def assessor_metric(assessor):
     if kind == "waveform_statistic":
         order = f":h{assessor.get('order', 1)}" if assessor["statistic"] == "harmonic_peak" else ""
         return f"{assessor['metric']}:{assessor['statistic']}{order}{label}"
+    if kind == "step_statistic":
+        return f"{assessor['metric']}:{assessor['statistic']}:{assessor['step_prefix']}{label}"
     if kind == "spatial_harmonic":
         return f"{assessor['measurement']}:{assessor['field']}:h{assessor['order']}{label}"
     if kind == "harmonic_superposition":
@@ -726,7 +808,7 @@ def assessor_metric(assessor):
 ASSESSORS = {"tube_bessel": _tube, "dipole_torque": _dipole_torque, "applied_field": _applied_field,
              "phase_linkage": _phase_linkage, "waveform_statistic": _waveform_statistic, "spatial_harmonic": _spatial_harmonic,
              "harmonic_superposition": _harmonic_superposition, "dq_linkage": _dq_linkage,
-             "metric_relation": _metric_relation, "parallel_branches": _parallel_branches}
+             "metric_relation": _metric_relation, "parallel_branches": _parallel_branches, "step_statistic": _step_statistic}
 
 
 def run_assessor(assessor, case, raw, metrics, model):
