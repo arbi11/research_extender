@@ -1,0 +1,2766 @@
+{
+ "schema_version": 1,
+ "id": "tlali-2020-vernier-wind-generator",
+ "set": "development",
+ "status": "frozen",
+ "skill_version": "fed94a6",
+ "title": "Design and performance comparison of Vernier and conventional PM synchronous wind generators",
+ "source": {
+  "citation": "P. M. Tlali, R.-J. Wang, S. Gerber, C. D. Botha, M. J. Kamper, IEEE Transactions on Industry Applications 56(3), 2020, pp. 2570-2579",
+  "doi": "10.1109/TIA.2020.2979111",
+  "url": "https://research.ee.sun.ac.za/emr/staff/rwang/papers/Tlali2020.pdf",
+  "access": "author copy (IEEE copyright)",
+  "licence": null,
+  "pdf_sha256": "d9c0b44c7c72e833919d53aa0a80abaf29261ab15526fcc415b83f0147cf35f2",
+  "pages": 11,
+  "accessed": "2026-10-26"
+ },
+ "machine": {
+  "family": "vernier",
+  "topology": "outer-rotor surface-PM Vernier machine: open-shoe stator teeth modulate the 66-pole rotor field for a 6-pole overlapping double-layer winding (Ns = Q = pr + ps)",
+  "problem": "planar",
+  "slots": 36,
+  "poles": 66,
+  "phases": 3,
+  "symmetry": "The whole cross-section is modelled (gcd(36, 66) = 6 would allow a 60 degree antiperiodic sector). A rotor pole pitch negates every linkage (half-wave symmetry at no load); at balanced load currents the torque repeats every sixth of an electrical period (1.818 degrees)."
+ },
+ "components_map": [
+  {
+   "part": "stator laminations: parallel teeth with tapered shoes, open slots closed at the shoe roots, two radial coil layers",
+   "component": "slotted_stator (tapered shoes, shoe-root closure and layer divider, new)"
+  },
+  {
+   "part": "overlapping double-layer winding, coils pitched 5 of 6 slots",
+   "component": "tooth_coil_winding (distributed double layer, new)"
+  },
+  {
+   "part": "66 radially magnetized arc magnets on an outer rotor yoke",
+   "component": "surface_magnet_rotor"
+  },
+  {
+   "part": "rotor yoke and outer boundary, stator bore and hub",
+   "component": "circle, block_label, fixed_potential_boundary"
+  },
+  {
+   "part": "sliding band in the 1.5 mm gap, turning the stator side for an outer rotor",
+   "component": "air_gap_element"
+  }
+ ],
+ "article": {
+  "parameters": {
+   "slots": {
+    "value": 36,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Stator slots 48 36",
+    "location": "Table IV, p. 6",
+    "note": "PMSM 48, PMVM 36; the slots' teeth are the PMVM's modulators (Ns = Q, Section III)."
+   },
+   "winding_pole_pairs": {
+    "value": 3,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "ps = 3, pr = 33 and Q = 36",
+    "location": "Section V-A, p. 6",
+    "note": "Table IV: 6 winding poles."
+   },
+   "rotor_pole_pairs": {
+    "value": 33,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "ps = 3, pr = 33 and Q = 36",
+    "location": "Section V-A, p. 6",
+    "note": "Table IV: 66 rotor poles; Ns = pr + ps (eq. (1))."
+   },
+   "rated_speed_rpm": {
+    "value": 150,
+    "unit": "r/min",
+    "provenance": "quoted",
+    "quote": "Operating speed 150 r/min",
+    "location": "Table III, p. 4",
+    "note": "Table IV's 82.5 Hz is 33 x 150 / 60."
+   },
+   "outer_diameter_mm": {
+    "value": 433,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Outer diameter (Dout ) 655 mm 433 mm",
+    "location": "Table VI, p. 8",
+    "note": "The rotor's outer diameter (Fig. 3(a): Dout/2 on the rotor yoke)."
+   },
+   "inner_diameter_mm": {
+    "value": 313,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Inner diameter (Di ) 528 mm 313 mm",
+    "location": "Table VI, p. 8",
+    "note": "The stator yoke's inner diameter (Fig. 3(b): Di/2)."
+   },
+   "stack_length_mm": {
+    "value": 151,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Stack length (Lstk ) 125 mm 151 mm",
+    "location": "Table VI, p. 8"
+   },
+   "rotor_yoke_mm": {
+    "value": 13.6,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Rotor yoke height (try ) 8.3 mm 13.6 mm",
+    "location": "Table V, p. 6",
+    "note": "Fig. 6(a): 13.56 mm (rotor yoke inner surface at 202.94 mm)."
+   },
+   "magnet_height_mm": {
+    "value": 3.9,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Rotor magnet height (tmh ) 5.5 mm 3.9 mm",
+    "location": "Table V, p. 6",
+    "note": "Fig. 6(a): 3.89 mm (magnet inner face 199.052 mm)."
+   },
+   "magnet_span_ratio": {
+    "value": 0.88,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "Magnet pole span (σpm ) 0.84 0.88",
+    "location": "Table V, p. 6",
+    "note": "theta_pm_s / theta_pm_p with theta_pm_p = pi/pr (eq. (6)); Fig. 6(a): 4.795 of 5.4545 degrees, 0.879."
+   },
+   "air_gap_mm": {
+    "value": 1.5,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Air-gap length (g) 2 mm 1.5 mm",
+    "location": "Table V, p. 6",
+    "note": "Fig. 6(a): 1.501 mm (tooth tips at 197.551 mm)."
+   },
+   "stator_yoke_table_mm": {
+    "value": 13.6,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Stator yoke height (tsy ) 6.7 mm 13.6 mm",
+    "location": "Table V, p. 6",
+    "note": "Recorded, not used: with the other radial dimensions and Di it cannot hold (60.56 against 60 mm); Fig. 6(a) shows 13.14 mm (slot bottoms at 169.598, bore 156.455), and the build takes the yoke as what Di leaves (13.04 mm). Control stator-yoke-13p6 moves the bore in to give 13.6 mm."
+   },
+   "slot_angle_ratio": {
+    "value": 0.74,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "Stator slot angle ratio (σs ) 0.51 0.74",
+    "location": "Table V, p. 6",
+    "note": "theta_s / theta_sp (eq. (6)), theta_s measured at the slot bottom (Fig. 3(b)): the teeth are parallel-sided (Fig. 6(a): half-widths 3.839-3.845 mm from the slot bottom to the shoes), 2.6 degrees wide at the slot bottom."
+   },
+   "slot_opening_ratio": {
+    "value": 0.82,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "Slot opening ratio (σso ) 1.0 0.82",
+    "location": "Table V, p. 6",
+    "note": "theta_so / theta_s (eq. (6)). Read with theta_s taken at the tip radius between the tooth sides extended, the ratio gives tip arcs of 2 x 1.8151 degrees; Fig. 6(a) shows 2 x 1.8168 (five teeth, 1.8162-1.8172). The literal reading (theta_s at the slot bottom, 7.4 degrees) gives 6.068 degrees of opening against the drawn 6.367: control opening-literal."
+   },
+   "tooth_length_mm": {
+    "value": 27.96,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Stator tooth length (lst ) 41.0 mm 27.96 mm",
+    "location": "Table V, p. 6",
+    "note": "Fig. 6(a): 27.953 mm (tip 197.551 to slot bottom 169.598)."
+   },
+   "fill_factor": {
+    "value": 0.4,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "Slot-fill factor 0.4",
+    "location": "Table III, p. 4"
+   },
+   "current_density_bound_A_per_mm2": {
+    "value": 5,
+    "unit": "A/mm2",
+    "provenance": "quoted",
+    "quote": "Current density 5 A/mm2",
+    "location": "Table III, p. 4",
+    "note": "The optimization's constraint J <= 5 A/mm2 (Section IV), recorded; not the operating point (see gaps)."
+   },
+   "winding_loss_W": {
+    "value": 480.4,
+    "unit": "W",
+    "provenance": "quoted",
+    "quote": "Winding losses (W) 588.48 599.1 480.4 570.2",
+    "location": "Table VII, p. 8",
+    "note": "The PMVM's FEA winding loss at rated conditions."
+   },
+   "copper_mass_kg": {
+    "value": 34.49,
+    "unit": "kg",
+    "provenance": "quoted",
+    "quote": "Copper mass ($6.67/kg) 20.16 kg 34.49 kg",
+    "location": "Table VI, p. 8",
+    "note": "Active winding including the end windings."
+   },
+   "magnet_grade": {
+    "value": "N48H",
+    "unit": "grade",
+    "provenance": "quoted",
+    "quote": "Permanent magnet grade N48H",
+    "location": "Table III, p. 4",
+    "note": "Its remanence is assumed (magnet_br_T)."
+   },
+   "steel_grade_paper": {
+    "value": "M470-50A",
+    "unit": "grade",
+    "provenance": "quoted",
+    "quote": "Lamination steel grade M470-50A",
+    "location": "Table III, p. 4",
+    "note": "Not in FEMM's library; see steel_grade."
+   },
+   "current_angle_deg": {
+    "value": 90,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "a constant current angle of θ = 90",
+    "location": "Section IV, p. 4",
+    "note": "From the d-axis: the current on the q-axis (Id = 0, Fig. 10's 'Id = 0 & Iq = Imax' for full load)."
+   },
+   "magnetization": {
+    "value": "radial",
+    "unit": "direction",
+    "provenance": "quoted",
+    "quote": "PMs are uniformly magnetized in the radial direction",
+    "location": "Section II, p. 3"
+   },
+   "shoe_edge_height_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 6(a), p. 6: the authors' FE mesh of the PMVM as vector art (each triangle a filled path, read with femm_brain.vector_figure)",
+    "scale_reference": "Dout/2 = 216.5 mm on the rotor's outer circle (220.142 pt about the centre where the sector's radial edges meet, at +/-60.000 degrees); the stator bore then reads 156.455 mm against Di/2 = 156.5 mm (0.03%)",
+    "uncertainty": 0.01,
+    "note": "Along the tooth axis, the shoe's outer edge from its corner to the tip: tip 197.452, corner 196.452 mm from the axis on all five teeth read (the edge lies on the tip's radial line within 0.004 degrees)."
+   },
+   "shoe_taper_height_mm": {
+    "value": 0.94,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 6(a), p. 6: the authors' FE mesh of the PMVM as vector art (each triangle a filled path, read with femm_brain.vector_figure)",
+    "scale_reference": "Dout/2 = 216.5 mm on the rotor's outer circle (220.142 pt about the centre where the sector's radial edges meet, at +/-60.000 degrees); the stator bore then reads 156.455 mm against Di/2 = 156.5 mm (0.03%)",
+    "uncertainty": 0.01,
+    "note": "Along the tooth axis, the tapered underside from its root on the tooth side (195.509-195.513) to the corner (196.451-196.455); Fig. 3(b)'s l_st_a and l_st_b are not tabulated."
+   },
+   "layer_divider_radius_mm": {
+    "value": 183.33,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 6(a), p. 6: the authors' FE mesh of the PMVM as vector art (each triangle a filled path, read with femm_brain.vector_figure)",
+    "scale_reference": "Dout/2 = 216.5 mm on the rotor's outer circle (220.142 pt about the centre where the sector's radial edges meet, at +/-60.000 degrees); the stator bore then reads 156.455 mm against Di/2 = 156.5 mm (0.03%)",
+    "uncertainty": 0.02,
+    "note": "The two coil layers meet on an arc of 183.33 mm (the interfaces of differently coloured coil sides, 186.41-186.42 pt); the coils fill the slot from its bottom to the shoe roots (195.53 mm)."
+   },
+   "coil_pitch_slots": {
+    "value": 5,
+    "unit": "slots",
+    "provenance": "figure",
+    "figure": "Fig. 6(a), p. 6: the authors' FE mesh of the PMVM as vector art (each triangle a filled path, read with femm_brain.vector_figure)",
+    "scale_reference": "Dout/2 = 216.5 mm on the rotor's outer circle (220.142 pt about the centre where the sector's radial edges meet, at +/-60.000 degrees); the stator bore then reads 156.455 mm against Di/2 = 156.5 mm (0.03%)",
+    "uncertainty": 0,
+    "discrete": true,
+    "note": "Each slot holds two coil sides stacked radially; the lower layer repeats the upper layer's phase one slot clockwise (Fig. 6(a), six slots: olive, olive/brown, brown, brown/green, green, green/yellow), so the coils span 5 of the 6 slots of a pole pitch, the go sides above (Table IV: overlapping)."
+   },
+   "copper_resistivity_ohm_m": {
+    "value": 1.7241e-08,
+    "unit": "ohm*m",
+    "provenance": "assumed",
+    "reason": "The paper states no conductor temperature for its FEA winding loss; copper's resistivity at 20 C (IEC 60028). The measured winding loss (570.2 W) exceeds the FEA's by 18.7%, copper's resistivity rise from 20 C to 68 C, a plausible test temperature; with the FEA at 75 C the test winding would have been at 136 C.",
+    "sensitivity_control": "copper-120c",
+    "note": "Pre-solve estimate: copper at 120 C (2.402e-8 ohm*m) lowers the current and torque by 15%."
+   },
+   "copper_density_kg_per_m3": {
+    "value": 8960,
+    "unit": "kg/m3",
+    "provenance": "assumed",
+    "reason": "Pure copper; the paper gives the copper mass, not its volume.",
+    "sensitivity_control": "copper-density-8890",
+    "note": "Winding copper is quoted at 8890-8960; the current scales with the square root (0.4%)."
+   },
+   "magnet_br_T": {
+    "value": 1.4,
+    "unit": "T",
+    "provenance": "assumed",
+    "reason": "N48H's remanence is 1.37-1.43 T at 20 C (a grade's range); its middle. The paper names no magnet temperature for its FEA (its demagnetization check, Fig. 10, deems the machine safe below 80 C).",
+    "sensitivity_control": "br-1p30",
+    "note": "Brackets: 1.30 T (80 C at -0.12%/K) and 1.43 T; the pre-solve estimate moves the torque by -7.1% and +2.1%."
+   },
+   "magnet_mu_r": {
+    "value": 1.05,
+    "unit": "ratio",
+    "provenance": "assumed",
+    "reason": "Sintered NdFeB's recoil permeability (lessons.md, Materials).",
+    "sensitivity_control": "mu-r-1p10"
+   },
+   "steel_grade": {
+    "value": "M-43 18 mil",
+    "unit": "library name",
+    "provenance": "assumed",
+    "reason": "M470-50A is not in FEMM's library; AISI M-43 is its usual equivalent (0.47 mm, 4.7 W/kg class). The library entry carries a 0.965 lamination fill; the rotor yoke is taken to be of the same laminations.",
+    "sensitivity_control": "steel-m43-solid"
+   },
+   "steel_folder": {
+    "value": "Soft Magnetic Materials/Silicon Iron",
+    "unit": "library folder",
+    "provenance": "assumed",
+    "reason": "The library folder of steel_grade.",
+    "sensitivity_control": "steel-m43-solid"
+   },
+   "hub_mu_r": {
+    "value": 1.0,
+    "unit": "ratio",
+    "provenance": "assumed",
+    "reason": "The stator's support inside its 313 mm bore is not described; taken as non-magnetic.",
+    "sensitivity_control": "hub-steel"
+   },
+   "band_margin_mm": {
+    "value": 0.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Thin air between the sliding band and each gap surface (a 0.5 mm band in the 1.5 mm gap)."
+   },
+   "gap_arc_deg": {
+    "value": 0.1,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc pieces of the sliding band's circles (0.35 mm)."
+   },
+   "tip_arc_deg": {
+    "value": 0.15,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc pieces of the tooth tips (0.52 mm)."
+   },
+   "magnet_arc_deg": {
+    "value": 0.25,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc pieces of the magnets and the rotor yoke's inner surface (0.87 mm)."
+   },
+   "slot_arc_deg": {
+    "value": 1.0,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc pieces of the slot bottoms, closures and layer dividers."
+   },
+   "thin_air_mesh_mm": {
+    "value": 0.35,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "The thin gap layers and the slot openings joined to them."
+   },
+   "magnet_mesh_mm": {
+    "value": 0.8,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Magnets (3.9 mm thick)."
+   },
+   "stator_iron_mesh_mm": {
+    "value": 1.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Stator teeth and yoke (7.7 mm teeth)."
+   },
+   "rotor_iron_mesh_mm": {
+    "value": 2.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Rotor yoke (13.6 mm)."
+   },
+   "coil_mesh_mm": {
+    "value": 2.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Coil sides."
+   },
+   "hub_mesh_mm": {
+    "value": 8.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "The non-magnetic hub."
+   },
+   "outer_radius_mm": {
+    "value": 216.5,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "outer_diameter_mm/2",
+    "inputs": [
+     "outer_diameter_mm"
+    ]
+   },
+   "magnet_outer_radius_mm": {
+    "value": 202.9,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "outer_diameter_mm/2-rotor_yoke_mm",
+    "inputs": [
+     "outer_diameter_mm",
+     "rotor_yoke_mm"
+    ],
+    "note": "The rotor yoke's inner surface."
+   },
+   "magnet_inner_radius_mm": {
+    "value": 199.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "outer_diameter_mm/2-rotor_yoke_mm-magnet_height_mm",
+    "inputs": [
+     "magnet_height_mm",
+     "outer_diameter_mm",
+     "rotor_yoke_mm"
+    ]
+   },
+   "tip_radius_mm": {
+    "value": 197.5,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "outer_diameter_mm/2-rotor_yoke_mm-magnet_height_mm-air_gap_mm",
+    "inputs": [
+     "air_gap_mm",
+     "magnet_height_mm",
+     "outer_diameter_mm",
+     "rotor_yoke_mm"
+    ]
+   },
+   "slot_bottom_radius_mm": {
+    "value": 169.54,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "outer_diameter_mm/2-rotor_yoke_mm-magnet_height_mm-air_gap_mm-tooth_length_mm",
+    "inputs": [
+     "air_gap_mm",
+     "magnet_height_mm",
+     "outer_diameter_mm",
+     "rotor_yoke_mm",
+     "tooth_length_mm"
+    ]
+   },
+   "bore_radius_mm": {
+    "value": 156.5,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "inner_diameter_mm/2",
+    "inputs": [
+     "inner_diameter_mm"
+    ]
+   },
+   "stator_yoke_mm": {
+    "value": 13.039999999999992,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "outer_diameter_mm/2-rotor_yoke_mm-magnet_height_mm-air_gap_mm-tooth_length_mm-inner_diameter_mm/2",
+    "inputs": [
+     "air_gap_mm",
+     "inner_diameter_mm",
+     "magnet_height_mm",
+     "outer_diameter_mm",
+     "rotor_yoke_mm",
+     "tooth_length_mm"
+    ],
+    "note": "13.04 mm: what Di leaves of Table V's radial build (Fig. 6(a): 13.14)."
+   },
+   "slot_pitch_deg": {
+    "value": 10.0,
+    "unit": "deg",
+    "provenance": "derived",
+    "expression": "360/slots",
+    "inputs": [
+     "slots"
+    ]
+   },
+   "tooth_width_mm": {
+    "value": 7.692821067858702,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "2*(outer_diameter_mm/2-rotor_yoke_mm-magnet_height_mm-air_gap_mm-tooth_length_mm)*sin(radians((1-slot_angle_ratio)*180/slots))",
+    "inputs": [
+     "air_gap_mm",
+     "magnet_height_mm",
+     "outer_diameter_mm",
+     "rotor_yoke_mm",
+     "slot_angle_ratio",
+     "slots",
+     "tooth_length_mm"
+    ],
+    "note": "Parallel teeth (1 - sigma_s) theta_sp wide at the slot bottom: 7.693 mm (Fig. 6(a): 7.683)."
+   },
+   "tooth_half_angle_at_tip_deg": {
+    "value": 1.1159342984629086,
+    "unit": "deg",
+    "provenance": "derived",
+    "expression": "degrees(atan2(tooth_width_mm/2, sqrt(tip_radius_mm**2-(tooth_width_mm/2)**2)))",
+    "inputs": [
+     "tip_radius_mm",
+     "tooth_width_mm"
+    ]
+   },
+   "tip_half_angle_deg": {
+    "value": 1.8150661247395856,
+    "unit": "deg",
+    "provenance": "derived",
+    "expression": "(slot_pitch_deg-slot_opening_ratio*(slot_pitch_deg-2*tooth_half_angle_at_tip_deg))/2",
+    "inputs": [
+     "slot_opening_ratio",
+     "slot_pitch_deg",
+     "tooth_half_angle_at_tip_deg"
+    ],
+    "note": "Half the tooth tip: the opening is sigma_so times the slot angle at the tip radius between the tooth sides extended."
+   },
+   "tip_arc_length_mm": {
+    "value": 12.51315760715735,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "tip_radius_mm*radians(2*tip_half_angle_deg)",
+    "inputs": [
+     "tip_half_angle_deg",
+     "tip_radius_mm"
+    ]
+   },
+   "shoe_corner_axial_mm": {
+    "value": 196.40090758282275,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "tip_radius_mm*cos(radians(tip_half_angle_deg))-shoe_edge_height_mm",
+    "inputs": [
+     "shoe_edge_height_mm",
+     "tip_half_angle_deg",
+     "tip_radius_mm"
+    ]
+   },
+   "shoe_root_axial_mm": {
+    "value": 195.46090758282276,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "tip_radius_mm*cos(radians(tip_half_angle_deg))-shoe_edge_height_mm-shoe_taper_height_mm",
+    "inputs": [
+     "shoe_edge_height_mm",
+     "shoe_taper_height_mm",
+     "tip_half_angle_deg",
+     "tip_radius_mm"
+    ]
+   },
+   "shoe_root_radius_mm": {
+    "value": 195.49875003972866,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "sqrt(shoe_root_axial_mm**2+(tooth_width_mm/2)**2)",
+    "inputs": [
+     "shoe_root_axial_mm",
+     "tooth_width_mm"
+    ],
+    "note": "Where the coils end (the slot closure)."
+   },
+   "tooth_strip_root_mm2": {
+    "value": 1503.8398683861187,
+    "unit": "mm2",
+    "provenance": "derived",
+    "expression": "tooth_width_mm/2*sqrt(shoe_root_radius_mm**2-(tooth_width_mm/2)**2)+shoe_root_radius_mm**2*atan2(tooth_width_mm/2, sqrt(shoe_root_radius_mm**2-(tooth_width_mm/2)**2))",
+    "inputs": [
+     "shoe_root_radius_mm",
+     "tooth_width_mm"
+    ],
+    "note": "The part of a tooth's strip (half-width w/2 about its axis) inside the shoe-root circle."
+   },
+   "tooth_strip_bottom_mm2": {
+    "value": 1304.1289897909746,
+    "unit": "mm2",
+    "provenance": "derived",
+    "expression": "tooth_width_mm/2*sqrt(slot_bottom_radius_mm**2-(tooth_width_mm/2)**2)+slot_bottom_radius_mm**2*atan2(tooth_width_mm/2, sqrt(slot_bottom_radius_mm**2-(tooth_width_mm/2)**2))",
+    "inputs": [
+     "slot_bottom_radius_mm",
+     "tooth_width_mm"
+    ],
+    "note": "The part of a tooth's strip inside the slot-bottom circle."
+   },
+   "slot_area_mm2": {
+    "value": 627.2217286253117,
+    "unit": "mm2",
+    "provenance": "derived",
+    "expression": "pi/slots*(shoe_root_radius_mm**2-slot_bottom_radius_mm**2)-(tooth_strip_root_mm2-tooth_strip_bottom_mm2)",
+    "inputs": [
+     "shoe_root_radius_mm",
+     "slot_bottom_radius_mm",
+     "slots",
+     "tooth_strip_bottom_mm2",
+     "tooth_strip_root_mm2"
+    ],
+    "note": "The coil region of one slot: the annular sector of a slot pitch between the slot bottom and the shoe roots less one tooth's strip."
+   },
+   "go_label_radius_mm": {
+    "value": 189.41437501986434,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "(layer_divider_radius_mm+shoe_root_radius_mm)/2",
+    "inputs": [
+     "layer_divider_radius_mm",
+     "shoe_root_radius_mm"
+    ]
+   },
+   "return_label_radius_mm": {
+    "value": 176.435,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "(layer_divider_radius_mm+slot_bottom_radius_mm)/2",
+    "inputs": [
+     "layer_divider_radius_mm",
+     "slot_bottom_radius_mm"
+    ]
+   },
+   "magnet_arc_deg_span": {
+    "value": 4.8,
+    "unit": "deg",
+    "provenance": "derived",
+    "expression": "magnet_span_ratio*180/rotor_pole_pairs",
+    "inputs": [
+     "magnet_span_ratio",
+     "rotor_pole_pairs"
+    ]
+   },
+   "pole_count": {
+    "value": 66,
+    "unit": "count",
+    "provenance": "derived",
+    "expression": "2*rotor_pole_pairs",
+    "inputs": [
+     "rotor_pole_pairs"
+    ]
+   },
+   "current_density_rms_A_per_mm2": {
+    "value": 2.690467071381232,
+    "unit": "A/mm2",
+    "provenance": "derived",
+    "expression": "sqrt(winding_loss_W*copper_density_kg_per_m3/(copper_resistivity_ohm_m*copper_mass_kg))/1e6",
+    "inputs": [
+     "copper_density_kg_per_m3",
+     "copper_mass_kg",
+     "copper_resistivity_ohm_m",
+     "winding_loss_W"
+    ],
+    "note": "From P = rho J^2 V with V = m / density: 2.69 A/mm2 rms."
+   },
+   "coil_side_peak_At": {
+    "value": 477.3025665202943,
+    "unit": "A",
+    "provenance": "derived",
+    "expression": "sqrt(2)*current_density_rms_A_per_mm2*fill_factor*slot_area_mm2/2",
+    "inputs": [
+     "current_density_rms_A_per_mm2",
+     "fill_factor",
+     "slot_area_mm2"
+    ],
+    "note": "Peak ampere-turns of one coil side (half the slot's copper); the model's coil sides have one turn and carry this current."
+   },
+   "magnet_coercivity_A_per_m": {
+    "value": 1061032.9539459688,
+    "unit": "A/m",
+    "provenance": "derived",
+    "expression": "magnet_br_T/(mu0*magnet_mu_r)",
+    "inputs": [
+     "magnet_br_T",
+     "magnet_mu_r"
+    ]
+   },
+   "band_inner_radius_mm": {
+    "value": 198.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "tip_radius_mm+band_margin_mm",
+    "inputs": [
+     "band_margin_mm",
+     "tip_radius_mm"
+    ]
+   },
+   "band_outer_radius_mm": {
+    "value": 198.5,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "outer_diameter_mm/2-rotor_yoke_mm-magnet_height_mm-band_margin_mm",
+    "inputs": [
+     "band_margin_mm",
+     "magnet_height_mm",
+     "outer_diameter_mm",
+     "rotor_yoke_mm"
+    ]
+   }
+  },
+  "assembly": {
+   "problem": {
+    "physics": "magnetics",
+    "units": "millimeters",
+    "type": "planar",
+    "frequency": 0,
+    "depth": "$stack_length_mm"
+   },
+   "steps": [
+    {
+     "use": "library_material",
+     "name": "Air",
+     "library": "matlib.dat"
+    },
+    {
+     "use": "library_material",
+     "name": "Copper",
+     "library": "matlib.dat"
+    },
+    {
+     "use": "library_material",
+     "name": "$steel_grade",
+     "library": "matlib.dat",
+     "folder": "$steel_folder",
+     "as_name": "Steel"
+    },
+    {
+     "use": "material",
+     "name": "Magnet",
+     "values": {
+      "Mu_x": "$magnet_mu_r",
+      "Mu_y": "$magnet_mu_r",
+      "H_c": "$magnet_coercivity_A_per_m"
+     }
+    },
+    {
+     "use": "material",
+     "name": "Hub",
+     "values": {
+      "Mu_x": "$hub_mu_r",
+      "Mu_y": "$hub_mu_r"
+     }
+    },
+    {
+     "use": "circuit",
+     "name": "A",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "B",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "C",
+     "current": 0
+    },
+    {
+     "use": "fixed_potential_boundary",
+     "name": "A=0",
+     "value": 0
+    },
+    {
+     "use": "slotted_stator",
+     "slot_count": "$slots",
+     "slot_bottom_radius": "$slot_bottom_radius_mm",
+     "tip_radius": "$tip_radius_mm",
+     "tooth_width": "$tooth_width_mm",
+     "tip_arc_length": "$tip_arc_length_mm",
+     "shoe_axial_distance": "$shoe_root_axial_mm",
+     "shoe_corner_axial_distance": "$shoe_corner_axial_mm",
+     "slot_closure": "shoe_roots",
+     "layer_divider_radius": "$layer_divider_radius_mm",
+     "tip_max_segment": "$tip_arc_deg",
+     "slot_bottom_max_segment": "$slot_arc_deg",
+     "closure_max_segment": "$slot_arc_deg",
+     "iron_material": "Steel",
+     "iron_mesh": "$stator_iron_mesh_mm"
+    },
+    {
+     "use": "circle",
+     "radius": "$bore_radius_mm",
+     "max_segment": "$slot_arc_deg"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      0
+     ],
+     "material": "Hub",
+     "mesh": "$hub_mesh_mm"
+    },
+    {
+     "use": "tooth_coil_winding",
+     "slot_count": "$slots",
+     "pole_pairs": "$winding_pole_pairs",
+     "turns": 1,
+     "material": "Copper",
+     "label_radius": "$go_label_radius_mm",
+     "layout": "slot_star",
+     "layers": "double",
+     "coil_pitch": "$coil_pitch_slots",
+     "return_layer_radius": "$return_label_radius_mm",
+     "phase_sequence": "forward",
+     "mesh": "$coil_mesh_mm"
+    },
+    {
+     "use": "air_gap_element",
+     "rotor_radius": "$band_inner_radius_mm",
+     "stator_radius": "$band_outer_radius_mm",
+     "max_segment": "$gap_arc_deg",
+     "name": "AGE"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(tip_radius_mm+band_inner_radius_mm)/2",
+      0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(band_outer_radius_mm+magnet_inner_radius_mm)/2",
+      0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "surface_magnet_rotor",
+     "pole_count": "$pole_count",
+     "magnet_material": "Magnet",
+     "thickness": "$magnet_height_mm",
+     "magnet_shape": "arc",
+     "inner_radius": "$magnet_inner_radius_mm",
+     "arc_angle": "$magnet_arc_deg_span",
+     "air_gap_side": "inner",
+     "magnetization": "$magnetization",
+     "first_pole_polarity": "outward",
+     "mesh": "$magnet_mesh_mm",
+     "arc_max_segment": "$magnet_arc_deg",
+     "seat_arcs": true,
+     "group": 1
+    },
+    {
+     "use": "circle",
+     "radius": "$outer_radius_mm",
+     "max_segment": "$magnet_arc_deg",
+     "boundary": "A=0",
+     "group": 1
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(magnet_outer_radius_mm+outer_radius_mm)/2",
+      0
+     ],
+     "material": "Steel",
+     "mesh": "$rotor_iron_mesh_mm",
+     "group": 1
+    }
+   ]
+  }
+ },
+ "gaps": [
+  {
+   "item": "rated current (turns per phase and phase current are not given)",
+   "affects": "every load quantity; torque about in proportion",
+   "decision": "assumed",
+   "note": "From Table VII's FEA winding loss and Table VI's copper mass at copper's 20 C resistivity: J = 2.69 A/mm2 rms, coil-side ampere-turns J x 0.4 x half the slot area. Bracketed before freezing: 120 C gives 15% less torque, the literal 5 A/mm2 86% more (pre-solve estimate); controls copper-120c, copper-density-8890 and current-density-5."
+  },
+  {
+   "item": "magnet remanence and temperature (N48H named, no temperature)",
+   "affects": "torque, about in proportion",
+   "decision": "assumed",
+   "note": "1.40 T, the grade's middle at 20 C; controls br-1p30 (80 C) and mu-r-1p10."
+  },
+  {
+   "item": "M470-50A's B-H curve",
+   "affects": "saturated teeth and yokes",
+   "decision": "assumed",
+   "note": "FEMM's M-43 18 mil (its usual equivalent, 0.965 fill); control steel-m43-solid."
+  },
+  {
+   "item": "stator support inside the bore",
+   "affects": "the stator yoke's flux, little",
+   "decision": "assumed",
+   "note": "Non-magnetic; control hub-steel."
+  },
+  {
+   "item": "Table V's radial build sums to 60.56 mm against (Dout - Di)/2 = 60 mm",
+   "affects": "the stator yoke's saturation",
+   "decision": "resolved",
+   "note": "Fig. 6(a) puts every other dimension within 0.06 mm of the table and the stator yoke at 13.14 mm, not 13.6: the build keeps Di and the table's other dimensions (yoke 13.04 mm); control stator-yoke-13p6."
+  },
+  {
+   "item": "how sigma_so refers to theta_s",
+   "affects": "the slot opening (6.07 or 6.37 degrees)",
+   "decision": "resolved",
+   "note": "Fig. 6(a)'s tips (2 x 1.8168 degrees) fit sigma_so of the slot angle at the tip radius (2 x 1.8151), not of the 7.4 degrees at the slot bottom (2 x 1.966); control opening-literal."
+  },
+  {
+   "item": "tooth-shoe shape (l_st_a and l_st_b of Fig. 3(b) are not tabulated)",
+   "affects": "the modulation and slot leakage, slightly",
+   "decision": "figure",
+   "note": "Fig. 6(a): a 1.00 mm radial edge and a 0.94 mm tapered underside."
+  },
+  {
+   "item": "winding layout (coil pitch, layers)",
+   "affects": "the winding factor (0.933 at a 5/6 pitch) and the d-axis",
+   "decision": "figure",
+   "note": "Fig. 6(a): double layer stacked radially, divided at 183.33 mm, coils pitched 5 of 6 slots."
+  },
+  {
+   "item": "the d-axis at each rotor position (current angle 90 degrees is stated, its reference is not)",
+   "affects": "the load torque",
+   "decision": "resolved",
+   "note": "From the construction: the star of slots at the rotor's 33rd harmonic puts phase A's flux-linkage peak at 33 alpha = 105 degrees; the phase_linkage assessor checks the prediction on the no-load sweep, and steps at 50, 70, 110 and 130 degrees check that the torque peaks near 90."
+  },
+  {
+   "item": "Table VII's FEA average torque (1042.0 N m) against Fig. 14's FE waveform (mean 1015.46)",
+   "affects": "the torque target",
+   "decision": "resolved",
+   "note": "Fig. 14 is the acceptance value; the table, possibly the shaft torque with the core-loss torque, a comparator."
+  },
+  {
+   "item": "end windings, resistance and core losses (power factor, output power, efficiency)",
+   "affects": "Table VII's power factor, losses, power and efficiency",
+   "decision": "out_of_scope",
+   "note": "The paper adds analytic end-winding inductance, resistance and core loss to its 2D results; the 2D internal power factor is a comparator only, the losses, power and efficiency are not reproduced."
+  },
+  {
+   "item": "the conventional PMSM (48 slots, 40 poles)",
+   "affects": "its column of Tables V-VII and Fig. 14",
+   "decision": "out_of_scope",
+   "note": "Not replicated in this case: its tooth-coil layers are drawn stacked radially (Fig. 6(b)) and its rated current has the same gap; the PMVM, the new family, comes first."
+  }
+ ],
+ "steps": [
+  {
+   "label": "nl00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.3409090909090909
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.6818181818181818
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -1.0227272727272727
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -1.3636363636363635
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -1.7045454545454544
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -2.0454545454545454
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -2.3863636363636362
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -2.727272727272727
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -3.068181818181818
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl10",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -3.4090909090909087
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl11",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -3.7499999999999996
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl12",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -4.090909090909091
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl13",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -4.431818181818182
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl14",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -4.7727272727272725
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl15",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -5.113636363636363
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "cg00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "cg01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.07575757575757576
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "cg02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.15151515151515152
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "cg03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.22727272727272727
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "cg04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.30303030303030304
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "cg05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.37878787878787873
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "cg06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.45454545454545453
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "cg07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.5303030303030303
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "cg08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.6060606060606061
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "cg09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.6818181818181818
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "cg10",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.7575757575757575
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "cg11",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.8333333333333334
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "ld00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-0+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-240+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-120+90.0))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 0.0,
+    "iq": 477.3025665202943,
+    "electrical_angle_deg": -105.0
+   }
+  },
+  {
+   "label": "ld01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.15151515151515152
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.15151515151515152-105.0-0+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.15151515151515152-105.0-240+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.15151515151515152-105.0-120+90.0))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 0.0,
+    "iq": 477.3025665202943,
+    "electrical_angle_deg": -100.0
+   }
+  },
+  {
+   "label": "ld02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.30303030303030304
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.30303030303030304-105.0-0+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.30303030303030304-105.0-240+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.30303030303030304-105.0-120+90.0))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 0.0,
+    "iq": 477.3025665202943,
+    "electrical_angle_deg": -95.0
+   }
+  },
+  {
+   "label": "ld03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.45454545454545453
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.45454545454545453-105.0-0+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.45454545454545453-105.0-240+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.45454545454545453-105.0-120+90.0))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 0.0,
+    "iq": 477.3025665202943,
+    "electrical_angle_deg": -90.0
+   }
+  },
+  {
+   "label": "ld04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.6060606060606061
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.6060606060606061-105.0-0+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.6060606060606061-105.0-240+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.6060606060606061-105.0-120+90.0))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 0.0,
+    "iq": 477.3025665202943,
+    "electrical_angle_deg": -85.0
+   }
+  },
+  {
+   "label": "ld05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.7575757575757575
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.7575757575757575-105.0-0+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.7575757575757575-105.0-240+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.7575757575757575-105.0-120+90.0))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 0.0,
+    "iq": 477.3025665202943,
+    "electrical_angle_deg": -80.0
+   }
+  },
+  {
+   "label": "ld06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.9090909090909091
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.9090909090909091-105.0-0+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.9090909090909091-105.0-240+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.9090909090909091-105.0-120+90.0))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 0.0,
+    "iq": 477.3025665202943,
+    "electrical_angle_deg": -75.0
+   }
+  },
+  {
+   "label": "ld07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -1.0606060606060606
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.0606060606060606-105.0-0+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.0606060606060606-105.0-240+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.0606060606060606-105.0-120+90.0))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 0.0,
+    "iq": 477.3025665202943,
+    "electrical_angle_deg": -70.0
+   }
+  },
+  {
+   "label": "ld08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -1.2121212121212122
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.2121212121212122-105.0-0+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.2121212121212122-105.0-240+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.2121212121212122-105.0-120+90.0))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 0.0,
+    "iq": 477.3025665202943,
+    "electrical_angle_deg": -65.0
+   }
+  },
+  {
+   "label": "ld09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -1.3636363636363635
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.3636363636363635-105.0-0+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.3636363636363635-105.0-240+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.3636363636363635-105.0-120+90.0))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 0.0,
+    "iq": 477.3025665202943,
+    "electrical_angle_deg": -60.0
+   }
+  },
+  {
+   "label": "ld10",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -1.515151515151515
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.515151515151515-105.0-0+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.515151515151515-105.0-240+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.515151515151515-105.0-120+90.0))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 0.0,
+    "iq": 477.3025665202943,
+    "electrical_angle_deg": -55.00000000000001
+   }
+  },
+  {
+   "label": "ld11",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -1.6666666666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.6666666666666667-105.0-0+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.6666666666666667-105.0-240+90.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*1.6666666666666667-105.0-120+90.0))"
+    }
+   ],
+   "dq": {
+    "point": "rated",
+    "id": 0.0,
+    "iq": 477.3025665202943,
+    "electrical_angle_deg": -50.0
+   }
+  },
+  {
+   "label": "ga050",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-0+50.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-240+50.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-120+50.0))"
+    }
+   ],
+   "dq": {
+    "point": "beta50",
+    "id": 306.80417583083045,
+    "iq": 365.6349787692978,
+    "electrical_angle_deg": -105.0
+   },
+   "note": "Current vector at 50 degrees from the d-axis (rated amplitude), to check that the torque peaks near 90."
+  },
+  {
+   "label": "ga070",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-0+70.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-240+70.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-120+70.0))"
+    }
+   ],
+   "dq": {
+    "point": "beta70",
+    "id": 163.24709221098064,
+    "iq": 448.5176996412957,
+    "electrical_angle_deg": -105.0
+   },
+   "note": "Current vector at 70 degrees from the d-axis (rated amplitude), to check that the torque peaks near 90."
+  },
+  {
+   "label": "ga110",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-0+110.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-240+110.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-120+110.0))"
+    }
+   ],
+   "dq": {
+    "point": "beta110",
+    "id": -163.24709221098058,
+    "iq": 448.51769964129574,
+    "electrical_angle_deg": -105.0
+   },
+   "note": "Current vector at 110 degrees from the d-axis (rated amplitude), to check that the torque peaks near 90."
+  },
+  {
+   "label": "ga130",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": -0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-0+130.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-240+130.0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=coil_side_peak_At*cos(radians(33*0.0-105.0-120+130.0))"
+    }
+   ],
+   "dq": {
+    "point": "beta130",
+    "id": -306.80417583083045,
+    "iq": 365.6349787692978,
+    "electrical_angle_deg": -105.0
+   },
+   "note": "Current vector at 130 degrees from the d-axis (rated amplitude), to check that the torque peaks near 90."
+  }
+ ],
+ "measurements": [
+  {
+   "id": "phA",
+   "op": "circuit",
+   "name": "A"
+  },
+  {
+   "id": "phB",
+   "op": "circuit",
+   "name": "B"
+  },
+  {
+   "id": "phC",
+   "op": "circuit",
+   "name": "C"
+  },
+  {
+   "id": "gap",
+   "op": "gap_integral",
+   "boundary": "AGE",
+   "type": 0
+  },
+  {
+   "id": "rotor",
+   "op": "block_integral",
+   "select": {
+    "group": 1
+   },
+   "type": 22
+  }
+ ],
+ "metrics": [
+  {
+   "name": "flux_A_Wb",
+   "value": [
+    "phA",
+    2
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "flux_B_Wb",
+   "value": [
+    "phB",
+    2
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "flux_C_Wb",
+   "value": [
+    "phC",
+    2
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "torque_Nm",
+   "value": [
+    "gap",
+    0
+   ],
+   "scale": -1,
+   "unit": "N*m",
+   "note": "The rotor's torque, counterclockwise positive: FEMM's air-gap-element torque acts on the band's inner side (the stator here; design-dipole-torque-variant checks that sign), so the outer rotor's is its negative."
+  },
+  {
+   "name": "torque_block_Nm",
+   "value": [
+    "rotor",
+    0
+   ],
+   "unit": "N*m",
+   "note": "Weighted stress tensor on the rotor's blocks (magnets and yoke), a cross-check."
+  }
+ ],
+ "targets": [],
+ "assessors": [
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "rotor_band_side": "outer",
+   "half_wave_symmetry": false,
+   "metric": "torque_Nm",
+   "statistic": "mean",
+   "pole_pairs": 198,
+   "step_prefix": "ld",
+   "value": 1015.46,
+   "value_kind": "digitized",
+   "digitization_uncertainty": 0.002,
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Predicted torque ripples of both PMVM and PMSM machines",
+   "location": "Fig. 14, p. 9 (vector art)",
+   "note": "The PMVM curve of Fig. 14, read from its filled outline (701 points) on the figure's gridlines (0-360 degrees at 50.27 pt per 90; 990-1040 N m at 16.60 pt per 10 N m): mean 1015.46 N m over the revolution, 1008.85-1021.49 N m. Its vertices lie about 3.55 degrees apart, so the curve samples the 198-per-revolution ripple at about 101 positions and aliases it (12 cycles drawn); a mean of such samples is still the average torque. Acceptance at 1%, the 2D FE rule; the digitization uncertainty, 0.2%, covers the line's width and the calibration. The torque's period at balanced currents is a sixth of an electrical period, 1.818 degrees (pole_pairs here is 6 pr, the sweep's span), so 12 positions over it average the whole waveform."
+  },
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "rotor_band_side": "outer",
+   "half_wave_symmetry": false,
+   "metric": "torque_Nm",
+   "statistic": "mean",
+   "pole_pairs": 198,
+   "step_prefix": "ld",
+   "value": 1042.0,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "label": "table",
+   "quote": "Average torque (Nm) 1011.1 1060.0 1042.0 1038.23",
+   "location": "Table VII, p. 8",
+   "note": "Table VII's FEA average torque, a comparator: 2.6% above the FE waveform it summarizes (Fig. 14); possibly the shaft torque including the core-loss torque (1015.46 + 476.4 W / 15.708 rad/s = 1045.8)."
+  },
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "rotor_band_side": "outer",
+   "half_wave_symmetry": false,
+   "metric": "torque_Nm",
+   "statistic": "mean",
+   "pole_pairs": 198,
+   "step_prefix": "ld",
+   "value": 1038.23,
+   "value_kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "label": "measured",
+   "quote": "Average torque (Nm) 1011.1 1060.0 1042.0 1038.23",
+   "location": "Table VII, p. 8",
+   "note": "Measured on the prototype, a comparator (3D, end effects, built tolerances)."
+  },
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "rotor_band_side": "outer",
+   "half_wave_symmetry": false,
+   "metric": "torque_Nm",
+   "statistic": "peak_to_peak",
+   "pole_pairs": 198,
+   "step_prefix": "ld",
+   "value": 12.64,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.25,
+   "used_for_acceptance": false,
+   "quote": "Torque ripple (%) 3.42 − 1.25 3.45",
+   "location": "Table VII, p. 8 and Fig. 14, p. 9 (vector art)",
+   "note": "Fig. 14's peak to peak, 12.64 N m (Table VII's 1.25% of 1015.46 is 12.69): a comparator, since ripple is mesh noise on a symmetric machine and Fig. 14's samples alias it."
+  },
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "rotor_band_side": "outer",
+   "half_wave_symmetry": false,
+   "metric": "torque_block_Nm",
+   "statistic": "mean",
+   "pole_pairs": 198,
+   "step_prefix": "ld",
+   "value": 1015.46,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "label": "stress_tensor",
+   "quote": "Predicted torque ripples of both PMVM and PMSM machines",
+   "location": "Fig. 14, p. 9 (vector art)",
+   "note": "The same target from the weighted stress tensor on the rotor's blocks, a cross-check of the band's torque."
+  },
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "rotor_band_side": "outer",
+   "half_wave_symmetry": false,
+   "metric": "torque_Nm",
+   "statistic": "peak",
+   "pole_pairs": 396,
+   "step_prefix": "cg",
+   "value": 17.3,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.25,
+   "used_for_acceptance": false,
+   "quote": "Cogging torque (%) 2.34 2.84 1.66 1.80",
+   "location": "Table VII, p. 8",
+   "note": "1.66% of 1042.0 N m read as the cogging torque's peak: Fig. 13's measured PMVM cogging swings about +/-18 N m, which is Table VII's measured 1.80% of 1038.23 (18.7 N m) as a peak. A comparator (mesh noise; 12 positions over the 0.909 degree cogging period, 360/lcm(36, 66))."
+  },
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "rotor_band_side": "outer",
+   "half_wave_symmetry": false,
+   "metric": "torque_Nm",
+   "statistic": "peak",
+   "pole_pairs": 396,
+   "step_prefix": "cg",
+   "value": 18.69,
+   "value_kind": "measured",
+   "relative_tolerance": 0.25,
+   "used_for_acceptance": false,
+   "label": "measured",
+   "quote": "Cogging torque (%) 2.34 2.84 1.66 1.80",
+   "location": "Table VII, p. 8",
+   "note": "The measured 1.80% of 1038.23 N m, a comparator."
+  },
+  {
+   "kind": "phase_linkage",
+   "pole_pairs": 33,
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "rotor_band_side": "outer",
+   "expected_sequence": [
+    "A",
+    "C",
+    "B"
+   ],
+   "flux_metrics": {
+    "A": "flux_A_Wb",
+    "B": "flux_B_Wb",
+    "C": "flux_C_Wb"
+   },
+   "half_wave_symmetry": true,
+   "step_prefix": "nl",
+   "phase_tolerance_deg": 1.0,
+   "amplitude_balance_tolerance": 0.01,
+   "quote": "Prediction from the construction: the winding's turns at the rotor's 33rd harmonic against the magnets' (the modulated 3rd harmonic has the same phase, eqs. (3)-(4)); balanced phases peaking in the order A, C, B as the rotor turns counterclockwise"
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phC",
+    "phB"
+   ],
+   "pole_pairs": 33,
+   "point": "rated",
+   "quantity": "torque",
+   "currents_from": "circuits",
+   "value": 1015.46,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "label": "flux_linkage",
+   "quote": "Predicted torque ripples of both PMVM and PMSM machines",
+   "location": "Fig. 14, p. 9 (vector art)",
+   "note": "3/2 pr (psi_d i_q - psi_q i_d) from the phase flux linkages and currents, averaged over the load positions: the lessons' check of a stress-tensor mean against the flux-linkage torque."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phC",
+    "phB"
+   ],
+   "pole_pairs": 33,
+   "point": "rated",
+   "quantity": "power_factor",
+   "currents_from": "circuits",
+   "value": 0.78,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.05,
+   "used_for_acceptance": false,
+   "quote": "Power factor (p.u.) 0.97 0.99 0.78 0.71",
+   "location": "Table VII, p. 8",
+   "note": "The 2D internal power factor (resistance and end-winding reactance neglected) at the load positions, a comparator: the paper's FEA adds an analytic end-winding inductance and the resistance (Section IV), which a 2D model lacks."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phC",
+    "phB"
+   ],
+   "pole_pairs": 33,
+   "point": "rated",
+   "quantity": "power_factor",
+   "currents_from": "circuits",
+   "value": 0.71,
+   "value_kind": "measured",
+   "relative_tolerance": 0.05,
+   "used_for_acceptance": false,
+   "label": "measured",
+   "quote": "the PMVM achieves a power factor of 0.71",
+   "location": "Section V-C, p. 9",
+   "note": "Measured at rated torque, a comparator."
+  }
+ ],
+ "controls": [
+  {
+   "id": "mesh-0p7",
+   "level": "article",
+   "mesh_scale": 0.7,
+   "purpose": "Every explicit element size and arc piece at 0.7 times."
+  },
+  {
+   "id": "copper-120c",
+   "level": "article",
+   "parameters": {
+    "copper_resistivity_ohm_m": 2.4017e-08
+   },
+   "purpose": "The FEA winding loss at copper's 120 C resistivity (the hot end of the current gap): 15% less current."
+  },
+  {
+   "id": "copper-density-8890",
+   "level": "article",
+   "parameters": {
+    "copper_density_kg_per_m3": 8890
+   },
+   "purpose": "Winding copper at 8890 kg/m3."
+  },
+  {
+   "id": "current-density-5",
+   "level": "article",
+   "parameters": {
+    "winding_loss_W": 1659.2
+   },
+   "purpose": "The literal reading of Table III: 5 A/mm2 rms in the copper (the winding loss that current density gives at the frozen resistivity, density and copper mass, 1659.2 W)."
+  },
+  {
+   "id": "br-1p30",
+   "level": "article",
+   "parameters": {
+    "magnet_br_T": 1.3
+   },
+   "purpose": "Magnets at 80 C (1.30 T)."
+  },
+  {
+   "id": "mu-r-1p10",
+   "level": "article",
+   "parameters": {
+    "magnet_mu_r": 1.1
+   },
+   "purpose": "Magnet recoil permeability 1.10."
+  },
+  {
+   "id": "steel-m43-solid",
+   "level": "article",
+   "parameters": {
+    "steel_grade": "M-43 and M-36",
+    "steel_folder": "Metals Handbook DC Magnetization Curves"
+   },
+   "purpose": "The Metals Handbook DC curve of M-43, without a lamination fill, for the laminated library grade."
+  },
+  {
+   "id": "hub-steel",
+   "level": "article",
+   "parameters": {
+    "hub_mu_r": 1000
+   },
+   "purpose": "A magnetic stator support inside the bore."
+  },
+  {
+   "id": "stator-yoke-13p6",
+   "level": "article",
+   "parameters": {
+    "inner_diameter_mm": 311.88
+   },
+   "purpose": "Table V's 13.6 mm stator yoke, built inward from the slot bottoms (Di 311.88 instead of 313 mm)."
+  },
+  {
+   "id": "opening-literal",
+   "level": "article",
+   "parameters": {
+    "slot_opening_ratio": 0.7811
+   },
+   "purpose": "The literal reading of sigma_so: 0.82 of the slot angle at the slot bottom (7.4 degrees) is 6.068 degrees of opening; expressed in the frozen reading's terms (of the slot angle at the tip radius, 7.7681 degrees), sigma_so = 0.7811."
+  }
+ ],
+ "engine": {
+  "solves_per_process": 12
+ },
+ "coverage": {
+  "scope": "partial",
+  "reproduced": "The PMVM's rated FE torque (acceptance), its winding sign and phase order against the construction; comparators for Table VII's FEA and measured torque, torque ripple, cogging torque and power factor.",
+  "not_reproduced": "Losses, output power, efficiency, the power-factor and efficiency curves (Figs. 17-18), open-circuit voltage (the turns are not given), demagnetization (Fig. 10), the optimization study (Figs. 4-9) and the PMSM."
+ },
+ "geometry_checks": [
+  {
+   "quantity": "radial build of Table V against (Dout - Di)/2 (mm)",
+   "paper_value": 60.0,
+   "model_value": 60.0,
+   "location": "Tables V-VI",
+   "note": "Table V sums to 60.56 mm (13.6 + 3.9 + 1.5 + 27.96 + 13.6); the build keeps Di, so its stator yoke is 13.04 mm."
+  },
+  {
+   "quantity": "radii read from Fig. 6(a) scaled by Dout/2 (mm): rotor yoke face, magnet face, tips, slot bottoms, bore",
+   "paper_value": [
+    202.94,
+    199.052,
+    197.551,
+    169.598,
+    156.455
+   ],
+   "model_value": [
+    202.9,
+    199.0,
+    197.5,
+    169.54,
+    156.5
+   ],
+   "location": "Fig. 6(a), p. 6",
+   "note": "Within 0.06 mm except the stator yoke, which the figure draws 13.14 mm thick (13.04 built)."
+  },
+  {
+   "quantity": "tooth width (mm), tip half-angle (deg), shoe corner and root along the tooth axis (mm)",
+   "paper_value": [
+    7.683,
+    1.8168,
+    196.452,
+    195.511
+   ],
+   "model_value": [
+    7.693,
+    1.8151,
+    196.401,
+    195.461
+   ],
+   "location": "Fig. 6(a), five teeth",
+   "note": "The shoe positions follow the build's tip radius, 0.05 mm inside the drawing's."
+  },
+  {
+   "quantity": "magnet span (deg)",
+   "paper_value": 4.795,
+   "model_value": 4.8,
+   "location": "Fig. 6(a); Table V sigma_pm 0.88"
+  },
+  {
+   "quantity": "slot (coil) area (mm2)",
+   "paper_value": null,
+   "model_value": 627.22,
+   "location": "the build",
+   "note": "With the 0.4 fill, 36 slots hold 9032 mm2 of copper; Table VI's 34.49 kg (at 8960 kg/m3) is then 0.426 m of conductor per coil side: the 0.151 m stack plus 0.275 m of end connection, plausible for a 5-slot pitch at 183 mm with 66 mm overhangs (Table VI)."
+  },
+  {
+   "quantity": "silicon steel mass (kg) at 7700 kg/m3, solid",
+   "paper_value": 45.08,
+   "model_value": 45.67,
+   "location": "Table VI",
+   "note": "Stator 21,358 mm2 and rotor yoke 17,919 mm2 over 151 mm: 1.3% high solid, 2.2% low with the library's 0.965 fill; a 13.6 mm stator yoke would add 0.64 kg, away from the table."
+  },
+  {
+   "quantity": "magnet density implied by the 4.85 kg magnet mass (kg/m3)",
+   "paper_value": null,
+   "model_value": 7412,
+   "location": "Table VI",
+   "note": "4333 mm2 of magnet over 151 mm; sintered NdFeB is 7400-7600."
+  }
+ ],
+ "findings": [],
+ "retrospective": []
+}

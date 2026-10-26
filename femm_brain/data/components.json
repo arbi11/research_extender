@@ -1528,7 +1528,7 @@
    "id": "slotted_stator",
    "layer": 2,
    "title": "Slotted stator with shoed teeth",
-   "description": "Parallel-sided teeth with shoes repeated around the axis: slot-bottom arcs, tooth sides, shoe undersides and edges, tip arcs and optional slot-opening chords and slot dividers. Teeth point outward when the tip radius exceeds the slot-bottom radius (outer-rotor machines) and inward otherwise.",
+   "description": "Parallel-sided teeth with shoes repeated around the axis: slot-bottom arcs, tooth sides, shoe undersides (flat or tapered) and edges, tip arcs and optional slot closures (chords across the shoe corners or arcs across the shoe roots), side-by-side slot dividers or radial layer dividers. Teeth point outward when the tip radius exceeds the slot-bottom radius (outer-rotor machines) and inward otherwise.",
    "physics": [
     "magnetics"
    ],
@@ -1649,6 +1649,42 @@
      "required": false,
      "unit": "model length",
      "exclusive_minimum": 0
+    },
+    {
+     "name": "shoe_corner_axial_distance",
+     "type": "number",
+     "description": "Distance from the axis, along the tooth axis, of the shoe corner; beyond the underside's root it tapers the underside (default: flat)",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "slot_closure",
+     "type": "string",
+     "description": "Close each slot with a chord across the shoe corners or an arc across the shoe roots (the space between the shoes then belongs to the air gap)",
+     "required": false,
+     "choices": [
+      "corners",
+      "shoe_roots"
+     ],
+     "default": "corners"
+    },
+    {
+     "name": "layer_divider_radius",
+     "type": "number",
+     "description": "Radius of an arc that splits each closed slot into two layers stacked radially",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "closure_max_segment",
+     "type": "number",
+     "description": "Discretization of the closure and layer-divider arcs",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
     }
    ],
    "femm_functions": [
@@ -1674,6 +1710,8 @@
    "constraints": [
     "Tooth bodies are parallel-sided; the shoe corner lies on the radial line through the end of the tip arc.",
     "Tips must not overlap (tip arc below the slot pitch) and the shoe must overhang the tooth body.",
+    "A tapered shoe's corner lies between the underside's root and the tip; a layer divider lies between the slot bottom and the shoe roots.",
+    "A side-by-side slot divider needs the corner closure and excludes a layer divider.",
     "The bore or yoke circle and its boundary are separate components."
    ]
   },
@@ -2040,7 +2078,7 @@
    "id": "tooth_coil_winding",
    "layer": 2,
    "title": "Multi-phase winding by the star of slots",
-   "description": "Assigns each coil (tooth coils, single or double layer) or slot (distributed single layer) to a phase and polarity from its EMF phasor using half-open phase belts, then places labels with the phase circuit and signed turns. A positive coil carries +turns in the slot clockwise of its tooth.",
+   "description": "Assigns each coil (tooth coils, single or double layer) or slot (distributed windings) to a phase and polarity from its EMF phasor using half-open phase belts, then places labels with the phase circuit and signed turns. A positive tooth coil carries +turns in the slot clockwise of its tooth; a distributed double layer puts each coil's go side in its slot at the label radius and its return side a coil pitch counterclockwise at the return-layer radius.",
    "physics": [
     "magnetics"
    ],
@@ -2078,7 +2116,7 @@
     {
      "name": "label_radius",
      "type": "number",
-     "description": "Radius of the slot labels",
+     "description": "Radius of the slot labels (the go sides' layer of a distributed double layer)",
      "required": true,
      "unit": "model length",
      "exclusive_minimum": 0
@@ -2108,7 +2146,7 @@
     {
      "name": "layout",
      "type": "string",
-     "description": "tooth_coils or slot_star (distributed single layer)",
+     "description": "tooth_coils or slot_star (distributed: single layer, or double with a coil pitch)",
      "required": false,
      "choices": [
       "tooth_coils",
@@ -2157,6 +2195,21 @@
      "required": false,
      "unit": "degrees",
      "exclusive_minimum": 0
+    },
+    {
+     "name": "coil_pitch",
+     "type": "integer",
+     "description": "Slots spanned by each coil of a distributed double layer",
+     "required": false,
+     "minimum": 1
+    },
+    {
+     "name": "return_layer_radius",
+     "type": "number",
+     "description": "Radius of the return sides' labels in a distributed double layer (layers stacked radially)",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
     }
    ],
    "femm_functions": [
@@ -2175,7 +2228,8 @@
    "stage": "excitation",
    "constraints": [
     "Refuses windings whose phases receive unequal numbers of coil sides, and even phase counts.",
-    "Double layers need slots divided by the stator's slot divider; single-layer tooth coils need an even slot count.",
+    "Tooth-coil double layers need slots divided by the stator's slot divider; single-layer tooth coils need an even slot count.",
+    "A distributed double layer needs a coil pitch and a return-layer radius, and slots split by a layer divider.",
     "Phase circuits and their currents are defined separately."
    ]
   },

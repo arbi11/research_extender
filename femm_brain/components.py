@@ -511,7 +511,8 @@ def _rotated(point, degrees):
 
 def slotted_stator(m, slot_count, slot_bottom_radius, tip_radius, tooth_width, tip_arc_length, shoe_axial_distance,
                    first_tooth_angle=0, close_slot_openings=True, slot_divider=False, tip_max_segment=1,
-                   slot_bottom_max_segment=5, group=0, slot_opening_group=None, iron_material=None, iron_mesh=None):
+                   slot_bottom_max_segment=5, group=0, slot_opening_group=None, iron_material=None, iron_mesh=None,
+                   shoe_corner_axial_distance=None, slot_closure="corners", layer_divider_radius=None, closure_max_segment=1):
     """Parallel-sided teeth with shoes, repeated around the axis.
 
     Each tooth rises from the slot-bottom circle to a shoe whose underside lies
@@ -519,9 +520,26 @@ def slotted_stator(m, slot_count, slot_bottom_radius, tip_radius, tooth_width, t
     radial line through the end of the tip arc, which spans ``tip_arc_length``
     on ``tip_radius``. Teeth point outward when the tip radius exceeds the
     slot-bottom radius (outer-rotor machines) and inward otherwise.
+
+    A tapered shoe: ``shoe_corner_axial_distance`` puts the shoe corner farther
+    along the tooth axis than the underside's root on the tooth side, so the
+    underside runs straight from the root to the corner (by default it is flat,
+    across the tooth axis). ``slot_closure`` closes each slot across its shoe
+    corners with a chord ("corners") or across the shoe roots with an arc
+    centred on the axis ("shoe_roots"), leaving the space between the shoes to
+    the air gap. ``layer_divider_radius`` splits each closed slot into two
+    layers stacked radially by an arc centred on the axis (double-layer windings
+    whose coil sides lie one above the other); ``slot_divider`` splits it into
+    two halves side by side.
     """
     if slot_divider and not close_slot_openings:
         raise ValueError("A slot divider needs closed slot openings")
+    if slot_closure not in ("corners", "shoe_roots"):
+        raise ValueError("The slot closure is corners or shoe_roots")
+    if slot_divider and (slot_closure != "corners" or layer_divider_radius is not None):
+        raise ValueError("A side-by-side slot divider closes the slot at its corners and excludes a layer divider")
+    if layer_divider_radius is not None and not close_slot_openings:
+        raise ValueError("A layer divider needs closed slots")
     pitch = 360 / slot_count
     half = tooth_width / 2
     tip_half = math.degrees(tip_arc_length / (2 * tip_radius))
@@ -532,28 +550,42 @@ def slotted_stator(m, slot_count, slot_bottom_radius, tip_radius, tooth_width, t
     if math.degrees(math.atan2(half, min(bottom_x, shoe_axial_distance))) >= pitch / 2:
         raise ValueError("Teeth overlap: reduce the tooth width")
     bottom_half = math.degrees(math.asin(half / slot_bottom_radius))
-    corner_y = shoe_axial_distance * math.tan(math.radians(tip_half))
-    corner_radius = math.hypot(shoe_axial_distance, corner_y)
+    corner_x = shoe_axial_distance if shoe_corner_axial_distance is None else shoe_corner_axial_distance
+    corner_y = corner_x * math.tan(math.radians(tip_half))
+    corner_radius = math.hypot(corner_x, corner_y)
     outward = tip_radius > slot_bottom_radius
     if corner_y <= half or not (min(slot_bottom_radius, tip_radius) < corner_radius < max(slot_bottom_radius, tip_radius)):
         raise ValueError("The shoe underside must lie between the slot bottom and the tips, and the shoe must overhang the tooth")
     if (shoe_axial_distance > bottom_x) != outward:
         raise ValueError("The shoe underside must be on the tip side of the slot bottom")
+    if shoe_corner_axial_distance is not None and (shoe_corner_axial_distance > shoe_axial_distance) != outward:
+        raise ValueError("A tapered shoe's corner lies between the underside's root and the tip")
+    side_radius = math.hypot(shoe_axial_distance, half)
+    if layer_divider_radius is not None and not (min(slot_bottom_radius, side_radius) < layer_divider_radius
+                                                 < max(slot_bottom_radius, side_radius)):
+        raise ValueError("The layer divider must lie between the slot bottom and the shoe roots")
     tip_point = (tip_radius * math.cos(math.radians(tip_half)), tip_radius * math.sin(math.radians(tip_half)))
     opening_group = group if slot_opening_group is None else slot_opening_group
+    profile = [("bottom", bottom_x, half), ("side", shoe_axial_distance, half), ("corner", corner_x, corner_y),
+               ("tip", tip_point[0], tip_point[1])]
+    if layer_divider_radius is not None:
+        profile.append(("layer", math.sqrt(layer_divider_radius ** 2 - half ** 2), half))
     # Points shared by neighbouring teeth are computed once, so a slot never
     # joins two copies of a corner that differ in the last bits.
     teeth = []
     for k in range(slot_count):
         angle = first_tooth_angle + k * pitch
-        teeth.append({(name, sign): _rotated((x, sign * y), angle) for sign in (-1, 1)
-                      for name, x, y in (("bottom", bottom_x, half), ("side", shoe_axial_distance, half),
-                                         ("corner", shoe_axial_distance, corner_y), ("tip", tip_point[0], tip_point[1]))})
+        teeth.append({(name, sign): _rotated((x, sign * y), angle) for sign in (-1, 1) for name, x, y in profile})
+    side_half = math.degrees(math.atan2(half, shoe_axial_distance))
     for k in range(slot_count):
         angle = first_tooth_angle + k * pitch
         tooth, following = teeth[k], teeth[(k + 1) % slot_count]
         for sign in (-1, 1):
-            m.segment(tooth["bottom", sign], tooth["side", sign], group=group)
+            if layer_divider_radius is None:
+                m.segment(tooth["bottom", sign], tooth["side", sign], group=group)
+            else:
+                m.segment(tooth["bottom", sign], tooth["layer", sign], group=group)
+                m.segment(tooth["layer", sign], tooth["side", sign], group=group)
             m.segment(tooth["side", sign], tooth["corner", sign], group=group)
             m.segment(tooth["corner", sign], tooth["tip", sign], group=group)
         m.arc(tooth["tip", -1], tooth["tip", 1], 2 * tip_half, tip_max_segment, group=group)
@@ -570,8 +602,13 @@ def slotted_stator(m, slot_count, slot_bottom_radius, tip_radius, tooth_width, t
             m.segment(middle, opening_middle, group=group)
         else:
             m.arc(start, end, pitch - 2 * bottom_half, slot_bottom_max_segment, group=group)
-            if close_slot_openings:
+            if close_slot_openings and slot_closure == "corners":
                 m.segment(corner, next_corner, group=opening_group)
+            elif close_slot_openings:
+                m.arc(tooth["side", 1], following["side", -1], pitch - 2 * side_half, closure_max_segment, group=opening_group)
+            if layer_divider_radius is not None:
+                layer_half = math.degrees(math.asin(half / layer_divider_radius))
+                m.arc(tooth["layer", 1], following["layer", -1], pitch - 2 * layer_half, closure_max_segment, group=group)
     if iron_material:
         m.label(*_rotated(((bottom_x + shoe_axial_distance) / 2, 0), first_tooth_angle), iron_material, mesh=iron_mesh, group=group)
 
@@ -791,22 +828,44 @@ def winding_layout(slot_count, pole_pairs, phases, layout="tooth_coils", layers=
 
 def tooth_coil_winding(m, slot_count, pole_pairs, turns, material, label_radius, phases=("A", "B", "C"), layers="single",
                        layout="tooth_coils", phase_sequence="forward", first_tooth_angle=0, mesh=None, group=0,
-                       layer_offset=None):
+                       layer_offset=None, coil_pitch=None, return_layer_radius=None):
     """Block labels carrying each slot's circuit and signed turns.
 
     A positive coil around tooth k carries +turns in the slot clockwise of the
     tooth and -turns in the slot counterclockwise of it. Double layers place one
     label in each half of a divided slot, ``layer_offset`` degrees from the slot
     centre (a quarter pitch by default; narrow slots need less).
+
+    A distributed double layer (``layout`` slot_star, ``layers`` double) has
+    one coil per slot: the coil's go side lies in slot k at ``label_radius``,
+    with the slot's star-of-slots phase and polarity, and its return side
+    ``coil_pitch`` slots counterclockwise at ``return_layer_radius`` with the
+    opposite sign, so the layers are stacked radially (a stator built with a
+    layer divider). A coil pitch below the pole pitch short-pitches the winding.
     """
     if not float(turns).is_integer() or turns <= 0:
         raise ValueError("Turns per coil side must be a positive integer")
     pitch = 360 / slot_count
-    assignment = winding_layout(slot_count, pole_pairs, list(phases), layout, layers, phase_sequence)
+    distributed_double = layout == "slot_star" and layers == "double"
+    if distributed_double:
+        if coil_pitch is None or return_layer_radius is None:
+            raise ValueError("A distributed double layer needs a coil pitch and a return-layer radius")
+        if not float(coil_pitch).is_integer() or not 0 < coil_pitch < slot_count:
+            raise ValueError("The coil pitch is a whole number of slots between 1 and the slot count less one")
+        if not return_layer_radius > 0 or math.isclose(return_layer_radius, label_radius):
+            raise ValueError("The return layer lies at its own positive radius")
+    elif coil_pitch is not None or return_layer_radius is not None:
+        raise ValueError("A coil pitch and a return-layer radius belong to a distributed double layer")
+    assignment = winding_layout(slot_count, pole_pairs, list(phases), layout, "single" if distributed_double else layers,
+                                phase_sequence)
     if layout == "slot_star":
         for k, (phase, polarity) in assignment.items():
             m.label(*_rotated((label_radius, 0), first_tooth_angle + (k + 0.5) * pitch), material, mesh=mesh,
                     circuit=phase, turns=int(polarity * turns), group=group)
+            if distributed_double:
+                back = (k + int(coil_pitch)) % slot_count
+                m.label(*_rotated((return_layer_radius, 0), first_tooth_angle + (back + 0.5) * pitch), material, mesh=mesh,
+                        circuit=phase, turns=int(-polarity * turns), group=group)
         return
     if layer_offset is not None and not 0 < layer_offset < pitch / 2:
         raise ValueError("A layer offset lies between the slot centre and half a pitch")

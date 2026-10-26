@@ -258,13 +258,20 @@ def _rotor_samples(assessor, case):
     """Rotor angle of each step from the case's rotate_group steps, keeping one even sweep of the declared span.
 
     With ``rotor_band`` the angle is instead the named sliding band's inner angle
-    (boundary property 10), which turns the rotor side without remeshing.
+    (boundary property 10), which turns the rotor side without remeshing. An
+    outer rotor lies outside the band (``rotor_band_side``: "outer"): the steps
+    then turn the inner side, the stator, and the rotor's angle relative to the
+    stator is minus the band's inner angle.
 
     The span is one electrical period, or half of one when the assessor declares
     half-wave symmetry (a pole pitch negates every linkage). ``step_prefix``
     keeps only the sweep's steps when others (an inductance step) follow it.
     """
     group, band = assessor["rotor_group"], assessor.get("rotor_band")
+    side = assessor.get("rotor_band_side", "inner")
+    if side not in ("inner", "outer") or (side == "outer" and band is None):
+        raise ValueError("rotor_band_side is inner or outer, and outer needs a rotor_band")
+    sign = -1 if side == "outer" else 1
     period = 360 / assessor["pole_pairs"]
     span = period / 2 if assessor.get("half_wave_symmetry") else period
     alpha, angles = 0.0, {}
@@ -273,7 +280,7 @@ def _rotor_samples(assessor, case):
             if band is None and change["function"] == "rotate_group" and change["group"] == group:
                 alpha += change["angle"]
             elif band is not None and change["function"] == "modifyboundprop" and change["name"] == band and change["property"] == 10:
-                alpha = change["value"]  # a sliding band's inner angle is absolute
+                alpha = sign * change["value"]  # a sliding band's inner angle is absolute
         if step["label"].startswith(assessor.get("step_prefix", "")):
             angles.setdefault(step["label"], alpha)
     samples = sorted((a, label) for label, a in angles.items() if -1e-9 <= a < span - 1e-9)
@@ -607,6 +614,15 @@ def _dq_linkage(assessor, case, raw, metrics, model):
     torque_scale). Values are averaged over the point's rotor positions, or
     taken at its first position.
 
+    With ``currents_from: circuits`` the dq currents come from the circuit
+    measurements (the currents the solve carried) rather than the step records,
+    so a control that changes a current parameter is followed.
+
+    ``power_factor`` is the internal power factor with resistance neglected
+    (the cosine between the current and the rotation voltage, from psi_d and
+    psi_q at the point's currents), as a 2D model gives it without end-winding
+    reactance.
+
     ``L_d`` and ``L_q`` are inductances from single-axis currents, as benchmarks
     separate them: (mean psi_d at the point - mean psi_d at ``reference_point``,
     usually no load) / i_d, and the same for q; they do not depend on the
@@ -631,6 +647,13 @@ def _dq_linkage(assessor, case, raw, metrics, model):
             psi = [assessor.get("flux_scale", 1) * raw[(step["label"], phases[k], 2)].real for k in range(3)]
             d = 2 / 3 * sum(psi[k] * math.cos(theta - 2 * math.pi * k / 3) for k in range(3))
             q = -2 / 3 * sum(psi[k] * math.sin(theta - 2 * math.pi * k / 3) for k in range(3))
+            if assessor.get("currents_from") == "circuits":
+                # The currents the solve carried (the circuit measurements), so a control that scales them is followed.
+                amps = [raw[(step["label"], phases[k], 0)].real for k in range(3)]
+                dq = dict(dq, id=2 / 3 * sum(amps[k] * math.cos(theta - 2 * math.pi * k / 3) for k in range(3)),
+                          iq=-2 / 3 * sum(amps[k] * math.sin(theta - 2 * math.pi * k / 3) for k in range(3)))
+            elif assessor.get("currents_from", "steps") != "steps":
+                raise ValueError("currents_from is steps or circuits")
             out.append((step, dq, d, q))
         return out
 
@@ -647,6 +670,13 @@ def _dq_linkage(assessor, case, raw, metrics, model):
             value = assessor["sequence_direction"] * assessor.get("torque_scale", 1) * raw[(step["label"], assessor["torque_measurement"], 0)].real
         elif quantity in ("L_d", "L_q"):
             value = d if quantity == "L_d" else q
+        elif quantity == "power_factor":
+            # The internal power factor with resistance neglected: the voltage is the rotation term, v_d = -w psi_q and
+            # v_q = w psi_d, so cos phi = (psi_d i_q - psi_q i_d) / (|psi| |i|), positive when the machine motors.
+            current = math.hypot(dq["id"], dq["iq"])
+            if not current:
+                raise ValueError("A power factor needs a nonzero current")
+            value = (d * dq["iq"] - q * dq["id"]) / (math.hypot(d, q) * current)
         else:
             raise ValueError("Unknown dq quantity: " + str(quantity))
         rows.append({"step": step["label"], "electrical_angle_deg": dq["electrical_angle_deg"], "psi_d": d, "psi_q": q, "value": value})
