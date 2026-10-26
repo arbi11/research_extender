@@ -211,11 +211,16 @@ def audit(record, registry_path, catalog="reproductions", max_solves=None):
     registry = json.loads(Path(registry_path).read_text())["failures"] if Path(registry_path).exists() else []
     reviewed = {(f["case_id"], level, m["metric"]): (f, m) for f in registry for level in f["levels"] for m in f["metrics"]}
     entries = {c["case_id"]: c for c in record.get("cases", [])}
-    observed_failures, accepted = set(), []
+    observed_failures, accepted, pending = set(), [], []
     for case in cases:
         identifier = case["id"]
         entry = entries.get(identifier)
         if entry is None or entry.get("status") == "not_run":
+            # A paper case committed at its freeze, before its first native solve, claims no result yet: its evidence
+            # is due with its outcome (status replicated, partial or failed), and then it may not be missing.
+            if catalog == "papers" and case.get("status") == "frozen":
+                pending.append(identifier)
+                continue
             problems.append(f"{identifier}: missing from the record.")
             continue
         if entry.get("case_binding_sha256") != case_binding_digest(case):
@@ -273,6 +278,7 @@ def audit(record, registry_path, catalog="reproductions", max_solves=None):
     resolved = sorted(key for key in set(reviewed) - observed_failures if key[0] in in_scope)
     problems += [f"{'/'.join(key)}: reviewed failure no longer fails; review and remove it." for key in resolved]
     return {"status": "passed" if not problems else "failed", "problems": problems, "accepted_reviewed_failures": accepted,
+            **({"pending_first_run": pending} if pending else {}),
             "note": "A passing audit means the record is complete and current and every failure is a reviewed finding within its "
                     "regression bound, not that all published targets passed."}
 

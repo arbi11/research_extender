@@ -1,0 +1,4425 @@
+{
+ "schema_version": 1,
+ "id": "przybylski-2022-srm-12-8",
+ "set": "held_out",
+ "status": "frozen",
+ "skill_version": "713906e",
+ "title": "Calculations and measurements of torque and inductance of switched reluctance motors with laminated and composite magnetic cores",
+ "source": {
+  "citation": "M. Przybylski, Archives of Electrical Engineering 71(1), 2022, pp. 125-138",
+  "doi": "10.24425/aee.2022.140201",
+  "url": "https://journals.pan.pl//Content/122620/PDF/art08_corr.pdf",
+  "access": "open access",
+  "licence": "CC BY-NC-ND 4.0",
+  "pdf_sha256": "2cf526dffedb523eede6fa771f02d48542c350d0043e4cccf8aae1d36b992fd2",
+  "pages": 14,
+  "accessed": "2026-10-26",
+  "related": [
+   {
+    "citation": "M. Przybylski, Modelling and analysis of the low-power 3-phase switched reluctance motor, Archives of Electrical Engineering 68(2), 2019, pp. 443-454",
+    "doi": "10.24425/aee.2019.128279",
+    "url": "https://journals.pan.pl/Content/111912?format_id=1",
+    "use": "The original (parallel-wound) motor's analysis and dimensions. Not downloaded: the user did not approve it, so nothing is taken from it."
+   }
+  ]
+ },
+ "machine": {
+  "family": "srm",
+  "topology": "inner rotor 12/8 switched reluctance motor (a modified Emerson Electric H55BMBJL-1820 washer motor): tapered salient stator poles with free-standing coil blocks, parallel-sided salient rotor poles",
+  "problem": "planar",
+  "stator_poles": 12,
+  "rotor_poles": 8,
+  "phases": 3,
+  "symmetry": "Full cross-section with A = 0 on the stator's outer circle, as the authors' model in Fig. 1(a). Phase A alone is excited: its four coils (poles at 0, 90, 180 and 270 degrees) in series with alternating polarity. The rotor turns by remeshing."
+ },
+ "components_map": [
+  {
+   "part": "stator: twelve tapered salient poles, slot bottoms on an arc",
+   "component": "salient_poles"
+  },
+  {
+   "part": "rotor: eight parallel-sided salient poles, slot bottoms on an arc",
+   "component": "salient_poles"
+  },
+  {
+   "part": "24 quadrilateral coil blocks drawn free in the slots",
+   "component": "entity_pattern"
+  },
+  {
+   "part": "three phases of four series coils, 172 turns each, polarities as Fig. 1(a)",
+   "component": "salient_pole_winding"
+  },
+  {
+   "part": "outer boundary and shaft",
+   "component": "circle, fixed_potential_boundary"
+  },
+  {
+   "part": "air in the slots and the gap",
+   "component": "block_label"
+  }
+ ],
+ "article": {
+  "parameters": {
+   "stator_poles": {
+    "value": 12,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Number of stator poles 12 12",
+    "location": "Table 1, p. 128"
+   },
+   "rotor_poles": {
+    "value": 8,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Number of rotor poles 8 8",
+    "location": "Table 1, p. 128"
+   },
+   "phases": {
+    "value": 3,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Number of phases 3 3",
+    "location": "Table 1, p. 128"
+   },
+   "stator_outer_diameter_mm": {
+    "value": 139.5,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "External stator diameter 139.5 139.5 mm",
+    "location": "Table 1, p. 128"
+   },
+   "rotor_outer_diameter_mm": {
+    "value": 83,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "External rotor diameter 83 83 mm",
+    "location": "Table 1, p. 128",
+    "note": "Fig. 1(a) puts two rotor-face nodes at 41.49 mm: the rotor's diameter, so the stator faces lie at 41.9 mm."
+   },
+   "air_gap_mm": {
+    "value": 0.4,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Air gap length 0.4 0.25 mm",
+    "location": "Table 1, p. 128",
+    "note": "Fig. 1(a): stator-face nodes at 41.95 mm (8 nodes, spread 0.11 mm), 0.46 mm outside the rotor."
+   },
+   "core_length_mm": {
+    "value": 47.3,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Axial length of magnetic core 47.3 46.6 mm",
+    "location": "Table 1, p. 128"
+   },
+   "turns_per_coil": {
+    "value": 172,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Coil turns 172 134",
+    "location": "Table 1, p. 128",
+    "note": "Turns of each pole's coil; a phase is four coils in series (gap 'winding'): Table 2's current linkage is 172 times the phase current."
+   },
+   "stator_pole_arc_table_deg": {
+    "value": 15.5,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "Stator pole angle 15.5 15.5",
+    "location": "Table 1, p. 128",
+    "note": "Recorded; the model uses Fig. 1(a)'s 15.0 degrees (stator_pole_arc_deg). Control table-pole-arcs builds 15.5."
+   },
+   "rotor_pole_arc_table_deg": {
+    "value": 16,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "Rotor pole angle 16 16",
+    "location": "Table 1, p. 128",
+    "note": "Recorded; the model uses Fig. 1(a)'s parallel 10.96 mm poles (15.2 degrees). Control table-pole-arcs builds 16."
+   },
+   "phase_resistance_ohm": {
+    "value": 8.4,
+    "unit": "ohm",
+    "provenance": "quoted",
+    "quote": "Phase resistance 8.4 ± 0.3 5.7 ± 0.3 Ω",
+    "location": "Table 1, p. 128",
+    "note": "Not used by a static solve. Checks the series winding: 688 turns of 0.56 mm copper with a 0.14-0.15 m mean turn give 6.7-7.2 ohm at 20 C (8.2-8.8 ohm near 75 C); 172 turns in all would give under 2 ohm."
+   },
+   "wire_diameter_mm": {
+    "value": 0.56,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Wire diameter 0.56 0.60 mm",
+    "location": "Table 1, p. 128",
+    "note": "Not used (coils have unit permeability)."
+   },
+   "inductance_current_A": {
+    "value": 0.7,
+    "unit": "A",
+    "provenance": "quoted",
+    "quote": "Emerson Electric motor were executed at the amplitude of currents equal to … = 0.7 A",
+    "location": "Section 3.3, p. 133",
+    "note": "The paper's inductance simulations: flux linkage over current at this amplitude, with the amplitude (AC) curve."
+   },
+   "stator_pole_arc_deg": {
+    "value": 15.012,
+    "unit": "deg",
+    "provenance": "figure",
+    "figure": "Fig. 1(a), p. 128: a rendering of the authors' FEMM model of the MEE motor, with FEMM's node markers",
+    "scale_reference": "Stator outer diameter 139.5 mm (Table 1): the fitted outer circle, 441.996 px radius, residual 0.47 px; an axis-aligned ellipse fit gives x and y scales within 0.08%. The 83 mm rotor (41.49 mm from two rotor-face nodes) checks the scale to 0.03%. 6.337 px per mm, so a node marker locates a node within about 0.08 mm.",
+    "uncertainty": 0.2,
+    "note": "Twice the half-angle of the stator-face corner nodes (8 nodes, mean 7.506, spread 0.166 degrees). Table 1 states 15.5 (control table-pole-arcs); pole-side line fits give 15.07 at the bore."
+   },
+   "stator_root_radius_mm": {
+    "value": 56.622,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1(a), p. 128: a rendering of the authors' FEMM model of the MEE motor, with FEMM's node markers",
+    "scale_reference": "Stator outer diameter 139.5 mm (Table 1): the fitted outer circle, 441.996 px radius, residual 0.47 px; an axis-aligned ellipse fit gives x and y scales within 0.08%. The 83 mm rotor (41.49 mm from two rotor-face nodes) checks the scale to 0.03%. 6.337 px per mm, so a node marker locates a node within about 0.08 mm.",
+    "uncertainty": 0.1,
+    "note": "Slot bottoms: arcs about the axis, through the pole-root nodes (24 nodes, mean 56.622, spread 0.108 mm); a blue circle fit gives 56.65 mm."
+   },
+   "stator_root_half_width_mm": {
+    "value": 6.286,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1(a), p. 128: a rendering of the authors' FEMM model of the MEE motor, with FEMM's node markers",
+    "scale_reference": "Stator outer diameter 139.5 mm (Table 1): the fitted outer circle, 441.996 px radius, residual 0.47 px; an axis-aligned ellipse fit gives x and y scales within 0.08%. The 83 mm rotor (41.49 mm from two rotor-face nodes) checks the scale to 0.03%. 6.337 px per mm, so a node marker locates a node within about 0.08 mm.",
+    "uncertainty": 0.1,
+    "note": "Half the pole width where the sides meet the slot bottom (24 nodes, mean 6.286, spread 0.130 mm). The poles taper: lines fitted to the 24 sides of the axis-aligned poles have slopes 0.0544-0.0551 against the 0.0553 implied, residual 0.03-0.05 mm."
+   },
+   "rotor_pole_width_mm": {
+    "value": 10.956,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1(a), p. 128: a rendering of the authors' FEMM model of the MEE motor, with FEMM's node markers",
+    "scale_reference": "Stator outer diameter 139.5 mm (Table 1): the fitted outer circle, 441.996 px radius, residual 0.47 px; an axis-aligned ellipse fit gives x and y scales within 0.08%. The 83 mm rotor (41.49 mm from two rotor-face nodes) checks the scale to 0.03%. 6.337 px per mm, so a node marker locates a node within about 0.08 mm.",
+    "uncertainty": 0.2,
+    "note": "Parallel-sided rotor poles: twice the half-width at the root nodes (16 nodes, mean 5.478, spread 0.228 mm); line fits to the sides of six poles give 5.29-5.59 mm half-widths with slopes under 0.01. Table 1's 16 degrees would make them 11.55 mm (control table-pole-arcs)."
+   },
+   "rotor_root_radius_mm": {
+    "value": 30.514,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1(a), p. 128: a rendering of the authors' FEMM model of the MEE motor, with FEMM's node markers",
+    "scale_reference": "Stator outer diameter 139.5 mm (Table 1): the fitted outer circle, 441.996 px radius, residual 0.47 px; an axis-aligned ellipse fit gives x and y scales within 0.08%. The 83 mm rotor (41.49 mm from two rotor-face nodes) checks the scale to 0.03%. 6.337 px per mm, so a node marker locates a node within about 0.08 mm.",
+    "uncertainty": 0.1,
+    "note": "Rotor slot bottoms: arcs about the axis through the root nodes (16 nodes, mean 30.514, spread 0.131 mm); a blue circle fit gives 30.49 mm."
+   },
+   "shaft_diameter_mm": {
+    "value": 16.885,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1(a), p. 128: a rendering of the authors' FEMM model of the MEE motor, with FEMM's node markers",
+    "scale_reference": "Stator outer diameter 139.5 mm (Table 1): the fitted outer circle, 441.996 px radius, residual 0.47 px; an axis-aligned ellipse fit gives x and y scales within 0.08%. The 83 mm rotor (41.49 mm from two rotor-face nodes) checks the scale to 0.03%. 6.337 px per mm, so a node marker locates a node within about 0.08 mm.",
+    "uncertainty": 0.1,
+    "note": "The circle drawn inside the rotor (nodes at 8.443 mm, a circle fit 8.47 mm). Not stated in the paper."
+   },
+   "coil_outline": {
+    "value": [
+     [
+      "segment",
+      42.4046,
+      6.8226,
+      54.5389,
+      7.6271
+     ],
+     [
+      "segment",
+      54.5389,
+      7.6271,
+      53.9044,
+      12.3368
+     ],
+     [
+      "segment",
+      53.9044,
+      12.3368,
+      41.5988,
+      10.8063
+     ],
+     [
+      "segment",
+      41.5988,
+      10.8063,
+      42.4046,
+      6.8226
+     ],
+     [
+      "segment",
+      42.4046,
+      -6.8226,
+      54.5389,
+      -7.6271
+     ],
+     [
+      "segment",
+      54.5389,
+      -7.6271,
+      53.9044,
+      -12.3368
+     ],
+     [
+      "segment",
+      53.9044,
+      -12.3368,
+      41.5988,
+      -10.8063
+     ],
+     [
+      "segment",
+      41.5988,
+      -10.8063,
+      42.4046,
+      -6.8226
+     ]
+    ],
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1(a), p. 128: a rendering of the authors' FEMM model of the MEE motor, with FEMM's node markers",
+    "scale_reference": "Stator outer diameter 139.5 mm (Table 1): the fitted outer circle, 441.996 px radius, residual 0.47 px; an axis-aligned ellipse fit gives x and y scales within 0.08%. The 83 mm rotor (41.49 mm from two rotor-face nodes) checks the scale to 0.03%. 6.337 px per mm, so a node marker locates a node within about 0.08 mm.",
+    "uncertainty": 0.15,
+    "note": "The two coil blocks of the pole at 0 degrees (counterclockwise side, then its mirror image), drawn free in the slot as in Fig. 1(a): corners at radius and offset from the slot centre line, averaged over 24 coils: inner bottom 42.950 mm, 5.860 deg; inner top 55.070, 7.039; outer top 55.298, 2.109; outer bottom 42.980, 0.438 (two markers merged on the centre line, each 0.328 mm from it). Node spreads 0.12-0.16 mm in radius and 0.24-0.31 degrees. Coils have unit permeability; their outline only places the current."
+   },
+   "steel_bh": {
+    "value": [
+     [
+      0.1,
+      169.9
+     ],
+     [
+      0.15,
+      186.3
+     ],
+     [
+      0.2,
+      202.0
+     ],
+     [
+      0.3,
+      233.7
+     ],
+     [
+      0.4,
+      260.1
+     ],
+     [
+      0.5,
+      283.5
+     ],
+     [
+      0.6,
+      307.6
+     ],
+     [
+      0.7,
+      336.5
+     ],
+     [
+      0.8,
+      367.9
+     ],
+     [
+      0.9,
+      414.1
+     ],
+     [
+      1.0,
+      474.6
+     ],
+     [
+      1.1,
+      572.5
+     ],
+     [
+      1.2,
+      719.5
+     ],
+     [
+      1.3,
+      880.0
+     ],
+     [
+      1.35,
+      997.8
+     ],
+     [
+      1.4,
+      1150.0
+     ],
+     [
+      1.45,
+      1353.9
+     ],
+     [
+      1.5,
+      1665.2
+     ],
+     [
+      1.55,
+      2151.6
+     ],
+     [
+      1.58,
+      2587.8
+     ]
+    ],
+    "unit": "[T, A/m]",
+    "provenance": "figure",
+    "figure": "Fig. 6, p. 131: magnetization curves of the electrical steel, 1 - AC 50 Hz (black), 2 - DC (grey)",
+    "scale_reference": "Gridlines at 0-4000 A/m and 0-1.6 T, least squares over all of them: misfit 4.2 A/m and 0.001 T; 8.38 A/m and 0.0042 T per pixel",
+    "uncertainty": 10,
+    "note": "Fig. 6 curve 2 (DC), which the paper used for torque: H at fixed B, local quadratic fits to the curve's pixel track (largest spread between fit windows 8.9 A/m). Uncertainty about 10 A/m (one pixel) below 1.2 T; above it the AC and DC curves coincide within a pixel or two and one track serves both, within 0.01 T. The reading's permeability at 300 A/m is 1508 against the quoted 1600 (control steel-quoted-permeability). FEMM extends the curve beyond 1.58 T itself; the paper's plots show at most 1.4 T in the motor."
+   },
+   "steel_bh_ac": {
+    "value": [
+     [
+      0.1,
+      216.1
+     ],
+     [
+      0.15,
+      239.4
+     ],
+     [
+      0.2,
+      255.8
+     ],
+     [
+      0.3,
+      287.3
+     ],
+     [
+      0.4,
+      311.1
+     ],
+     [
+      0.5,
+      337.8
+     ],
+     [
+      0.6,
+      364.5
+     ],
+     [
+      0.7,
+      395.7
+     ],
+     [
+      0.8,
+      434.9
+     ],
+     [
+      0.9,
+      478.7
+     ],
+     [
+      1.0,
+      536.3
+     ],
+     [
+      1.1,
+      611.2
+     ],
+     [
+      1.2,
+      718.9
+     ],
+     [
+      1.3,
+      880.0
+     ],
+     [
+      1.35,
+      997.8
+     ],
+     [
+      1.4,
+      1150.0
+     ],
+     [
+      1.45,
+      1353.9
+     ],
+     [
+      1.5,
+      1665.2
+     ],
+     [
+      1.55,
+      2151.6
+     ],
+     [
+      1.58,
+      2587.8
+     ]
+    ],
+    "unit": "[T, A/m]",
+    "provenance": "figure",
+    "figure": "Fig. 6, p. 131: magnetization curves of the electrical steel, 1 - AC 50 Hz (black), 2 - DC (grey)",
+    "scale_reference": "Gridlines at 0-4000 A/m and 0-1.6 T, least squares over all of them: misfit 4.2 A/m and 0.001 T; 8.38 A/m and 0.0042 T per pixel",
+    "uncertainty": 10,
+    "note": "Fig. 6 curve 1 (AC 50 Hz, amplitudes), which the paper used for its inductance simulations; the variant ac-curve builds the steel with it. Largest fit spread 8.9 A/m; permeability at 300 A/m 937 against the quoted 1000. Recorded here for its provenance; the variant carries the same values."
+   },
+   "stacking_factor": {
+    "value": 1.0,
+    "unit": "fraction",
+    "provenance": "assumed",
+    "reason": "The paper names no lamination fill and measured the curves on toroidal samples cut from the motor's own sheet; FEMM's default fill of 1 applies the measured curve to the whole core, as the authors' FEMM model most likely did.",
+    "sensitivity_control": "stacking-0p95"
+   },
+   "shaft_material": {
+    "value": "Steel",
+    "unit": "material",
+    "provenance": "assumed",
+    "reason": "Fig. 1(a) fills the shaft with the cores' grey; the paper names no shaft material. Taken as the core steel; control shaft-air makes it non-magnetic. The rotor core carries 0.25-0.7 T (Section 3.2), so the shaft carries little flux.",
+    "sensitivity_control": "shaft-air"
+   },
+   "coil_label_axial_mm": {
+    "value": 48.2739,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1(a), p. 128: a rendering of the authors' FEMM model of the MEE motor, with FEMM's node markers",
+    "scale_reference": "Stator outer diameter 139.5 mm (Table 1): the fitted outer circle, 441.996 px radius, residual 0.47 px; an axis-aligned ellipse fit gives x and y scales within 0.08%. The 83 mm rotor (41.49 mm from two rotor-face nodes) checks the scale to 0.03%. 6.337 px per mm, so a node marker locates a node within about 0.08 mm.",
+    "uncertainty": 0.1,
+    "note": "Centroid of the coil block (coil_outline) along the pole axis: where each coil's label sits."
+   },
+   "coil_label_offset_mm": {
+    "value": 9.4223,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 1(a), p. 128: a rendering of the authors' FEMM model of the MEE motor, with FEMM's node markers",
+    "scale_reference": "Stator outer diameter 139.5 mm (Table 1): the fitted outer circle, 441.996 px radius, residual 0.47 px; an axis-aligned ellipse fit gives x and y scales within 0.08%. The 83 mm rotor (41.49 mm from two rotor-face nodes) checks the scale to 0.03%. 6.337 px per mm, so a node marker locates a node within about 0.08 mm.",
+    "uncertainty": 0.1,
+    "note": "Centroid of the coil block across the pole axis."
+   },
+   "face_max_segment_deg": {
+    "value": 0.25,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Pole-face arcs in 0.18 mm pieces, about two element layers across the 0.4 mm gap (the stress-tensor torque needs them)."
+   },
+   "root_max_segment_deg": {
+    "value": 1.0,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Slot-bottom arcs."
+   },
+   "outer_max_segment_deg": {
+    "value": 2.0,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Outer boundary circle."
+   },
+   "shaft_max_segment_deg": {
+    "value": 5.0,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Shaft circle."
+   },
+   "air_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Air in the slots and the gap; refined near the face arcs."
+   },
+   "stator_iron_mesh_mm": {
+    "value": 1.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Stator iron."
+   },
+   "rotor_iron_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Rotor iron."
+   },
+   "coil_mesh_mm": {
+    "value": 1.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Coil blocks."
+   },
+   "shaft_mesh_mm": {
+    "value": 2.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Shaft."
+   },
+   "stator_outer_radius_mm": {
+    "value": 69.75,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "stator_outer_diameter_mm/2",
+    "inputs": [
+     "stator_outer_diameter_mm"
+    ]
+   },
+   "rotor_radius_mm": {
+    "value": 41.5,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "rotor_outer_diameter_mm/2",
+    "inputs": [
+     "rotor_outer_diameter_mm"
+    ]
+   },
+   "stator_face_radius_mm": {
+    "value": 41.9,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "rotor_outer_diameter_mm/2+air_gap_mm",
+    "inputs": [
+     "air_gap_mm",
+     "rotor_outer_diameter_mm"
+    ]
+   },
+   "shaft_radius_mm": {
+    "value": 8.4425,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "shaft_diameter_mm/2",
+    "inputs": [
+     "shaft_diameter_mm"
+    ]
+   },
+   "stator_root_width_mm": {
+    "value": 12.572,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "2*stator_root_half_width_mm",
+    "inputs": [
+     "stator_root_half_width_mm"
+    ]
+   },
+   "rotor_pole_arc_deg": {
+    "value": 15.1703599757702,
+    "unit": "deg",
+    "provenance": "derived",
+    "expression": "2*degrees(atan2(rotor_pole_width_mm/2, sqrt((rotor_outer_diameter_mm/2)**2-(rotor_pole_width_mm/2)**2)))",
+    "inputs": [
+     "rotor_outer_diameter_mm",
+     "rotor_pole_width_mm"
+    ],
+    "note": "The face arc of parallel-sided rotor poles of the drawn width."
+   },
+   "air_label_radius_mm": {
+    "value": 49.261,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "(stator_root_radius_mm+rotor_outer_diameter_mm/2+air_gap_mm)/2",
+    "inputs": [
+     "air_gap_mm",
+     "rotor_outer_diameter_mm",
+     "stator_root_radius_mm"
+    ],
+    "note": "Air label on a slot centre line, halfway between bore and slot bottom (1.2 mm from either coil)."
+   },
+   "current_linkage_check_A": {
+    "value": 103.2,
+    "unit": "A",
+    "provenance": "derived",
+    "expression": "turns_per_coil*0.6",
+    "inputs": [
+     "turns_per_coil"
+    ],
+    "note": "Table 2 lists 103 A of current linkage at 0.6 A: 172 turns per pole."
+   }
+  },
+  "assembly": {
+   "problem": {
+    "physics": "magnetics",
+    "units": "millimeters",
+    "type": "planar",
+    "frequency": 0,
+    "depth": "$core_length_mm"
+   },
+   "steps": [
+    {
+     "use": "material",
+     "name": "Air"
+    },
+    {
+     "use": "library_material",
+     "name": "Copper",
+     "library": "matlib.dat"
+    },
+    {
+     "use": "material",
+     "name": "Steel",
+     "values": {
+      "LamFill": "$stacking_factor",
+      "LamType": 0
+     },
+     "curve": "$steel_bh"
+    },
+    {
+     "use": "circuit",
+     "name": "A",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "B",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "C",
+     "current": 0
+    },
+    {
+     "use": "fixed_potential_boundary",
+     "name": "A=0",
+     "value": 0
+    },
+    {
+     "use": "salient_poles",
+     "pole_count": "$stator_poles",
+     "tip_radius": "$stator_face_radius_mm",
+     "root_radius": "$stator_root_radius_mm",
+     "pole_arc": "$stator_pole_arc_deg",
+     "root_width": "$stator_root_width_mm",
+     "tip_max_segment": "$face_max_segment_deg",
+     "root_max_segment": "$root_max_segment_deg",
+     "iron_material": "Steel",
+     "iron_mesh": "$stator_iron_mesh_mm"
+    },
+    {
+     "use": "circle",
+     "radius": "$stator_outer_radius_mm",
+     "max_segment": "$outer_max_segment_deg",
+     "boundary": "A=0"
+    },
+    {
+     "use": "entity_pattern",
+     "entities": "$coil_outline",
+     "copies": "$stator_poles",
+     "angle_step": "=360/stator_poles",
+     "snap": 1e-06
+    },
+    {
+     "use": "salient_pole_winding",
+     "pole_count": "$stator_poles",
+     "phases": [
+      "A",
+      "C",
+      "B"
+     ],
+     "turns": "$turns_per_coil",
+     "material": "Copper",
+     "label_axial": "$coil_label_axial_mm",
+     "label_offset": "$coil_label_offset_mm",
+     "mesh": "$coil_mesh_mm",
+     "polarities": [
+      -1,
+      1,
+      1,
+      1,
+      -1,
+      -1,
+      -1,
+      1,
+      1,
+      1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=air_label_radius_mm*cos(radians(180/stator_poles))",
+      "=air_label_radius_mm*sin(radians(180/stator_poles))"
+     ],
+     "material": "Air",
+     "mesh": "$air_mesh_mm"
+    },
+    {
+     "use": "salient_poles",
+     "pole_count": "$rotor_poles",
+     "tip_radius": "$rotor_radius_mm",
+     "root_radius": "$rotor_root_radius_mm",
+     "pole_arc": "$rotor_pole_arc_deg",
+     "first_pole_angle": "=-180/rotor_poles",
+     "tip_max_segment": "$face_max_segment_deg",
+     "root_max_segment": "$root_max_segment_deg",
+     "group": 1,
+     "iron_material": "Steel",
+     "iron_mesh": "$rotor_iron_mesh_mm"
+    },
+    {
+     "use": "circle",
+     "radius": "$shaft_radius_mm",
+     "max_segment": "$shaft_max_segment_deg",
+     "group": 1
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      0
+     ],
+     "material": "$shaft_material",
+     "mesh": "$shaft_mesh_mm",
+     "group": 1
+    }
+   ]
+  }
+ },
+ "gaps": [
+  {
+   "item": "dimensions beyond Table 1 (pole roots, yoke, rotor roots, shaft, pole taper, coil outline)",
+   "affects": "every target",
+   "decision": "figure",
+   "note": "The 2019 companion paper is unavailable (not approved for download). Fig. 1(a) is a rendering of the authors' FEMM model with its node markers; scaled by the 139.5 mm stator and checked by the 83 mm rotor, the markers locate nodes within about 0.08 mm."
+  },
+  {
+   "item": "pole arcs: Table 1 states 15.5 and 16 degrees; Fig. 1(a) shows 15.0 and 15.2",
+   "affects": "torque plateau and the inductance's slope",
+   "decision": "figure",
+   "note": "The model is built as Fig. 1(a) shows, since the targets are that model's results (as in hamouda-2019-srm-8-6); control table-pole-arcs builds Table 1's angles."
+  },
+  {
+   "item": "steel magnetization curves",
+   "affects": "every target, most at low current where the steel's initial permeability matters",
+   "decision": "figure",
+   "note": "Fig. 6 digitized (DC for torque, AC amplitude for inductance, as Section 2 and 3.3 state). The readings' permeability at 300 A/m is 6% below the quoted 1600 and 1000; control steel-quoted-permeability scales H by 0.94."
+  },
+  {
+   "item": "lamination stacking factor",
+   "affects": "iron reluctance",
+   "decision": "assumed",
+   "note": "1 (FEMM's default); control stacking-0p95."
+  },
+  {
+   "item": "shaft material",
+   "affects": "rotor yoke flux, slightly",
+   "decision": "assumed",
+   "note": "The core steel, as Fig. 1(a)'s grey suggests; control shaft-air."
+  },
+  {
+   "item": "winding connection after the rewiring",
+   "affects": "every flux linkage, inductance and torque",
+   "decision": "resolved",
+   "note": "Four 172-turn coils in series per phase: the text says the coils were changed from parallel to serial, Table 2's current linkage is 172 times the phase current, and the 8.4 ohm resistance needs about 688 turns of the 0.56 mm wire."
+  },
+  {
+   "item": "angle convention",
+   "affects": "the sweep and its statistics",
+   "decision": "resolved",
+   "note": "0 degrees aligned, 22.5 unaligned: Fig. 9's inductance is largest at 0 and Fig. 11's torque falls to zero at both ends."
+  },
+  {
+   "item": "which build the inductance targets come from",
+   "affects": "inductance targets",
+   "decision": "resolved",
+   "note": "The AC amplitude curve at a 0.7 A amplitude (Section 3.3); the variant ac-curve is that build. Torque uses the DC curve (Section 2)."
+  },
+  {
+   "item": "the paper's mesh",
+   "affects": "numerical agreement",
+   "decision": "assumed",
+   "note": "About 100,000 elements (Section 3.2); the model's own mesh plus control mesh-0p6."
+  },
+  {
+   "item": "the prototype SMC motor (Table 1 and 2's second column, Fig. 1(b))",
+   "affects": "half of the paper's results",
+   "decision": "out_of_scope",
+   "note": "A different machine: round-bottomed rotor slots and stator outlines no component draws, two further Somaloy curves (Fig. 4, 5). Left for a separate case."
+  },
+  {
+   "item": "end windings, eddy currents, measurement",
+   "affects": "measured comparators",
+   "decision": "out_of_scope",
+   "note": "Measured inductances and torques are comparators, as the paper's own 2D FEMM differs from them by 5-40%."
+  }
+ ],
+ "steps": [
+  {
+   "label": "u06",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "u07",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "u10",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "u16",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t22.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.25
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t22.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t22.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t22.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t21.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t21.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t21.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t21.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t21.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t21.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t21.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t21.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t20.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t20.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t20.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t20.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t20.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t20.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t20.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t20.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t19.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t19.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t19.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t19.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t19.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t19.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t19.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t19.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t18.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t18.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t18.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t18.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t18.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t18.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t18.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t18.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t17.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t17.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t17.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t17.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t17.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t17.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t17.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t17.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t16.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t16.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t16.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t16.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t16.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t16.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t16.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t16.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t15.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t15.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t15.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t15.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t15.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t15.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t15.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t15.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t14.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t14.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t14.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t14.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t14.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t14.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t14.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t14.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t13.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t13.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t13.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t13.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t13.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t13.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t13.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t13.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t12.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t12.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t12.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t12.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t12.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t12.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t12.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t12.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t11.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t11.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t11.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t11.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t11.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t11.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t11.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t11.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t10.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t10.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t10.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t10.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t10.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t10.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t10.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t10.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t09.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t09.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t09.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t09.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t09.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t09.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t09.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t09.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t08.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t08.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t08.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t08.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t08.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t08.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t08.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t08.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t07.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t07.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t07.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t07.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t07.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t07.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t07.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t07.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t06.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t06.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t06.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t06.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t06.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t06.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t06.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t06.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t05.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t05.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t05.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t05.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t05.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t05.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t05.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t05.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t04.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t04.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t04.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t04.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t04.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t04.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t04.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t04.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t03.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t03.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t03.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t03.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t03.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t03.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t03.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t03.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t02.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t02.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t02.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t02.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t02.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t02.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t02.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t02.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t01.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t01.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t01.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t01.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t01.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t01.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t01.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t01.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t00.75",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t00.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t00.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t00.75",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "m06_t00.25",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.5
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "m07_t00.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "m10_t00.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "m16_t00.25",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  },
+  {
+   "label": "a06",
+   "modify": [
+    {
+     "function": "rotate_group",
+     "group": 1,
+     "angle": 0.25
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.6
+    }
+   ]
+  },
+  {
+   "label": "a07",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0.7
+    }
+   ]
+  },
+  {
+   "label": "a10",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "label": "a16",
+   "modify": [
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 1.6
+    }
+   ]
+  }
+ ],
+ "engine": {
+  "solves_per_process": 25
+ },
+ "measurements": [
+  {
+   "id": "phA",
+   "op": "circuit",
+   "name": "A"
+  },
+  {
+   "id": "phB",
+   "op": "circuit",
+   "name": "B"
+  },
+  {
+   "id": "phC",
+   "op": "circuit",
+   "name": "C"
+  },
+  {
+   "id": "torque",
+   "op": "block_integral",
+   "select": {
+    "group": 1
+   },
+   "type": 22
+  }
+ ],
+ "metrics": [
+  {
+   "name": "flux_A_Wb",
+   "value": [
+    "phA",
+    2
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "flux_B_Wb",
+   "value": [
+    "phB",
+    2
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "flux_C_Wb",
+   "value": [
+    "phC",
+    2
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "inductance_A_H",
+   "value": [
+    "phA",
+    2
+   ],
+   "divide": [
+    "phA",
+    0
+   ],
+   "unit": "H"
+  },
+  {
+   "name": "torque_Nm",
+   "value": [
+    "torque",
+    0
+   ],
+   "unit": "N*m"
+  }
+ ],
+ "variants": [
+  {
+   "id": "ac-curve",
+   "parameters": {
+    "steel_bh": [
+     [
+      0.1,
+      216.1
+     ],
+     [
+      0.15,
+      239.4
+     ],
+     [
+      0.2,
+      255.8
+     ],
+     [
+      0.3,
+      287.3
+     ],
+     [
+      0.4,
+      311.1
+     ],
+     [
+      0.5,
+      337.8
+     ],
+     [
+      0.6,
+      364.5
+     ],
+     [
+      0.7,
+      395.7
+     ],
+     [
+      0.8,
+      434.9
+     ],
+     [
+      0.9,
+      478.7
+     ],
+     [
+      1.0,
+      536.3
+     ],
+     [
+      1.1,
+      611.2
+     ],
+     [
+      1.2,
+      718.9
+     ],
+     [
+      1.3,
+      880.0
+     ],
+     [
+      1.35,
+      997.8
+     ],
+     [
+      1.4,
+      1150.0
+     ],
+     [
+      1.45,
+      1353.9
+     ],
+     [
+      1.5,
+      1665.2
+     ],
+     [
+      1.55,
+      2151.6
+     ],
+     [
+      1.58,
+      2587.8
+     ]
+    ]
+   },
+   "purpose": "The paper's inductance simulations: the same machine with the steel's AC 50 Hz amplitude curve (Fig. 6 curve 1, the parameter steel_bh_ac) instead of the DC curve its torque simulations used. Carries the inductance targets; its torques are diagnostics."
+  }
+ ],
+ "targets": [
+  {
+   "metric": "inductance_A_H@a07",
+   "variant": "ac-curve",
+   "value": 0.17556,
+   "unit": "H",
+   "kind": "2d_fea",
+   "absolute_tolerance": 0.00228,
+   "used_for_acceptance": true,
+   "quote": "for the MEE motor for the aligned position is by 23%, and for the unaligned position … by 35%",
+   "location": "Section 3.3, pp. 133-134, with Table 1 (228 mH measured)",
+   "note": "The paper's simulated aligned inductance: 23% below the measured 228 mH, 175.6 mH; Fig. 9(a) curve 2 reads 173.5 mH at 0.25 degrees (174.6 extrapolated to 0). The percentage is rounded to 1% of 228 mH: tolerance 2.28 mH (1.3%), one unit, as for rounded tables. Flux linkage over current at the 0.7 A amplitude with the AC curve."
+  },
+  {
+   "metric": "inductance_A_H@u07",
+   "variant": "ac-curve",
+   "value": 0.0234,
+   "unit": "H",
+   "kind": "2d_fea",
+   "absolute_tolerance": 0.00036,
+   "used_for_acceptance": true,
+   "quote": "for the MEE motor for the aligned position is by 23%, and for the unaligned position … by 35%",
+   "location": "Section 3.3, pp. 133-134, with Table 1 (36 mH measured)",
+   "note": "The paper's simulated unaligned inductance: 35% below the measured 36 mH, 23.4 mH; Fig. 9(a) curve 2 reads 23.75 mH at 22.25 degrees. Tolerance one unit of the rounded percentage, 0.36 mH (1.5%)."
+  },
+  {
+   "metric": "inductance_A_H@a07",
+   "variant": "ac-curve",
+   "value": 0.228,
+   "unit": "H",
+   "kind": "measured",
+   "relative_tolerance": 0.1,
+   "used_for_acceptance": false,
+   "quote": "Phase inductance – aligned 228 135 mH",
+   "location": "Table 1, p. 128",
+   "note": "Measured at 0.5 A rms, 50 Hz, with end windings and eddy currents; the paper's 2D FEMM is 23% lower. A comparator."
+  },
+  {
+   "metric": "inductance_A_H@u07",
+   "variant": "ac-curve",
+   "value": 0.036,
+   "unit": "H",
+   "kind": "measured",
+   "relative_tolerance": 0.1,
+   "used_for_acceptance": false,
+   "quote": "Phase inductance – unaligned 36 24 mH",
+   "location": "Table 1, p. 128",
+   "note": "Measured; the paper's 2D FEMM is 35% lower (end windings). A comparator."
+  },
+  {
+   "metric": "inductance_A_H@m07_t00.25",
+   "variant": "ac-curve",
+   "value": 0.17348,
+   "unit": "H",
+   "kind": "digitized",
+   "absolute_tolerance": 0.002,
+   "absolute_digitization_uncertainty": 0.001,
+   "used_for_acceptance": false,
+   "quote": "Fig. 9. Measured (1) and simulated (2) inductance of: the modified Emerson Electric motor (a)",
+   "location": "Fig. 9(a), p. 134, curve 2",
+   "note": "Simulated inductance curve read at the sweep's angle (local fits, spread 0.22 mH; 0.73 mH per pixel). A comparator."
+  },
+  {
+   "metric": "inductance_A_H@m07_t02.25",
+   "variant": "ac-curve",
+   "value": 0.16107,
+   "unit": "H",
+   "kind": "digitized",
+   "absolute_tolerance": 0.002,
+   "absolute_digitization_uncertainty": 0.001,
+   "used_for_acceptance": false,
+   "quote": "Fig. 9. Measured (1) and simulated (2) inductance of: the modified Emerson Electric motor (a)",
+   "location": "Fig. 9(a), p. 134, curve 2",
+   "note": "Simulated inductance curve read at the sweep's angle (local fits, spread 0.41 mH; 0.73 mH per pixel). A comparator."
+  },
+  {
+   "metric": "inductance_A_H@m07_t04.25",
+   "variant": "ac-curve",
+   "value": 0.14399,
+   "unit": "H",
+   "kind": "digitized",
+   "absolute_tolerance": 0.002,
+   "absolute_digitization_uncertainty": 0.001,
+   "used_for_acceptance": false,
+   "quote": "Fig. 9. Measured (1) and simulated (2) inductance of: the modified Emerson Electric motor (a)",
+   "location": "Fig. 9(a), p. 134, curve 2",
+   "note": "Simulated inductance curve read at the sweep's angle (local fits, spread 0.40 mH; 0.73 mH per pixel). A comparator."
+  },
+  {
+   "metric": "inductance_A_H@m07_t06.25",
+   "variant": "ac-curve",
+   "value": 0.12526,
+   "unit": "H",
+   "kind": "digitized",
+   "absolute_tolerance": 0.002,
+   "absolute_digitization_uncertainty": 0.001,
+   "used_for_acceptance": false,
+   "quote": "Fig. 9. Measured (1) and simulated (2) inductance of: the modified Emerson Electric motor (a)",
+   "location": "Fig. 9(a), p. 134, curve 2",
+   "note": "Simulated inductance curve read at the sweep's angle (local fits, spread 0.50 mH; 0.73 mH per pixel). A comparator."
+  },
+  {
+   "metric": "inductance_A_H@m07_t08.25",
+   "variant": "ac-curve",
+   "value": 0.10624,
+   "unit": "H",
+   "kind": "digitized",
+   "absolute_tolerance": 0.002,
+   "absolute_digitization_uncertainty": 0.001,
+   "used_for_acceptance": false,
+   "quote": "Fig. 9. Measured (1) and simulated (2) inductance of: the modified Emerson Electric motor (a)",
+   "location": "Fig. 9(a), p. 134, curve 2",
+   "note": "Simulated inductance curve read at the sweep's angle (local fits, spread 0.45 mH; 0.73 mH per pixel). A comparator."
+  },
+  {
+   "metric": "inductance_A_H@m07_t10.25",
+   "variant": "ac-curve",
+   "value": 0.08733,
+   "unit": "H",
+   "kind": "digitized",
+   "absolute_tolerance": 0.002,
+   "absolute_digitization_uncertainty": 0.001,
+   "used_for_acceptance": false,
+   "quote": "Fig. 9. Measured (1) and simulated (2) inductance of: the modified Emerson Electric motor (a)",
+   "location": "Fig. 9(a), p. 134, curve 2",
+   "note": "Simulated inductance curve read at the sweep's angle (local fits, spread 0.56 mH; 0.73 mH per pixel). A comparator."
+  },
+  {
+   "metric": "inductance_A_H@m07_t12.25",
+   "variant": "ac-curve",
+   "value": 0.06745,
+   "unit": "H",
+   "kind": "digitized",
+   "absolute_tolerance": 0.002,
+   "absolute_digitization_uncertainty": 0.001,
+   "used_for_acceptance": false,
+   "quote": "Fig. 9. Measured (1) and simulated (2) inductance of: the modified Emerson Electric motor (a)",
+   "location": "Fig. 9(a), p. 134, curve 2",
+   "note": "Simulated inductance curve read at the sweep's angle (local fits, spread 0.37 mH; 0.73 mH per pixel). A comparator."
+  },
+  {
+   "metric": "inductance_A_H@m07_t14.25",
+   "variant": "ac-curve",
+   "value": 0.0478,
+   "unit": "H",
+   "kind": "digitized",
+   "absolute_tolerance": 0.002,
+   "absolute_digitization_uncertainty": 0.001,
+   "used_for_acceptance": false,
+   "quote": "Fig. 9. Measured (1) and simulated (2) inductance of: the modified Emerson Electric motor (a)",
+   "location": "Fig. 9(a), p. 134, curve 2",
+   "note": "Simulated inductance curve read at the sweep's angle (local fits, spread 0.34 mH; 0.73 mH per pixel). A comparator."
+  },
+  {
+   "metric": "inductance_A_H@m07_t16.25",
+   "variant": "ac-curve",
+   "value": 0.03199,
+   "unit": "H",
+   "kind": "digitized",
+   "absolute_tolerance": 0.002,
+   "absolute_digitization_uncertainty": 0.001,
+   "used_for_acceptance": false,
+   "quote": "Fig. 9. Measured (1) and simulated (2) inductance of: the modified Emerson Electric motor (a)",
+   "location": "Fig. 9(a), p. 134, curve 2",
+   "note": "Simulated inductance curve read at the sweep's angle (local fits, spread 0.24 mH; 0.73 mH per pixel). A comparator."
+  },
+  {
+   "metric": "inductance_A_H@m07_t18.25",
+   "variant": "ac-curve",
+   "value": 0.02664,
+   "unit": "H",
+   "kind": "digitized",
+   "absolute_tolerance": 0.002,
+   "absolute_digitization_uncertainty": 0.001,
+   "used_for_acceptance": false,
+   "quote": "Fig. 9. Measured (1) and simulated (2) inductance of: the modified Emerson Electric motor (a)",
+   "location": "Fig. 9(a), p. 134, curve 2",
+   "note": "Simulated inductance curve read at the sweep's angle (local fits, spread 0.20 mH; 0.73 mH per pixel). A comparator."
+  },
+  {
+   "metric": "inductance_A_H@m07_t20.25",
+   "variant": "ac-curve",
+   "value": 0.02425,
+   "unit": "H",
+   "kind": "digitized",
+   "absolute_tolerance": 0.002,
+   "absolute_digitization_uncertainty": 0.001,
+   "used_for_acceptance": false,
+   "quote": "Fig. 9. Measured (1) and simulated (2) inductance of: the modified Emerson Electric motor (a)",
+   "location": "Fig. 9(a), p. 134, curve 2",
+   "note": "Simulated inductance curve read at the sweep's angle (local fits, spread 0.16 mH; 0.73 mH per pixel). A comparator."
+  },
+  {
+   "metric": "inductance_A_H@m07_t22.25",
+   "variant": "ac-curve",
+   "value": 0.02375,
+   "unit": "H",
+   "kind": "digitized",
+   "absolute_tolerance": 0.002,
+   "absolute_digitization_uncertainty": 0.001,
+   "used_for_acceptance": false,
+   "quote": "Fig. 9. Measured (1) and simulated (2) inductance of: the modified Emerson Electric motor (a)",
+   "location": "Fig. 9(a), p. 134, curve 2",
+   "note": "Simulated inductance curve read at the sweep's angle (local fits, spread 0.01 mH; 0.73 mH per pixel). A comparator."
+  },
+  {
+   "metric": "flux_A_Wb@a06",
+   "value": 0.108,
+   "unit": "Wb",
+   "kind": "digitized",
+   "absolute_tolerance": 0.006,
+   "absolute_digitization_uncertainty": 0.003,
+   "used_for_acceptance": false,
+   "quote": "Fig. 10. Flux linkage vs current linkage of 1-aligned position, 2-unaligned position for: modified Emerson",
+   "location": "Fig. 10(a), p. 134, curve 1",
+   "note": "Aligned FE flux linkage at 103.2 A of current linkage (172 turns times the current), 2.75 mWb per pixel. Which magnetization curve the figure used is not stated; its eq. (1) column of Table 2 follows from it. A comparator."
+  },
+  {
+   "metric": "flux_A_Wb@a07",
+   "value": 0.1287,
+   "unit": "Wb",
+   "kind": "digitized",
+   "absolute_tolerance": 0.006,
+   "absolute_digitization_uncertainty": 0.003,
+   "used_for_acceptance": false,
+   "quote": "Fig. 10. Flux linkage vs current linkage of 1-aligned position, 2-unaligned position for: modified Emerson",
+   "location": "Fig. 10(a), p. 134, curve 1",
+   "note": "Aligned FE flux linkage at 120.4 A of current linkage (172 turns times the current), 2.75 mWb per pixel. Which magnetization curve the figure used is not stated; its eq. (1) column of Table 2 follows from it. A comparator."
+  },
+  {
+   "metric": "flux_A_Wb@a10",
+   "value": 0.1892,
+   "unit": "Wb",
+   "kind": "digitized",
+   "absolute_tolerance": 0.006,
+   "absolute_digitization_uncertainty": 0.003,
+   "used_for_acceptance": false,
+   "quote": "Fig. 10. Flux linkage vs current linkage of 1-aligned position, 2-unaligned position for: modified Emerson",
+   "location": "Fig. 10(a), p. 134, curve 1",
+   "note": "Aligned FE flux linkage at 172 A of current linkage (172 turns times the current), 2.75 mWb per pixel. Which magnetization curve the figure used is not stated; its eq. (1) column of Table 2 follows from it. A comparator."
+  },
+  {
+   "metric": "flux_A_Wb@a16",
+   "value": 0.3078,
+   "unit": "Wb",
+   "kind": "digitized",
+   "absolute_tolerance": 0.006,
+   "absolute_digitization_uncertainty": 0.003,
+   "used_for_acceptance": false,
+   "quote": "Fig. 10. Flux linkage vs current linkage of 1-aligned position, 2-unaligned position for: modified Emerson",
+   "location": "Fig. 10(a), p. 134, curve 1",
+   "note": "Aligned flux linkage at 275.2 A, a local line fit to the curve's columns. A comparator."
+  },
+  {
+   "metric": "flux_A_Wb@u06",
+   "value": 0.0141,
+   "unit": "Wb",
+   "kind": "digitized",
+   "absolute_tolerance": 0.006,
+   "absolute_digitization_uncertainty": 0.003,
+   "used_for_acceptance": false,
+   "quote": "Fig. 10. Flux linkage vs current linkage of 1-aligned position, 2-unaligned position for: modified Emerson",
+   "location": "Fig. 10(a), p. 134, curve 2",
+   "note": "Unaligned FE flux linkage at 103.2 A of current linkage. A comparator."
+  },
+  {
+   "metric": "flux_A_Wb@u07",
+   "value": 0.0171,
+   "unit": "Wb",
+   "kind": "digitized",
+   "absolute_tolerance": 0.006,
+   "absolute_digitization_uncertainty": 0.003,
+   "used_for_acceptance": false,
+   "quote": "Fig. 10. Flux linkage vs current linkage of 1-aligned position, 2-unaligned position for: modified Emerson",
+   "location": "Fig. 10(a), p. 134, curve 2",
+   "note": "Unaligned FE flux linkage at 120.4 A of current linkage. A comparator."
+  },
+  {
+   "metric": "flux_A_Wb@u10",
+   "value": 0.0245,
+   "unit": "Wb",
+   "kind": "digitized",
+   "absolute_tolerance": 0.006,
+   "absolute_digitization_uncertainty": 0.003,
+   "used_for_acceptance": false,
+   "quote": "Fig. 10. Flux linkage vs current linkage of 1-aligned position, 2-unaligned position for: modified Emerson",
+   "location": "Fig. 10(a), p. 134, curve 2",
+   "note": "Unaligned FE flux linkage at 172 A of current linkage. A comparator."
+  },
+  {
+   "metric": "flux_A_Wb@u16",
+   "value": 0.0385,
+   "unit": "Wb",
+   "kind": "digitized",
+   "absolute_tolerance": 0.006,
+   "absolute_digitization_uncertainty": 0.003,
+   "used_for_acceptance": false,
+   "quote": "Fig. 10. Flux linkage vs current linkage of 1-aligned position, 2-unaligned position for: modified Emerson",
+   "location": "Fig. 10(a), p. 134, curve 2",
+   "note": "Unaligned FE flux linkage at 275.2 A of current linkage. A comparator."
+  },
+  {
+   "metric": "torque_Nm@m16_t04.25",
+   "value": 0.7129,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0002 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m16_t06.25",
+   "value": 0.7454,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0002 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m16_t08.25",
+   "value": 0.7619,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0003 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m16_t10.25",
+   "value": 0.7754,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0004 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m16_t12.25",
+   "value": 0.7913,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0003 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m16_t14.25",
+   "value": 0.7874,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0002 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m16_t14.75",
+   "value": 0.7684,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0000 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m10_t04.25",
+   "value": 0.2638,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.0 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0004 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m10_t06.25",
+   "value": 0.2784,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.0 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0003 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m10_t08.25",
+   "value": 0.2825,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.0 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0004 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m10_t10.25",
+   "value": 0.2884,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.0 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0003 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m10_t12.25",
+   "value": 0.2949,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.0 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0000 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m10_t13.25",
+   "value": 0.2951,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.0 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0005 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m10_t14.25",
+   "value": 0.2944,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.0 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0007 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m10_t14.75",
+   "value": 0.2882,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.0 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0017 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m10_t17.25",
+   "value": 0.1997,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.0 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0002 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m10_t18.25",
+   "value": 0.1267,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.0 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0015 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m10_t20.25",
+   "value": 0.0513,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.0 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0006 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m06_t04.25",
+   "value": 0.0876,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 0.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0003 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m06_t06.25",
+   "value": 0.09,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 0.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0005 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m06_t08.25",
+   "value": 0.0958,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 0.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0008 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m06_t10.25",
+   "value": 0.0951,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 0.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0005 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m06_t12.25",
+   "value": 0.1005,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 0.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0003 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m06_t13.25",
+   "value": 0.1,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 0.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0000 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m06_t14.25",
+   "value": 0.0998,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 0.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0005 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m06_t14.75",
+   "value": 0.0977,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 0.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0013 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m06_t16.25",
+   "value": 0.0461,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 0.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0010 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m06_t17.25",
+   "value": 0.0263,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 0.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0003 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m06_t18.25",
+   "value": 0.0151,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 0.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0006 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m06_t20.25",
+   "value": 0.006,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 0.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0005 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m16_t00.75",
+   "value": 0.4655,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0295 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m16_t01.25",
+   "value": 0.5462,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0006 N m; 0.0025 N m per pixel). A comparator."
+  },
+  {
+   "metric": "torque_Nm@m16_t02.25",
+   "value": 0.6478,
+   "unit": "N*m",
+   "kind": "digitized",
+   "absolute_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.005,
+   "used_for_acceptance": false,
+   "quote": "Electromagnetic torque vs angle between sta-",
+   "location": "Fig. 11, p. 135, simulated curve at 1.6 A",
+   "note": "Grey (simulated) curve read at the sweep's angle (local fits, spread 0.0031 N m; 0.0025 N m per pixel). A comparator."
+  }
+ ],
+ "assessors": [
+  {
+   "kind": "step_statistic",
+   "metric": "torque_Nm",
+   "step_prefix": "m06_",
+   "statistic": "maximum",
+   "value_kind": "2d_fea",
+   "value": 0.1,
+   "absolute_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "0.6 103 0.11 0.10 0.07 0.07 0.11",
+   "location": "Table 2, p. 136, MEE row at 0.6 A, maximum torque calculated",
+   "note": "The paper's FEMM static torque at its peak (Fig. 11 curve shows it near 14 degrees), against the model's largest over the 45 midpoints. The table gives two decimals: tolerance one unit of the last digit (0.01 N m), as the lessons ask for rounded tables, since it exceeds 1%."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "torque_Nm",
+   "step_prefix": "m06_",
+   "statistic": "mean",
+   "value_kind": "2d_fea",
+   "value": 0.07,
+   "absolute_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "0.6 103 0.11 0.10 0.07 0.07 0.11",
+   "location": "Table 2, p. 136, MEE row at 0.6 A, average torque calculated",
+   "note": "The paper integrates its FEMM torque curve over 0-22.5 degrees and divides by the interval; the plain mean over the 45 midpoints of half-degree intervals is that integral mean (midpoint rule). Tolerance 0.01 N m, one unit of the last digit."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "torque_Nm",
+   "step_prefix": "m06_",
+   "statistic": "maximum",
+   "value_kind": "measured",
+   "label": "measured",
+   "value": 0.11,
+   "relative_tolerance": 0.1,
+   "absolute_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "0.6 103 0.11 0.10 0.07 0.07 0.11",
+   "location": "Table 2, p. 136, MEE row at 0.6 A, maximum torque measured",
+   "note": "Measured static torque, a comparator: the paper's FEMM differs from it by up to 10% for this motor."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "torque_Nm",
+   "step_prefix": "m06_",
+   "statistic": "mean",
+   "value_kind": "measured",
+   "label": "measured",
+   "value": 0.07,
+   "relative_tolerance": 0.1,
+   "absolute_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "0.6 103 0.11 0.10 0.07 0.07 0.11",
+   "location": "Table 2, p. 136, MEE row at 0.6 A, average torque measured",
+   "note": "Measured, a comparator."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "torque_Nm",
+   "step_prefix": "m10_",
+   "statistic": "maximum",
+   "value_kind": "2d_fea",
+   "value": 0.3,
+   "absolute_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Modified 1 172 0.32 0.30 0.20 0.22 0.32",
+   "location": "Table 2, p. 136, MEE row at 1.0 A, maximum torque calculated",
+   "note": "The paper's FEMM static torque at its peak (Fig. 11 curve shows it near 14 degrees), against the model's largest over the 45 midpoints. The table gives two decimals: tolerance one unit of the last digit (0.01 N m), as the lessons ask for rounded tables, since it exceeds 1%."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "torque_Nm",
+   "step_prefix": "m10_",
+   "statistic": "mean",
+   "value_kind": "2d_fea",
+   "value": 0.22,
+   "absolute_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Modified 1 172 0.32 0.30 0.20 0.22 0.32",
+   "location": "Table 2, p. 136, MEE row at 1.0 A, average torque calculated",
+   "note": "The paper integrates its FEMM torque curve over 0-22.5 degrees and divides by the interval; the plain mean over the 45 midpoints of half-degree intervals is that integral mean (midpoint rule). Tolerance 0.01 N m, one unit of the last digit."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "torque_Nm",
+   "step_prefix": "m10_",
+   "statistic": "maximum",
+   "value_kind": "measured",
+   "label": "measured",
+   "value": 0.32,
+   "relative_tolerance": 0.1,
+   "absolute_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "Modified 1 172 0.32 0.30 0.20 0.22 0.32",
+   "location": "Table 2, p. 136, MEE row at 1.0 A, maximum torque measured",
+   "note": "Measured static torque, a comparator: the paper's FEMM differs from it by up to 10% for this motor."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "torque_Nm",
+   "step_prefix": "m10_",
+   "statistic": "mean",
+   "value_kind": "measured",
+   "label": "measured",
+   "value": 0.2,
+   "relative_tolerance": 0.1,
+   "absolute_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "Modified 1 172 0.32 0.30 0.20 0.22 0.32",
+   "location": "Table 2, p. 136, MEE row at 1.0 A, average torque measured",
+   "note": "Measured, a comparator."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "torque_Nm",
+   "step_prefix": "m16_",
+   "statistic": "maximum",
+   "value_kind": "2d_fea",
+   "value": 0.8,
+   "absolute_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "1.6 275 0.82 0.80 0.53 0.55 0.83",
+   "location": "Table 2, p. 136, MEE row at 1.6 A, maximum torque calculated",
+   "note": "The paper's FEMM static torque at its peak (Fig. 11 curve shows it near 14 degrees), against the model's largest over the 45 midpoints. The table gives two decimals: tolerance one unit of the last digit (0.01 N m), as the lessons ask for rounded tables, since it exceeds 1%."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "torque_Nm",
+   "step_prefix": "m16_",
+   "statistic": "mean",
+   "value_kind": "2d_fea",
+   "value": 0.55,
+   "absolute_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "1.6 275 0.82 0.80 0.53 0.55 0.83",
+   "location": "Table 2, p. 136, MEE row at 1.6 A, average torque calculated",
+   "note": "The paper integrates its FEMM torque curve over 0-22.5 degrees and divides by the interval; the plain mean over the 45 midpoints of half-degree intervals is that integral mean (midpoint rule). Tolerance 0.01 N m, one unit of the last digit."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "torque_Nm",
+   "step_prefix": "m16_",
+   "statistic": "maximum",
+   "value_kind": "measured",
+   "label": "measured",
+   "value": 0.82,
+   "relative_tolerance": 0.1,
+   "absolute_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "1.6 275 0.82 0.80 0.53 0.55 0.83",
+   "location": "Table 2, p. 136, MEE row at 1.6 A, maximum torque measured",
+   "note": "Measured static torque, a comparator: the paper's FEMM differs from it by up to 10% for this motor."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "torque_Nm",
+   "step_prefix": "m16_",
+   "statistic": "mean",
+   "value_kind": "measured",
+   "label": "measured",
+   "value": 0.53,
+   "relative_tolerance": 0.1,
+   "absolute_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "1.6 275 0.82 0.80 0.53 0.55 0.83",
+   "location": "Table 2, p. 136, MEE row at 1.6 A, average torque measured",
+   "note": "Measured, a comparator."
+  }
+ ],
+ "controls": [
+  {
+   "id": "mesh-0p6",
+   "level": "article",
+   "mesh_scale": 0.6,
+   "purpose": "Every explicit mesh size and arc segment at 0.6 times (about the paper's 100,000 elements)."
+  },
+  {
+   "id": "table-pole-arcs",
+   "level": "article",
+   "parameters": {
+    "stator_pole_arc_deg": 15.5,
+    "stator_root_half_width_mm": 6.4632,
+    "rotor_pole_width_mm": 11.5514
+   },
+   "purpose": "Table 1's pole angles: 15.5 degree stator faces (the taper kept, the roots widened as much as the faces) and 16 degree parallel-sided rotor poles."
+  },
+  {
+   "id": "steel-quoted-permeability",
+   "level": "article",
+   "parameters": {
+    "steel_bh": [
+     [
+      0.1,
+      159.7
+     ],
+     [
+      0.15,
+      175.1
+     ],
+     [
+      0.2,
+      189.9
+     ],
+     [
+      0.3,
+      219.7
+     ],
+     [
+      0.4,
+      244.5
+     ],
+     [
+      0.5,
+      266.5
+     ],
+     [
+      0.6,
+      289.1
+     ],
+     [
+      0.7,
+      316.3
+     ],
+     [
+      0.8,
+      345.8
+     ],
+     [
+      0.9,
+      389.3
+     ],
+     [
+      1.0,
+      446.1
+     ],
+     [
+      1.1,
+      538.1
+     ],
+     [
+      1.2,
+      676.3
+     ],
+     [
+      1.3,
+      827.2
+     ],
+     [
+      1.35,
+      937.9
+     ],
+     [
+      1.4,
+      1081.0
+     ],
+     [
+      1.45,
+      1272.7
+     ],
+     [
+      1.5,
+      1565.3
+     ],
+     [
+      1.55,
+      2022.5
+     ],
+     [
+      1.58,
+      2432.5
+     ]
+    ]
+   },
+   "purpose": "The DC curve with H times 0.94, so its permeability at 300 A/m matches the quoted 1600 (a one-pixel shift of the reading)."
+  },
+  {
+   "id": "stacking-0p95",
+   "level": "article",
+   "parameters": {
+    "stacking_factor": 0.95
+   },
+   "purpose": "A lamination fill of 0.95."
+  },
+  {
+   "id": "shaft-air",
+   "level": "article",
+   "parameters": {
+    "shaft_material": "Air"
+   },
+   "purpose": "A non-magnetic shaft."
+  }
+ ],
+ "coverage": {
+  "scope": "partial",
+  "reproduced": "The modified Emerson Electric motor: Table 2's FEMM maximum and average static torque at 0.6, 1 and 1.6 A, and the FEMM aligned and unaligned inductance at 0.7 A (Section 3.3 with Table 1); Table 1 and 2's measurements, Fig. 9(a)'s inductance curve, Fig. 10(a)'s flux linkage and Fig. 11's torque curves as comparators.",
+  "not_reproduced": "The SMC prototype (Fig. 1(b), Table 1-2 second columns), the magnetization measurements themselves, the flux density maps of Figs. 7-8, Fig. 13, and Table 2's eq. (1) column (an analytic formula over Fig. 10, reported as a diagnostic)."
+ },
+ "geometry_checks": [
+  {
+   "quantity": "stator outer radius (mm), the scale reference",
+   "paper_value": 69.75,
+   "model_value": 69.75,
+   "location": "Table 1; Fig. 1(a)",
+   "note": "Fig. 1(a) scaled so its outer circle is 139.5 mm across: 6.337 px per mm; x and y scales agree within 0.08%."
+  },
+  {
+   "quantity": "rotor face radius (mm)",
+   "paper_value": 41.5,
+   "model_value": 41.5,
+   "location": "Table 1; Fig. 1(a)",
+   "note": "Two rotor-face nodes at 41.483 and 41.497 mm."
+  },
+  {
+   "quantity": "stator face radius (mm)",
+   "paper_value": 41.9,
+   "model_value": 41.9,
+   "location": "Table 1 (41.5 + 0.4); Fig. 1(a)",
+   "note": "Fig. 1(a): stator-face corner nodes at 41.953 mm (8 nodes, mean 41.953, spread 0.106), within the 0.08 mm marker precision of 41.9 plus a bias."
+  },
+  {
+   "quantity": "stator pole arc at the bore (deg)",
+   "paper_value": [
+    15.5,
+    15.012
+   ],
+   "model_value": 15.012,
+   "location": "Table 1; Fig. 1(a)",
+   "note": "Table 1 against the figure's corner nodes; line fits to the pole sides give 15.07. The model follows the figure."
+  },
+  {
+   "quantity": "rotor pole arc at the rotor face (deg)",
+   "paper_value": [
+    16,
+    15.17
+   ],
+   "model_value": 15.17,
+   "location": "Table 1; Fig. 1(a)",
+   "note": "Parallel-sided poles of the figure's 10.96 mm width; Table 1's 16 degrees would need 11.55 mm."
+  },
+  {
+   "quantity": "stator pole half-width at face and root (mm)",
+   "paper_value": [
+    5.473,
+    6.286
+   ],
+   "model_value": [
+    5.473,
+    6.286
+   ],
+   "location": "Fig. 1(a)",
+   "note": "Tapered stator poles (sides diverge at 0.055 per mm); lines fitted to the sides of the four axis-aligned poles give 3.13-3.26 + 0.0544-0.0551 x."
+  },
+  {
+   "quantity": "slot bottom and rotor root radii (mm)",
+   "paper_value": [
+    56.622,
+    30.514
+   ],
+   "model_value": [
+    56.622,
+    30.514
+   ],
+   "location": "Fig. 1(a)",
+   "note": "Node means; blue circle fits give 56.65 and 30.49 mm. Stator yoke 13.1 mm, rotor pole height 11.0 mm."
+  },
+  {
+   "quantity": "shaft diameter (mm)",
+   "paper_value": 16.885,
+   "model_value": 16.885,
+   "location": "Fig. 1(a)",
+   "note": "Not stated in the text."
+  },
+  {
+   "quantity": "coil block area (mm^2) and bare-copper fill of 172 turns of 0.56 mm wire",
+   "paper_value": null,
+   "model_value": [
+    53.96,
+    0.785
+   ],
+   "location": "Fig. 1(a); Table 1",
+   "note": "A tight but possible fill for 172 turns per coil; 43 turns per coil (172 per phase) would fill 20%."
+  },
+  {
+   "quantity": "phase resistance (ohm) from 4 x 172 turns of 0.56 mm copper",
+   "paper_value": 8.4,
+   "model_value": [
+    6.7,
+    7.2
+   ],
+   "location": "Table 1",
+   "note": "Mean turn 0.140-0.150 m around the drawn pole and coil, 1.72e-8 ohm m at 20 C; 8.2-8.8 ohm near 75 C. Supports four coils in series."
+  },
+  {
+   "quantity": "overlay of the built model on Fig. 1(a)",
+   "paper_value": null,
+   "model_value": null,
+   "location": "Fig. 1(a)",
+   "note": "Every segment and arc of the built model, drawn at the figure's scale with the rotor turned to the figure's position (rotor pole at 14.41 degrees), lies on the figure's outlines within about one pixel (0.16 mm); przybylski/overlay.png in the work folder."
+  },
+  {
+   "quantity": "B-H readings against the quoted permeabilities at 300 A/m",
+   "paper_value": [
+    1600,
+    1000
+   ],
+   "model_value": [
+    1508,
+    937
+   ],
+   "location": "Section 3.1, p. 131; Fig. 6",
+   "note": "DC and AC: both readings 6% below the rounded quoted values, a one-pixel H offset on the steep part of the curve; control steel-quoted-permeability."
+  },
+  {
+   "quantity": "element count estimate before freezing",
+   "paper_value": 100000,
+   "model_value": [
+    25000,
+    45000
+   ],
+   "location": "Section 3.2",
+   "note": "Areas over mesh sizes plus the refinement along 1200 gap-face segments; mesh-0p6 about 2.8 times. 25 solves per FEMM process keep the container well under 2 GB (45k x 360 B x 25 = 0.4 GB, 1.1 GB for the mesh control)."
+  }
+ ],
+ "findings": [],
+ "retrospective": []
+}

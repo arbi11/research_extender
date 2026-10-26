@@ -188,6 +188,24 @@ class PaperAuditTests(unittest.TestCase):
         record["cases"] = [c for c in record["cases"] if c["case_id"] != "elrefaie-2006-fscw-spm"]
         self.assertIn("elrefaie-2006-fscw-spm: missing from the record.", self.audit(record)["problems"])
 
+    def test_a_case_frozen_before_its_first_run_is_pending_not_missing(self):
+        from unittest import mock
+        from femm_brain import reproduction_report
+        cases = reproduction_report.catalog_cases("papers")
+        record = self.record()
+        record["cases"] = [c for c in record["cases"] if c["case_id"] != "elrefaie-2006-fscw-spm"]
+        frozen = [dict(c, status="frozen") if c["id"] == "elrefaie-2006-fscw-spm" else c for c in cases]
+        with mock.patch.object(reproduction_report, "catalog_cases", return_value=frozen):
+            result = self.audit(record)
+        self.assertNotIn("elrefaie-2006-fscw-spm: missing from the record.", result["problems"])
+        self.assertIn("elrefaie-2006-fscw-spm", result["pending_first_run"])
+        # Once the case reports an outcome its evidence is due: the same record fails.
+        self.assertIn("elrefaie-2006-fscw-spm: missing from the record.", self.audit(record)["problems"])
+        # A pending case that was run is audited in full.
+        record = self.record()
+        with mock.patch.object(reproduction_report, "catalog_cases", return_value=frozen):
+            self.assertNotIn("elrefaie-2006-fscw-spm", self.audit(record).get("pending_first_run", []))
+
     def test_a_reviewed_failure_is_bound_to_its_frozen_tolerances(self):
         registry = json.loads((Path(__file__).parents[1] / "data" / "verification" / "reviewed_paper_failures.json").read_text())
         registry["failures"][0]["metrics"][0]["absolute_tolerance"] = 1e-5
