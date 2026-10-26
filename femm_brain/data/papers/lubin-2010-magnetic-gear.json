@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "lubin-2010-magnetic-gear",
  "set": "unassigned",
- "status": "frozen",
+ "status": "partial",
  "skill_version": null,
  "title": "Analytical computation of the magnetic field distribution in a magnetic gear",
  "source": {
@@ -1759,7 +1759,33 @@
   "reproduced": "The FEM static torque of the inner rotor against its position, for both application examples (Figs. 12 and 17).",
   "not_reproduced": "The coupled rotation (Figs. 13 and 18), the slot-opening sweep (Fig. 19) and the air-gap field plots (Figs. 10, 11, 15, 16)."
  },
- "geometry_checks": [],
- "findings": [],
- "retrospective": []
+ "geometry_checks": [
+  {
+   "quantity": "gear ratios",
+   "paper_value": {
+    "example-1": 1.5,
+    "example-2": 4.33
+   },
+   "model_value": {
+    "example-1": 1.5,
+    "example-2": 4.333
+   },
+   "location": "Sections IV-V",
+   "note": "Pole pieces = inner + outer pole pairs in both examples."
+  }
+ ],
+ "findings": [
+  "Example 1 (2/3 pole pairs, 5 pole pieces): 8 of Fig. 12's 13 FEM points pass at 1%. The five that fail are within 0.64 N m: +2.9% at 10 degrees (22.83 against 22.19), +1.0% at 40 and 59, +1.8% at 73 and -4.1% at 87 (12.22 against 12.74). Over all 43 digitized points the rms difference is 0.44 N m on a 74 N m curve. The fundamental is 66.80 N m against 66.38 (+0.6%), and the 3rd and 5th harmonics agree within 0.1 N m.",
+  "The text's analytic values (comparators): the maximum is 74.07 N m at 52 degrees against 'a maximum torque of 75 Nm ... around 51°' (-1.2%), and 62.53 at 40 degrees against 61 (+2.5%).",
+  "Example 2 (3/13 pole pairs, 16 pole pieces): 1 of Fig. 17's 6 FEM points used for acceptance passes. The fundamental and 3rd harmonic of the 18 FEM points agree: 40.46 N m against 40.39 and -0.37 against -0.38. The differences alternate in sign from point to point: +27.5% at 3.2 degrees, -10.8% at 6.3, +5.7% at 9.5 and so on to +6.1% at 53.7, rms 1.02 N m. The model's ripple about the fundamental is at orders 45 and 51 a turn (0.84 and 0.76 N m), the 48 cogging periods of 6 inner poles against 16 pieces modulated by the fundamental. It is in antiphase with the paper's points. No rigid shift explains it (best 0.25 degrees, rms 0.97). The cause is open; a relative angle of the outer magnets and pole pieces that the paper does not state would move that ripple and not the fundamental.",
+  "The construction is not the cause. Without sliding bands (both gaps meshed, the inner rotor turned by remeshing, the stress tensor; a diagnostic outside the case), both examples agree with the sliding-band results within 0.6%. Mesh 0.6 times moves Example 1 by 0.2% at most.",
+  "Example 2's text gives po = 3 and pi = 13; Figs. 15-17 show 3 inner and 13 outer pole pairs, which the variant uses (gap resolved before freezing).",
+  "run1 and run2 gave identical torques at both levels. run1's mesh control ran out of memory in a single engine process. The engine's solves_per_process was set to 8 for run2, which changes no input, target or tolerance."
+ ],
+ "retrospective": [
+  "Longest: digitizing Figs. 12 and 17, whose FEM diamonds overlap the analytic line; erosion separated the markers.",
+  "The skill lacked a way to compare a curve's shape as well as its points. Fitting the fundamental and low harmonics of the digitized points against the model's separated a correct fundamental from an antiphase ripple. That is a lesson now.",
+  "Lessons that held: resolve the paper's internal contradictions (the pole-pair swap) from its own figures before freezing; a diagnostic without the sliding band rules the construction in or out.",
+  "Added generically: ring_sectors with ideal-iron (unmeshed) sectors and label_gaps, so that pole pieces of infinitely permeable iron in an analytic model's assumption are reproduced as natural boundaries."
+ ]
 }

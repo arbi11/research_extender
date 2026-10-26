@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "ieej-2012-d-model-ipmsm",
  "set": "unassigned",
- "status": "frozen",
+ "status": "partial",
  "skill_version": null,
  "title": "IPMSM \"Dモデル\" モータ情報",
  "source": {
@@ -18079,8 +18079,34 @@
     "labels": 14
    },
    "location": "the one-pole model"
+  },
+  {
+   "quantity": "inductances at 3 A rms on one axis (mH)",
+   "paper_value": {
+    "L_d": 10.7,
+    "L_q": 26.3
+   },
+   "model_value": {
+    "L_d": 10.47,
+    "L_q": 26.17
+   },
+   "location": "Table 1",
+   "note": "Table 1's inductances are taken as 2D values; the measured ones of Table 10 include the end winding."
   }
  ],
- "findings": [],
- "retrospective": []
+ "findings": [
+  "Nine of eleven acceptance targets pass (run2). The 2D magnet flux is 159.84 mWb against 160.6 (-0.47%), and the construction's phase linkage passes (balanced to 1.1e-4, phase order within 0.01 degrees). The 2D torque at 3 A rms passes from beta = 0 to 50 degrees, 0.04-0.82% from Table 4 (1.662 N m at 0 against 1.674; 1.853 at 25 against 1.852).",
+  "The torque fails at large current phase: beta = 60 gives 1.250 N m against 1.236 (+1.16%) and beta = 80 gives 0.458 against 0.450 (+1.74%). The model's d-axis inductance is 10.47 mH against Table 1's 10.70 (-2.1%) and its q-axis 26.17 against 26.30 (-0.5%). A larger Lq - Ld adds reluctance torque, which grows with beta, so this is consistent with the high-beta excess. The torque from the flux linkages agrees with the stress tensor within 0.03%.",
+  "Cogging is 0.253 N m peak to peak against Table 9's 0.072 (2D), 3.5 times. It is the same within 1% from the one-pole sector with a sliding band, the full cross-section with a sliding band (0.252), and the stress tensor on a meshed gap at 0.1 and 0.05 mm (0.251, 0.249; diagnostics outside the case). The cause is open. The page's sentence above Table 9 swaps the 2D and 3D values (0.079 and 0.072); the table is taken.",
+  "EMF harmonics (comparators): the 1st, 3rd and 5th are within 0.2%, 2.4% and 12% of Table 7's analysis column; the 7th is small in both (0.32 V against 0.16). Table 7's last row is labelled 9 but holds the 11th harmonic. Digitizing the paper's 2D EMF waveform (Fig. 17) gives orders 1-7 within 0.1-4% of the table, a 9th of 1.4 V and an 11th of 6.3 V. The model's 11th is 5.88 V against 6.44 (-8.8%).",
+  "Against the measured torques (comparators) the model is 3-9% high from beta = 0 to 50 degrees, +1.7% at 60 and -4.6% at 80, much as the paper's own 2D column is. The model's d-axis inductances are 15-19% below the measured ones (8.6% for a positive d current) and its q-axis ones 0.9-5.9% below; the measured values include the end winding, which a 2D model leaves out.",
+  "Controls: mesh 0.7 times moves every result by 0.1% at most. Solid steel instead of the 98% stacking factor moves torque by up to +0.44% and Lq by +1.5%. A steel shaft or steel bolts in the rotor holes each raise the flux by 1.5% and the torque by 1.1-1.9%. That would fail the flux target, so air, as assumed, agrees better. The 67.5 mm rotor length as the depth scales everything by +12.5% and fails the flux target, which supports the 60 mm stator length as the 2D depth.",
+  "run1 (kept) measured torque wrongly in two ways and passed only the flux. It multiplied the sliding-band torque by 4: the air-gap element's torque of an (anti)periodic sector is already the whole machine's. It averaged each current phase over six rotor positions 5 degrees apart, two of which fell in the ripple's dips, so the average read 2.7% low. Neither change touched an input, target or tolerance (commit 8fd5179). run1's phase_linkage failed only its check of the construction's predicted phase order, at a 1e-6 degree tolerance that drawing noise exceeds (5e-5 degrees); it now checks to 1e-3."
+ ],
+ "retrospective": [
+  "Longest: the winding. The data page gives turns but not the layout. Fig. 3(a) of the 2015 article labels every slot, and the phase_linkage assessor confirmed the reading before any torque was compared.",
+  "The skill lacked rules for an air-gap element's torque scale on a sector, for averaging a rippled torque densely enough, and for checking a table's labels against the paper's own waveforms. All three are lessons now (51c5ba5), along with the power-invariant dq convention check that IEEJ's psi_m = sqrt(3/2) Psi1 needed.",
+  "Lessons that held: the authors' CAD drawing beats the table where they differ by 0.1 mm (stated in the geometry checks); inductances from single-axis currents are convention-free comparators.",
+  "Added generically: R12 POLYLINE support in the DXF reader (SPLINE and ELLIPSE refused), the harmonic_peak statistic with a time derivative and scale, power-invariant dq linkage, and L_d/L_q from single-axis currents."
+ ]
 }
