@@ -174,6 +174,13 @@ contradicts it.
   its Fig. 8 (k_ri 4.8, not 2.36). Find the same quantity in the paper's tables
   or plots and freeze the one that is the FE (or analytic) result.
   (`nemeth-2001-double-cage-bar`)
+- **Compare shapes as well as values.** A uniform factor across operating
+  points, with the curve's shape reproduced, points at a scale (an effective
+  length, a current or voltage convention) rather than at geometry or materials:
+  the SynRM's torque was 1.28-1.36 times the paper's at two currents while its
+  torque-angle curve matched within 1.1%, and no geometry or steel control moved
+  it more than 3.2%. Check the paper's operating point against its own rating
+  too (15.63 N m at 6000 rpm is the stated 10 kW). (`ibrahim-2016-synrm`)
 - **Tabulated optimum designs are rounded.** Before blaming the rounding, solve
   the rounded variables' neighbours once each: in the gear it moved the torque
   by at most 0.3%, too little to explain 1.3%. (`zhang-2014-coaxial-magnetic-gear`)
