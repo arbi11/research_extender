@@ -58,6 +58,25 @@ contradicts it.
   such a model against the full machine at one operating point first (psi_d
   0.072890 against 0.072896 Wb). (`gierczynski-2024-prius-gen4-ipm`)
 
+- **FEMM's air-gap-element torque of a sector is the whole machine's.** For
+  an (anti)periodic sliding band FEMM extends the field round the full circle,
+  so scaling the gap torque by the pole count read four times too high; a full
+  cross-section solve gave the same torque at every position (flux linkages,
+  by contrast, are the sector's and need the scale). (`ieej-2012-d-model-ipmsm`)
+- **Average torque needs dense positions when the ripple is sharp.** Six
+  positions over 60 electrical degrees put two samples in the D model's torque
+  dips and read the mean 2.7% low; 30 positions at 1 degree matched the
+  flux-linkage torque, 3/2 p (psi_d i_q - psi_q i_d), to 0.0001 N m. Compare
+  the two before trusting a stress-tensor mean. (`ieej-2012-d-model-ipmsm`)
+- **An air-gap element and unmeshed stator iron can give a wrong field.** With
+  the stator's ideal iron left unmeshed and reaching the model's outer
+  boundary, a sliding band in the gap gave half the paper's no-load flux
+  linkage and a no-load torque with a nonzero mean. Meshing the gap and turning
+  the rotor by remeshing (stress-tensor torque), or meshing the iron at a high
+  permeability, reproduced the paper; unmeshed pole pieces between two bands
+  were fine. Check an idealized-iron model against meshed iron at one position
+  first. (`lubin-2011-spm-semi-closed-slots`, `lubin-2010-magnetic-gear`)
+
 - **Measure a target the way the paper defines it.** The gear's stall torque is
   "the maximum point" of a curve with a 3% third harmonic; read as the
   fundamental it came out 3% low. Do not substitute a statistic on an untested
@@ -108,6 +127,20 @@ contradicts it.
 - **Halbach directions decide which side the field is on.** Read each block's
   arrow from the figure, then confirm with an independent sign in the paper's
   results before trusting the reading. (`wang-2005-tubular-halbach`)
+
+- **Ideal iron is an unmeshed region** when the paper idealizes it (subdomain
+  models do): `ring_sectors` leaves a sector with no material unmeshed, so its
+  surfaces are natural boundaries; fix the potential at one node. Mind the
+  air-gap-element pitfall above. (`lubin-2010-magnetic-gear`)
+- **Slots shared by two phases, with uniform current density,** are one-turn
+  circuits each: a slot's current is the connecting matrix's sum of the phase
+  currents, and a phase's flux linkage per turn the matrix's sum of the slots'
+  (metric `terms`). FEMM gives a block one circuit only. (`lubin-2012-surface-inset-pm`)
+- **Benchmark drawings can be R12 DXF with old POLYLINEs and doubled
+  contours.** The reader now takes POLYLINE and VERTEX (it used to skip them),
+  and refuses contour types it cannot convert; look for a contour drawn twice
+  (one slot opening closed by both arcs and a chord left a 0.018 mm sliver).
+  (`ieej-2012-d-model-ipmsm`)
 
 - **Drawings supplied as DXF need joining.** Endpoints that should meet can
   miss by 1-8 micrometres, and a magnet corner can rest on a pocket edge without
@@ -181,6 +214,25 @@ contradicts it.
   torque-angle curve matched within 1.1%, and no geometry or steel control moved
   it more than 3.2%. Check the paper's operating point against its own rating
   too (15.63 N m at 6000 rpm is the stated 10 kW). (`ibrahim-2016-synrm`)
+- **A table row can be mislabelled.** The D model's EMF table labels its last
+  row 9; digitizing the figure it summarizes gave orders 1-7 within 4% of the
+  table, a 9th of 1.4 V and an 11th equal to that row. When a value looks
+  impossible, recompute it from the figure before blaming the model.
+  (`ieej-2012-d-model-ipmsm`)
+- **Benchmarks may state dq values on the power-invariant scale.** The IEEJ
+  page's psi_m is sqrt(3/2) times the phase flux-linkage fundamental, and its
+  dq currents are sqrt(3) times rms; check a convention by recomputing one
+  published number from another (psi_m from the EMF fundamental) before
+  freezing. (`ieej-2012-d-model-ipmsm`)
+- **Text values are rounded readings of a figure.** "A maximum torque of 75 Nm"
+  was 73.8 N m on the paper's own FE points. Freeze the figure's points and keep
+  the text as a comparator; check pole counts against field plots too (one
+  example's text swapped the two rotors' pole pairs). (`lubin-2010-magnetic-gear`)
+- **Published FE points sit at k times range/N, rarely on round angles** (19 or
+  39 intervals here). Find N from the digitized positions and put the sweep on
+  them; find markers by eroding the image (filled diamonds) or by closing the
+  gap a plotted line cuts through a dot. (`lubin-2010-magnetic-gear`, `lubin-2011-spm-semi-closed-slots`)
+
 - **Tabulated optimum designs are rounded.** Before blaming the rounding, solve
   the rounded variables' neighbours once each: in the gear it moved the torque
   by at most 0.3%, too little to explain 1.3%. (`zhang-2014-coaxial-magnetic-gear`)
