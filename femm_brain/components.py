@@ -1056,7 +1056,7 @@ def belt_winding(m, inner_radius, outer_radius, belts, material, gap_material, m
 
 
 def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0, gap_material=None, max_segment=1, mesh=None,
-                 gap_mesh=None, group=0, label_gaps=True):
+                 gap_mesh=None, group=0, label_gaps=True, share_circles=False):
     """An annulus divided into angular sectors, each a block of its own material and magnetization.
 
     ``sectors`` lists [start, end, material, magnetization] with angles in
@@ -1077,7 +1077,12 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0,
     sectors may describe one period, repeated ``copies`` times by ``angle_step``
     degrees (a parallel direction turns with its copy), so a pole count can be a
     parameter. Arcs are split at every sector edge and wherever they would exceed
-    180 degrees, and radial edges are drawn once where neighbours meet.
+    180 degrees, and radial edges are drawn once where neighbours meet. A ring
+    that lies against one drawn before it (magnets on a yoke) sets
+    ``share_circles``: on a common circle its arcs then split at the nodes
+    already there and the arcs already drawn are kept, so the circle is drawn
+    once (overlapping arcs make FEMM's solver stall or the field wrong). Draw
+    the ring with more edges on the circle first.
     """
     if not 0 < inner_radius < outer_radius:
         raise ValueError("A ring needs 0 < inner radius < outer radius")
@@ -1126,9 +1131,27 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0,
         edges += [round((a + (b - a) * k / pieces) % 360, 12) for k in range(pieces)]
     edges.sort()
     point = lambda r, angle: (r * math.cos(math.radians(angle)), r * math.sin(math.radians(angle)))
-    for a, b in zip(edges, edges[1:] + [edges[0]]):
-        for r in (inner_radius, outer_radius):
-            m.arc(point(r, a), point(r, b), (b - a) % 360 or 360, max_segment, group=group)
+    # With share_circles, a circle another ring drew before is shared: its arcs split at the nodes already on it,
+    # and arcs drawn already are kept. Otherwise the arcs are drawn edge by edge on both circles.
+    shared = {}
+    for r in (inner_radius, outer_radius):
+        existing = {round(math.degrees(math.atan2(n["y"], n["x"])) % 360, 9) % 360: (n["x"], n["y"]) for n in m.nodes
+                    if abs(math.hypot(n["x"], n["y"]) - r) <= 1e-9 * r}
+        if share_circles and set(existing) - {round(e, 9) % 360 for e in edges}:
+            shared[r] = existing
+    if not shared:
+        for a, b in zip(edges, edges[1:] + [edges[0]]):
+            for r in (inner_radius, outer_radius):
+                m.arc(point(r, a), point(r, b), (b - a) % 360 or 360, max_segment, group=group)
+    for r in (inner_radius, outer_radius) if shared else ():
+        at = {round(e, 9) % 360: point(r, e) for e in edges}
+        at.update(shared.get(r, {}))
+        stops = sorted(at)
+        for a, b in zip(stops, stops[1:] + [stops[0]]):
+            n0, n1, angle = m.node(*at[a], group=group), m.node(*at[b], group=group), (b - a) % 360 or 360
+            if any(x["n0"] == n0 and x["n1"] == n1 and math.isclose(x["angle"], angle) for x in m.arcs):
+                continue
+            m.arc(at[a], at[b], angle, max_segment, group=group)
     for angle in radial:
         m.segment(point(inner_radius, angle), point(outer_radius, angle), group=group)
     middle = (inner_radius + outer_radius) / 2

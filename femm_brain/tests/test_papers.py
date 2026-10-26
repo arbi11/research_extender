@@ -132,6 +132,16 @@ class CaseRuleTests(unittest.TestCase):
         case["article"]["assembly"]["steps"].append({"use": "block_label", "at": [1, 1], "material": "Air"})
         self.assertTrue(any(p.startswith("region:") for p in self.problems(case)))
 
+    def test_overlapping_arcs_block_freezing_and_are_noted_for_recorded_cases(self):
+        case = minimal_case()
+        # A second, half circle on the magnet's circle: its arc shares a stretch with the circle's own arcs.
+        case["article"]["assembly"]["steps"].insert(4, {"use": "arc", "start": ["$radius_mm", 0], "end": [0, "$radius_mm"], "angle": 90})
+        self.assertTrue(any("arcs overlap" in p for p in self.problems(case)))
+        recorded = papers.check(dict(case, status="partial"))
+        self.assertFalse(any("arcs overlap" in p for p in recorded["problems"]))
+        self.assertTrue(any("arcs overlap" in n for n in recorded["notes"]))
+        self.assertFalse(any("arcs overlap" in p for p in self.problems(minimal_case())))
+
     def test_held_out_cases_record_the_skill_version(self):
         self.assertTrue(any("skill_version" in p for p in self.problems(minimal_case(set="held_out"))))
 

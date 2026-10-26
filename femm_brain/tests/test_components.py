@@ -1003,6 +1003,31 @@ class RingSectorTests(unittest.TestCase):
         self.assertAlmostEqual(float(tail[0]), x, places=6)
         self.assertLess(float(tail[2]), -y)                          # SVG y grows downward: the arrow points up
 
+    def test_rings_that_meet_on_a_circle_share_it(self):
+        from femm_brain.reproduce import overlapping_arcs
+        magnets = {"use": "ring_sectors", "inner_radius": 10, "outer_radius": 12, "copies": 4, "angle_step": 90,
+                   "sectors": [[0, 45, "PM", "outward"], [45, 90, "PM", "inward"]]}
+        yoke = {"use": "ring_sectors", "inner_radius": 5, "outer_radius": 10, "sectors": [[0, 180, "Iron", None], [180, 360, "Iron", None]]}
+        steps = [{"use": "material", "name": "Iron"}, {"use": "material", "name": "PM", "values": {"H_c": 900000}}, magnets]
+        # Drawn independently, the yoke's two half circles at r = 10 overlap the magnets' eight arcs there.
+        apart = assemble({"problem": self.problem, "steps": steps + [yoke]}, {})[0]
+        self.assertEqual({round(o["radius"], 9) for o in overlapping_arcs(apart)}, {10})
+        self.assertEqual(len(overlapping_arcs(apart)), 8)
+        shared = assemble({"problem": self.problem, "steps": steps + [dict(yoke, share_circles=True)]}, {})[0]
+        self.assertEqual(overlapping_arcs(shared), [])
+        self.assertEqual(check_regions(shared), [])
+        on_ten = [a for a in shared["arcs"] if all(abs(math.hypot(shared["nodes"][a[k]]["x"], shared["nodes"][a[k]]["y"]) - 10) < 1e-9
+                                                   for k in ("n0", "n1"))]
+        self.assertEqual(len(on_ten), 8)                               # the circle is drawn once, at the magnets' edges
+        self.assertEqual(sorted(l["material"] for l in shared["labels"]), ["Iron", "Iron"] + ["PM"] * 8)
+        # Without nodes of another ring on its circles, share_circles changes nothing.
+        alone = assemble({"problem": self.problem, "steps": steps}, {})[0]
+        flagged = assemble({"problem": self.problem, "steps": steps[:2] + [dict(magnets, share_circles=True)]}, {})[0]
+        self.assertEqual(alone, flagged)
+        # A later ring with an edge that is not a node of the earlier one still overlaps it, and the check says so.
+        skew = dict(yoke, share_circles=True, sectors=[[10, 190, "Iron", None], [190, 370, "Iron", None]])
+        self.assertTrue(overlapping_arcs(assemble({"problem": self.problem, "steps": steps + [skew]}, {})[0]))
+
     def test_refusals(self):
         for sectors, extra in (([[0, 20, "Iron", None], [10, 30, "Iron", None]], {"gap_material": "Air"}),
                                ([[0, 20, "Iron", None]], {}),

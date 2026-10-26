@@ -15,7 +15,7 @@ import math
 from .collect import DEFAULT_CACHE
 from .components import catalog as component_catalog, direction_function_offset, evaluate
 from .geometry import arc_geometry
-from .reproduce import DATA, check_regions, load_papers, plan_level
+from .reproduce import DATA, check_regions, load_papers, overlapping_arcs, plan_level
 
 PAPER_CACHE = DEFAULT_CACHE / "papers"
 PROVENANCE = {"quoted": ("quote", "location"), "derived": ("expression", "inputs"),
@@ -24,6 +24,7 @@ PROVENANCE = {"quoted": ("quote", "location"), "derived": ("expression", "inputs
 TARGET_KINDS = ("analytic", "2d_fea", "3d_fea", "measured", "digitized")
 STATUSES = ("candidate", "extracting", "frozen", "replicated", "partial", "failed")
 FROZEN = STATUSES[2:]
+RECORDED = STATUSES[3:]
 GAP_DECISIONS = ("ask", "figure", "assumed", "out_of_scope", "resolved")
 # The paper index: what every entry must say to be planned from, and the screening vocabulary
 # (how much of the drawable geometry the source gives, and where its published numbers come from).
@@ -215,6 +216,13 @@ def check(case, cache=PAPER_CACHE, build=True):
             try:
                 plan = plan_level(case, "article", variant=variant)
                 problems += [f"region{where}: {problem}" for problem in check_regions(plan["expected_model"])]
+                overlaps = overlapping_arcs(plan["expected_model"])
+                if overlaps:
+                    first = overlaps[0]
+                    text = (f"{len(overlaps)} pair(s) of arcs overlap{where}, first on the circle of radius {first['radius']:.9g}: "
+                            "a circle drawn by two components with different split points (FEMM can stall or give a wrong field)")
+                    # A case recorded before this check keeps its evidence; a case being frozen must be free of them.
+                    (notes if case["status"] in RECORDED else problems).append(text)
             except (ValueError, KeyError, TypeError) as exc:
                 problems.append(f"assembly does not build{where}: {exc}")
     return {"problems": problems, "notes": notes}

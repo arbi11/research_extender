@@ -36,8 +36,8 @@
    "component": "ring_sectors"
   },
   {
-   "part": "yokes (ideal iron, unmeshed; meshed linear iron in a control)",
-   "component": "ring_sectors, hole"
+   "part": "yokes (ideal iron: the inner one unmeshed, nothing beyond the outer one)",
+   "component": "hole"
   },
   {
    "part": "the two air gaps",
@@ -193,7 +193,7 @@
     "provenance": "quoted",
     "quote": "infinite permeability of the iron yokes and the ferromagnetic segments is assumed",
     "location": "Section 2.1, p. 2",
-    "note": "Null: the yokes and pole pieces are unmeshed ideal iron, their surfaces natural boundaries, as the analytic model assumes. Control meshed-iron builds them of linear iron of iron_mu_r."
+    "note": "Null: the pole pieces are unmeshed ideal iron, their surfaces natural boundaries, as the analytic model assumes; the yokes are not drawn (r1 and r6 are natural boundaries)."
    },
    "magnet_mu_r": {
     "value": 1.05,
@@ -202,18 +202,6 @@
     "reason": "Not stated; equation (1) carries the magnets' relative permeability. Sintered NdFeB (N52) has a recoil permeability of about 1.05 (lessons.md, Materials).",
     "sensitivity_control": "mu-r-1p0",
     "note": "Brackets: controls mu-r-1p0 and mu-r-1p1. The pre-solve estimate moves xi_4 by +4.4% and -4.1% at those ends: the gap can decide the outcome against a 1.5% tolerance. The physically typical value is frozen."
-   },
-   "iron_mu_r": {
-    "value": 10000,
-    "unit": "ratio",
-    "provenance": "numerical",
-    "reason": "Relative permeability of the linear iron that stands for infinite permeability in control meshed-iron only."
-   },
-   "shaft_radius_mm": {
-    "value": 20,
-    "unit": "mm",
-    "provenance": "numerical",
-    "reason": "Bore of the inner yoke (Fig. 1 shows a shaft hole, unstated); with ideal iron it is not part of the field problem, and in control meshed-iron it leaves a 60 mm deep yoke."
    },
    "positions_per_period": {
     "value": 36,
@@ -256,12 +244,6 @@
     "unit": "mm",
     "provenance": "numerical",
     "reason": "Magnets."
-   },
-   "iron_mesh_mm": {
-    "value": 2.0,
-    "unit": "mm",
-    "provenance": "numerical",
-    "reason": "Iron, when meshed (control meshed-iron)."
    },
    "pole_pieces": {
     "value": 14,
@@ -306,35 +288,6 @@
       "Mu_y": "$magnet_mu_r",
       "H_c": "$magnet_coercivity_A_per_m"
      }
-    },
-    {
-     "use": "material",
-     "name": "IronLinear",
-     "values": {
-      "Mu_x": "$iron_mu_r",
-      "Mu_y": "$iron_mu_r"
-     }
-    },
-    {
-     "use": "ring_sectors",
-     "inner_radius": "$r6_mm",
-     "outer_radius": "$rout_mm",
-     "sectors": [
-      [
-       0,
-       180,
-       "$iron_material",
-       null
-      ],
-      [
-       180,
-       360,
-       "$iron_material",
-       null
-      ]
-     ],
-     "max_segment": "$ring_arc_deg",
-     "mesh": "$iron_mesh_mm"
     },
     {
      "use": "ring_sectors",
@@ -382,7 +335,6 @@
      ],
      "gap_material": "Air",
      "max_segment": "$gap_arc_deg",
-     "mesh": "$iron_mesh_mm",
      "gap_mesh": "$slot_air_mesh_mm"
     },
     {
@@ -466,27 +418,6 @@
      ],
      "max_segment": "$ring_arc_deg",
      "mesh": "$magnet_mesh_mm"
-    },
-    {
-     "use": "ring_sectors",
-     "inner_radius": "$shaft_radius_mm",
-     "outer_radius": "$r1_mm",
-     "sectors": [
-      [
-       0,
-       180,
-       "$iron_material",
-       null
-      ],
-      [
-       180,
-       360,
-       "$iron_material",
-       null
-      ]
-     ],
-     "max_segment": "$ring_arc_deg",
-     "mesh": "$iron_mesh_mm"
     },
     {
      "use": "hole",
@@ -1265,14 +1196,6 @@
     "magnet_mu_r": 1.1
    },
    "purpose": "Magnets of recoil permeability 1.1: the high end of the assumption's range."
-  },
-  {
-   "id": "meshed-iron",
-   "level": "article",
-   "parameters": {
-    "iron_material": "IronLinear"
-   },
-   "purpose": "Yokes and pole pieces meshed as linear iron of relative permeability 1e4: checks the unmeshed ideal-iron construction with its sliding bands (lessons: an air-gap element and unmeshed iron)."
   }
  ],
  "coverage": {
@@ -1281,6 +1204,8 @@
   "not_reproduced": "The FEA points of Fig. 6, the dynamic response (Table 4, Figs. 7-8, the 13.5% transmission error), the 0.3% torque ripple (its definition is not given)."
  },
  "geometry_checks": [],
- "findings": [],
+ "findings": [
+  "Post-freeze construction fix (disclosed; run1 kept): run1's first solve did not finish in 25 minutes and was stopped. The frozen build drew ideal-iron yoke rings (unmeshed, out to a 20 mm shaft and to rout) whose arcs overlapped the magnet rings' arcs on r1 and r6 and whose far circles carried nodes no element uses. Single diagnostic solves outside the case: without the yoke rings 3 s; without only the outer ring 4 s but an inner torque 7% off (290.0 against 313.2 N m at p00: the overlap on r1 changed the field silently); yoke rings sharing the magnets' circles still stalled while unmeshed, and solved in 3 s when meshed as linear iron (mu_r 1e4), 313.07 / -784.83 N m against 313.18 / -785.10 without rings (0.04%). The yokes are therefore not drawn (inner yoke a hole, nothing beyond r6), as in the Lubin 2010 gear, and control meshed-iron, which needed the rings, is withdrawn; that one-position comparison stands in for it. No physical input, target, tolerance or measurement changed."
+ ],
  "retrospective": []
 }

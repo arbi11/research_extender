@@ -3109,6 +3109,13 @@
      "description": "Label the gaps between sectors with gap_material; false leaves them to other steps (slots that carry circuits)",
      "required": false,
      "default": true
+    },
+    {
+     "name": "share_circles",
+     "type": "boolean",
+     "description": "Share a circle with a ring drawn before: split this ring's arcs on it at the nodes already there and keep the arcs already drawn (a yoke ring against a magnet ring); draw the ring with more edges first",
+     "required": false,
+     "default": false
     }
    ],
    "femm_functions": [
@@ -3131,7 +3138,8 @@
    "constraints": [
     "Sectors span less than 360 degrees and may not overlap; a sector of zero width is left out (a parametrized array whose blocks vanish), but at least one must remain; sectors that leave gaps need a gap material.",
     "The annulus circles are drawn by the component; do not draw circles at its radii as well.",
-    "Radial magnetization uses FEMM's theta and theta+180 direction functions, and a fixed angle from the radial direction theta+degrees, so it follows each element's angle (Halbach segments with constant radial and tangential components)."
+    "Radial magnetization uses FEMM's theta and theta+180 direction functions, and a fixed angle from the radial direction theta+degrees, so it follows each element's angle (Halbach segments with constant radial and tangential components).",
+    "Two rings that meet on a circle must draw it once: the later one sets share_circles, and its edges on that circle must be nodes of the earlier one. Arcs that overlap on a circle (two components drawing it with different split points) stall FEMM's solver or give a wrong field; papers --check refuses them in a case being frozen."
    ]
   },
   {

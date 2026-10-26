@@ -445,6 +445,34 @@ def region_keys(model, points, arc_step=1.0):
     return keys
 
 
+def overlapping_arcs(model):
+    """Pairs of arcs that share a stretch of one circle (meeting at an end is fine).
+
+    FEMM does not merge overlapping curves: such a model meshes, but its solver
+    can stall or its field come out wrong. Two components that both draw a
+    circle at a common radius with different split points produce them.
+    """
+    from .geometry import arc_geometry
+    circles, found = {}, []
+    for index, arc in enumerate(model["arcs"]):
+        a, b = model["nodes"][arc["n0"]], model["nodes"][arc["n1"]]
+        info = arc_geometry((a["x"], a["y"]), (b["x"], b["y"]), arc["angle"])
+        (cx, cy), radius = info["center"], info["radius"]
+        start = math.degrees(math.atan2(a["y"] - cy, a["x"] - cx)) % 360
+        tolerance = 1e-7 * max(1.0, radius)
+        bucket = round(radius, 5)
+        for key in (round(bucket - 1e-5, 5), bucket, round(bucket + 1e-5, 5)):
+            for other, ox, oy, other_radius, other_start, other_angle in circles.get(key, []):
+                if abs(other_radius - radius) > tolerance or math.hypot(ox - cx, oy - cy) > tolerance:
+                    continue
+                ahead, behind = (other_start - start) % 360, (start - other_start) % 360
+                same_start = min(ahead, behind) <= 1e-7
+                if same_start or 1e-7 < ahead < arc["angle"] - 1e-7 or 1e-7 < behind < other_angle - 1e-7:
+                    found.append({"arcs": [other, index], "radius": radius, "center": [cx, cy]})
+        circles.setdefault(bucket, []).append((index, cx, cy, radius, start, arc["angle"]))
+    return found
+
+
 def check_regions(model, arc_step=1.0):
     """Every block label and hole must lie inside a closed region of its own."""
     faces = _face_cycles(model, arc_step)
