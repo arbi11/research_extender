@@ -499,3 +499,21 @@ class FemmStorageTests(unittest.TestCase):
         # Anything else still differs: another curve, or a segment below the limit that FEMM kept.
         self.assertTrue(compare_models(self.model(curve, 28.6), self.model([[0, 0], [0.5, 100.0], [1.0, 310.0]], 10)))
         self.assertTrue(compare_models(self.model(curve, 5), self.model([[0, 0]] + curve, 10)))
+
+    def test_contours_sharing_a_stretch_are_compared_as_the_pieces_femm_stores(self):
+        # Two rings meeting on one circle with different sector edges: FEMM splits each arc at the other's nodes
+        # and keeps one of the coincident pieces, with either one's maximum segment.
+        def model(arcs, segments=()):
+            nodes = [{"x": math.cos(math.radians(a)), "y": math.sin(math.radians(a))} for a in (0, 45, 90, 135)]
+            nodes += [{"x": 2, "y": 0}, {"x": 3, "y": 0}, {"x": 4, "y": 0}]
+            return dict(self.model([], 10), nodes=nodes, materials=[],
+                        arcs=[{"n0": a, "n1": b, "angle": t, "max_segment": s} for a, b, t, s in arcs],
+                        segments=[{"n0": a, "n1": b} for a, b in segments])
+        drawn = model([(0, 2, 90, 1), (1, 3, 90, 0.25)], [(4, 6)])
+        stored = model([(0, 1, 45, 1), (1, 2, 45, 0.25), (2, 3, 45, 0.25)], [(4, 5), (5, 6)])
+        self.assertEqual(compare_models(drawn, stored), [])
+        self.assertEqual(compare_models(drawn, model([(0, 1, 45, 1), (1, 2, 45, 1), (2, 3, 45, 0.25)], [(4, 5), (5, 6)])), [])
+        # A piece with neither maximum segment, or a piece missing, still differs.
+        self.assertTrue(compare_models(drawn, model([(0, 1, 45, 1), (1, 2, 45, 5), (2, 3, 45, 0.25)], [(4, 5), (5, 6)])))
+        self.assertTrue(compare_models(drawn, model([(0, 1, 45, 1), (2, 3, 45, 0.25)], [(4, 5), (5, 6)])))
+        self.assertTrue(compare_models(drawn, model([(0, 1, 45, 1), (1, 2, 45, 1), (2, 3, 45, 0.25)], [(4, 5)])))

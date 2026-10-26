@@ -15,8 +15,8 @@ from femm_brain.components import DATA as COMPONENT_DATA, IMPLEMENTATIONS, _chec
 from femm_brain.core import load_graph
 from femm_brain.geometry import arc_geometry
 from femm_brain.reference_models import assessor_metric, linkage_prediction, run_assessor
-from femm_brain.reproduce import (_source_record, check_regions, compare_models, compare_regions, jitter_coordinates, load_cases,
-                                  load_designs, permute_entities, plan_level)
+from femm_brain.reproduce import (_source_record, check_regions, compare_models, compare_regions, compile_model, jitter_coordinates,
+                                  load_cases, load_designs, permute_entities, plan_level)
 
 # Typed-model digests of the article builds that passed natively. A change here
 # changes the solved model: update only deliberately and re-run the evidence.
@@ -25,7 +25,7 @@ ARTICLE_MODELS = {
     "electrostatics-square-capacitor": "20c87fef8a2538a5c8a4f2261c98f2e87173ef46ce4fc3c5006fc3c996643f60",
     "electrostatics-two-spheres": "1a101c8229e4b97f65bf5ad829df92852a7a21221fb1576f172288c705d274c3",
     "tube-eddy-current": "58a6ba688d110f4568c88f8dbdd0f6e162d297d013bfebc0bd7c4755353dfe54",
-    "torque-benchmark": "855b800fbb386e24c3aae766706fefd37099f2ed72158d6c71eca7d1247259b1",
+    "torque-benchmark": "d686d28c68f4f333e671088d209266c0ae1b3e86d482ebf2f76b6c32293ef976",
     "heatflow-chimney": "9386bc6448f6436d22f9ccfe02ba9027851436ee9491637fbf25fe8dfc85287d",
 }
 CONTOUR = {"boundary", "conductor", "hidden", "group"}
@@ -795,6 +795,10 @@ class RingSectorTests(unittest.TestCase):
         # Slots that carry circuits are left for block labels of their own.
         teeth = self.ring([[60 * k + 15, 60 * k + 45, None, None] for k in range(6)], label_gaps=False)
         self.assertEqual((len(teeth["holes"]), len(teeth["labels"])), (6, 0))
+        # Unmeshed labels turn with their ring: a rotor rotated as a group carries its iron along.
+        rotor = self.ring([[90 * k, 90 * k + 45, None, None] for k in range(4)], gap_material="Air", group=1)
+        self.assertEqual({h["group"] for h in rotor["holes"]}, {1})
+        self.assertIn('mi_setblockprop("<No Mesh>",1,0,"<None>",0,1,0)', "\n".join(compile_model(rotor)))
         with self.assertRaises(ValueError):
             self.ring([[0, 20, "Iron", None]])
 

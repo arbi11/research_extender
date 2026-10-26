@@ -519,7 +519,7 @@ def parse_fem(text, *, physics="magnetics"):
         if len(row)<2: raise ValueError("Malformed FEMM block label.")
         x,y=number(row[0]),number(row[1]); ident=f"label:{index}"
         drawing["labels"].append({"id":ident,"x":x,"y":y,"source_line":line,"attributes":row[2:],"material_index":integer(row[2]) if len(row)>2 else None,"operation_id":operation(prefix+"_addblocklabel",[x,y],ident)})
-    return {**drawing,**properties,"metadata":metadata,"holes":[{"x":number(row[0]),"y":number(row[1]),"source_line":line} for line,row in sections.get("holes",[])],
+    return {**drawing,**properties,"metadata":metadata,"holes":[{"x":number(row[0]),"y":number(row[1]),"group":integer(row[2]) if len(row)>2 else 0,"source_line":line} for line,row in sections.get("holes",[])],
             "svg":_svg(drawing),"validation":{"status":"parsed","node_count":len(points),"segment_count":len(drawing["segments"]),"arc_count":len(drawing["arcs"]),"native_mesh_verified":False,"numerical_convergence_verified":False},
             "verification":{"status":"documented","note":"Exact geometry and attributes read from a native model file. Operation order is a reconstruction, not the original authoring history or proof of numerical accuracy."},"parameters":{},"source_ids":[]}
 

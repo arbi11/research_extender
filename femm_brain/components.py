@@ -155,8 +155,10 @@ class ModelBuilder:
             raise ValueError("Circuits, turns and magnetization belong to magnetics labels")
         self.labels.append(label)
 
-    def hole(self, x, y):
-        self.holes.append({"x": float(x), "y": float(y)})
+    def hole(self, x, y, group=0):
+        if not (_finite(x) and _finite(y)):
+            raise ValueError(f"Hole coordinates must be finite numbers: {x!r}, {y!r}")
+        self.holes.append({"x": float(x), "y": float(y), "group": group})
 
     def property(self, collection, name, curve=None, **values):
         keys = PROPERTY_KEYS[(self.physics, collection)]
@@ -238,8 +240,8 @@ def block_label(m, at, material, mesh=None, circuit=None, turns=1, magdir=0, gro
             magdir_function=magdir_function)
 
 
-def hole(m, at):
-    m.hole(*at)
+def hole(m, at, group=0):
+    m.hole(*at, group=group)
 
 
 # --- Properties --------------------------------------------------------------
@@ -1027,7 +1029,8 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0,
                 m.label(*point(middle, centre), gap_material, mesh=gap_mesh, group=group)
         elif owner[2] is None:
             # Ideal iron (infinitely permeable) is left unmeshed: its surfaces are natural boundaries.
-            m.hole(*point(middle, centre))
+            # The unmeshed label carries the group so it turns with the ring.
+            m.hole(*point(middle, centre), group=group)
         elif owner[3] in ("outward", "inward"):
             m.label(*point(middle, centre), owner[2], mesh=mesh, group=group,
                     magdir_function="theta" if owner[3] == "outward" else "theta+180")

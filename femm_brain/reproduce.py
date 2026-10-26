@@ -15,6 +15,7 @@ catalog before execution, and every comparison is reported, including failures.
 """
 from __future__ import annotations
 
+import bisect
 import cmath
 from copy import deepcopy
 import csv
@@ -245,7 +246,8 @@ def normalize(parsed):
                      external=bool(flags & 1), default=bool(flags & 2))
         labels.append(label)
     model.update(nodes=nodes, segments=segments, arcs=arcs, labels=labels,
-                 holes=[{"x": _number(h["x"]), "y": _number(h["y"])} for h in parsed.get("holes", [])])
+                 holes=[{"x": _number(h["x"]), "y": _number(h["y"]), "group": _integer(h.get("group", 0))}
+                        for h in parsed.get("holes", [])])
     return model
 
 
@@ -352,7 +354,8 @@ def compile_model(model):
         lines.append(pre + "_clearselected()")
     for hole in model["holes"]:
         lines += [_call(pre + "_addblocklabel", hole["x"], hole["y"]), _call(pre + "_selectlabel", hole["x"], hole["y"]),
-                  _call(pre + "_setblockprop", "<No Mesh>", 1, 0, *(["<None>", 0, 0, 0] if not scalar else [0])),
+                  _call(pre + "_setblockprop", "<No Mesh>", 1, 0,
+                        *(["<None>", 0, hole.get("group", 0), 0] if not scalar else [hole.get("group", 0)])),
                   pre + "_clearselected()"]
     lines.append(_call(pre + "_saveas", "built" + spec["extension"]))
     return lines
@@ -513,6 +516,53 @@ def compare_regions(expected, actual):
     return differences
 
 
+def split_at_nodes(model, tolerance=1e-6):
+    """The model with each segment and arc split at the nodes lying inside it, as FEMM splits a contour a node falls on.
+
+    Two contours that share a stretch, such as two rings meeting on one circle with
+    different sector edges, are then drawn as the same pieces FEMM stores.
+    """
+    points = [(n["x"], n["y"]) for n in model["nodes"]]
+    by_x = sorted(range(len(points)), key=lambda i: points[i][0])
+    xs = [points[i][0] for i in by_x]
+
+    def near(x0, x1, y0, y1):
+        lo, hi = bisect.bisect_left(xs, min(x0, x1) - tolerance), bisect.bisect_right(xs, max(x0, x1) + tolerance)
+        return [i for i in by_x[lo:hi] if min(y0, y1) - tolerance <= points[i][1] <= max(y0, y1) + tolerance]
+
+    segments = []
+    for item in model["segments"]:
+        (x0, y0), (x1, y1) = points[item["n0"]], points[item["n1"]]
+        length = math.hypot(x1 - x0, y1 - y0)
+        inside = []
+        for i in near(x0, x1, y0, y1):
+            px, py = points[i]
+            along = ((px - x0) * (x1 - x0) + (py - y0) * (y1 - y0)) / length
+            if tolerance < along < length - tolerance and abs((px - x0) * (y1 - y0) - (py - y0) * (x1 - x0)) / length <= tolerance:
+                inside.append((along, i))
+        ends = [item["n0"]] + [i for _, i in sorted(inside)] + [item["n1"]]
+        segments += [dict(item, n0=a, n1=b) for a, b in zip(ends, ends[1:])]
+    arcs = []
+    for item in model["arcs"]:
+        info = arc_geometry(points[item["n0"]], points[item["n1"]], item["angle"])
+        (cx, cy), radius, start = info["center"], info["radius"], info["start_angle"]
+        box = [points[item["n0"]], points[item["n1"]]] + [
+            (cx + radius * math.cos(math.radians(d)), cy + radius * math.sin(math.radians(d)))
+            for d in (0, 90, 180, 270) if (d - start) % 360 < item["angle"]]
+        inside = []
+        for i in near(min(p[0] for p in box), max(p[0] for p in box), min(p[1] for p in box), max(p[1] for p in box)):
+            px, py = points[i]
+            sweep = (math.degrees(math.atan2(py - cy, px - cx)) - start) % 360
+            if abs(math.hypot(px - cx, py - cy) - radius) <= tolerance and \
+                    tolerance < math.radians(sweep) * radius < math.radians(item["angle"]) * radius - tolerance:
+                inside.append((sweep, i))
+        cuts = [0.0] + [s for s, _ in sorted(inside)] + [item["angle"]]
+        ends = [item["n0"]] + [i for _, i in sorted(inside)] + [item["n1"]]
+        arcs += [dict(item, n0=a, n1=b, angle=t - s) if len(ends) > 2 else item
+                 for a, b, s, t in zip(ends, ends[1:], cuts, cuts[1:])]
+    return dict(model, segments=segments, arcs=arcs)
+
+
 def compare_models(expected, actual):
     """Return differences between two typed models, independent of entity order."""
     differences = []
@@ -554,7 +604,7 @@ def compare_models(expected, actual):
         n = model["nodes"][index]
         return round(n["x"], 9), round(n["y"], 9)
 
-    def keyed(model, section):
+    def keyed(model, section, shared=False):
         result = {}
         for item in model[section]:
             if section == "nodes":
@@ -566,24 +616,32 @@ def compare_models(expected, actual):
                 key = ends + (round(angle, 7),)
             else:
                 key = (round(item["x"], 9), round(item["y"], 9))
+            properties = {k: v for k, v in item.items() if k not in ("x", "y", "n0", "n1")}
+            if key in result and shared and section in ("segments", "arcs"):
+                # Contours sharing a stretch draw its pieces twice; FEMM keeps one, with either one's properties.
+                result[key].append(properties)
+                continue
             if key in result:
                 differences.append({"where": section + ".duplicate", "expected": None, "observed": list(key)})
-            result[key] = {k: v for k, v in item.items() if k not in ("x", "y", "n0", "n1")}
+            result[key] = [properties]
         return result
 
+    expected, actual = split_at_nodes(expected), split_at_nodes(actual)
     for section in ("nodes", "segments", "arcs", "labels", "holes"):
-        a, b = keyed(expected, section), keyed(actual, section)
+        a, b = keyed(expected, section, shared=True), keyed(actual, section)
         if set(a) != set(b):
             differences.append({"where": section + ".entities", "expected": len(a), "observed": len(b),
                                 "missing": [list(k) for k in sorted(set(a) - set(b))][:20],
                                 "unexpected": [list(k) for k in sorted(set(b) - set(a))][:20]})
         for key in set(a) & set(b):
-            for field, value in a[key].items():
-                observed = b[key].get(field)
+            for field in a[key][0]:
+                values, observed = [item.get(field) for item in a[key]], b[key][0].get(field)
                 # FEMM's addarc stores at most 10 degrees as an arc's maximum segment.
-                if section == "arcs" and field == "max_segment" and isinstance(value, (int, float)) and value > 10:
-                    value = 10
-                compare(f"{section}.{list(key)}.{field}", value, observed)
+                if section == "arcs" and field == "max_segment":
+                    values = [10 if isinstance(v, (int, float)) and v > 10 else v for v in values]
+                if not any(close(v, observed) for v in values):
+                    differences.append({"where": f"{section}.{list(key)}.{field}",
+                                        "expected": values[0] if len(values) == 1 else values, "observed": observed})
     return differences
 
 
