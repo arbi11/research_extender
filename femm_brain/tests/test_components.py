@@ -786,6 +786,13 @@ class RingSectorTests(unittest.TestCase):
         self.assertTrue(all(a["angle"] <= 180 for a in model["arcs"]))
         self.assertEqual(check_regions(model), [])
 
+    def test_ideal_iron_sectors_are_left_unmeshed(self):
+        # Pole pieces of infinitely permeable iron (an analytic model's assumption) are holes with natural boundaries.
+        model = self.ring([[72 * k + 18, 72 * k + 54, None, None] for k in range(5)], gap_material="Air")
+        self.assertEqual(len(model["holes"]), 5)
+        self.assertEqual(sorted(l["material"] for l in model["labels"]), ["Air"] * 5)
+        self.assertEqual(check_regions(model), [])
+
     def test_one_period_repeated_by_a_pole_count_parameter(self):
         steps = [{"use": "material", "name": "PM", "values": {"H_c": 900000}},
                  {"use": "ring_sectors", "inner_radius": 10, "outer_radius": 12, "copies": "$p", "angle_step": "=360/p",

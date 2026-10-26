@@ -962,7 +962,9 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0,
     """An annulus divided into angular sectors, each a block of its own material and magnetization.
 
     ``sectors`` lists [start, end, material, magnetization] with angles in
-    degrees, counterclockwise from start to end. Magnetization is null, "outward"
+    degrees, counterclockwise from start to end; a null material leaves the sector
+    unmeshed (ideal, infinitely permeable iron, whose surfaces are then natural
+    boundaries, as analytic models assume). Magnetization is null, "outward"
     or "inward" (radial, through FEMM's direction function) or a number (a
     parallel direction in degrees). Contiguous sectors make a closed ring of
     magnets (a magnetic gear's or Halbach rotor's); sectors with gaps between
@@ -986,7 +988,7 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0,
             repeated.append([sector[0] + turn, sector[1] + turn, sector[2], direction])
     spans = []
     for sector in repeated:
-        if len(sector) != 4 or not (_finite(sector[0]) and _finite(sector[1])) or not isinstance(sector[2], str):
+        if len(sector) != 4 or not (_finite(sector[0]) and _finite(sector[1])) or not (sector[2] is None or isinstance(sector[2], str)):
             raise ValueError("Each sector is [start degrees, end degrees, material, magnetization]")
         magnetization = sector[3]
         if magnetization is not None and magnetization not in ("outward", "inward") and not _finite(magnetization):
@@ -1020,6 +1022,9 @@ def ring_sectors(m, inner_radius, outer_radius, sectors, copies=1, angle_step=0,
         owner = next((sector for sector in spans if (centre - sector[0]) % 360 < sector[1]), None)
         if owner is None:
             m.label(*point(middle, centre), gap_material, mesh=gap_mesh, group=group)
+        elif owner[2] is None:
+            # Ideal iron (infinitely permeable) is left unmeshed: its surfaces are natural boundaries.
+            m.hole(*point(middle, centre))
         elif owner[3] in ("outward", "inward"):
             m.label(*point(middle, centre), owner[2], mesh=mesh, group=group,
                     magdir_function="theta" if owner[3] == "outward" else "theta+180")

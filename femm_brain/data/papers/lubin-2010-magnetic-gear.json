@@ -1,0 +1,1765 @@
+{
+ "schema_version": 1,
+ "id": "lubin-2010-magnetic-gear",
+ "set": "unassigned",
+ "status": "frozen",
+ "skill_version": null,
+ "title": "Analytical computation of the magnetic field distribution in a magnetic gear",
+ "source": {
+  "citation": "T. Lubin, S. Mezani, A. Rezzoug, IEEE Transactions on Magnetics 46(7):2611-2621, 2010",
+  "doi": "10.1109/TMAG.2010.2044187",
+  "url": "https://hal.science/hal-00558537",
+  "access": "author copy on HAL (IEEE copyright)",
+  "pdf_sha256": "eecf706ca6923f1874f0d79bd3657047c20a0bfbb07b6f7293b9f3971ed1fb07",
+  "pages": 14,
+  "accessed": "2026-10-26"
+ },
+ "machine": {
+  "family": "magnetic_gear",
+  "topology": "coaxial magnetic gear: inner and outer rotors of full-arc radial magnets on ideal iron yokes, a ring of ideal-iron pole pieces between two air gaps",
+  "problem": "planar",
+  "poles": 4,
+  "symmetry": "Full cross-section (Example 1 has no rotational symmetry shorter than 360 degrees: 2, 3 and 5 share no factor)."
+ },
+ "components_map": [
+  {
+   "part": "magnet rings and the pole-piece ring (pole pieces unmeshed)",
+   "component": "ring_sectors"
+  },
+  {
+   "part": "the two air gaps",
+   "component": "air_gap_element (sliding bands; the inner one turns the inner rotor)"
+  },
+  {
+   "part": "inner yoke, gauge",
+   "component": "hole, fixed_point_potential"
+  }
+ ],
+ "article": {
+  "parameters": {
+   "r1_cm": {
+    "value": 4,
+    "unit": "cm",
+    "provenance": "quoted",
+    "quote": "Radius of the inner rotor yoke 4 cm",
+    "location": "Table I, p. 7"
+   },
+   "r2_cm": {
+    "value": 5,
+    "unit": "cm",
+    "provenance": "quoted",
+    "quote": "Outer radius of the inner rotor PMs 5 cm",
+    "location": "Table I, p. 7"
+   },
+   "r3_cm": {
+    "value": 5.2,
+    "unit": "cm",
+    "provenance": "quoted",
+    "quote": "Inner radius of the slots 5.2 cm",
+    "location": "Table I, p. 7",
+    "note": "Read from the OCR: the text layer splits these two table rows."
+   },
+   "r4_cm": {
+    "value": 6.2,
+    "unit": "cm",
+    "provenance": "quoted",
+    "quote": "Outer radius of the slots 6.2 cm",
+    "location": "Table I, p. 7",
+    "note": "As r3_cm."
+   },
+   "r5_cm": {
+    "value": 6.4,
+    "unit": "cm",
+    "provenance": "quoted",
+    "quote": "Inner radius of the outer rotor PMs 6.4 cm",
+    "location": "Table I, p. 7"
+   },
+   "r6_cm": {
+    "value": 7.4,
+    "unit": "cm",
+    "provenance": "quoted",
+    "quote": "Inner radius of the outer rotor yoke 7.4 cm",
+    "location": "Table I, p. 7"
+   },
+   "axial_length_cm": {
+    "value": 10,
+    "unit": "cm",
+    "provenance": "quoted",
+    "quote": "Axial length 10 cm",
+    "location": "Table I, p. 7"
+   },
+   "slot_opening_fraction_of_pi": {
+    "value": 0.2,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "Slot opening π/5 rad",
+    "location": "Table I, p. 7",
+    "note": "beta = pi/5 rad."
+   },
+   "magnet_br_T": {
+    "value": 1.2,
+    "unit": "T",
+    "provenance": "quoted",
+    "quote": "Remanence of the magnets 1.2 T",
+    "location": "Table I, p. 7"
+   },
+   "magnet_mu_r": {
+    "value": 1,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "The relative recoil permeability of the magnets is µ r = 1",
+    "location": "Section II, assumptions, p. 2"
+   },
+   "inner_pole_pairs": {
+    "value": 2,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Pole-pairs inner rotor 2",
+    "location": "Table I, p. 7"
+   },
+   "outer_pole_pairs": {
+    "value": 3,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Pole-pairs outer rotor 3",
+    "location": "Table I, p. 7"
+   },
+   "pole_pieces": {
+    "value": 5,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Number of ferromagnetic pole-pieces 5",
+    "location": "Table I, p. 7"
+   },
+   "sweep_step_deg": {
+    "value": 1.0,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Inner-rotor positions: Fig. 12's FEM points lie on whole degrees (every 2 degrees to 48, odd degrees from 51)."
+   },
+   "band_margin_mm": {
+    "value": 0.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Thin air between each gap's sliding band and its two surfaces (the 2 mm gaps keep a 1 mm band)."
+   },
+   "gap_arc_deg": {
+    "value": 0.25,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc pieces along the gaps (0.22 mm at 5 cm)."
+   },
+   "ring_arc_deg": {
+    "value": 0.5,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc pieces elsewhere."
+   },
+   "thin_air_mesh_mm": {
+    "value": 0.15,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Thin air regions of the gaps."
+   },
+   "slot_air_mesh_mm": {
+    "value": 0.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Slots between the pole pieces."
+   },
+   "magnet_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Magnets."
+   },
+   "r1_mm": {
+    "value": 40,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r1_cm*10",
+    "inputs": [
+     "r1_cm"
+    ]
+   },
+   "r2_mm": {
+    "value": 50,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r2_cm*10",
+    "inputs": [
+     "r2_cm"
+    ]
+   },
+   "r3_mm": {
+    "value": 52.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r3_cm*10",
+    "inputs": [
+     "r3_cm"
+    ]
+   },
+   "r4_mm": {
+    "value": 62.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r4_cm*10",
+    "inputs": [
+     "r4_cm"
+    ]
+   },
+   "r5_mm": {
+    "value": 64.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r5_cm*10",
+    "inputs": [
+     "r5_cm"
+    ]
+   },
+   "r6_mm": {
+    "value": 74.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "r6_cm*10",
+    "inputs": [
+     "r6_cm"
+    ]
+   },
+   "axial_length_mm": {
+    "value": 100,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "axial_length_cm*10",
+    "inputs": [
+     "axial_length_cm"
+    ]
+   },
+   "slot_opening_deg": {
+    "value": 36.0,
+    "unit": "deg",
+    "provenance": "derived",
+    "expression": "slot_opening_fraction_of_pi*180",
+    "inputs": [
+     "slot_opening_fraction_of_pi"
+    ]
+   },
+   "magnet_coercivity_A_per_m": {
+    "value": 954929.658551372,
+    "unit": "A/m",
+    "provenance": "derived",
+    "expression": "magnet_br_T/(mu0*magnet_mu_r)",
+    "inputs": [
+     "magnet_br_T",
+     "magnet_mu_r"
+    ]
+   }
+  },
+  "assembly": {
+   "problem": {
+    "physics": "magnetics",
+    "units": "millimeters",
+    "type": "planar",
+    "frequency": 0,
+    "depth": "$axial_length_mm"
+   },
+   "steps": [
+    {
+     "use": "material",
+     "name": "Air"
+    },
+    {
+     "use": "material",
+     "name": "Magnet",
+     "values": {
+      "Mu_x": "$magnet_mu_r",
+      "Mu_y": "$magnet_mu_r",
+      "H_c": "$magnet_coercivity_A_per_m"
+     }
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$r5_mm",
+     "outer_radius": "$r6_mm",
+     "copies": "$outer_pole_pairs",
+     "angle_step": "=360/outer_pole_pairs",
+     "sectors": [
+      [
+       0,
+       "=180/outer_pole_pairs",
+       "Magnet",
+       "outward"
+      ],
+      [
+       "=180/outer_pole_pairs",
+       "=360/outer_pole_pairs",
+       "Magnet",
+       "inward"
+      ]
+     ],
+     "max_segment": "$ring_arc_deg",
+     "mesh": "$magnet_mesh_mm"
+    },
+    {
+     "use": "air_gap_element",
+     "rotor_radius": "=r4_mm+band_margin_mm",
+     "stator_radius": "=r5_mm-band_margin_mm",
+     "max_segment": "$gap_arc_deg",
+     "name": "AGE_out"
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$r3_mm",
+     "outer_radius": "$r4_mm",
+     "copies": "$pole_pieces",
+     "angle_step": "=360/pole_pieces",
+     "sectors": [
+      [
+       "=slot_opening_deg/2",
+       "=360/pole_pieces-slot_opening_deg/2",
+       null,
+       null
+      ]
+     ],
+     "gap_material": "Air",
+     "max_segment": "$gap_arc_deg",
+     "gap_mesh": "$slot_air_mesh_mm"
+    },
+    {
+     "use": "air_gap_element",
+     "rotor_radius": "=r2_mm+band_margin_mm",
+     "stator_radius": "=r3_mm-band_margin_mm",
+     "max_segment": "$gap_arc_deg",
+     "name": "AGE_in"
+    },
+    {
+     "use": "ring_sectors",
+     "inner_radius": "$r1_mm",
+     "outer_radius": "$r2_mm",
+     "copies": "$inner_pole_pairs",
+     "angle_step": "=360/inner_pole_pairs",
+     "sectors": [
+      [
+       0,
+       "=180/inner_pole_pairs",
+       "Magnet",
+       "outward"
+      ],
+      [
+       "=180/inner_pole_pairs",
+       "=360/inner_pole_pairs",
+       "Magnet",
+       "inward"
+      ]
+     ],
+     "max_segment": "$ring_arc_deg",
+     "mesh": "$magnet_mesh_mm"
+    },
+    {
+     "use": "hole",
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r5_mm-band_margin_mm/2",
+      0.0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r4_mm+band_margin_mm/2",
+      0.0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r3_mm-band_margin_mm/2",
+      0.0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=r2_mm+band_margin_mm/2",
+      0.0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "fixed_point_potential",
+     "at": [
+      "$r6_mm",
+      0
+     ],
+     "name": "A0"
+    }
+   ]
+  }
+ },
+ "variants": [
+  {
+   "id": "example-2",
+   "purpose": "Application example 2 (Section V): 3 inner and 13 outer pole pairs, 16 pole pieces, slot opening pi/16; Fig. 17's sweep of 60 degrees in steps of 60/57 degrees.",
+   "parameters": {
+    "inner_pole_pairs": 3,
+    "outer_pole_pairs": 13,
+    "pole_pieces": 16,
+    "slot_opening_fraction_of_pi": 0.0625,
+    "sweep_step_deg": 1.0526315789473684
+   }
+  }
+ ],
+ "gaps": [
+  {
+   "item": "the torque's sign convention",
+   "affects": "torque targets",
+   "decision": "resolved",
+   "note": "Not defined; Fig. 12's torque is positive between 0 and 90 degrees. Magnitudes are compared (the curve does not change sign inside the range)."
+  },
+  {
+   "item": "which rotor has 13 pole pairs in Example 2",
+   "affects": "the variant",
+   "decision": "resolved",
+   "note": "The text says po = 3 and pi = 13, but the inner air-gap field of Fig. 15 has 3 periods and the outer of Fig. 16 about 13, and Fig. 17 sweeps the inner rotor over 60 degrees, half a period only for 3 pole pairs. The variant has 3 inner and 13 outer pole pairs."
+  },
+  {
+   "item": "the coupled rotation of Figs. 13 and 18, and the field plots",
+   "affects": "comparators only",
+   "decision": "out_of_scope",
+   "note": "The sweep assessor samples a sweep that starts at zero; the coupled sweep starts at 40 degrees. The field plots are not digitized."
+  }
+ ],
+ "steps": [
+  {
+   "label": "p00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=0*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=1*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=2*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=3*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=4*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=5*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=6*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=7*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=8*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=9*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p10",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=10*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p11",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=11*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p12",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=12*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p13",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=13*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p14",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=14*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p15",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=15*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p16",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=16*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p17",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=17*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p18",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=18*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p19",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=19*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p20",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=20*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p21",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=21*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p22",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=22*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p23",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=23*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p24",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=24*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p25",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=25*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p26",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=26*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p27",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=27*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p28",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=28*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p29",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=29*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p30",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=30*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p31",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=31*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p32",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=32*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p33",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=33*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p34",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=34*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p35",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=35*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p36",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=36*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p37",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=37*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p38",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=38*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p39",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=39*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p40",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=40*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p41",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=41*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p42",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=42*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p43",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=43*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p44",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=44*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p45",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=45*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p46",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=46*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p47",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=47*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p48",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=48*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p49",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=49*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p50",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=50*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p51",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=51*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p52",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=52*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p53",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=53*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p54",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=54*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p55",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=55*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p56",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=56*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p57",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=57*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p58",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=58*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p59",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=59*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p60",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=60*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p61",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=61*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p62",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=62*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p63",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=63*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p64",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=64*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p65",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=65*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p66",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=66*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p67",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=67*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p68",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=68*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p69",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=69*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p70",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=70*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p71",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=71*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p72",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=72*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p73",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=73*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p74",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=74*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p75",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=75*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p76",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=76*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p77",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=77*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p78",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=78*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p79",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=79*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p80",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=80*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p81",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=81*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p82",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=82*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p83",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=83*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p84",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=84*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p85",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=85*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p86",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=86*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p87",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=87*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p88",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=88*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p89",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=89*sweep_step_deg"
+    }
+   ]
+  },
+  {
+   "label": "p90",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE_in",
+     "property": 10,
+     "value": "=90*sweep_step_deg"
+    }
+   ]
+  }
+ ],
+ "engine": {
+  "solves_per_process": 40
+ },
+ "measurements": [
+  {
+   "id": "tq_in",
+   "op": "gap_integral",
+   "boundary": "AGE_in",
+   "type": 0
+  }
+ ],
+ "metrics": [
+  {
+   "name": "torque_inner_Nm",
+   "value": [
+    "tq_in",
+    0
+   ],
+   "unit": "N*m",
+   "part": "abs"
+  }
+ ],
+ "targets": [
+  {
+   "metric": "torque_inner_Nm@p10",
+   "value": 22.19,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.5,
+   "absolute_digitization_uncertainty": 0.25,
+   "used_for_acceptance": true,
+   "quote": "Fig. 12. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 12, p. 9 (FEM points)",
+   "note": "The FEM point at 10 degrees (FEMM, the paper's [16]), read at 600 dpi: gridline calibration within 0.09 N m, diamond centres stable to 0.04 N m between two erosion sizes. Magnitude, since the paper does not define the torque's sign."
+  },
+  {
+   "metric": "torque_inner_Nm@p16",
+   "value": 39.43,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.5,
+   "absolute_digitization_uncertainty": 0.25,
+   "used_for_acceptance": true,
+   "quote": "Fig. 12. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 12, p. 9 (FEM points)",
+   "note": "The FEM point at 16 degrees (FEMM, the paper's [16]), read at 600 dpi: gridline calibration within 0.09 N m, diamond centres stable to 0.04 N m between two erosion sizes. Magnitude, since the paper does not define the torque's sign."
+  },
+  {
+   "metric": "torque_inner_Nm@p20",
+   "value": 37.83,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.5,
+   "absolute_digitization_uncertainty": 0.25,
+   "used_for_acceptance": true,
+   "quote": "Fig. 12. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 12, p. 9 (FEM points)",
+   "note": "The FEM point at 20 degrees (FEMM, the paper's [16]), read at 600 dpi: gridline calibration within 0.09 N m, diamond centres stable to 0.04 N m between two erosion sizes. Magnitude, since the paper does not define the torque's sign."
+  },
+  {
+   "metric": "torque_inner_Nm@p30",
+   "value": 59.34,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.5,
+   "absolute_digitization_uncertainty": 0.25,
+   "used_for_acceptance": true,
+   "quote": "Fig. 12. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 12, p. 9 (FEM points)",
+   "note": "The FEM point at 30 degrees (FEMM, the paper's [16]), read at 600 dpi: gridline calibration within 0.09 N m, diamond centres stable to 0.04 N m between two erosion sizes. Magnitude, since the paper does not define the torque's sign."
+  },
+  {
+   "metric": "torque_inner_Nm@p34",
+   "value": 70.18,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.5,
+   "absolute_digitization_uncertainty": 0.25,
+   "used_for_acceptance": true,
+   "quote": "Fig. 12. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 12, p. 9 (FEM points)",
+   "note": "The FEM point at 34 degrees (FEMM, the paper's [16]), read at 600 dpi: gridline calibration within 0.09 N m, diamond centres stable to 0.04 N m between two erosion sizes. Magnitude, since the paper does not define the torque's sign."
+  },
+  {
+   "metric": "torque_inner_Nm@p40",
+   "value": 61.91,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.5,
+   "absolute_digitization_uncertainty": 0.25,
+   "used_for_acceptance": true,
+   "quote": "Fig. 12. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 12, p. 9 (FEM points)",
+   "note": "The FEM point at 40 degrees (FEMM, the paper's [16]), read at 600 dpi: gridline calibration within 0.09 N m, diamond centres stable to 0.04 N m between two erosion sizes. Magnitude, since the paper does not define the torque's sign."
+  },
+  {
+   "metric": "torque_inner_Nm@p42",
+   "value": 61.46,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.5,
+   "absolute_digitization_uncertainty": 0.25,
+   "used_for_acceptance": true,
+   "quote": "Fig. 12. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 12, p. 9 (FEM points)",
+   "note": "The FEM point at 42 degrees (FEMM, the paper's [16]), read at 600 dpi: gridline calibration within 0.09 N m, diamond centres stable to 0.04 N m between two erosion sizes. Magnitude, since the paper does not define the torque's sign."
+  },
+  {
+   "metric": "torque_inner_Nm@p51",
+   "value": 73.8,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.5,
+   "absolute_digitization_uncertainty": 0.25,
+   "used_for_acceptance": true,
+   "quote": "Fig. 12. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 12, p. 9 (FEM points)",
+   "note": "The FEM point at 51 degrees (FEMM, the paper's [16]), read at 600 dpi: gridline calibration within 0.09 N m, diamond centres stable to 0.04 N m between two erosion sizes. Magnitude, since the paper does not define the torque's sign."
+  },
+  {
+   "metric": "torque_inner_Nm@p59",
+   "value": 53.47,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.5,
+   "absolute_digitization_uncertainty": 0.25,
+   "used_for_acceptance": true,
+   "quote": "Fig. 12. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 12, p. 9 (FEM points)",
+   "note": "The FEM point at 59 degrees (FEMM, the paper's [16]), read at 600 dpi: gridline calibration within 0.09 N m, diamond centres stable to 0.04 N m between two erosion sizes. Magnitude, since the paper does not define the torque's sign."
+  },
+  {
+   "metric": "torque_inner_Nm@p67",
+   "value": 49.39,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.5,
+   "absolute_digitization_uncertainty": 0.25,
+   "used_for_acceptance": true,
+   "quote": "Fig. 12. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 12, p. 9 (FEM points)",
+   "note": "The FEM point at 67 degrees (FEMM, the paper's [16]), read at 600 dpi: gridline calibration within 0.09 N m, diamond centres stable to 0.04 N m between two erosion sizes. Magnitude, since the paper does not define the torque's sign."
+  },
+  {
+   "metric": "torque_inner_Nm@p73",
+   "value": 34.6,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.5,
+   "absolute_digitization_uncertainty": 0.25,
+   "used_for_acceptance": true,
+   "quote": "Fig. 12. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 12, p. 9 (FEM points)",
+   "note": "The FEM point at 73 degrees (FEMM, the paper's [16]), read at 600 dpi: gridline calibration within 0.09 N m, diamond centres stable to 0.04 N m between two erosion sizes. Magnitude, since the paper does not define the torque's sign."
+  },
+  {
+   "metric": "torque_inner_Nm@p81",
+   "value": 19.12,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.5,
+   "absolute_digitization_uncertainty": 0.25,
+   "used_for_acceptance": true,
+   "quote": "Fig. 12. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 12, p. 9 (FEM points)",
+   "note": "The FEM point at 81 degrees (FEMM, the paper's [16]), read at 600 dpi: gridline calibration within 0.09 N m, diamond centres stable to 0.04 N m between two erosion sizes. Magnitude, since the paper does not define the torque's sign."
+  },
+  {
+   "metric": "torque_inner_Nm@p87",
+   "value": 12.74,
+   "unit": "N*m",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.5,
+   "absolute_digitization_uncertainty": 0.25,
+   "used_for_acceptance": true,
+   "quote": "Fig. 12. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 12, p. 9 (FEM points)",
+   "note": "The FEM point at 87 degrees (FEMM, the paper's [16]), read at 600 dpi: gridline calibration within 0.09 N m, diamond centres stable to 0.04 N m between two erosion sizes. Magnitude, since the paper does not define the torque's sign."
+  },
+  {
+   "metric": "torque_inner_Nm@p51",
+   "value": 75,
+   "unit": "N*m",
+   "kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "a maximum torque of 75 Nm is obtained for a value of … around 51°",
+   "location": "Section IV-B, p. 8",
+   "note": "The text's rounded maximum; Fig. 12's FEM point at 51 degrees reads 73.8 N m. A comparator."
+  },
+  {
+   "metric": "torque_inner_Nm@p40",
+   "value": 61,
+   "unit": "N*m",
+   "kind": "analytic",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "quote": "corresponds to a torque value exerted on the inner rotor of 61 Nm",
+   "location": "Section IV-B, p. 8",
+   "note": "Rounded in the text; Fig. 12 reads 61.9 N m at 40 degrees. A comparator."
+  },
+  {
+   "metric": "torque_inner_Nm@p06",
+   "value": 13.39,
+   "unit": "N*m",
+   "kind": "digitized",
+   "variant": "example-2",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.4,
+   "absolute_digitization_uncertainty": 0.2,
+   "used_for_acceptance": true,
+   "quote": "Fig. 17. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 17, p. 10 (FEM points)",
+   "note": "The FEM point at 6.316 degrees (the FEM points lie every 60/19 degrees), read at 600 dpi: calibration within 0.05 N m."
+  },
+  {
+   "metric": "torque_inner_Nm@p15",
+   "value": 30.61,
+   "unit": "N*m",
+   "kind": "digitized",
+   "variant": "example-2",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.4,
+   "absolute_digitization_uncertainty": 0.2,
+   "used_for_acceptance": true,
+   "quote": "Fig. 17. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 17, p. 10 (FEM points)",
+   "note": "The FEM point at 15.789 degrees (the FEM points lie every 60/19 degrees), read at 600 dpi: calibration within 0.05 N m."
+  },
+  {
+   "metric": "torque_inner_Nm@p24",
+   "value": 38.75,
+   "unit": "N*m",
+   "kind": "digitized",
+   "variant": "example-2",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.4,
+   "absolute_digitization_uncertainty": 0.2,
+   "used_for_acceptance": true,
+   "quote": "Fig. 17. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 17, p. 10 (FEM points)",
+   "note": "The FEM point at 25.263 degrees (the FEM points lie every 60/19 degrees), read at 600 dpi: calibration within 0.05 N m."
+  },
+  {
+   "metric": "torque_inner_Nm@p30",
+   "value": 41.12,
+   "unit": "N*m",
+   "kind": "digitized",
+   "variant": "example-2",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.4,
+   "absolute_digitization_uncertainty": 0.2,
+   "used_for_acceptance": true,
+   "quote": "Fig. 17. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 17, p. 10 (FEM points)",
+   "note": "The FEM point at 31.579 degrees (the FEM points lie every 60/19 degrees), read at 600 dpi: calibration within 0.05 N m."
+  },
+  {
+   "metric": "torque_inner_Nm@p39",
+   "value": 32.89,
+   "unit": "N*m",
+   "kind": "digitized",
+   "variant": "example-2",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.4,
+   "absolute_digitization_uncertainty": 0.2,
+   "used_for_acceptance": true,
+   "quote": "Fig. 17. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 17, p. 10 (FEM points)",
+   "note": "The FEM point at 41.053 degrees (the FEM points lie every 60/19 degrees), read at 600 dpi: calibration within 0.05 N m."
+  },
+  {
+   "metric": "torque_inner_Nm@p48",
+   "value": 18.73,
+   "unit": "N*m",
+   "kind": "digitized",
+   "variant": "example-2",
+   "relative_tolerance": 0.01,
+   "absolute_tolerance": 0.4,
+   "absolute_digitization_uncertainty": 0.2,
+   "used_for_acceptance": true,
+   "quote": "Fig. 17. Torque exerted on the inner rotor with the pole-pieces ring and the outer rotor fixed",
+   "location": "Fig. 17, p. 10 (FEM points)",
+   "note": "The FEM point at 50.526 degrees (the FEM points lie every 60/19 degrees), read at 600 dpi: calibration within 0.05 N m."
+  }
+ ],
+ "assessors": [],
+ "controls": [
+  {
+   "id": "mesh-0p6",
+   "level": "article",
+   "mesh_scale": 0.6,
+   "purpose": "Every element size and arc piece at 0.6 times."
+  }
+ ],
+ "coverage": {
+  "scope": "core",
+  "reproduced": "The FEM static torque of the inner rotor against its position, for both application examples (Figs. 12 and 17).",
+  "not_reproduced": "The coupled rotation (Figs. 13 and 18), the slot-opening sweep (Fig. 19) and the air-gap field plots (Figs. 10, 11, 15, 16)."
+ },
+ "geometry_checks": [],
+ "findings": [],
+ "retrospective": []
+}
