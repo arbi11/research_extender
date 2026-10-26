@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "tzouganakis-2024-halbach-gear",
  "set": "held_out",
- "status": "frozen",
+ "status": "partial",
  "skill_version": "713906e",
  "title": "Torque calculation and dynamical response in Halbach array coaxial magnetic gears through a novel analytical 2D model",
  "source": {
@@ -1201,11 +1201,82 @@
  "coverage": {
   "scope": "core",
   "reproduced": "Table 3's analytic torque amplitudes of both rotors for the HAL-CMG and the standard CMG (fundamentals for acceptance, 3rd and 5th harmonics as comparators).",
-  "not_reproduced": "The FEA points of Fig. 6, the dynamic response (Table 4, Figs. 7-8, the 13.5% transmission error), the 0.3% torque ripple (its definition is not given)."
+  "not_reproduced": "The FEA points of Fig. 6, the dynamic response (Table 4, Figs. 7-8, the 13.5% transmission error), the 0.3% torque ripple (its definition is not given).",
+  "outcome": "Partial: the HAL-CMG's xi_4 within 0.90%; its xi_10 and the standard CMG's xi_4 and xi_10 1.55-1.96% high with the frozen magnet mu_r 1.05, which the paper does not state and which decides the outcome (all four within 1.5% for about 1.06-1.075)."
  },
- "geometry_checks": [],
- "findings": [
-  "Post-freeze construction fix (disclosed; run1 kept): run1's first solve did not finish in 25 minutes and was stopped. The frozen build drew ideal-iron yoke rings (unmeshed, out to a 20 mm shaft and to rout) whose arcs overlapped the magnet rings' arcs on r1 and r6 and whose far circles carried nodes no element uses. Single diagnostic solves outside the case: without the yoke rings 3 s; without only the outer ring 4 s but an inner torque 7% off (290.0 against 313.2 N m at p00: the overlap on r1 changed the field silently); yoke rings sharing the magnets' circles still stalled while unmeshed, and solved in 3 s when meshed as linear iron (mu_r 1e4), 313.07 / -784.83 N m against 313.18 / -785.10 without rings (0.04%). The yokes are therefore not drawn (inner yoke a hole, nothing beyond r6), as in the Lubin 2010 gear, and control meshed-iron, which needed the rings, is withdrawn; that one-position comparison stands in for it. No physical input, target, tolerance or measurement changed."
+ "geometry_checks": [
+  {
+   "quantity": "inner Halbach pole-pair pitch 2 alpha_h + 4 beta_h + 2 gamma_h (deg)",
+   "paper_value": 90,
+   "model_value": 90,
+   "location": "Table 2 against Table 1 (360/p_in)",
+   "note": "The array closes on one pole pair; the standard variant (45, 0, 0) does too."
+  },
+  {
+   "quantity": "outer magnet pitch 2 alpha_h (deg)",
+   "paper_value": 36,
+   "model_value": 36,
+   "location": "Table 2 against Table 1 (360/p_out)"
+  },
+  {
+   "quantity": "pole pieces: count, width and pitch (deg) read from Fig. 1",
+   "paper_value": {
+    "count": 14,
+    "width": "14.3-15.0",
+    "pitch": "25.7-26.2"
+   },
+   "model_value": {
+    "count": 14,
+    "width": 15,
+    "pitch": 25.714
+   },
+   "location": "Fig. 1, p. 3 (300 dpi), Table 1",
+   "note": "Fig. 1 is otherwise a schematic (8 and 20 pole pairs drawn)."
+  },
+  {
+   "quantity": "radii read from Fig. 1 scaled by r6 = 150 mm (mm)",
+   "paper_value": [
+    78.5,
+    99.6,
+    104.1,
+    124.4,
+    128.8
+   ],
+   "model_value": [
+    80,
+    100,
+    105,
+    125,
+    130
+   ],
+   "location": "Fig. 1, p. 3",
+   "note": "r1 to r5; within 1.5 mm, the drawing's rout reads 174 mm against 170."
+  },
+  {
+   "quantity": "elements (article level)",
+   "paper_value": null,
+   "model_value": 149533,
+   "location": "run2",
+   "note": "Estimated 140-200k before solving; mesh 0.75: 243,687; standard variant 147,426."
+  }
  ],
- "retrospective": []
+ "findings": [
+  "Post-freeze construction fix (disclosed; run1 kept): run1's first solve did not finish in 25 minutes and was stopped. The frozen build drew ideal-iron yoke rings (unmeshed, out to a 20 mm shaft and to rout) whose arcs overlapped the magnet rings' arcs on r1 and r6 and whose far circles carried nodes no element uses. Single diagnostic solves outside the case: without the yoke rings 3 s; without only the outer ring 4 s but an inner torque 7% off (290.0 against 313.2 N m at p00: the overlap on r1 changed the field silently); yoke rings sharing the magnets' circles still stalled while unmeshed, and solved in 3 s when meshed as linear iron (mu_r 1e4), 313.07 / -784.83 N m against 313.18 / -785.10 without rings (0.04%). The yokes are therefore not drawn (inner yoke a hole, nothing beyond r6), as in the Lubin 2010 gear, and control meshed-iron, which needed the rings, is withdrawn; that one-position comparison stands in for it. No physical input, target, tolerance or measurement changed.",
+  "Outcome (run2, frozen magnet mu_r 1.05): 1 of 4 acceptance checks passes at 1.5%. HAL-CMG xi_4 385.34 N m against Table 3's 381.89 (+0.90%, passed) and xi_10 971.66 against 952.95 (+1.96%); standard CMG xi_4 339.00 against 333.81 (+1.55%) and xi_10 849.13 against 832.98 (+1.94%). The pre-solve estimate (subdomain model, same assumptions) had put them at +2.0% (inner) and +1.2% (outer): FEMM's inner amplitude lies 1.05% below the estimate and its outer 0.8% above, as in the Lubin 2010 gear, where FEMM's ideal-iron maximum (74.07 N m) lay 1.2% below the same estimator and the paper's analytic 75.",
+  "The magnet permeability decides the outcome. Controls (HAL-CMG): mu_r 1.0 gives 402.29 / 1014.41 N m (+5.34% / +6.45% from Table 3), mu_r 1.1 gives 369.51 / 931.74 (-3.24% / -2.23%). Interpolated, xi_4 matches Table 3 at mu_r about 1.061 and xi_10 at about 1.073, and with the standard CMG's offsets (+1.55%, +1.94% at 1.05) all four amplitudes would lie within 1.5% for mu_r about 1.06-1.075. The paper gives none; 1.05 is the lessons' sintered-NdFeB value and was not tuned.",
+  "No single permeability brings both rotors within 1%: Table 3's xi_10/xi_4 is 2.49535 for the HAL-CMG and 2.49537 for the standard CMG (equal to five digits, a constant of the analytic model), while the field gives 2.522 and 2.505: the outer amplitude carries higher-order couplings (an inner harmonic with the outer fundamental through a higher modulator order) that depend on the array. The paper's own FEA (ANSYS, pure iron) differed from its analytic model by 1-1.5%.",
+  "Numerically settled: mesh 0.75 (243.7k elements) moves every amplitude by under 0.03% (385.25 / 971.49); a diagnostic sweep of the inner rotor instead of the outer (outside the case) gives 386.25 / 971.58 N m, within 0.24%; ideal against meshed linear iron 0.04% at one position (first finding). The inner rotor's own cogging at its fixed position is a constant 1.35 N m in the sweep, which the amplitude ignores.",
+  "The Halbach gain: xi_4 HAL/standard 1.1367 (paper 1.1440, its text 14.3%) and xi_10 1.1443 (paper 1.1440). The reading of Figs. 2-4 (blocks of constant radial and tangential magnetization turning counterclockwise, field on the gap side) is confirmed by that gain; the opposite sense would weaken the gap field.",
+  "Comparators (Table 3's higher harmonics): xi_12 1.131 against 1.09 (HAL) and 1.364 against 1.25 (standard), xi_30 3.103 against 2.88 and 3.516 against 3.26: 4-9% high, the same direction as the fundamentals and closer at mu_r 1.1 (1.091 and 2.991 for the HAL-CMG). xi_20 and xi_50 are at the 0.001-0.1 N m level in both (0.0024 / 0.0088 HAL, 0.043 / 0.094 standard, against 0.001 / 0.002 and 0.02 / 0.05).",
+  "Fig. 1 is a schematic of the build, not of the case study: scaled by r6 = 150 mm its radii read 78.5, 99.6, 104.1, 124.4 and 128.8 mm against Table 1's 80, 100, 105, 125, 130, and its 14 pole pieces of 14.3-15.0 degrees at a 25.7-26.2 degree pitch confirm N = 14 and delta = 15, but its rings carry 64 and 160 blocks (8 and 20 pole pairs of the 8-block array).",
+  "The new overlapping-arc check finds 24 and 60 pairs of overlapping arcs in the recorded Lubin 2011 and Lubin 2012 builds (two ring_sectors drawing one circle with different split points). Here such an overlap changed the inner torque by 7% without any error, so those cases' unexplained field errors (the lesson on an air-gap element with unmeshed stator iron) may come from it; their cases and evidence are not touched (noted by papers --check)."
+ ],
+ "retrospective": [
+  "Outcome first (held-out, skill 713906e, no skill or lesson edits): partial, 1 of 4 acceptance checks. The HAL-CMG's inner amplitude passes at +0.90%; its outer amplitude (+1.96%) and the standard CMG's (+1.55%, +1.94%) fail the 1.5% the paper reports for its FEA. The unstated magnet permeability decides it (about 4% per 0.05; 1.06-1.075 would pass all four). Times: reading, the pre-solve estimator and the generic magnetization changes to the freeze about 30 min (14:00-14:30 UTC); run1 and the diagnosis of its stall about 34 min (14:30-15:04); run2 8 min (15:05-15:13); recording and write-up about 20 min.",
+  "Longest: the stalled run1. The frozen build passed every check (regions, provenance, render) yet FEMM's solver never finished: ideal yoke rings drawn as unmeshed ring_sectors overlapped the magnet rings' arcs and left circles of nodes no element uses. Single-solve diagnostics separated the two (overlap alone changed the inner torque by 7% silently; unmeshed rings stalled even without overlap). Second longest: a subdomain estimator written for the pre-solve estimate, validated on Lubin 2010 first.",
+  "What the skill lacked: (1) a build check for curves FEMM cannot mesh cleanly. Added generically: overlapping_arcs in papers --check (refuses a case being frozen). Proposed: also refuse unmeshed regions that touch no meshed region (nodes no element uses), and solve one position of each level, timed, before the full sweep (a 2 s solve that takes minutes is a construction error). (2) A rule for analytic targets whose ratios no field can give: Table 3's outer/inner ratio is the same constant for both drives, the field's is not; comparing tabulated ratios with the physics (p_out/p_in plus cross couplings, here from an estimator) before freezing would have predicted that both rotors cannot pass at 1% and shown which column carries the model constant. (3) Material inputs of analytic models: when the analytic model states the property symbolically (mu_r in eq. (1)) but gives no value, the skill could ask for the implied value range to be computed from the paper's own results before freezing, and recorded as a finding beside the typical value frozen (here 1.06-1.075 against 1.05).",
+  "Lessons that held: adopt the analytic model's assumptions (ideal iron, unmeshed pole pieces between two sliding bands: 0.04% from meshed iron); measure the target as the paper defines it (Table 3's xi are harmonic amplitudes, so the fundamental of a full period, sampled densely enough that no strong harmonic aliases; the inner and outer sweeps agree within 0.24%); Halbach directions confirmed by an independent sign (the HAL/standard gain); Milykh's proposed lesson, bracket an assumed input at both ends before freezing: the estimate's brackets (+4.4%, -4.1%) foretold the controls (+5.3%, -3.2%) and flagged the gap as decisive. Lesson to revisit: 'an air-gap element and unmeshed stator iron can give a wrong field' (Lubin 2011) may describe overlapping arcs: those builds have 24 and 60 overlapping pairs.",
+  "Generic changes: ring_sectors magnetization at a fixed angle from the radial direction ({from_radial: degrees}, FEMM's theta+X), zero-width blocks left out (a Halbach array reduced to a radial one as a variant), and share_circles (a ring drawn against another shares its circle); direction_function helpers, with the renderer and the linkage prediction reading any theta+X; overlapping_arcs with its case check. Every existing case and design builds the same model as before (108 models compared); 288 host tests pass.",
+  "Proposed lessons (generic): a FEMM ideal-iron model and a converged subdomain model of a coaxial gear, under the same assumptions, differed by -1.05% (inner) and +0.8% (outer) here and by -1.2% in Lubin 2010, so 1% is tight for analytic gear torques; never leave ideal iron as an unmeshed region reaching out to a further circle (draw nothing beyond an ideal yoke's face); two components that draw one circle must share its nodes (share_circles) or FEMM may stall or, worse, solve a wrong field without an error."
+ ]
 }
