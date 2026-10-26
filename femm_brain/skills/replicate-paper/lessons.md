@@ -77,6 +77,15 @@ contradicts it.
   were fine. Check an idealized-iron model against meshed iron at one position
   first. (`lubin-2011-spm-semi-closed-slots`, `lubin-2010-magnetic-gear`)
 
+- **A linear model's torque for any current phase follows from a few solves.**
+  With ideal or linear iron and linear magnets, torque is quadratic in the
+  sources: the no-current torque plus terms in cos phi, sin phi, cos^2 phi,
+  sin^2 phi and sin phi cos phi for a balanced set at phasor angle phi. Six
+  solve sets (no current, phi = 0, 45, 90, 180, 270) give every term exactly,
+  and two suffice when the rotor has no saliency. Use it to test whether any
+  current reference reproduces a figure, as a diagnostic outside the frozen
+  case. (`lubin-2011-spm-semi-closed-slots`, `lubin-2012-surface-inset-pm`)
+
 - **Measure a target the way the paper defines it.** The gear's stall torque is
   "the maximum point" of a curve with a 3% third harmonic; read as the
   fundamental it came out 3% low. Do not substitute a statistic on an untested
@@ -128,6 +137,11 @@ contradicts it.
   arrow from the figure, then confirm with an independent sign in the paper's
   results before trusting the reading. (`wang-2005-tubular-halbach`)
 
+- **Unmeshed labels turn with their region.** A rotor turned by `rotate_group`
+  must carry every label in it, `<No Mesh>` ones included, or a label left
+  behind lands on an edge once the rotor has turned half a sector (the mesher
+  then stops). `ring_sectors` gives its unmeshed sectors the ring's group; a
+  `hole` inside a moving region takes `group`. (`lubin-2012-surface-inset-pm`)
 - **Ideal iron is an unmeshed region** when the paper idealizes it (subdomain
   models do): `ring_sectors` leaves a sector with no material unmeshed, so its
   surfaces are natural boundaries; fix the potential at one node. Mind the
@@ -228,6 +242,18 @@ contradicts it.
   was 73.8 N m on the paper's own FE points. Freeze the figure's points and keep
   the text as a comparator; check pole counts against field plots too (one
   example's text swapped the two rotors' pole pairs). (`lubin-2010-magnetic-gear`)
+- **A static-torque figure can disagree with the paper's EMF figure.** Lubin
+  2011 states Ia = I, Ib = Ic = -I/2, and its phase-A EMF is largest at 0
+  degrees, so the torque must be largest there; its static-torque figure is
+  zero there. The same model reproduced that figure within 0.07 N m with the
+  current phasor turned 90 electrical degrees. Its cogging figure also has the
+  opposite sign to the ripple inside its own torque figure. Check a figure's
+  reference and sign against another result before freezing (see the skill's
+  reference angles). (`lubin-2011-spm-semi-closed-slots`)
+- **Fit a digitized curve's harmonics as well as its points.** A gear curve's
+  fundamental and 3rd harmonic agreed within 0.2% while its points missed by
+  -11% to +27%, alternating: the slot ripple was in antiphase. Point errors
+  alone would have suggested a wrong amplitude. (`lubin-2010-magnetic-gear`)
 - **Published FE points sit at k times range/N, rarely on round angles** (19 or
   39 intervals here). Find N from the digitized positions and put the sweep on
   them; find markers by eroding the image (filled diamonds) or by closing the

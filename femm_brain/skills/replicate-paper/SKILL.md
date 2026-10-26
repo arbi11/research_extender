@@ -5,7 +5,8 @@ description: Replicate an electric machine from a paper, report or PDF in FEMM w
 
 # Replicate a machine from a paper
 
-Version 0.5 (0.4 plus EMF harmonics from flux linkage, inductances from single-axis currents,
+Version 0.6 (0.5 plus the reference angles of a sweep at fixed currents, from the Lubin SPM
+papers; 0.5 was 0.4 plus EMF harmonics from flux linkage, inductances from single-axis currents,
 power-invariant dq values and assessor labels, from the IEEJ D model; 0.4 was 0.3 plus each
 target column's convention and orientation, variants for the further
 designs a paper tabulates, and assessors for moving conductors, dq maps and symmetry relations,
@@ -106,6 +107,15 @@ phase, and which drawing (orientation, mirror image) signed values refer to. A
 benchmark can state its excitation in one convention and some outputs in
 another. Where a convention is inferred rather than stated, add a comparator or
 a control in the other convention before freezing.
+
+**Reference angles.** A sweep at fixed currents (static torque, flux linkage
+under load) depends on the angle between the stator field and the magnets at
+the sweep's zero, and on where the slots sit against the rotor's reference.
+Papers often set both only implicitly. Derive them from two results that must
+agree (the back-EMF's phase, a no-load field plot, the torque's zero crossings)
+before freezing; where they stay implicit or disagree, record an `assumed` gap
+with a control that turns the current phasor 90 electrical degrees, and one
+that moves the slots, if their position is assumed.
 
 **Variants.** When the paper tabulates further designs of the same machine
 (other pole counts, sizes or angle sets), list them in `variants`, each an `id`,
