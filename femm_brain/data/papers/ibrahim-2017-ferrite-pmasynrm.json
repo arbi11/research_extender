@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "ibrahim-2017-ferrite-pmasynrm",
  "set": "development",
- "status": "frozen",
+ "status": "failed",
  "skill_version": "ad08772",
  "title": "Performance Comparison of Conventional Synchronous Reluctance Machines and PM-Assisted Types with Combined Star-Delta Winding",
  "source": {
@@ -10996,6 +10996,22 @@
    "location": "the model's winding and the rotor's d-axis at zero"
   }
  ],
- "findings": [],
- "retrospective": []
+ "findings": [
+  "No acceptance target passes. The S machine (the base) gives 15.34 N m at 54.3 deg against 13.89 (+10.4%), 18.81 N m at 56.4 deg against 17.5 (+7.5%), 6.03 N m at 46.6 deg against 5.17 (+16.7%) (the data tip at 10.59 A, Fig. 5's peaks at full and half rated current). The variants show the same pattern: Sd 16.12 N m at 54.8 deg against 14.69 (+9.7%), 19.74 N m at 57.0 deg against 18.39 (+7.3%), 6.41 N m at 46.8 deg against 5.52 (+16.2%); S-PM 17.73 N m at 51.3 deg against 16.34 (+8.5%), 21.95 N m at 53.7 deg against 20.5 (+7.1%), 8.06 N m at 42.8 deg against 6.98 (+15.4%); Sd-PM 18.52 N m at 51.9 deg against 17.13 (+8.1%), 22.89 N m at 54.2 deg against 21.41 (+6.9%), 8.48 N m at 43.2 deg against 7.37 (+15.0%). The PM rotors with the current on the d-axis give 5.36 and 5.53 N m against Fig. 5's 4.38 and 4.75 (+22.3%, +16.3%). Stress-tensor and flux-linkage torque agree within 0.1%.",
+  "What matches: the optimal current angles (S 46.6 and 56.4 degrees against Fig. 5's 46.2 and 54.6; S-PM 42.8 and 53.7 against 42.2 and 52.2), and the gains over S that the text tabulates: Sd +4.92% at full and +6.26% at half current (text 5.02 and 6.41%), S-PM +16.67% and +33.54% (17.01 and 34.55%), Sd-PM +21.67% and +40.50% (22.37 and 41.85%). The combined star-delta winding's gain (kd 0.960 to 0.990) is reproduced within about 0.7 points.",
+  "Controls move the S machine's torque by at most 2.1%: mesh 0.7 times +0.04% at rated current, the neighbouring steels +0.28%, solid steel +2.12% (+0.30% at half current), a magnetic shaft +0.09%. None changes the ratio's pattern.",
+  "The excess is not a scale: it falls as current rises (1.15-1.17 at half rated current, 1.08-1.10 at the data tips, 1.07 at rated) and it distorts Fig. 5's torque against current angle (at the drawn gap: +5 to +26% at eight further angles). That is a gap's signature. Outside the frozen case (~/code/femm-brain-work/papers/synrm/fresh/diag.py), a grid of stator bores (55.0, 55.1, 55.2 mm) and steels (library, Metals Handbook) puts the match at a 0.057-0.062 mm longer gap for all three currents with the library steels, but at 0.022-0.051 mm with the lower curves. At a 0.36 mm gap (bore 55.06 mm) the S machine comes within -1.3 to +0.5% at the three currents and Fig. 5's curve within -0.9 to +3.2% at seven further angles (+5.8% at its smallest torque, 2.4 N m), and results not fitted follow: the Sd data tip +0.5%, the S-PM data tip +2.0%. The lower Metals Handbook curves alone remove 3-5% and leave the pattern (1.13, 1.06, 1.03).",
+  "A likely cause, not a reading: the authors' Maxwell model behaves as if its gap were about 0.36 mm, for example through the arc discretization of its rotor surface (chords of about 6.6 degrees on a 54.7 mm radius average a 0.06 mm sag); SynRM torque is steep in a 0.3 mm gap (-16% per 0.1 mm here). The drawn and tabulated 0.3 mm gap stays frozen.",
+  "The magnets' flux is too high at either gap: with the current on the d-axis the S-PM rotor gives 5.28 N m at 0.36 mm against 4.38 (+21%). The Y30BH linear magnet through the stated Br and Hc (mu_r 1.33) filling the barriers' middle sections (Fig. 4's fills are a stroke width smaller) is the frozen reading; a smaller block, a lower remanence (temperature) or a nonlinear recoil curve would each lower it. At the optimal angle the PM share is small, so the S-PM data tip is only 2% high at 0.36 mm.",
+  "Measured torque (not a target): the S prototype's measured 13.5 N m at 10.73 A (Fig. 24) and Fig. 22's measured peak of about 5.0 N m at half current lie 3-5% below the paper's FE; the paper reports 5% at most. The brain at the drawn gap is 15-20% above these measurements.",
+  "Torque ripple (not a target): about 10% peak to peak over ten positions at rated current and 55 degrees, against the paper's 6.44% (Fig. 11) and Fig. 6's 6.5%; ten positions over 30 degrees under-sample the slot ripple, and the ripple was not frozen.",
+  "Power factor and voltage (not targets): the S machine's internal power factor at 10.59 A and 55 degrees is 0.71 (Fig. 23(d): about 0.70); its line EMF at rated current and 3000 rpm is 393 V (380 V rated), at the drawn gap."
+ ],
+ "retrospective": [
+  "Longest: deciding what the paper gives. Its rotor dimensions are in non-open conference papers, but Fig. 3a turned out to be the authors' CAD drawing at scale (checked on four diameters, confirmed on the Maxwell plot), and Fig. 24's data tips are exact values once OCR'd at 4x. The run took 7.3 hours (1360 solves at 132k elements; the mesh control's 204k elements alone 3.6 hours while diagnostics shared the machine).",
+  "What the skill lacked: (1) a check that a schematic is a scale drawing before reading geometry elsewhere; (2) a target kind for torque at the optimal current angle (added generically: dq_linkage over_points maximum); (3) a winding given slot by slot (slot_winding) and the lamination fill of library steels (library_material values); (4) a step for using a sibling paper on the same hardware as a transfer standard (see ibrahim-2016-synrm's retrospective). Proposed for SKILL.md: in Extract, fit the circles of every vector drawing against the stated diameters; in Freeze, test whether a paper's FE is sensitive to the air gap's discretization when the gap is under 0.5 mm, and add a gap control where it is (here a 0.06 mm change is 10%).",
+  "Lessons that held: read geometry from the authors' FE rendering; read a discrepancy's signature (the ratio's current dependence pointed at the gap); a small grid of opposing inputs (Hamouda) found the pair, confirmed on results not fitted. A lesson corrected: a rating is no independent check when it is the FE torque times the speed.",
+  "Pre-solve estimate (+6 to +12% from ibrahim-2016-synrm's build): the outcome, +7.5 to +16.7%, lay in and just beyond it; the estimate missed the current dependence, which only the solve shows.",
+  "Generic additions: slot_winding, library_material property overrides, the dq_linkage maximum over current angles with a parabolic vertex; lessons on scale drawings, data tips, star-delta windings, library fills, sibling papers and gap-versus-scale signatures."
+ ]
 }
