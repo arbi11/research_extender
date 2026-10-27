@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "bazzo-2021-salient-pole-generator",
  "set": "development",
- "status": "extracting",
+ "status": "frozen",
  "skill_version": "3199b36",
  "title": "A Step-by-Step Procedure to Perform Preliminary Designs of Salient-Pole Synchronous Generators",
  "source": {
@@ -21,6 +21,7156 @@
   "problem": "planar",
   "slots": 36,
   "poles": 6,
-  "phases": 3
+  "phases": 3,
+  "symmetry": "The whole cross-section is modelled (the paper's FEA modelled one pole, Fig. 10). A pole pitch negates every linkage at no load (half-wave symmetry); at balanced load currents the torque repeats every sixth of an electrical period (20 mechanical degrees)."
+ },
+ "components_map": [
+  {
+   "part": "stator: trapezoidal slots with parallel teeth, openings, wedges of their own and two coil layers stacked radially",
+   "component": "trapezoidal_slot_stator (wedge closures and labels, layer divider: new)"
+  },
+  {
+   "part": "double-layer lap winding pitched 5 of 6 slots, 13 turns per coil",
+   "component": "tooth_coil_winding (distributed double layer)"
+  },
+  {
+   "part": "salient-pole rotor: concentric pole faces, shoes, bodies on a hexagonal core, field coil blocks, damper bars, shaft, interpolar closures",
+   "component": "salient_pole_rotor (new)"
+  },
+  {
+   "part": "field coils, 485 turns per pole, alternating polarity",
+   "component": "salient_pole_winding"
+  },
+  {
+   "part": "steels from FEMM's library with their lamination fill",
+   "component": "library_material (values)"
+  },
+  {
+   "part": "sliding band in the 3.5 mm gap",
+   "component": "air_gap_element"
+  },
+  {
+   "part": "d/q inductances (two phases in series), load points and terminal quantities",
+   "component": "step_statistic; dq_linkage (terminal quantities: new); phase_linkage (field-winding rotors: new)"
+  }
+ ],
+ "article": {
+  "parameters": {
+   "frequency_hz": {
+    "value": 50,
+    "unit": "Hz",
+    "provenance": "quoted",
+    "quote": "f Hz Electrical frequency 50",
+    "location": "Table 1, p. 5"
+   },
+   "speed_rpm": {
+    "value": 1000,
+    "unit": "r/min",
+    "provenance": "quoted",
+    "quote": "n rpm Rotation 1000",
+    "location": "Table 1, p. 5"
+   },
+   "rated_voltage_V": {
+    "value": 400,
+    "unit": "V",
+    "provenance": "quoted",
+    "quote": "Vra Vv Desired Terminal Voltage 400",
+    "location": "Table 1, p. 5",
+    "note": "Line-to-line, star connected (Section 2.1)."
+   },
+   "rated_power_factor": {
+    "value": 0.9,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "PF - Power Factor 0.9",
+    "location": "Table 1, p. 5"
+   },
+   "pole_count": {
+    "value": 6,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Number of poles 6",
+    "location": "Table 3, p. 15"
+   },
+   "slots": {
+    "value": 36,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "It has been chosen to use 36 slots and double-layer lap windings",
+    "location": "Section 2.1, p. 3"
+   },
+   "rotor_diameter_mm": {
+    "value": 250,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "DRe mm 2 250",
+    "location": "Table 2, p. 6",
+    "note": "The rotor's outer diameter at the pole faces; the face is concentric (\"the air-gap between pole shoes and the internal diameter of stator is constant\", Section 2.1)."
+   },
+   "stack_length_mm": {
+    "value": 200.2,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "LA mm 2 200.2",
+    "location": "Table 2, p. 6"
+   },
+   "shoe_straight_factor": {
+    "value": 0.15,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "K PSs - 0.12–0.2 0.15",
+    "location": "Table 2, p. 6",
+    "note": "Eq. (5): h_PSs = D_Re K_PSs / P = 6.25 mm."
+   },
+   "opening_width_mm": {
+    "value": 2,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "WSo - 4 2",
+    "location": "Table 2, p. 6"
+   },
+   "opening_height_mm": {
+    "value": 2,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "hSo mm ≈WSo 2",
+    "location": "Table 2, p. 6"
+   },
+   "wedge_height_mm": {
+    "value": 2.24,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "hSw mm 5 2.24",
+    "location": "Table 2, p. 6"
+   },
+   "coil_pitch_factor": {
+    "value": 0.8333333333333334,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "K Ac - 5/6 or 2/3 5/6",
+    "location": "Table 2, p. 6",
+    "note": "Coils span 5 of the 6 slots of a pole pitch (Section 2.3.2: \"the coil pitch is 5 slots\")."
+   },
+   "layers": {
+    "value": 2,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "NSl layers 1 or 2 2",
+    "location": "Table 2, p. 6"
+   },
+   "coils_in_series": {
+    "value": 6,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "NCs paths number of poles 6",
+    "location": "Table 2, p. 6",
+    "note": "Eq. (30): T_A = T_Ac N_Cpp N_Cs = 13 x 2 x 6 = 156 turns per phase, every coil of a phase in series."
+   },
+   "damper_pitch_factor": {
+    "value": 0.8,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "K Dp - 0.8–0.9 or 1.1–1.2 [1] 0.8",
+    "location": "Table 2, p. 6"
+   },
+   "field_current_nl_A": {
+    "value": 2.5,
+    "unit": "A",
+    "provenance": "quoted",
+    "quote": "IFnl A 8 2.5",
+    "location": "Table 2, p. 6",
+    "note": "The no-load field current (Fig. 12's caption: \"field current equal to I_Fnl\")."
+   },
+   "field_current_fl_A": {
+    "value": 4.78,
+    "unit": "A",
+    "provenance": "quoted",
+    "quote": "IF A 8 4.78",
+    "location": "Table 2, p. 6",
+    "note": "The full-load field current (Table 5's 100% row); see the gap on how the full-load FEA was driven."
+   },
+   "shoe_width_mm": {
+    "value": 85.51,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Width of pole shoes 85.51",
+    "location": "Table 3, p. 15",
+    "note": "The chord between the face corners: eq. (3) gives D_Re sin(K_aP alpha_P / 2) = 85.505 mm."
+   },
+   "body_width_mm": {
+    "value": 31.09,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Width of pole body 31.09",
+    "location": "Table 3, p. 15"
+   },
+   "shoe_height_mm": {
+    "value": 13.81,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Height of pole shoes 13.81",
+    "location": "Table 3, p. 15",
+    "note": "From the rotor surface on the pole axis to the flat underside; eqs. (2), (5), (6) give 7.538 + 6.25 = 13.788 mm, the table's value 0.022 mm more (it fixes the underside)."
+   },
+   "pole_body_height_mm": {
+    "value": 37.14,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Height of pole body 37.14",
+    "location": "Table 3, p. 15",
+    "note": "Recorded: the build takes the core from eq. (8)'s apothem (below), so its body is 37.136 mm."
+   },
+   "field_turns_per_pole": {
+    "value": 485,
+    "unit": "turns",
+    "provenance": "quoted",
+    "quote": "Field winding turns 485",
+    "location": "Table 3, p. 15",
+    "note": "Per pole: eq. (10) counts the turns that fit one coil side's window (h_PB W_PBc K_Ff / S_F = 37.14 x 27.21 x 0.8 / 1.6667 = 485.1), and eqs. (11)-(13) give the design's B_PB = 1.25 T only with 485 x 2.5 A per pole. Control field-turns-total (485 in all: 81 per pole)."
+   },
+   "stator_bore_diameter_mm": {
+    "value": 257,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Internal diameter of stator 257",
+    "location": "Table 3, p. 15",
+    "note": "Eq. (14): D_Re + 2 L_AG with L_AG = 3.5 mm."
+   },
+   "slot_width_top_mm": {
+    "value": 11.59,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Top of slot width 11.59",
+    "location": "Table 3, p. 15",
+    "note": "At the wedge's end, D_St/2 = 132.74 mm from the axis."
+   },
+   "slot_width_bottom_mm": {
+    "value": 14.6,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Bottom of slot width 14.60",
+    "location": "Table 3, p. 15",
+    "note": "Parallel teeth (eq. (21)); eq. (22) gives 14.604."
+   },
+   "slot_height_mm": {
+    "value": 17.2,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Height of the slot 17.20",
+    "location": "Table 3, p. 15",
+    "note": "The slot body below the wedge (eq. (20))."
+   },
+   "stator_yoke_mm": {
+    "value": 24.87,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Height of stator yoke 24.87",
+    "location": "Table 3, p. 15"
+   },
+   "stator_outer_diameter_mm": {
+    "value": 349.6,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "External diameter of stator 349.6",
+    "location": "Table 3, p. 15",
+    "note": "Recorded: the build closes the radial build (eq. (23)) at 349.62 mm."
+   },
+   "turns_per_coil": {
+    "value": 13,
+    "unit": "turns",
+    "provenance": "quoted",
+    "quote": "Number of turns per coil 13",
+    "location": "Table 3, p. 15"
+   },
+   "damper_diameter_mm": {
+    "value": 4.64,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Diameter of damper bars 4.64",
+    "location": "Table 3, p. 15"
+   },
+   "damper_bars_per_pole": {
+    "value": 4,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Number of damper bars per pole 4",
+    "location": "Table 3, p. 15"
+   },
+   "rated_current_A": {
+    "value": 21.66,
+    "unit": "A",
+    "provenance": "quoted",
+    "quote": "La A 21.66 21.19",
+    "location": "Table 6, p. 18",
+    "note": "The design's armature current (rms), the nominal current of the inductance test."
+   },
+   "armature_resistance_ohm": {
+    "value": 0.6275,
+    "unit": "ohm",
+    "provenance": "quoted",
+    "quote": "Armature resistance per phase … 0.6275",
+    "location": "Table 3, p. 15",
+    "note": "At 100 C; eqs. (36)-(40) with r_Akm 3.92 ohm/km reproduce it (0.628)."
+   },
+   "end_winding_inductance_H": {
+    "value": 0.00118,
+    "unit": "H",
+    "provenance": "quoted",
+    "quote": "End-winding inductance 1.18",
+    "location": "Table 3, p. 15",
+    "note": "Eq. (46), added to the 2D L_d and L_q in X_d, X_q."
+   },
+   "shaft_radius_mm": {
+    "value": 28.2,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 10, p. 18: the authors' FE solution of one pole at no load (a 464 x 436 px raster, read at its native resolution from the embedded image)",
+    "scale_reference": "the common centre of the stator's outer arc and the four concentric gap arcs (rms 0.56 px): outer arc 494.19 px = D_Se/2 = 174.8 mm and the gap's innermost and outermost arcs 351.68 and 361.62 px = 125 and 128.5 mm, 2.813-2.827 px/mm (the two references differ by 0.5%; lengths below the rotor face are read from the face)",
+    "uncertainty": 0.3,
+    "note": "The rotor core's inner arc (Fig. 5a's D_Ri), 79.6 +/- 0.5 px from the centre: D_Ri = 56.4 mm."
+   },
+   "damper_radius_mm": {
+    "value": 121.95,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 10, p. 18: the authors' FE solution of one pole at no load (a 464 x 436 px raster, read at its native resolution from the embedded image)",
+    "scale_reference": "the common centre of the stator's outer arc and the four concentric gap arcs (rms 0.56 px): outer arc 494.19 px = D_Se/2 = 174.8 mm and the gap's innermost and outermost arcs 351.68 and 361.62 px = 125 and 128.5 mm, 2.813-2.827 px/mm (the two references differ by 0.5%; lengths below the rotor face are read from the face)",
+    "uncertainty": 0.25,
+    "note": "Centres of the four bars at 343.1 +/- 0.3 px, 8.6 px (3.04 mm) under the rotor face; the bars lie 18.1, 26.2, 34.4 and 42.4 degrees from the sector edge (pitch 8.11 +/- 0.10, about the pole axis at 30.3)."
+   },
+   "steel_grade": {
+    "value": "M-19 14 mil",
+    "unit": "library name",
+    "provenance": "assumed",
+    "reason": "The paper names no steel; its loss data (1.656 W/kg hysteresis and 0.698 W/kg eddy current, from Grauers) are a 2.35 W/kg-class non-oriented lamination (M235-35A to M250-35A), whose FEMM equivalent is AISI M-19 at 14 mil (0.36 mm); the library entry carries its lamination fill (0.955). The rotor poles and core are taken to be of the same laminations (rotor_steel_grade).",
+    "sensitivity_control": "steel-m45",
+    "note": "Pre-solve estimate: M-45 18 mil -0.6% in B_PB, fill 1 +0.2%, solid 1010 -6.4%."
+   },
+   "steel_folder": {
+    "value": "Soft Magnetic Materials/Silicon Iron",
+    "unit": "library folder",
+    "provenance": "assumed",
+    "reason": "The library folder of steel_grade.",
+    "sensitivity_control": "steel-1010"
+   },
+   "steel_fill": {
+    "value": 0.955,
+    "unit": "ratio",
+    "provenance": "assumed",
+    "reason": "The library entry's own lamination fill for 14 mil M-19; the paper states none.",
+    "sensitivity_control": "steel-fill-1"
+   },
+   "rotor_steel_grade": {
+    "value": "M-19 14 mil",
+    "unit": "library name",
+    "provenance": "assumed",
+    "reason": "Small salient-pole generators stack their poles (and usually the core) from laminations; the same grade as the stator.",
+    "sensitivity_control": "rotor-solid-1010",
+    "note": "Pre-solve estimate: a solid 1010 rotor under the M-19 stator lowers B_PB 3.1%."
+   },
+   "rotor_steel_folder": {
+    "value": "Soft Magnetic Materials/Silicon Iron",
+    "unit": "library folder",
+    "provenance": "assumed",
+    "reason": "The library folder of rotor_steel_grade.",
+    "sensitivity_control": "rotor-solid-1010"
+   },
+   "rotor_steel_fill": {
+    "value": 0.955,
+    "unit": "ratio",
+    "provenance": "assumed",
+    "reason": "As steel_fill.",
+    "sensitivity_control": "steel-fill-1"
+   },
+   "shaft_material": {
+    "value": "Air",
+    "unit": "material",
+    "provenance": "assumed",
+    "reason": "Fig. 10 shows nothing inside the core's inner arc; a non-magnetic shaft (or none).",
+    "sensitivity_control": "shaft-steel",
+    "note": "Pre-solve estimate: 0.03% in B_PB (the core carries about 0.45 T)."
+   },
+   "wedge_mu_r": {
+    "value": 1.0,
+    "unit": "ratio",
+    "provenance": "assumed",
+    "reason": "Fig. 2 draws the slot wedge as a part of its own; no magnetic wedge is named.",
+    "sensitivity_control": "wedge-magnetic"
+   },
+   "test_current_A": {
+    "value": 21.66,
+    "unit": "A",
+    "provenance": "assumed",
+    "reason": "\"Excited with nominal armature current\": Table 6's rated current, 21.66 A rms, carried as a static current in the two phases in series.",
+    "sensitivity_control": "test-current-peak",
+    "note": "Pre-solve estimate: its peak (30.63 A) saturates the d axis, L_d about -5%."
+   },
+   "fea_id_rms_A": {
+    "value": 16.876,
+    "unit": "A",
+    "provenance": "figure",
+    "figure": "Fig. 14, p. 19 (vector art): the I_d curve's centreline, averaged over 0-180 degrees",
+    "scale_reference": "the figure's 16 horizontal gridlines at 5 A (fit residual at most 0.12 A)",
+    "uncertainty": 0.05,
+    "note": "On the paper's phasor scale (rms: |I_dq| = 21.13 A, the phase currents' fundamental 21.11 A); positive I_d demagnetizes (Fig. 6, generator convention). The design's 100% point has 17.135 A."
+   },
+   "fea_iq_rms_A": {
+    "value": 12.716,
+    "unit": "A",
+    "provenance": "figure",
+    "figure": "Fig. 14, p. 19 (vector art): the I_q curve's centreline, averaged over 0-180 degrees",
+    "scale_reference": "the figure's 16 horizontal gridlines at 5 A (fit residual at most 0.12 A)",
+    "uncertainty": 0.05,
+    "note": "In phase with the EMF (generating). The design's 100% point has 13.25 A."
+   },
+   "band_margin_mm": {
+    "value": 0.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Thin air between the sliding band and each gap surface (a 2.5 mm band in the 3.5 mm gap)."
+   },
+   "gap_arc_deg": {
+    "value": 0.25,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc pieces of the band, the pole faces and the bore (0.55 mm)."
+   },
+   "thin_air_mesh_mm": {
+    "value": 0.4,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "The thin gap layers and the slot openings joined to them."
+   },
+   "stator_iron_mesh_mm": {
+    "value": 2.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Stator teeth (11.6 mm) and yoke (24.9 mm)."
+   },
+   "rotor_iron_mesh_mm": {
+    "value": 2.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Pole shoes, bodies and core."
+   },
+   "coil_mesh_mm": {
+    "value": 2.5,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Stator coil sides."
+   },
+   "field_coil_mesh_mm": {
+    "value": 4.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Field coil blocks (27 x 37 mm)."
+   },
+   "wedge_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Slot wedges (2.24 mm)."
+   },
+   "interpolar_mesh_mm": {
+    "value": 3.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "The spaces between poles."
+   },
+   "damper_mesh_mm": {
+    "value": 0.8,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Damper bars (4.64 mm)."
+   },
+   "shaft_mesh_mm": {
+    "value": 6.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "The shaft."
+   },
+   "slot_arc_deg": {
+    "value": 5.0,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc pieces of the damper bars and the shaft."
+   },
+   "outer_arc_deg": {
+    "value": 1.0,
+    "unit": "deg",
+    "provenance": "numerical",
+    "reason": "Arc pieces of the stator's outer circle (3 mm)."
+   },
+   "rotor_radius_mm": {
+    "value": 125.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "rotor_diameter_mm/2",
+    "inputs": [
+     "rotor_diameter_mm"
+    ]
+   },
+   "bore_radius_mm": {
+    "value": 128.5,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "stator_bore_diameter_mm/2",
+    "inputs": [
+     "stator_bore_diameter_mm"
+    ]
+   },
+   "air_gap_mm": {
+    "value": 3.5,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "(stator_bore_diameter_mm-rotor_diameter_mm)/2",
+    "inputs": [
+     "rotor_diameter_mm",
+     "stator_bore_diameter_mm"
+    ],
+    "note": "Eq. (14): L_AG = 3.5 mm (Table 2)."
+   },
+   "pole_pitch_deg": {
+    "value": 60.0,
+    "unit": "deg",
+    "provenance": "derived",
+    "expression": "360/pole_count",
+    "inputs": [
+     "pole_count"
+    ]
+   },
+   "shoe_tip_height_mm": {
+    "value": 6.270674163738732,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "sqrt((rotor_diameter_mm/2)**2-(shoe_width_mm/2)**2)-(rotor_diameter_mm/2-shoe_height_mm)",
+    "inputs": [
+     "rotor_diameter_mm",
+     "shoe_height_mm",
+     "shoe_width_mm"
+    ],
+    "note": "From the face corners to the underside that Table 3's h_PS fixes (6.270 mm; eq. (5)'s h_PSs is 6.25)."
+   },
+   "core_apothem_mm": {
+    "value": 74.05383227760733,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "shoe_width_mm/2*tan(radians((180-360/pole_count)/2))",
+    "inputs": [
+     "pole_count",
+     "shoe_width_mm"
+    ],
+    "note": "Eq. (8)'s apothem: the hexagonal core's flat under each pole lies where the interpolar axes cross the shoe's chord half-width, so neighbouring coils meet at its corners (74.054 mm; Table 3's heights give 74.05)."
+   },
+   "pole_body_built_mm": {
+    "value": 37.13616772239267,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "rotor_diameter_mm/2-shoe_height_mm-shoe_width_mm/2*tan(radians((180-360/pole_count)/2))",
+    "inputs": [
+     "pole_count",
+     "rotor_diameter_mm",
+     "shoe_height_mm",
+     "shoe_width_mm"
+    ],
+    "note": "37.136 mm against Table 3's 37.14."
+   },
+   "field_coil_width_mm": {
+    "value": 27.21,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "(shoe_width_mm-body_width_mm)/2",
+    "inputs": [
+     "body_width_mm",
+     "shoe_width_mm"
+    ],
+    "note": "Eq. (7)'s W_PBc: the coil fills the body side up to the shoe tips' line (27.21 mm)."
+   },
+   "damper_pitch_deg": {
+    "value": 8.0,
+    "unit": "deg",
+    "provenance": "derived",
+    "expression": "damper_pitch_factor*360/slots",
+    "inputs": [
+     "damper_pitch_factor",
+     "slots"
+    ],
+    "note": "K_Dp alpha_S = 8 degrees (Fig. 10: 8.11 +/- 0.10); eq. (55) as printed, alpha_S (1 - K_Dp), gives 2 degrees, which cannot place four bars on the 40 degree shoe."
+   },
+   "slot_top_axial_mm": {
+    "value": 132.74,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "stator_bore_diameter_mm/2+opening_height_mm+wedge_height_mm",
+    "inputs": [
+     "opening_height_mm",
+     "stator_bore_diameter_mm",
+     "wedge_height_mm"
+    ],
+    "note": "Eq. (15): D_St/2 = 132.74 mm."
+   },
+   "layer_divider_height_mm": {
+    "value": 9.092575018099295,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "(sqrt((slot_width_top_mm**2+slot_width_bottom_mm**2)/2)-slot_width_top_mm)*slot_height_mm/(slot_width_bottom_mm-slot_width_top_mm)",
+    "inputs": [
+     "slot_height_mm",
+     "slot_width_bottom_mm",
+     "slot_width_top_mm"
+    ],
+    "note": "Equal areas for the two coil layers (each holds one 13-turn coil side; Fig. 2's separator crosses the slot near its middle): 9.09 mm below the slot top."
+   },
+   "go_label_radius_mm": {
+    "value": 137.28628750904966,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "stator_bore_diameter_mm/2+opening_height_mm+wedge_height_mm+(sqrt((slot_width_top_mm**2+slot_width_bottom_mm**2)/2)-slot_width_top_mm)*slot_height_mm/(slot_width_bottom_mm-slot_width_top_mm)/2",
+    "inputs": [
+     "opening_height_mm",
+     "slot_height_mm",
+     "slot_width_bottom_mm",
+     "slot_width_top_mm",
+     "stator_bore_diameter_mm",
+     "wedge_height_mm"
+    ]
+   },
+   "return_label_radius_mm": {
+    "value": 145.88628750904965,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "stator_bore_diameter_mm/2+opening_height_mm+wedge_height_mm+((sqrt((slot_width_top_mm**2+slot_width_bottom_mm**2)/2)-slot_width_top_mm)*slot_height_mm/(slot_width_bottom_mm-slot_width_top_mm)+slot_height_mm)/2",
+    "inputs": [
+     "opening_height_mm",
+     "slot_height_mm",
+     "slot_width_bottom_mm",
+     "slot_width_top_mm",
+     "stator_bore_diameter_mm",
+     "wedge_height_mm"
+    ]
+   },
+   "stator_outer_radius_mm": {
+    "value": 174.81,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "stator_bore_diameter_mm/2+opening_height_mm+wedge_height_mm+slot_height_mm+stator_yoke_mm",
+    "inputs": [
+     "opening_height_mm",
+     "slot_height_mm",
+     "stator_bore_diameter_mm",
+     "stator_yoke_mm",
+     "wedge_height_mm"
+    ],
+    "note": "Eq. (23): D_Se/2 = 174.81 mm (Table 3: 349.6 mm)."
+   },
+   "coil_pitch_slots": {
+    "value": 5,
+    "unit": "slots",
+    "provenance": "derived",
+    "expression": "coil_pitch_factor*slots/pole_count",
+    "inputs": [
+     "coil_pitch_factor",
+     "pole_count",
+     "slots"
+    ],
+    "note": "5 slots."
+   },
+   "field_label_axial_mm": {
+    "value": 92.62191613880367,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "(shoe_width_mm/2*tan(radians((180-360/pole_count)/2))+rotor_diameter_mm/2-shoe_height_mm)/2",
+    "inputs": [
+     "pole_count",
+     "rotor_diameter_mm",
+     "shoe_height_mm",
+     "shoe_width_mm"
+    ]
+   },
+   "field_label_offset_mm": {
+    "value": 29.15,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "body_width_mm/2+(shoe_width_mm-body_width_mm)/4",
+    "inputs": [
+     "body_width_mm",
+     "shoe_width_mm"
+    ]
+   },
+   "pole_body_centre_mm": {
+    "value": 92.62191613880367,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "(shoe_width_mm/2*tan(radians((180-360/pole_count)/2))+rotor_diameter_mm/2-shoe_height_mm)/2",
+    "inputs": [
+     "pole_count",
+     "rotor_diameter_mm",
+     "shoe_height_mm",
+     "shoe_width_mm"
+    ],
+    "note": "\"The center of pole body\" (Table 6, note 1): halfway between the core and the shoe underside on the pole axis."
+   },
+   "band_inner_radius_mm": {
+    "value": 125.5,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "rotor_diameter_mm/2+band_margin_mm",
+    "inputs": [
+     "band_margin_mm",
+     "rotor_diameter_mm"
+    ]
+   },
+   "band_outer_radius_mm": {
+    "value": 128.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "stator_bore_diameter_mm/2-band_margin_mm",
+    "inputs": [
+     "band_margin_mm",
+     "stator_bore_diameter_mm"
+    ]
+   },
+   "fea_current_rms_A": {
+    "value": 21.130452716399617,
+    "unit": "A",
+    "provenance": "derived",
+    "expression": "sqrt(fea_id_rms_A**2+fea_iq_rms_A**2)",
+    "inputs": [
+     "fea_id_rms_A",
+     "fea_iq_rms_A"
+    ],
+    "note": "21.13 A: Fig. 14's phase currents have a 21.11 A fundamental."
+   },
+   "fea_id_peak_A": {
+    "value": -23.866268078608357,
+    "unit": "A",
+    "provenance": "derived",
+    "expression": "-sqrt(2)*fea_id_rms_A",
+    "inputs": [
+     "fea_id_rms_A"
+    ],
+    "note": "Amplitude-invariant peak, currents into the terminals: demagnetizing."
+   },
+   "fea_iq_peak_A": {
+    "value": -17.983139659136278,
+    "unit": "A",
+    "provenance": "derived",
+    "expression": "-sqrt(2)*fea_iq_rms_A",
+    "inputs": [
+     "fea_iq_rms_A"
+    ],
+    "note": "Amplitude-invariant peak, currents into the terminals: generating."
+   }
+  },
+  "assembly": {
+   "problem": {
+    "physics": "magnetics",
+    "units": "millimeters",
+    "type": "planar",
+    "frequency": 0,
+    "depth": "$stack_length_mm"
+   },
+   "steps": [
+    {
+     "use": "library_material",
+     "name": "Air",
+     "library": "matlib.dat"
+    },
+    {
+     "use": "library_material",
+     "name": "Copper",
+     "library": "matlib.dat"
+    },
+    {
+     "use": "library_material",
+     "name": "$steel_grade",
+     "library": "matlib.dat",
+     "folder": "$steel_folder",
+     "as_name": "Steel",
+     "values": {
+      "LamFill": "$steel_fill"
+     }
+    },
+    {
+     "use": "library_material",
+     "name": "$rotor_steel_grade",
+     "library": "matlib.dat",
+     "folder": "$rotor_steel_folder",
+     "as_name": "RotorSteel",
+     "values": {
+      "LamFill": "$rotor_steel_fill"
+     }
+    },
+    {
+     "use": "material",
+     "name": "Wedge",
+     "values": {
+      "Mu_x": "$wedge_mu_r",
+      "Mu_y": "$wedge_mu_r"
+     }
+    },
+    {
+     "use": "circuit",
+     "name": "A",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "B",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "C",
+     "current": 0
+    },
+    {
+     "use": "circuit",
+     "name": "F",
+     "current": "$field_current_nl_A"
+    },
+    {
+     "use": "fixed_potential_boundary",
+     "name": "A=0",
+     "value": 0
+    },
+    {
+     "use": "trapezoidal_slot_stator",
+     "slot_count": "$slots",
+     "bore_radius": "$bore_radius_mm",
+     "opening_width": "$opening_width_mm",
+     "opening_height": "$opening_height_mm",
+     "slot_width_top": "$slot_width_top_mm",
+     "slot_width_bottom": "$slot_width_bottom_mm",
+     "slot_height": "$slot_height_mm",
+     "wedge_height": "$wedge_height_mm",
+     "close_wedges": true,
+     "wedge_material": "Wedge",
+     "wedge_mesh": "$wedge_mesh_mm",
+     "layer_divider_height": "$layer_divider_height_mm",
+     "bore_max_segment": "$gap_arc_deg",
+     "iron_material": "Steel",
+     "iron_mesh": "$stator_iron_mesh_mm"
+    },
+    {
+     "use": "circle",
+     "radius": "$stator_outer_radius_mm",
+     "max_segment": "$outer_arc_deg",
+     "boundary": "A=0"
+    },
+    {
+     "use": "tooth_coil_winding",
+     "slot_count": "$slots",
+     "pole_pairs": "=pole_count/2",
+     "turns": "$turns_per_coil",
+     "material": "Copper",
+     "label_radius": "$go_label_radius_mm",
+     "layout": "slot_star",
+     "layers": "double",
+     "coil_pitch": "$coil_pitch_slots",
+     "return_layer_radius": "$return_label_radius_mm",
+     "phase_sequence": "forward",
+     "mesh": "$coil_mesh_mm"
+    },
+    {
+     "use": "air_gap_element",
+     "rotor_radius": "$band_inner_radius_mm",
+     "stator_radius": "$band_outer_radius_mm",
+     "max_segment": "$gap_arc_deg",
+     "name": "AGE"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(rotor_diameter_mm/2+band_inner_radius_mm)/2",
+      0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm",
+     "group": 1
+    },
+    {
+     "use": "block_label",
+     "at": [
+      "=(band_outer_radius_mm+stator_bore_diameter_mm/2)/2",
+      0
+     ],
+     "material": "Air",
+     "mesh": "$thin_air_mesh_mm"
+    },
+    {
+     "use": "salient_pole_rotor",
+     "pole_count": "$pole_count",
+     "outer_radius": "$rotor_radius_mm",
+     "shoe_width": "$shoe_width_mm",
+     "shoe_tip_height": "$shoe_tip_height_mm",
+     "body_width": "$body_width_mm",
+     "root_distance": "$core_apothem_mm",
+     "root_shape": "polygon",
+     "coil_width": "$field_coil_width_mm",
+     "damper_bars": "$damper_bars_per_pole",
+     "damper_pitch": "$damper_pitch_deg",
+     "damper_radius": "$damper_radius_mm",
+     "damper_diameter": "$damper_diameter_mm",
+     "damper_material": "Copper",
+     "damper_mesh": "$damper_mesh_mm",
+     "damper_max_segment": "$slot_arc_deg",
+     "shaft_radius": "$shaft_radius_mm",
+     "shaft_material": "$shaft_material",
+     "shaft_mesh": "$shaft_mesh_mm",
+     "shaft_max_segment": "$slot_arc_deg",
+     "face_max_segment": "$gap_arc_deg",
+     "interpolar_material": "Air",
+     "interpolar_mesh": "$interpolar_mesh_mm",
+     "iron_material": "RotorSteel",
+     "iron_mesh": "$rotor_iron_mesh_mm",
+     "group": 1
+    },
+    {
+     "use": "salient_pole_winding",
+     "pole_count": "$pole_count",
+     "phases": [
+      "F"
+     ],
+     "turns": "$field_turns_per_pole",
+     "material": "Copper",
+     "label_axial": "$field_label_axial_mm",
+     "label_offset": "$field_label_offset_mm",
+     "polarities": [
+      -1,
+      1,
+      -1,
+      1,
+      -1,
+      1
+     ],
+     "mesh": "$field_coil_mesh_mm",
+     "group": 1
+    }
+   ]
+  }
+ },
+ "gaps": [
+  {
+   "item": "whether the 485 field turns are per pole or in total",
+   "affects": "every field-driven quantity, by a factor of six",
+   "decision": "resolved",
+   "note": "Per pole: eq. (10) fills one coil side's window, and eqs. (11)-(13) reproduce the design's 1.25 T only with 485 turns per pole; the pre-solve estimate gives 1.27 T per pole and 0.21 T for 485 in total against the FEA's 1.28 T. Control field-turns-total (81 per pole). The paper's field resistance and copper loss are then one pole coil's (a finding)."
+  },
+  {
+   "item": "the steel grade and B-H curve",
+   "affects": "B_PB, the EMF and the full-load torque by up to about 6%; L_d by about 2%",
+   "decision": "assumed",
+   "note": "M-19 14 mil (library fill 0.955) in stator and rotor, the equivalent of the 2.35 W/kg-class lamination the loss data describe. Bracketed before freezing (pre-solve estimate, B_PB): M-45 18 mil -0.6%, fill 1 +0.2%, solid 1010 -6.4%, a solid 1010 rotor -3.1%. The electrical steels lie within the tolerance; the solid steels do not, and are controls (steel-1010, rotor-solid-1010) with steel-m45 and steel-fill-1."
+  },
+  {
+   "item": "the rotor core diameter",
+   "affects": "the core's flux density (about 0.45 T), negligibly",
+   "decision": "figure",
+   "note": "The core's outer shape is eq. (8)'s hexagon (apothem 74.05 mm); its inner diameter, D_Ri, is not tabulated: Fig. 10's inner arc gives 56.4 +/- 0.6 mm. Inside it non-magnetic (assumed, control shaft-steel; estimate 0.03%)."
+  },
+  {
+   "item": "the damper bars' depth, pitch and material",
+   "affects": "the pole shoe's iron near the face, slightly",
+   "decision": "figure",
+   "note": "Fig. 10: centres 121.95 +/- 0.25 mm from the axis (3.04 mm under the face), 8.11 +/- 0.10 degrees apart; the build takes K_Dp alpha_S = 8 degrees (eq. (55) as printed gives 2). Copper (eq. (57)); in static solves they carry no current."
+  },
+  {
+   "item": "how the full-load FEA was driven",
+   "affects": "every full-load quantity",
+   "decision": "assumed",
+   "note": "A time-stepping FEA with saturation (Section 3), its field current not restated (Table 2's I_F = 4.78 A, the design's full-load value, is taken) and its armature connected to a load the paper does not describe (its currents carry an 8.4% 3rd harmonic, so the load's neutral was connected). The replication drives FEMM with the FEA's own fundamental currents, Fig. 14's Park components, and compares the torque (acceptance) and the terminal quantities (comparators, with no external elements and with the design's R_A and L_Tend). Table 5's load points test the design model at its own currents and field currents (comparators)."
+  },
+  {
+   "item": "the inductance test current (nominal armature current: rms or peak)",
+   "affects": "L_d by about 5% (saturation)",
+   "decision": "assumed",
+   "note": "21.66 A rms carried as a static current; control test-current-peak (30.63 A)."
+  },
+  {
+   "item": "the slot wedge's material",
+   "affects": "slot leakage and the gap permeance, slightly",
+   "decision": "assumed",
+   "note": "Non-magnetic; control wedge-magnetic (mu_r 5)."
+  },
+  {
+   "item": "the layer split",
+   "affects": "slot leakage, negligibly",
+   "decision": "resolved",
+   "note": "Fig. 2 draws a separator across the slot: the two coil sides lie one above the other; equal areas for equal turns."
+  },
+  {
+   "item": "the rotor position of the paper's B_PB and of its time steps",
+   "affects": "the slot ripple of B_PB and the torque",
+   "decision": "resolved",
+   "note": "Means over the positions of a period: the paper reports one value without its instant."
+  },
+  {
+   "item": "losses, efficiency, the V curves and the torque-angle curves (Tables 4, Figs. 8-9)",
+   "affects": "nothing frozen",
+   "decision": "out_of_scope",
+   "note": "Analytic results of the design procedure beyond the electromagnetic FE quantities."
+  }
+ ],
+ "engine": {
+  "solves_per_process": 40
+ },
+ "steps": [
+  {
+   "label": "nl00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 1.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 8.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 11.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 13.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 15.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl10",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 16.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl11",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 18.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl12",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 20.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl13",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 21.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl14",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 23.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl15",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 25.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl16",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 26.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl17",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 28.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl18",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 30.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl19",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 31.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl20",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 33.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl21",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 35.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl22",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 36.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl23",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 38.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl24",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 40.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl25",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 41.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl26",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 43.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl27",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 45.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl28",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 46.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl29",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 48.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl30",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 50.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl31",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 51.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl32",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 53.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl33",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 55.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl34",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 56.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "nl35",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 58.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_nl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "label": "ls00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 72.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis -3 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 73.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis -2 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 74.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis -1 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 75.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 0 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 76.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 1 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 77.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 2 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 78.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 3 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 79.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 4 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 80.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 5 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 81.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 6 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls10",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 82.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 7 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls11",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 83.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 8 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls12",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 84.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 9 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls13",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 85.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 10 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls14",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 86.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 11 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls15",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 87.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 12 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls16",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 88.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 13 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls17",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 89.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 14 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls18",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 90.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 15 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls19",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 91.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 16 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls20",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 92.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 17 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls21",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 93.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 18 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls22",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 94.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 19 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls23",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 95.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 20 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls24",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 96.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 21 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls25",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 97.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 22 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls26",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 98.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 23 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls27",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 99.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 24 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls28",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 100.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 25 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls29",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 101.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 26 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls30",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 102.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 27 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls31",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 103.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 28 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls32",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 104.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 29 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls33",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 105.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 30 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls34",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 106.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 31 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls35",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 107.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 32 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "ls36",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 108.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "$test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=-test_current_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": 0
+    }
+   ],
+   "note": "The d axis 33 mechanical degrees past the A-B series winding's axis."
+  },
+  {
+   "label": "fl00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-254.999999999-0))-(fea_iq_peak_A)*sin(radians(-254.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-254.999999999-120))-(fea_iq_peak_A)*sin(radians(-254.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-254.999999999-240))-(fea_iq_peak_A)*sin(radians(-254.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -254.999999999
+   }
+  },
+  {
+   "label": "fl01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 1.111111111
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-251.66666666566667-0))-(fea_iq_peak_A)*sin(radians(-251.66666666566667-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-251.66666666566667-120))-(fea_iq_peak_A)*sin(radians(-251.66666666566667-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-251.66666666566667-240))-(fea_iq_peak_A)*sin(radians(-251.66666666566667-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -251.66666666566667
+   }
+  },
+  {
+   "label": "fl02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 2.222222222
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-248.33333333233335-0))-(fea_iq_peak_A)*sin(radians(-248.33333333233335-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-248.33333333233335-120))-(fea_iq_peak_A)*sin(radians(-248.33333333233335-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-248.33333333233335-240))-(fea_iq_peak_A)*sin(radians(-248.33333333233335-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -248.33333333233335
+   }
+  },
+  {
+   "label": "fl03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-244.999999999-0))-(fea_iq_peak_A)*sin(radians(-244.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-244.999999999-120))-(fea_iq_peak_A)*sin(radians(-244.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-244.999999999-240))-(fea_iq_peak_A)*sin(radians(-244.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -244.999999999
+   }
+  },
+  {
+   "label": "fl04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 4.444444444
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-241.66666666566667-0))-(fea_iq_peak_A)*sin(radians(-241.66666666566667-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-241.66666666566667-120))-(fea_iq_peak_A)*sin(radians(-241.66666666566667-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-241.66666666566667-240))-(fea_iq_peak_A)*sin(radians(-241.66666666566667-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -241.66666666566667
+   }
+  },
+  {
+   "label": "fl05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 5.555555556
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-238.33333333233335-0))-(fea_iq_peak_A)*sin(radians(-238.33333333233335-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-238.33333333233335-120))-(fea_iq_peak_A)*sin(radians(-238.33333333233335-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-238.33333333233335-240))-(fea_iq_peak_A)*sin(radians(-238.33333333233335-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -238.33333333233335
+   }
+  },
+  {
+   "label": "fl06",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-234.999999999-0))-(fea_iq_peak_A)*sin(radians(-234.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-234.999999999-120))-(fea_iq_peak_A)*sin(radians(-234.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-234.999999999-240))-(fea_iq_peak_A)*sin(radians(-234.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -234.999999999
+   }
+  },
+  {
+   "label": "fl07",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 7.777777778
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-231.66666666566667-0))-(fea_iq_peak_A)*sin(radians(-231.66666666566667-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-231.66666666566667-120))-(fea_iq_peak_A)*sin(radians(-231.66666666566667-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-231.66666666566667-240))-(fea_iq_peak_A)*sin(radians(-231.66666666566667-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -231.66666666566667
+   }
+  },
+  {
+   "label": "fl08",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 8.888888889
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-228.33333333233335-0))-(fea_iq_peak_A)*sin(radians(-228.33333333233335-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-228.33333333233335-120))-(fea_iq_peak_A)*sin(radians(-228.33333333233335-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-228.33333333233335-240))-(fea_iq_peak_A)*sin(radians(-228.33333333233335-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -228.33333333233335
+   }
+  },
+  {
+   "label": "fl09",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-224.999999999-0))-(fea_iq_peak_A)*sin(radians(-224.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-224.999999999-120))-(fea_iq_peak_A)*sin(radians(-224.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-224.999999999-240))-(fea_iq_peak_A)*sin(radians(-224.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -224.999999999
+   }
+  },
+  {
+   "label": "fl10",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 11.111111111
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-221.6666666656667-0))-(fea_iq_peak_A)*sin(radians(-221.6666666656667-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-221.6666666656667-120))-(fea_iq_peak_A)*sin(radians(-221.6666666656667-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-221.6666666656667-240))-(fea_iq_peak_A)*sin(radians(-221.6666666656667-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -221.6666666656667
+   }
+  },
+  {
+   "label": "fl11",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 12.222222222
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-218.33333333233335-0))-(fea_iq_peak_A)*sin(radians(-218.33333333233335-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-218.33333333233335-120))-(fea_iq_peak_A)*sin(radians(-218.33333333233335-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-218.33333333233335-240))-(fea_iq_peak_A)*sin(radians(-218.33333333233335-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -218.33333333233335
+   }
+  },
+  {
+   "label": "fl12",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 13.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-214.999999999-0))-(fea_iq_peak_A)*sin(radians(-214.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-214.999999999-120))-(fea_iq_peak_A)*sin(radians(-214.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-214.999999999-240))-(fea_iq_peak_A)*sin(radians(-214.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -214.999999999
+   }
+  },
+  {
+   "label": "fl13",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 14.444444444
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-211.66666666566667-0))-(fea_iq_peak_A)*sin(radians(-211.66666666566667-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-211.66666666566667-120))-(fea_iq_peak_A)*sin(radians(-211.66666666566667-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-211.66666666566667-240))-(fea_iq_peak_A)*sin(radians(-211.66666666566667-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -211.66666666566667
+   }
+  },
+  {
+   "label": "fl14",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 15.555555556
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-208.33333333233335-0))-(fea_iq_peak_A)*sin(radians(-208.33333333233335-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-208.33333333233335-120))-(fea_iq_peak_A)*sin(radians(-208.33333333233335-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-208.33333333233335-240))-(fea_iq_peak_A)*sin(radians(-208.33333333233335-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -208.33333333233335
+   }
+  },
+  {
+   "label": "fl15",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 16.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-204.999999999-0))-(fea_iq_peak_A)*sin(radians(-204.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-204.999999999-120))-(fea_iq_peak_A)*sin(radians(-204.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-204.999999999-240))-(fea_iq_peak_A)*sin(radians(-204.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -204.999999999
+   }
+  },
+  {
+   "label": "fl16",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 17.777777778
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-201.66666666566667-0))-(fea_iq_peak_A)*sin(radians(-201.66666666566667-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-201.66666666566667-120))-(fea_iq_peak_A)*sin(radians(-201.66666666566667-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-201.66666666566667-240))-(fea_iq_peak_A)*sin(radians(-201.66666666566667-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -201.66666666566667
+   }
+  },
+  {
+   "label": "fl17",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 18.888888889
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": "$field_current_fl_A"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-198.33333333233332-0))-(fea_iq_peak_A)*sin(radians(-198.33333333233332-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-198.33333333233332-120))-(fea_iq_peak_A)*sin(radians(-198.33333333233332-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(fea_id_peak_A)*cos(radians(-198.33333333233332-240))-(fea_iq_peak_A)*sin(radians(-198.33333333233332-240))"
+    }
+   ],
+   "dq": {
+    "point": "full_load",
+    "id": -23.866268078608357,
+    "iq": -17.983139659136278,
+    "electrical_angle_deg": -198.33333333233332
+   }
+  },
+  {
+   "label": "lp025_0",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 2.94
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-254.999999999-0))-(-6.279329336522712)*sin(radians(-254.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-254.999999999-120))-(-6.279329336522712)*sin(radians(-254.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-254.999999999-240))-(-6.279329336522712)*sin(radians(-254.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp025",
+    "id": -4.371066584197185,
+    "iq": -6.279329336522712,
+    "electrical_angle_deg": -254.999999999
+   }
+  },
+  {
+   "label": "lp025_1",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 2.94
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-244.999999999-0))-(-6.279329336522712)*sin(radians(-244.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-244.999999999-120))-(-6.279329336522712)*sin(radians(-244.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-244.999999999-240))-(-6.279329336522712)*sin(radians(-244.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp025",
+    "id": -4.371066584197185,
+    "iq": -6.279329336522712,
+    "electrical_angle_deg": -244.999999999
+   }
+  },
+  {
+   "label": "lp025_2",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 2.94
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-234.999999999-0))-(-6.279329336522712)*sin(radians(-234.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-234.999999999-120))-(-6.279329336522712)*sin(radians(-234.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-234.999999999-240))-(-6.279329336522712)*sin(radians(-234.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp025",
+    "id": -4.371066584197185,
+    "iq": -6.279329336522712,
+    "electrical_angle_deg": -234.999999999
+   }
+  },
+  {
+   "label": "lp025_3",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 2.94
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-224.999999999-0))-(-6.279329336522712)*sin(radians(-224.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-224.999999999-120))-(-6.279329336522712)*sin(radians(-224.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-224.999999999-240))-(-6.279329336522712)*sin(radians(-224.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp025",
+    "id": -4.371066584197185,
+    "iq": -6.279329336522712,
+    "electrical_angle_deg": -224.999999999
+   }
+  },
+  {
+   "label": "lp025_4",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 13.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 2.94
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-214.999999999-0))-(-6.279329336522712)*sin(radians(-214.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-214.999999999-120))-(-6.279329336522712)*sin(radians(-214.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-214.999999999-240))-(-6.279329336522712)*sin(radians(-214.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp025",
+    "id": -4.371066584197185,
+    "iq": -6.279329336522712,
+    "electrical_angle_deg": -214.999999999
+   }
+  },
+  {
+   "label": "lp025_5",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 16.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 2.94
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-204.999999999-0))-(-6.279329336522712)*sin(radians(-204.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-204.999999999-120))-(-6.279329336522712)*sin(radians(-204.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-4.371066584197185)*cos(radians(-204.999999999-240))-(-6.279329336522712)*sin(radians(-204.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp025",
+    "id": -4.371066584197185,
+    "iq": -6.279329336522712,
+    "electrical_angle_deg": -204.999999999
+   }
+  },
+  {
+   "label": "lp050_0",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 3.49
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-254.999999999-0))-(-11.376242762872513)*sin(radians(-254.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-254.999999999-120))-(-11.376242762872513)*sin(radians(-254.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-254.999999999-240))-(-11.376242762872513)*sin(radians(-254.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp050",
+    "id": -10.254701390103508,
+    "iq": -11.376242762872513,
+    "electrical_angle_deg": -254.999999999
+   }
+  },
+  {
+   "label": "lp050_1",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 3.49
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-244.999999999-0))-(-11.376242762872513)*sin(radians(-244.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-244.999999999-120))-(-11.376242762872513)*sin(radians(-244.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-244.999999999-240))-(-11.376242762872513)*sin(radians(-244.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp050",
+    "id": -10.254701390103508,
+    "iq": -11.376242762872513,
+    "electrical_angle_deg": -244.999999999
+   }
+  },
+  {
+   "label": "lp050_2",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 3.49
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-234.999999999-0))-(-11.376242762872513)*sin(radians(-234.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-234.999999999-120))-(-11.376242762872513)*sin(radians(-234.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-234.999999999-240))-(-11.376242762872513)*sin(radians(-234.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp050",
+    "id": -10.254701390103508,
+    "iq": -11.376242762872513,
+    "electrical_angle_deg": -234.999999999
+   }
+  },
+  {
+   "label": "lp050_3",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 3.49
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-224.999999999-0))-(-11.376242762872513)*sin(radians(-224.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-224.999999999-120))-(-11.376242762872513)*sin(radians(-224.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-224.999999999-240))-(-11.376242762872513)*sin(radians(-224.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp050",
+    "id": -10.254701390103508,
+    "iq": -11.376242762872513,
+    "electrical_angle_deg": -224.999999999
+   }
+  },
+  {
+   "label": "lp050_4",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 13.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 3.49
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-214.999999999-0))-(-11.376242762872513)*sin(radians(-214.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-214.999999999-120))-(-11.376242762872513)*sin(radians(-214.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-214.999999999-240))-(-11.376242762872513)*sin(radians(-214.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp050",
+    "id": -10.254701390103508,
+    "iq": -11.376242762872513,
+    "electrical_angle_deg": -214.999999999
+   }
+  },
+  {
+   "label": "lp050_5",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 16.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 3.49
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-204.999999999-0))-(-11.376242762872513)*sin(radians(-204.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-204.999999999-120))-(-11.376242762872513)*sin(radians(-204.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-10.254701390103508)*cos(radians(-204.999999999-240))-(-11.376242762872513)*sin(radians(-204.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp050",
+    "id": -10.254701390103508,
+    "iq": -11.376242762872513,
+    "electrical_angle_deg": -204.999999999
+   }
+  },
+  {
+   "label": "lp075_0",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 4.11
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-254.999999999-0))-(-15.447493024452896)*sin(radians(-254.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-254.999999999-120))-(-15.447493024452896)*sin(radians(-254.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-254.999999999-240))-(-15.447493024452896)*sin(radians(-254.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp075",
+    "id": -16.99559234800244,
+    "iq": -15.447493024452896,
+    "electrical_angle_deg": -254.999999999
+   }
+  },
+  {
+   "label": "lp075_1",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 4.11
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-244.999999999-0))-(-15.447493024452896)*sin(radians(-244.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-244.999999999-120))-(-15.447493024452896)*sin(radians(-244.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-244.999999999-240))-(-15.447493024452896)*sin(radians(-244.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp075",
+    "id": -16.99559234800244,
+    "iq": -15.447493024452896,
+    "electrical_angle_deg": -244.999999999
+   }
+  },
+  {
+   "label": "lp075_2",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 4.11
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-234.999999999-0))-(-15.447493024452896)*sin(radians(-234.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-234.999999999-120))-(-15.447493024452896)*sin(radians(-234.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-234.999999999-240))-(-15.447493024452896)*sin(radians(-234.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp075",
+    "id": -16.99559234800244,
+    "iq": -15.447493024452896,
+    "electrical_angle_deg": -234.999999999
+   }
+  },
+  {
+   "label": "lp075_3",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 4.11
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-224.999999999-0))-(-15.447493024452896)*sin(radians(-224.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-224.999999999-120))-(-15.447493024452896)*sin(radians(-224.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-224.999999999-240))-(-15.447493024452896)*sin(radians(-224.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp075",
+    "id": -16.99559234800244,
+    "iq": -15.447493024452896,
+    "electrical_angle_deg": -224.999999999
+   }
+  },
+  {
+   "label": "lp075_4",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 13.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 4.11
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-214.999999999-0))-(-15.447493024452896)*sin(radians(-214.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-214.999999999-120))-(-15.447493024452896)*sin(radians(-214.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-214.999999999-240))-(-15.447493024452896)*sin(radians(-214.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp075",
+    "id": -16.99559234800244,
+    "iq": -15.447493024452896,
+    "electrical_angle_deg": -214.999999999
+   }
+  },
+  {
+   "label": "lp075_5",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 16.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 4.11
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-204.999999999-0))-(-15.447493024452896)*sin(radians(-204.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-204.999999999-120))-(-15.447493024452896)*sin(radians(-204.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-16.99559234800244)*cos(radians(-204.999999999-240))-(-15.447493024452896)*sin(radians(-204.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp075",
+    "id": -16.99559234800244,
+    "iq": -15.447493024452896,
+    "electrical_angle_deg": -204.999999999
+   }
+  },
+  {
+   "label": "lp100_0",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 4.78
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-254.999999999-0))-(-18.744084661032513)*sin(radians(-254.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-254.999999999-120))-(-18.744084661032513)*sin(radians(-254.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-254.999999999-240))-(-18.744084661032513)*sin(radians(-254.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp100",
+    "id": -24.227473872033087,
+    "iq": -18.744084661032513,
+    "electrical_angle_deg": -254.999999999
+   }
+  },
+  {
+   "label": "lp100_1",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 4.78
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-244.999999999-0))-(-18.744084661032513)*sin(radians(-244.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-244.999999999-120))-(-18.744084661032513)*sin(radians(-244.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-244.999999999-240))-(-18.744084661032513)*sin(radians(-244.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp100",
+    "id": -24.227473872033087,
+    "iq": -18.744084661032513,
+    "electrical_angle_deg": -244.999999999
+   }
+  },
+  {
+   "label": "lp100_2",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 4.78
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-234.999999999-0))-(-18.744084661032513)*sin(radians(-234.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-234.999999999-120))-(-18.744084661032513)*sin(radians(-234.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-234.999999999-240))-(-18.744084661032513)*sin(radians(-234.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp100",
+    "id": -24.227473872033087,
+    "iq": -18.744084661032513,
+    "electrical_angle_deg": -234.999999999
+   }
+  },
+  {
+   "label": "lp100_3",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 4.78
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-224.999999999-0))-(-18.744084661032513)*sin(radians(-224.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-224.999999999-120))-(-18.744084661032513)*sin(radians(-224.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-224.999999999-240))-(-18.744084661032513)*sin(radians(-224.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp100",
+    "id": -24.227473872033087,
+    "iq": -18.744084661032513,
+    "electrical_angle_deg": -224.999999999
+   }
+  },
+  {
+   "label": "lp100_4",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 13.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 4.78
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-214.999999999-0))-(-18.744084661032513)*sin(radians(-214.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-214.999999999-120))-(-18.744084661032513)*sin(radians(-214.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-214.999999999-240))-(-18.744084661032513)*sin(radians(-214.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp100",
+    "id": -24.227473872033087,
+    "iq": -18.744084661032513,
+    "electrical_angle_deg": -214.999999999
+   }
+  },
+  {
+   "label": "lp100_5",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 16.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 4.78
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-204.999999999-0))-(-18.744084661032513)*sin(radians(-204.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-204.999999999-120))-(-18.744084661032513)*sin(radians(-204.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-24.227473872033087)*cos(radians(-204.999999999-240))-(-18.744084661032513)*sin(radians(-204.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp100",
+    "id": -24.227473872033087,
+    "iq": -18.744084661032513,
+    "electrical_angle_deg": -204.999999999
+   }
+  },
+  {
+   "label": "lp125_0",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 5.47
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-254.999999999-0))-(-21.439602532338274)*sin(radians(-254.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-254.999999999-120))-(-21.439602532338274)*sin(radians(-254.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-254.999999999-240))-(-21.439602532338274)*sin(radians(-254.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp125",
+    "id": -31.71613537704987,
+    "iq": -21.439602532338274,
+    "electrical_angle_deg": -254.999999999
+   }
+  },
+  {
+   "label": "lp125_1",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 5.47
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-244.999999999-0))-(-21.439602532338274)*sin(radians(-244.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-244.999999999-120))-(-21.439602532338274)*sin(radians(-244.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-244.999999999-240))-(-21.439602532338274)*sin(radians(-244.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp125",
+    "id": -31.71613537704987,
+    "iq": -21.439602532338274,
+    "electrical_angle_deg": -244.999999999
+   }
+  },
+  {
+   "label": "lp125_2",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 5.47
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-234.999999999-0))-(-21.439602532338274)*sin(radians(-234.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-234.999999999-120))-(-21.439602532338274)*sin(radians(-234.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-234.999999999-240))-(-21.439602532338274)*sin(radians(-234.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp125",
+    "id": -31.71613537704987,
+    "iq": -21.439602532338274,
+    "electrical_angle_deg": -234.999999999
+   }
+  },
+  {
+   "label": "lp125_3",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 5.47
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-224.999999999-0))-(-21.439602532338274)*sin(radians(-224.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-224.999999999-120))-(-21.439602532338274)*sin(radians(-224.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-224.999999999-240))-(-21.439602532338274)*sin(radians(-224.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp125",
+    "id": -31.71613537704987,
+    "iq": -21.439602532338274,
+    "electrical_angle_deg": -224.999999999
+   }
+  },
+  {
+   "label": "lp125_4",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 13.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 5.47
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-214.999999999-0))-(-21.439602532338274)*sin(radians(-214.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-214.999999999-120))-(-21.439602532338274)*sin(radians(-214.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-214.999999999-240))-(-21.439602532338274)*sin(radians(-214.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp125",
+    "id": -31.71613537704987,
+    "iq": -21.439602532338274,
+    "electrical_angle_deg": -214.999999999
+   }
+  },
+  {
+   "label": "lp125_5",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 16.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 5.47
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-204.999999999-0))-(-21.439602532338274)*sin(radians(-204.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-204.999999999-120))-(-21.439602532338274)*sin(radians(-204.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(-31.71613537704987)*cos(radians(-204.999999999-240))-(-21.439602532338274)*sin(radians(-204.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "lp125",
+    "id": -31.71613537704987,
+    "iq": -21.439602532338274,
+    "electrical_angle_deg": -204.999999999
+   }
+  },
+  {
+   "label": "sd0",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-254.999999999-0))-(0.0)*sin(radians(-254.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-254.999999999-120))-(0.0)*sin(radians(-254.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-254.999999999-240))-(0.0)*sin(radians(-254.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "sd",
+    "id": 25.010813661,
+    "iq": 0.0,
+    "electrical_angle_deg": -254.999999999
+   }
+  },
+  {
+   "label": "sd1",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-244.999999999-0))-(0.0)*sin(radians(-244.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-244.999999999-120))-(0.0)*sin(radians(-244.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-244.999999999-240))-(0.0)*sin(radians(-244.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "sd",
+    "id": 25.010813661,
+    "iq": 0.0,
+    "electrical_angle_deg": -244.999999999
+   }
+  },
+  {
+   "label": "sd2",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-234.999999999-0))-(0.0)*sin(radians(-234.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-234.999999999-120))-(0.0)*sin(radians(-234.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-234.999999999-240))-(0.0)*sin(radians(-234.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "sd",
+    "id": 25.010813661,
+    "iq": 0.0,
+    "electrical_angle_deg": -234.999999999
+   }
+  },
+  {
+   "label": "sd3",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-224.999999999-0))-(0.0)*sin(radians(-224.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-224.999999999-120))-(0.0)*sin(radians(-224.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-224.999999999-240))-(0.0)*sin(radians(-224.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "sd",
+    "id": 25.010813661,
+    "iq": 0.0,
+    "electrical_angle_deg": -224.999999999
+   }
+  },
+  {
+   "label": "sd4",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 13.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-214.999999999-0))-(0.0)*sin(radians(-214.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-214.999999999-120))-(0.0)*sin(radians(-214.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-214.999999999-240))-(0.0)*sin(radians(-214.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "sd",
+    "id": 25.010813661,
+    "iq": 0.0,
+    "electrical_angle_deg": -214.999999999
+   }
+  },
+  {
+   "label": "sd5",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 16.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-204.999999999-0))-(0.0)*sin(radians(-204.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-204.999999999-120))-(0.0)*sin(radians(-204.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(25.010813661)*cos(radians(-204.999999999-240))-(0.0)*sin(radians(-204.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "sd",
+    "id": 25.010813661,
+    "iq": 0.0,
+    "electrical_angle_deg": -204.999999999
+   }
+  },
+  {
+   "label": "sq0",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-254.999999999-0))-(25.010813661)*sin(radians(-254.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-254.999999999-120))-(25.010813661)*sin(radians(-254.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-254.999999999-240))-(25.010813661)*sin(radians(-254.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "sq",
+    "id": 0.0,
+    "iq": 25.010813661,
+    "electrical_angle_deg": -254.999999999
+   }
+  },
+  {
+   "label": "sq1",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-244.999999999-0))-(25.010813661)*sin(radians(-244.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-244.999999999-120))-(25.010813661)*sin(radians(-244.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-244.999999999-240))-(25.010813661)*sin(radians(-244.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "sq",
+    "id": 0.0,
+    "iq": 25.010813661,
+    "electrical_angle_deg": -244.999999999
+   }
+  },
+  {
+   "label": "sq2",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-234.999999999-0))-(25.010813661)*sin(radians(-234.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-234.999999999-120))-(25.010813661)*sin(radians(-234.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-234.999999999-240))-(25.010813661)*sin(radians(-234.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "sq",
+    "id": 0.0,
+    "iq": 25.010813661,
+    "electrical_angle_deg": -234.999999999
+   }
+  },
+  {
+   "label": "sq3",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-224.999999999-0))-(25.010813661)*sin(radians(-224.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-224.999999999-120))-(25.010813661)*sin(radians(-224.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-224.999999999-240))-(25.010813661)*sin(radians(-224.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "sq",
+    "id": 0.0,
+    "iq": 25.010813661,
+    "electrical_angle_deg": -224.999999999
+   }
+  },
+  {
+   "label": "sq4",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 13.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-214.999999999-0))-(25.010813661)*sin(radians(-214.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-214.999999999-120))-(25.010813661)*sin(radians(-214.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-214.999999999-240))-(25.010813661)*sin(radians(-214.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "sq",
+    "id": 0.0,
+    "iq": 25.010813661,
+    "electrical_angle_deg": -214.999999999
+   }
+  },
+  {
+   "label": "sq5",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 16.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-204.999999999-0))-(25.010813661)*sin(radians(-204.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-204.999999999-120))-(25.010813661)*sin(radians(-204.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-204.999999999-240))-(25.010813661)*sin(radians(-204.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "sq",
+    "id": 0.0,
+    "iq": 25.010813661,
+    "electrical_angle_deg": -204.999999999
+   }
+  },
+  {
+   "label": "s00",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 0.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-254.999999999-0))-(0.0)*sin(radians(-254.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-254.999999999-120))-(0.0)*sin(radians(-254.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-254.999999999-240))-(0.0)*sin(radians(-254.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "s0",
+    "id": 0.0,
+    "iq": 0.0,
+    "electrical_angle_deg": -254.999999999
+   }
+  },
+  {
+   "label": "s01",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 3.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-244.999999999-0))-(0.0)*sin(radians(-244.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-244.999999999-120))-(0.0)*sin(radians(-244.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-244.999999999-240))-(0.0)*sin(radians(-244.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "s0",
+    "id": 0.0,
+    "iq": 0.0,
+    "electrical_angle_deg": -244.999999999
+   }
+  },
+  {
+   "label": "s02",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 6.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-234.999999999-0))-(0.0)*sin(radians(-234.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-234.999999999-120))-(0.0)*sin(radians(-234.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-234.999999999-240))-(0.0)*sin(radians(-234.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "s0",
+    "id": 0.0,
+    "iq": 0.0,
+    "electrical_angle_deg": -234.999999999
+   }
+  },
+  {
+   "label": "s03",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 10.0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-224.999999999-0))-(0.0)*sin(radians(-224.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-224.999999999-120))-(0.0)*sin(radians(-224.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-224.999999999-240))-(0.0)*sin(radians(-224.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "s0",
+    "id": 0.0,
+    "iq": 0.0,
+    "electrical_angle_deg": -224.999999999
+   }
+  },
+  {
+   "label": "s04",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 13.333333333
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-214.999999999-0))-(0.0)*sin(radians(-214.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-214.999999999-120))-(0.0)*sin(radians(-214.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-214.999999999-240))-(0.0)*sin(radians(-214.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "s0",
+    "id": 0.0,
+    "iq": 0.0,
+    "electrical_angle_deg": -214.999999999
+   }
+  },
+  {
+   "label": "s05",
+   "modify": [
+    {
+     "function": "modifyboundprop",
+     "name": "AGE",
+     "property": 10,
+     "value": 16.666666667
+    },
+    {
+     "function": "modifycircprop",
+     "name": "F",
+     "property": 1,
+     "value": 0
+    },
+    {
+     "function": "modifycircprop",
+     "name": "A",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-204.999999999-0))-(0.0)*sin(radians(-204.999999999-0))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "B",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-204.999999999-120))-(0.0)*sin(radians(-204.999999999-120))"
+    },
+    {
+     "function": "modifycircprop",
+     "name": "C",
+     "property": 1,
+     "value": "=(0.0)*cos(radians(-204.999999999-240))-(0.0)*sin(radians(-204.999999999-240))"
+    }
+   ],
+   "dq": {
+    "point": "s0",
+    "id": 0.0,
+    "iq": 0.0,
+    "electrical_angle_deg": -204.999999999
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "id": "phA",
+   "op": "circuit",
+   "name": "A"
+  },
+  {
+   "id": "phB",
+   "op": "circuit",
+   "name": "B"
+  },
+  {
+   "id": "phC",
+   "op": "circuit",
+   "name": "C"
+  },
+  {
+   "id": "phF",
+   "op": "circuit",
+   "name": "F"
+  },
+  {
+   "id": "gap",
+   "op": "gap_integral",
+   "boundary": "AGE",
+   "type": 0
+  },
+  {
+   "id": "body",
+   "op": "point_values",
+   "points": [
+    [
+     92.621916139,
+     0.0
+    ]
+   ],
+   "fields": [
+    "B1",
+    "B2"
+   ]
+  }
+ ],
+ "metrics": [
+  {
+   "name": "flux_A_Wb",
+   "value": [
+    "phA",
+    2
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "flux_B_Wb",
+   "value": [
+    "phB",
+    2
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "flux_C_Wb",
+   "value": [
+    "phC",
+    2
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "flux_F_Wb",
+   "value": [
+    "phF",
+    2
+   ],
+   "unit": "Wb"
+  },
+  {
+   "name": "torque_Nm",
+   "value": [
+    "gap",
+    0
+   ],
+   "unit": "N*m",
+   "note": "The rotor's torque from the sliding band, counterclockwise positive (negative while generating)."
+  },
+  {
+   "name": "body_B_T",
+   "value": [
+    "body:B1",
+    0
+   ],
+   "unit": "T",
+   "note": "The flux density at the centre of pole 0's body along the pole axis (x); the rotor side of the band does not move, so the point stays in the body. B2 (across the axis) is recorded beside it."
+  },
+  {
+   "name": "body_Bt_T",
+   "value": [
+    "body:B2",
+    0
+   ],
+   "unit": "T"
+  },
+  {
+   "name": "L2ps_H",
+   "terms": [
+    [
+     "phA",
+     2,
+     1
+    ],
+    [
+     "phB",
+     2,
+     -1
+    ]
+   ],
+   "divide": [
+    "phA",
+    0
+   ],
+   "unit": "H",
+   "note": "The inductance of phases A and B in series, (psi_A - psi_B) / I_A with I_B = -I_A (Section 2.3.2)."
+  }
+ ],
+ "targets": [],
+ "assessors": [
+  {
+   "kind": "step_statistic",
+   "metric": "body_B_T",
+   "statistic": "mean",
+   "step_prefix": "nl",
+   "value": 1.28,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Bpp ! T 1.25 1.28",
+   "location": "Table 6, p. 18",
+   "note": "The FEA's no-load flux density \"measured in the center of pole body\" (note 1), at I_Fnl = 2.5 A; the mean over 36 positions of half an electrical period (slot ripple; the paper's instant is not stated). Acceptance at 1% (the value's rounding is 0.4%)."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "body_B_T",
+   "statistic": "mean",
+   "step_prefix": "nl",
+   "value": 1.25,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "label": "design",
+   "quote": "Bpp ! T 1.25 1.28",
+   "location": "Table 6, p. 18",
+   "note": "The design's value (eqs. (11)-(13), no iron, no leakage), a comparator."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "L2ps_H",
+   "step_prefix": "ls",
+   "statistic": "maximum",
+   "scale": 500,
+   "value": 40.78,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Direct axis inductance … 40.78",
+   "location": "Table 3, p. 15; Section 2.3.2, p. 11; Fig. 7",
+   "note": "L_d = half the largest L_2ps over the rotor sweep, in mH (scale 500), as Section 2.3.2 defines it: two phases in series at the nominal current, field and third phase removed. Fig. 7 (vector art) peaks at 81.557 mH at 55, 115 and 175 degrees: 40.78 halved."
+  },
+  {
+   "kind": "step_statistic",
+   "metric": "L2ps_H",
+   "step_prefix": "ls",
+   "statistic": "minimum",
+   "scale": 500,
+   "value": 26.1,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Quadrature axis inductance … 26.10",
+   "location": "Table 3, p. 15; Section 2.3.2, p. 11; Fig. 7",
+   "note": "L_q = half the smallest L_2ps, in mH. Fig. 7's minima, 52.213 mH at 25, 85 and 145 degrees, halve to 26.11."
+  },
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "pole_pairs": 3,
+   "half_wave_symmetry": true,
+   "step_prefix": "nl",
+   "time_derivative_frequency_hz": 50,
+   "metric": "flux_A_Wb",
+   "statistic": "fundamental_rms",
+   "value": 230.51,
+   "value_kind": "digitized",
+   "digitization_uncertainty": 0.003,
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "No-load phase voltages (field current equal to",
+   "location": "Fig. 12, p. 19 (vector art)",
+   "note": "Fig. 12's E_A, E_B and E_C, read from their outlines and centrelines on the figure's gridlines (0-180 degrees at 9.457 pt per 5 degrees, -400 to 400 V at 10.57 pt per 100 V; fit residuals 0.08 degree and 1.25 V) over one electrical period (120 mechanical degrees): fundamentals 230.51, 230.49 and 230.43 V rms, 120 electrical degrees apart in the order A, B, C; with harmonics 231.09 V rms (THD 7.1%: 3rd 5.3%, 11th and 13th 2.7%). The EMF is the flux linkage's time derivative at 50 Hz (phase A). Acceptance at 1%: the reading's uncertainty, 0.3%, covers the line width and the calibration (the 2D FE rule)."
+  },
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "pole_pairs": 3,
+   "half_wave_symmetry": true,
+   "step_prefix": "nl",
+   "time_derivative_frequency_hz": 50,
+   "metric": "flux_A_Wb",
+   "statistic": "rms",
+   "value": 231.09,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "label": "with_harmonics",
+   "quote": "The THD of this curve is 7%",
+   "location": "Fig. 12, p. 19 (vector art)",
+   "note": "The EMF's rms with its harmonics (the samples resolve orders up to 36), a comparator: with the fundamental it gives the THD (Fig. 12: 7.1%)."
+  },
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "pole_pairs": 3,
+   "half_wave_symmetry": true,
+   "step_prefix": "nl",
+   "time_derivative_frequency_hz": 50,
+   "metric": "flux_A_Wb",
+   "statistic": "harmonic_peak",
+   "order": 3,
+   "value": 17.22,
+   "value_kind": "digitized",
+   "absolute_tolerance": 1.7,
+   "used_for_acceptance": false,
+   "quote": "The THD of this curve is 7%",
+   "location": "Fig. 12, p. 19 (vector art)",
+   "note": "Fig. 12's 3rd harmonic (5.28% of the 325.99 V peak fundamental), a comparator at 10%."
+  },
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "pole_pairs": 3,
+   "half_wave_symmetry": true,
+   "step_prefix": "nl",
+   "time_derivative_frequency_hz": 50,
+   "metric": "flux_A_Wb",
+   "statistic": "harmonic_peak",
+   "order": 13,
+   "value": 8.97,
+   "value_kind": "digitized",
+   "absolute_tolerance": 1.8,
+   "used_for_acceptance": false,
+   "quote": "The THD of this curve is 7%",
+   "location": "Fig. 12, p. 19 (vector art)",
+   "note": "Fig. 12's 13th harmonic (2.75%), a slot harmonic: a comparator at 20% (mesh and time-step sensitive)."
+  },
+  {
+   "kind": "phase_linkage",
+   "pole_pairs": 3,
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "expected_sequence": [
+    "A",
+    "B",
+    "C"
+   ],
+   "flux_metrics": {
+    "A": "flux_A_Wb",
+    "B": "flux_B_Wb",
+    "C": "flux_C_Wb"
+   },
+   "half_wave_symmetry": true,
+   "step_prefix": "nl",
+   "phase_tolerance_deg": 1.0,
+   "amplitude_balance_tolerance": 0.01,
+   "quote": "Prediction from the construction: the winding's turns at the field winding's 3rd harmonic (the rotor's pole pairs); balanced phases peaking in the order A, B, C as the rotor turns counterclockwise"
+  },
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "pole_pairs": 18,
+   "half_wave_symmetry": false,
+   "step_prefix": "fl",
+   "metric": "torque_Nm",
+   "statistic": "mean",
+   "scale": -1,
+   "value": 131.6,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "is 131.6 N·m",
+   "location": "Section 3, p. 20; Fig. 15",
+   "note": "The FEA's mean electromagnetic torque at full load (Fig. 15's curve averages 131.73 N m), reproduced with the FEA's own excitation: field 4.78 A and Fig. 14's fundamental Park currents, sinusoidal. The band's torque on the rotor is negative while generating (scale -1). Acceptance at 1%: the inputs' digitization (0.05 A in I_q) moves it about 0.4%, the FEA's 9% current harmonics (8.4% 3rd) add power at the 3rd harmonic of about 0.3%."
+  },
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "pole_pairs": 18,
+   "half_wave_symmetry": false,
+   "step_prefix": "fl",
+   "metric": "torque_Nm",
+   "statistic": "mean",
+   "scale": -1,
+   "value": 131.73,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "label": "fig15",
+   "quote": "is 131.6 N·m",
+   "location": "Fig. 15, p. 20 (vector art)",
+   "note": "Fig. 15's torque curve averaged over 0-180 degrees, a comparator."
+  },
+  {
+   "kind": "waveform_statistic",
+   "rotor_group": 1,
+   "rotor_band": "AGE",
+   "pole_pairs": 18,
+   "half_wave_symmetry": false,
+   "step_prefix": "fl",
+   "metric": "torque_Nm",
+   "statistic": "peak_to_peak",
+   "value": 34.81,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.3,
+   "used_for_acceptance": false,
+   "quote": "0.24 for the electromagnetic torque and 0.14 for the output power",
+   "location": "Fig. 15, p. 20",
+   "note": "Fig. 15's torque swings 118.87-153.67 N m (0.264 of the mean; the text's ratio is 0.24); the FEA's currents carry 9% harmonics and its damper bars carry current, so a comparator."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "full_load",
+   "frequency_hz": 50,
+   "quantity": "torque",
+   "scale": -1,
+   "value": 131.6,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "label": "flux_linkage",
+   "quote": "is 131.6 N·m",
+   "location": "Section 3, p. 20",
+   "note": "3/2 p (psi_d i_q - psi_q i_d), a cross-check of the band's torque."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "full_load",
+   "frequency_hz": 50,
+   "quantity": "v_d",
+   "scale": 0.7071067811865475,
+   "value": 104.94,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "label": "no_external",
+   "quote": "The THD of the line voltages presented in Figure 13 is 3%",
+   "location": "Fig. 13, p. 19 (vector art)",
+   "note": "Fig. 13's V_d averaged over 0-180 degrees (rms scale, like Fig. 14's currents), against the 2D internal voltage (no resistance, no end winding): which external elements the FEA's circuit held is not stated, so a comparator."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "full_load",
+   "frequency_hz": 50,
+   "quantity": "v_q",
+   "scale": 0.7071067811865475,
+   "value": 210.37,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "label": "no_external",
+   "quote": "The THD of the line voltages presented in Figure 13 is 3%",
+   "location": "Fig. 13, p. 19 (vector art)",
+   "note": "Fig. 13's V_q, as v_d."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "full_load",
+   "frequency_hz": 50,
+   "quantity": "v_d",
+   "scale": 0.7071067811865475,
+   "value": 104.94,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "label": "design_circuit",
+   "resistance": 0.6275,
+   "end_inductance": 0.00118,
+   "quote": "The THD of the line voltages presented in Figure 13 is 3%",
+   "location": "Fig. 13, p. 19 (vector art)",
+   "note": "As no_external, with the design's R_A (100 C) and L_Tend outside the 2D model."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "full_load",
+   "frequency_hz": 50,
+   "quantity": "v_q",
+   "scale": 0.7071067811865475,
+   "value": 210.37,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "label": "design_circuit",
+   "resistance": 0.6275,
+   "end_inductance": 0.00118,
+   "quote": "The THD of the line voltages presented in Figure 13 is 3%",
+   "location": "Fig. 13, p. 19 (vector art)",
+   "note": "As no_external, with the design's R_A and L_Tend."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "full_load",
+   "frequency_hz": 50,
+   "quantity": "line_voltage",
+   "value": 405.98,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "label": "no_external",
+   "quote": "Vr Vv 400.3 405.98",
+   "location": "Table 6, p. 18",
+   "note": "Table 6's FEA terminal voltage (rms, its 3% THD included) against the 2D internal line voltage, a comparator."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "full_load",
+   "frequency_hz": 50,
+   "quantity": "line_voltage",
+   "value": 405.98,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "label": "design_circuit",
+   "resistance": 0.6275,
+   "end_inductance": 0.00118,
+   "quote": "Vr Vv 400.3 405.98",
+   "location": "Table 6, p. 18",
+   "note": "With the design's R_A and L_Tend, a comparator."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "full_load",
+   "frequency_hz": 50,
+   "quantity": "electrical_power",
+   "scale": -1,
+   "value": 13220,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "label": "no_external",
+   "quote": "Pr 3 kw 13.50 13.22",
+   "location": "Table 6, p. 18",
+   "note": "Table 6's FEA output power (the mean of the instantaneous power) against the 2D internal power, a comparator."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "full_load",
+   "frequency_hz": 50,
+   "quantity": "electrical_power",
+   "scale": -1,
+   "value": 13220,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "label": "design_circuit",
+   "resistance": 0.6275,
+   "end_inductance": 0.00118,
+   "quote": "Pr 3 kw 13.50 13.22",
+   "location": "Table 6, p. 18",
+   "note": "With the design's R_A and L_Tend, a comparator."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "full_load",
+   "frequency_hz": 50,
+   "quantity": "terminal_power_factor",
+   "scale": -1,
+   "value": 0.89,
+   "value_kind": "2d_fea",
+   "absolute_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "label": "no_external",
+   "quote": "PF + - 0.90 0.89",
+   "location": "Table 6, p. 18",
+   "note": "Table 6's FEA power factor (P_E/S_E) against the 2D internal one, a comparator."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "full_load",
+   "frequency_hz": 50,
+   "quantity": "terminal_power_factor",
+   "scale": -1,
+   "value": 0.89,
+   "value_kind": "2d_fea",
+   "absolute_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "label": "design_circuit",
+   "resistance": 0.6275,
+   "end_inductance": 0.00118,
+   "quote": "PF + - 0.90 0.89",
+   "location": "Table 6, p. 18",
+   "note": "With the design's R_A and L_Tend, a comparator."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "lp025",
+   "frequency_hz": 50,
+   "quantity": "line_voltage",
+   "resistance": 0.6275,
+   "end_inductance": 0.00118,
+   "value": 400.0,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "25% 5.41 A 2.94 A 9.00",
+   "location": "Table 5, p. 16",
+   "note": "Table 5's 25% load point: the design model holds 400 V with 2.94 A of field current at 5.41 A, PF 0.9 and a 9.0 degree load angle (eqs. (49)-(54) with the 2D L_d, L_q, R_A and L_Tend, no saturation). FEMM gives the line voltage at that field current and those currents, with R_A and L_Tend outside the 2D model: a comparator of the analytic model."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "lp050",
+   "frequency_hz": 50,
+   "quantity": "line_voltage",
+   "resistance": 0.6275,
+   "end_inductance": 0.00118,
+   "value": 400.0,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "50% 10.83 A 3.49 A 16.19",
+   "location": "Table 5, p. 16",
+   "note": "Table 5's 50% load point: the design model holds 400 V with 3.49 A of field current at 10.83 A, PF 0.9 and a 16.19 degree load angle (eqs. (49)-(54) with the 2D L_d, L_q, R_A and L_Tend, no saturation). FEMM gives the line voltage at that field current and those currents, with R_A and L_Tend outside the 2D model: a comparator of the analytic model."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "lp075",
+   "frequency_hz": 50,
+   "quantity": "line_voltage",
+   "resistance": 0.6275,
+   "end_inductance": 0.00118,
+   "value": 400.0,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "16.24A 411A 21.89",
+   "location": "Table 5, p. 16",
+   "note": "Table 5's 75% load point: the design model holds 400 V with 4.11 A of field current at 16.24 A, PF 0.9 and a 21.89 degree load angle (eqs. (49)-(54) with the 2D L_d, L_q, R_A and L_Tend, no saturation). FEMM gives the line voltage at that field current and those currents, with R_A and L_Tend outside the 2D model: a comparator of the analytic model."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "lp100",
+   "frequency_hz": 50,
+   "quantity": "line_voltage",
+   "resistance": 0.6275,
+   "end_inductance": 0.00118,
+   "value": 400.0,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "100% 21.66 A 4.78 A 26.43",
+   "location": "Table 5, p. 16",
+   "note": "Table 5's 100% load point: the design model holds 400 V with 4.78 A of field current at 21.66 A, PF 0.9 and a 26.43 degree load angle (eqs. (49)-(54) with the 2D L_d, L_q, R_A and L_Tend, no saturation). FEMM gives the line voltage at that field current and those currents, with R_A and L_Tend outside the 2D model: a comparator of the analytic model."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "lp125",
+   "frequency_hz": 50,
+   "quantity": "line_voltage",
+   "resistance": 0.6275,
+   "end_inductance": 0.00118,
+   "value": 400.0,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "125% 27.07 A 5.47 A 30.10",
+   "location": "Table 5, p. 16",
+   "note": "Table 5's 125% load point: the design model holds 400 V with 5.47 A of field current at 27.07 A, PF 0.9 and a 30.1 degree load angle (eqs. (49)-(54) with the 2D L_d, L_q, R_A and L_Tend, no saturation). FEMM gives the line voltage at that field current and those currents, with R_A and L_Tend outside the 2D model: a comparator of the analytic model."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "lp100",
+   "frequency_hz": 50,
+   "quantity": "electrical_power",
+   "scale": -1,
+   "value": 13500,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.02,
+   "used_for_acceptance": false,
+   "label": "design",
+   "resistance": 0.6275,
+   "end_inductance": 0.00118,
+   "quote": "Pr 3 kw 13.50 13.22",
+   "location": "Table 6, p. 18",
+   "note": "The design's output power at its rated point, a comparator."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "lp100",
+   "frequency_hz": 50,
+   "quantity": "line_voltage",
+   "value": 400.3,
+   "value_kind": "analytic",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "label": "design",
+   "resistance": 0.6275,
+   "end_inductance": 0.00118,
+   "quote": "Vr Vv 400.3 405.98",
+   "location": "Table 6, p. 18",
+   "note": "The design's terminal voltage at its rated point, a comparator."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "sd",
+   "reference_point": "s0",
+   "quantity": "L_d",
+   "scale": 1000,
+   "value": 40.78,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "label": "single_axis",
+   "quote": "Direct axis inductance … 40.78",
+   "location": "Table 3, p. 15",
+   "note": "L_d from a d-axis current of the A-B test's MMF (2/sqrt(3) of its current as an amplitude), averaged over 6 positions: the other convention, a comparator."
+  },
+  {
+   "kind": "dq_linkage",
+   "phases": [
+    "phA",
+    "phB",
+    "phC"
+   ],
+   "pole_pairs": 3,
+   "point": "sq",
+   "reference_point": "s0",
+   "quantity": "L_q",
+   "scale": 1000,
+   "value": 26.1,
+   "value_kind": "2d_fea",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "label": "single_axis",
+   "quote": "Quadrature axis inductance … 26.10",
+   "location": "Table 3, p. 15",
+   "note": "L_q from a q-axis current, as L_d single_axis."
+  }
+ ],
+ "controls": [
+  {
+   "id": "mesh-0p75",
+   "level": "article",
+   "mesh_scale": 0.75,
+   "purpose": "Every explicit element size and arc piece at 0.75 times."
+  },
+  {
+   "id": "mesh-1p4",
+   "level": "article",
+   "mesh_scale": 1.4,
+   "purpose": "Every explicit element size and arc piece at 1.4 times."
+  },
+  {
+   "id": "field-turns-total",
+   "level": "article",
+   "parameters": {
+    "field_turns_per_pole": 81
+   },
+   "purpose": "The other reading of the 485 field turns: in total, 81 per pole (whole turns)."
+  },
+  {
+   "id": "steel-m45",
+   "level": "article",
+   "parameters": {
+    "steel_grade": "M-45 18 mil",
+    "rotor_steel_grade": "M-45 18 mil",
+    "steel_fill": 0.965,
+    "rotor_steel_fill": 0.965
+   },
+   "purpose": "A lower electrical steel grade (18 mil M-45, its library fill)."
+  },
+  {
+   "id": "steel-fill-1",
+   "level": "article",
+   "parameters": {
+    "steel_fill": 1.0,
+    "rotor_steel_fill": 1.0
+   },
+   "purpose": "M-19 without a lamination fill (solid stacks)."
+  },
+  {
+   "id": "steel-1010",
+   "level": "article",
+   "parameters": {
+    "steel_grade": "1010 Steel (hot rolled)",
+    "rotor_steel_grade": "1010 Steel (hot rolled)",
+    "steel_folder": "Soft Magnetic Materials/Low Carbon Steel (Hot Rolled)",
+    "rotor_steel_folder": "Soft Magnetic Materials/Low Carbon Steel (Hot Rolled)",
+    "steel_fill": 1.0,
+    "rotor_steel_fill": 1.0
+   },
+   "purpose": "The low end of the steel bracket: solid hot-rolled 1010 throughout."
+  },
+  {
+   "id": "rotor-solid-1010",
+   "level": "article",
+   "parameters": {
+    "rotor_steel_grade": "1010 Steel (hot rolled)",
+    "rotor_steel_folder": "Soft Magnetic Materials/Low Carbon Steel (Hot Rolled)",
+    "rotor_steel_fill": 1.0
+   },
+   "purpose": "A solid hot-rolled 1010 rotor under the M-19 stator."
+  },
+  {
+   "id": "test-current-peak",
+   "level": "article",
+   "parameters": {
+    "test_current_A": 30.632
+   },
+   "purpose": "The inductance test at the nominal current's peak (21.66 sqrt 2 A)."
+  },
+  {
+   "id": "shaft-steel",
+   "level": "article",
+   "parameters": {
+    "shaft_material": "RotorSteel"
+   },
+   "purpose": "A shaft of the rotor steel inside the core's inner arc."
+  },
+  {
+   "id": "wedge-magnetic",
+   "level": "article",
+   "parameters": {
+    "wedge_mu_r": 5.0
+   },
+   "purpose": "Magnetic slot wedges (mu_r 5)."
+  }
+ ],
+ "coverage": {
+  "scope": "core",
+  "reproduced": "The 2D FEA's no-load flux density in the pole body (Table 6), its d and q inductances as the paper defines them (Table 3, Fig. 7), its no-load phase EMF (Fig. 12) and its full-load mean torque (text, Fig. 15) at the FEA's own currents; the winding sign and phase order against the construction.",
+  "not_reproduced": "The FEA's load circuit (not described): its terminal voltage, power, power factor and V_d, V_q (Table 6, Fig. 13) are comparators with and without the design's R_A and L_Tend; its current harmonics and damper currents (the static solves carry sinusoidal currents and none in the bars), so torque ripple and voltage THD are comparators; Table 5's analytic load points and Table 6's design column are comparators of the analytic model; losses and efficiency (Table 4), the V curves (Fig. 8) and the analytic torque-angle curves (Fig. 9) are out of scope.",
+  "pre_solve_estimate": "Host-side magnetic circuit (gap with Carter factor and the paper's K_AG, pole body and shoe, core, teeth and yoke on the library curves, a 4.5% pole leakage): B_PB 1.27 T at 485 x 2.5 A per pole (FEA 1.28), 0.21 T with 485 turns in total; steel M-45 -0.6%, fill 1 +0.2%, solid 1010 -6.4%, a solid 1010 rotor -3.1%; the shaft 0.03%. A winding-function estimate gives L_d 41.7 mH unsaturated, about 41.0 with the iron at 21.66 A (the paper: 40.78) and about -5% at the 30.63 A peak; L_q about 20 mH (crude interpolar term; the paper 26.10). The full-load torque from the paper's own L_d, L_q and the unsaturated EMF at 4.78 A is 132.2 N m (FEA 131.6). About 50k elements (thin gap layers 12k, stator iron 10-14k, rotor iron 8-11k, coils 6k, openings 3k): 139 solves per level, 11 levels."
  }
 }

@@ -225,6 +225,12 @@ def linkage_prediction(model, pole_pairs, circuits, rotor_group):
     potential at the conductors varies as sin(p theta - arg R), and a circuit with
     S = sum(turns e^(i p theta)) links Im(S e^(-i arg R)). Turning the rotor
     counterclockwise by alpha advances arg R by p alpha.
+
+    A rotor without magnets is a wound-field rotor: its coil sides (labels of
+    the rotor group in circuits other than the phases) carry their turns times
+    their circuit's current as built, F = sum(turns I e^(i p theta)); a current
+    distribution puts the vector potential in phase with itself, which is the
+    magnetization R = -i F (a quarter period behind).
     """
     from .components import direction_function_offset
     from .reproduce import _face_cycles, _region_of
@@ -239,7 +245,8 @@ def linkage_prediction(model, pole_pairs, circuits, rotor_group):
         return math.atan2(y, x)
 
     windings = {name: 0j for name in circuits}
-    rotor = 0j
+    rotor = field = 0j
+    amps = {c["name"]: c["props"].get("TotalAmps_re", 0) for c in model.get("circuits", [])}
     for label in model["labels"]:
         if label.get("circuit") in windings:
             windings[label["circuit"]] += label["turns"] * cmath.exp(1j * pole_pairs * centroid_angle(label))
@@ -249,8 +256,12 @@ def linkage_prediction(model, pole_pairs, circuits, rotor_group):
             direction = math.degrees(theta) + offset if offset is not None else label["magdir"]
             radial = math.cos(math.radians(direction) - theta)
             rotor += coercivity[label["material"]] * radial * cmath.exp(1j * pole_pairs * theta)
+        elif label.get("group") == rotor_group and label.get("circuit"):
+            field += label["turns"] * amps.get(label["circuit"], 0) * cmath.exp(1j * pole_pairs * centroid_angle(label))
+    if not rotor:
+        rotor = -1j * field
     if not rotor or not all(windings.values()):
-        raise ValueError("The model has no rotor magnetization fundamental or a circuit links nothing")
+        raise ValueError("The model has no rotor magnetization or field-current fundamental, or a circuit links nothing")
     return windings, rotor
 
 
@@ -599,6 +610,9 @@ def _harmonic_superposition(assessor, case, raw, metrics, model):
             "absolute_tolerance": tolerance, "samples": len(rows), "rows": rows, "target": target}
 
 
+TERMINAL_QUANTITIES = ("v_d", "v_q", "line_voltage", "electrical_power", "terminal_power_factor")
+
+
 def _dq_linkage(assessor, case, raw, metrics, model):
     """d- and q-axis flux linkage or torque of one operating point, from measured phase flux linkages.
 
@@ -622,6 +636,17 @@ def _dq_linkage(assessor, case, raw, metrics, model):
     (the cosine between the current and the rotation voltage, from psi_d and
     psi_q at the point's currents), as a 2D model gives it without end-winding
     reactance.
+
+    Terminal quantities at an electrical ``frequency_hz`` add a phase
+    ``resistance`` and an ``end_inductance`` (both zero by default) outside the
+    2D model, with currents into the terminals (v = R i + d psi/dt):
+    v_d = R i_d - w (psi_q + L_e i_q) and v_q = R i_q + w (psi_d + L_e i_d)
+    (amplitude-invariant peaks), ``line_voltage`` the line-to-line rms of a
+    star connection, sqrt(3/2) |v|,
+    ``electrical_power`` 3/2 (v_d i_d + v_q i_q), positive into the machine,
+    and ``terminal_power_factor`` that power over 3/2 |v| |i|. ``scale``
+    multiplies any quantity (-1 for a generator's output; 1/sqrt(2) for rms
+    components).
 
     ``L_d`` and ``L_q`` are inductances from single-axis currents, as benchmarks
     separate them: (mean psi_d at the point - mean psi_d at ``reference_point``,
@@ -668,6 +693,8 @@ def _dq_linkage(assessor, case, raw, metrics, model):
         return out
 
     scale = math.sqrt(1.5) if assessor.get("transform") == "power_invariant" else 1
+    if quantity in TERMINAL_QUANTITIES and scale != 1:
+        raise ValueError("Terminal quantities are taken on the amplitude-invariant scale")
     rows = []
     for step, dq, d, q in point_rows(point):
         if quantity == "psi_d":
@@ -687,6 +714,21 @@ def _dq_linkage(assessor, case, raw, metrics, model):
             if not current:
                 raise ValueError("A power factor needs a nonzero current")
             value = (d * dq["iq"] - q * dq["id"]) / (math.hypot(d, q) * current)
+        elif quantity in TERMINAL_QUANTITIES:
+            if not assessor.get("frequency_hz", 0) > 0:
+                raise ValueError("Terminal quantities need an electrical frequency_hz")
+            omega = 2 * math.pi * assessor["frequency_hz"]
+            resistance, end = assessor.get("resistance", 0), assessor.get("end_inductance", 0)
+            vd = resistance * dq["id"] - omega * (q + end * dq["iq"])
+            vq = resistance * dq["iq"] + omega * (d + end * dq["id"])
+            power = 1.5 * (vd * dq["id"] + vq * dq["iq"])
+            if quantity == "terminal_power_factor":
+                current = math.hypot(dq["id"], dq["iq"])
+                if not current:
+                    raise ValueError("A power factor needs a nonzero current")
+                value = power / (1.5 * math.hypot(vd, vq) * current)
+            else:
+                value = {"v_d": vd, "v_q": vq, "electrical_power": power, "line_voltage": math.sqrt(1.5) * math.hypot(vd, vq)}[quantity]
         else:
             raise ValueError("Unknown dq quantity: " + str(quantity))
         rows.append({"step": step["label"], "electrical_angle_deg": dq["electrical_angle_deg"], "psi_d": d, "psi_q": q, "value": value})
@@ -699,6 +741,7 @@ def _dq_linkage(assessor, case, raw, metrics, model):
         reference = point_rows(assessor["reference_point"])
         base = sum(d if quantity == "L_d" else q for _, _, d, q in reference) / len(reference)
         observed = (observed - base) / next(iter(currents))
+    observed *= assessor.get("scale", 1)
     metric = assessor_metric(assessor)
     target = {key: assessor[key] for key in ("value", "relative_tolerance", "absolute_tolerance", "quote", "location",
                                               "used_for_acceptance", "allowance") if key in assessor}

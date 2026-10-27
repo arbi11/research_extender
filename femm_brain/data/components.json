@@ -1726,7 +1726,7 @@
    "id": "trapezoidal_slot_stator",
    "layer": 2,
    "title": "Stator with tabulated slot profiles",
-   "description": "Slots of the profile papers tabulate, repeated around the axis: a parallel-sided opening of given width and height, an optional wedge tapering to the slot top width, straight sides from the top width to the bottom width over the slot height, and a flat or arc bottom, with optional opening chords and slot dividers. The teeth are what lies between the slots. Slots open toward the axis for inner-rotor machines and away from it for outer-rotor machines.",
+   "description": "Slots of the profile papers tabulate, repeated around the axis: a parallel-sided opening of given width and height, an optional wedge tapering to the slot top width, straight sides from the top width to the bottom width over the slot height, and a flat or arc bottom, with optional opening chords, wedge chords (a wedge region of its own above the coils), slot dividers (two halves side by side) and layer dividers (two layers stacked along the slot axis). The teeth are what lies between the slots. Slots open toward the axis for inner-rotor machines and away from it for outer-rotor machines.",
    "physics": [
     "magnetics"
    ],
@@ -1886,6 +1886,35 @@
      "required": false,
      "unit": "model length",
      "exclusive_minimum": 0
+    },
+    {
+     "name": "close_wedges",
+     "type": "boolean",
+     "description": "Draw the chord between each wedge and its slot body, so the wedge is a region of its own",
+     "required": false,
+     "default": false
+    },
+    {
+     "name": "wedge_material",
+     "type": "string",
+     "description": "Material of a label in each closed wedge (needs closed wedges and slot openings)",
+     "required": false
+    },
+    {
+     "name": "wedge_mesh",
+     "type": "number",
+     "description": "Element size of the wedges",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "layer_divider_height",
+     "type": "number",
+     "description": "Distance along the slot axis from the top of the slot body to a chord dividing it into two stacked layers",
+     "required": false,
+     "unit": "model length",
+     "minimum": 0
     }
    ],
    "femm_functions": [
@@ -1910,7 +1939,8 @@
    "constraints": [
     "Widths are chords across the slot centreline; 'top' is the end nearest the air gap.",
     "The opening may not be wider than the slot top, and adjacent slots may not overlap at the bore, top or bottom.",
-    "The yoke circle and its boundary are separate components."
+    "The yoke circle and its boundary are separate components.",
+    "Closing the wedges needs a wedge height; a layer divider lies strictly inside the slot body and excludes a side-by-side slot divider."
    ]
   },
   {
@@ -2777,6 +2807,282 @@
     "The pole count must be a multiple of the number of phases, and phase names must be distinct.",
     "Each label must lie between its pole axis and the middle of the gap to the next pole; the coil outlines come from salient_poles.",
     "Phase circuits and their currents are defined separately."
+   ]
+  },
+  {
+   "id": "salient_pole_rotor",
+   "layer": 2,
+   "title": "Salient-pole wound-field rotor",
+   "description": "A salient-pole rotor of the wound-field synchronous machine: pole shoes whose face is an arc through the outer radius with a given chord, concentric with the axis (a constant gap) or of a smaller radius centred on the pole axis (an eccentric face); straight shoe tips parallel to the pole axis and a flat underside; parallel-sided pole bodies standing on a core that is a regular polygon (one flat side under each pole, meeting on the axes between poles) or a circle; optional field coil blocks against both body sides that share edges with the body, the shoe underside and the core (neighbouring coils share the polygon's corner when they reach it); optional round damper bars in the shoes, symmetric about each pole axis; an optional shaft circle; and optional closures of the spaces between poles (arcs through the face corners, centred on the axis), so the thin air gap and the interpolar spaces can be meshed apart. Coil labels come from salient_pole_winding.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "pole_count",
+     "type": "integer",
+     "description": "Number of poles (even)",
+     "required": true,
+     "minimum": 2
+    },
+    {
+     "name": "outer_radius",
+     "type": "number",
+     "description": "Rotor outer radius: the pole face's distance from the axis on the pole axis",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "shoe_width",
+     "type": "number",
+     "description": "Chord between the face corners of each pole shoe",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "shoe_tip_height",
+     "type": "number",
+     "description": "Length of the straight shoe tips from the face corners toward the axis, parallel to the pole axis",
+     "required": true,
+     "unit": "model length",
+     "minimum": 0
+    },
+    {
+     "name": "body_width",
+     "type": "number",
+     "description": "Width of the parallel-sided pole body",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "root_distance",
+     "type": "number",
+     "description": "Distance from the axis of each polygon side (polygon core) or radius of the core circle (arc core)",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "root_shape",
+     "type": "string",
+     "description": "polygon (a flat core side under each pole) or arc (a core circle)",
+     "required": false,
+     "choices": [
+      "polygon",
+      "arc"
+     ],
+     "default": "polygon"
+    },
+    {
+     "name": "face_radius",
+     "type": "number",
+     "description": "Radius of the pole face arc, centred on the pole axis (default: the outer radius, a face concentric with the axis)",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "first_pole_angle",
+     "type": "number",
+     "description": "Angle of the axis of pole 0",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "coil_width",
+     "type": "number",
+     "description": "Width of the field coil blocks beyond each body side, at right angles to the pole axis (no coils by default)",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "coil_start",
+     "type": "number",
+     "description": "Distance from the axis, along the pole axis, of the coil blocks' end nearer the axis (default: the core)",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "coil_end",
+     "type": "number",
+     "description": "Distance from the axis, along the pole axis, of the coil blocks' far end (default: the shoe underside)",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "damper_bars",
+     "type": "integer",
+     "description": "Round damper bars per pole",
+     "required": false,
+     "minimum": 0,
+     "default": 0
+    },
+    {
+     "name": "damper_pitch",
+     "type": "number",
+     "description": "Angle between neighbouring damper bars of a pole, about the axis",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "damper_radius",
+     "type": "number",
+     "description": "Radius of the damper bars' centres",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "damper_diameter",
+     "type": "number",
+     "description": "Diameter of the damper bars",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "damper_material",
+     "type": "string",
+     "description": "Material of the damper bar labels",
+     "required": false
+    },
+    {
+     "name": "damper_mesh",
+     "type": "number",
+     "description": "Element size of the damper bars",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "shaft_radius",
+     "type": "number",
+     "description": "Radius of a shaft circle inside the core",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "shaft_material",
+     "type": "string",
+     "description": "Material of the shaft label (needed with a shaft)",
+     "required": false
+    },
+    {
+     "name": "shaft_mesh",
+     "type": "number",
+     "description": "Element size of the shaft",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "face_max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of the pole face arcs",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
+    },
+    {
+     "name": "root_max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of an arc core",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 1
+    },
+    {
+     "name": "damper_max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of the damper bar circles",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 10
+    },
+    {
+     "name": "shaft_max_segment",
+     "type": "number",
+     "description": "Maximum angular segment of the shaft circle",
+     "required": false,
+     "unit": "degrees",
+     "exclusive_minimum": 0,
+     "default": 5
+    },
+    {
+     "name": "interpolar_material",
+     "type": "string",
+     "description": "Close each space between neighbouring poles with an arc through the face corners (centred on the axis) and label it with this material",
+     "required": false
+    },
+    {
+     "name": "interpolar_mesh",
+     "type": "number",
+     "description": "Element size of the spaces between poles",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "iron_material",
+     "type": "string",
+     "description": "Material of the iron label placed in the body of pole 0",
+     "required": false
+    },
+    {
+     "name": "iron_mesh",
+     "type": "number",
+     "description": "Element size of the rotor iron",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the contours and labels (a rotor's group turns between positions)",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "addarc",
+    "addblocklabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "segment",
+    "arc",
+    "circle",
+    "block_label"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": [
+    "The pole count is even; pole shoes and bodies of neighbouring poles may not overlap, the body is narrower than the shoe and the shoe underside lies beyond the core.",
+    "A face radius lies between the shoe's half chord and the outer radius; a smaller one centres the face on the pole axis inside the rotor.",
+    "Coil blocks lie along the body between the core and the shoe underside, inside their half of the gap between poles, and no wider than the shoe where they reach its underside.",
+    "Damper bars lie inside the shoes (beyond the underside, inside the tips and the face) and may not overlap; they need a material. A shaft lies inside the core and needs a material.",
+    "Coil circuits and turns come from salient_pole_winding; the air gap, stator and boundaries are separate components."
    ]
   },
   {

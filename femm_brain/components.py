@@ -628,7 +628,8 @@ def slotted_stator(m, slot_count, slot_bottom_radius, tip_radius, tooth_width, t
 def trapezoidal_slot_stator(m, slot_count, bore_radius, opening_width, opening_height, slot_width_top, slot_width_bottom,
                             slot_height, wedge_height=0, rotor_side="inner", slot_bottom="flat", first_tooth_angle=0,
                             close_slot_openings=True, slot_divider=False, bore_max_segment=1, slot_bottom_max_segment=1,
-                            group=0, slot_opening_group=None, iron_material=None, iron_mesh=None):
+                            group=0, slot_opening_group=None, iron_material=None, iron_mesh=None, close_wedges=False,
+                            wedge_material=None, wedge_mesh=None, layer_divider_height=None):
     """Slots of the profile papers tabulate, repeated around the axis; the teeth are what lies between.
 
     From the bore, each slot has a parallel-sided opening (width and height),
@@ -637,6 +638,13 @@ def trapezoidal_slot_stator(m, slot_count, bore_radius, opening_width, opening_h
     "Top" is the end nearest the air gap and widths are chords across the slot
     centerline. Slots open toward the axis for inner rotors and away from it
     for outer rotors. Slot k is centred half a pitch after tooth k.
+    ``close_wedges`` draws the chord between each wedge and its slot body, so
+    the wedge is a region of its own (a non-magnetic wedge above the coils),
+    labelled with ``wedge_material`` when it is given.
+    ``layer_divider_height`` splits each slot body into two layers stacked
+    along the slot axis by a chord that far from the body's top (double-layer
+    windings whose coil sides lie one above the other); ``slot_divider`` splits
+    the slot into two halves side by side instead.
     """
     if rotor_side not in ("inner", "outer") or slot_bottom not in ("flat", "arc"):
         raise ValueError("The rotor side is inner or outer, and the slot bottom flat or arc")
@@ -644,6 +652,12 @@ def trapezoidal_slot_stator(m, slot_count, bore_radius, opening_width, opening_h
         raise ValueError("The slot opening must not be wider than the slot top")
     if slot_divider and not close_slot_openings:
         raise ValueError("A slot divider needs closed slot openings")
+    if close_wedges and not wedge_height:
+        raise ValueError("Closing the wedges needs a wedge height")
+    if wedge_material and not (close_wedges and close_slot_openings):
+        raise ValueError("Wedge labels need closed wedges and closed slot openings")
+    if layer_divider_height is not None and (slot_divider or not 0 < layer_divider_height < slot_height):
+        raise ValueError("A layer divider lies inside the slot body and excludes a side-by-side slot divider")
     sign = 1 if rotor_side == "inner" else -1
     pitch = 360 / slot_count
     if opening_width >= 2 * bore_radius:
@@ -667,6 +681,9 @@ def trapezoidal_slot_stator(m, slot_count, bore_radius, opening_width, opening_h
                ("side", -1): (side_x, -slot_width_top / 2), ("side", 1): (side_x, slot_width_top / 2),
                ("bottom", -1): (bottom_x, -slot_width_bottom / 2), ("bottom", 1): (bottom_x, slot_width_bottom / 2),
                ("bottom", 0): (bottom_x, 0) if slot_bottom == "flat" else (corner_radius, 0)}
+    if layer_divider_height is not None:
+        layer_half = slot_width_top / 2 + layer_divider_height * (slot_width_bottom - slot_width_top) / (2 * slot_height)
+        profile.update({("layer", s): (side_x + sign * layer_divider_height, s * layer_half) for s in (-1, 1)})
     # Each slot's points are computed once; neighbouring slots share the bore points.
     slots = [{key: _rotated(point, first_tooth_angle + (k + 0.5) * pitch) for key, point in profile.items()}
              for k in range(slot_count)]
@@ -675,7 +692,18 @@ def trapezoidal_slot_stator(m, slot_count, bore_radius, opening_width, opening_h
             m.segment(slot["bore", s], slot["top", s], group=group)
             if wedge_height or slot_width_top != opening_width:
                 m.segment(slot["top", s], slot["side", s], group=group)
-            m.segment(slot["side", s], slot["bottom", s], group=group)
+            if layer_divider_height is None:
+                m.segment(slot["side", s], slot["bottom", s], group=group)
+            else:
+                m.segment(slot["side", s], slot["layer", s], group=group)
+                m.segment(slot["layer", s], slot["bottom", s], group=group)
+        if close_wedges:
+            m.segment(slot["side", -1], slot["side", 1], group=group)
+            if wedge_material:
+                m.label(*_rotated(((top_x + side_x) / 2, 0), first_tooth_angle + (k + 0.5) * pitch), wedge_material,
+                        mesh=wedge_mesh, group=group)
+        if layer_divider_height is not None:
+            m.segment(slot["layer", -1], slot["layer", 1], group=group)
         # An arc bottom is centred on the axis and runs counterclockwise for either rotor side.
         low, high, middle = slot["bottom", -1], slot["bottom", 1], slot["bottom", 0]
         if slot_bottom == "flat":
@@ -1101,6 +1129,178 @@ def salient_pole_winding(m, pole_count, phases, turns, material, label_axial, la
         for side in (-1, 1):
             m.label(*_rotated((label_axial, side * label_offset), axis), material, mesh=mesh, circuit=phase,
                     turns=int(-side * polarity * turns), group=group)
+
+
+def salient_pole_rotor(m, pole_count, outer_radius, shoe_width, shoe_tip_height, body_width, root_distance, root_shape="polygon",
+                       face_radius=None, first_pole_angle=0, coil_width=None, coil_start=None, coil_end=None, damper_bars=0,
+                       damper_pitch=None, damper_radius=None, damper_diameter=None, damper_material=None, damper_mesh=None,
+                       shaft_radius=None, shaft_material=None, shaft_mesh=None, face_max_segment=1, root_max_segment=1,
+                       damper_max_segment=10, shaft_max_segment=5, interpolar_material=None, interpolar_mesh=None,
+                       iron_material=None, iron_mesh=None, group=0):
+    """A salient-pole (wound-field) rotor: pole shoes, parallel pole bodies on a core, field coil blocks and round damper bars.
+
+    Each pole face is an arc through the rotor's outer radius on the pole axis
+    whose chord between the face corners is ``shoe_width``: concentric with the
+    axis by default (a constant air gap), or of a smaller ``face_radius`` centred
+    on the pole axis (an eccentric face, the gap widening toward the tips).
+    Straight shoe tips run from the face corners toward the axis, parallel to
+    the pole axis, for ``shoe_tip_height``; a flat underside at right angles to
+    the pole axis joins them to the body, ``body_width`` wide, whose parallel
+    sides end on the core. The core is a regular polygon whose sides lie
+    ``root_distance`` from the axis, one under each pole, meeting on the axes
+    between poles ("polygon"), or a circle of that radius ("arc"). Field coil
+    blocks, when ``coil_width`` is given, lie against both body sides from
+    ``coil_start`` (the core by default) to ``coil_end`` (the shoe underside by
+    default) and reach ``coil_width`` beyond the body at right angles to the pole
+    axis, sharing edges with the iron they touch; where a coil's corner reaches
+    the polygon's corner, neighbouring coils share that node. ``damper_bars``
+    round bars per pole, ``damper_pitch`` degrees apart about the axis and
+    symmetric about the pole axis, have their centres on ``damper_radius`` and
+    are labelled with ``damper_material``. An optional shaft circle of
+    ``shaft_radius`` is labelled with ``shaft_material``. With
+    ``interpolar_material`` each space between neighbouring poles is closed by
+    an arc centred on the axis through the face corners and labelled, so the
+    thin air gap above the poles can take a finer mesh than the spaces between
+    them. Coil labels come from ``salient_pole_winding``.
+    """
+    if pole_count < 2 or pole_count % 2:
+        raise ValueError("A salient-pole rotor has an even number of poles, at least two")
+    if root_shape not in ("polygon", "arc"):
+        raise ValueError("The core is a polygon or an arc")
+    pitch = 360 / pole_count
+    half_pitch = math.radians(pitch / 2)
+    face_radius = outer_radius if face_radius is None else face_radius
+    shoe_half, body_half = shoe_width / 2, body_width / 2
+    if not 0 < face_radius <= outer_radius:
+        raise ValueError("The face radius lies between zero and the outer radius")
+    if shoe_half >= face_radius:
+        raise ValueError("The shoe is wider than its face arc allows")
+    centre_u = outer_radius - face_radius  # the face arc's centre on the pole axis
+    corner_u = centre_u + math.sqrt(face_radius ** 2 - shoe_half ** 2)
+    if math.atan2(shoe_half, corner_u) >= half_pitch:
+        raise ValueError("Pole shoes overlap: reduce the shoe width")
+    under_u = corner_u - shoe_tip_height
+    if shoe_tip_height < 0 or not body_half < shoe_half:
+        raise ValueError("The shoe tips need a nonnegative height and the body must be narrower than the shoe")
+    if root_shape == "polygon":
+        root_u = root_distance
+        corner_v = root_distance * math.tan(half_pitch)
+        if body_half >= corner_v:
+            raise ValueError("The pole bodies are wider than the core's sides")
+    else:
+        if body_half >= root_distance:
+            raise ValueError("The pole bodies are wider than the core circle")
+        root_u = math.sqrt(root_distance ** 2 - body_half ** 2)
+        if math.atan2(body_half, root_u) >= half_pitch:
+            raise ValueError("The pole bodies overlap at the core")
+    if not root_u < under_u:
+        raise ValueError("The shoe underside must lie beyond the core")
+    tolerance = 1e-9 * outer_radius
+    points = {}
+    for s in (-1, 1):
+        points["root", s], points["under", s] = (root_u, s * body_half), (under_u, s * body_half)
+        points["shoe", s], points["face", s] = (under_u, s * shoe_half), (corner_u, s * shoe_half)
+    coils = coil_width is not None
+    coil_on_root = coil_on_under = coil_at_tip = coil_shared = False
+    if coils:
+        start = root_u if coil_start is None else coil_start
+        end = under_u if coil_end is None else coil_end
+        outer_v = body_half + coil_width
+        if not (coil_width > 0 and root_u <= start < end <= under_u):
+            raise ValueError("Coil blocks lie along the pole body, between the core and the shoe underside")
+        coil_on_root, coil_on_under = start == root_u and root_shape == "polygon", end == under_u
+        if coil_on_under and outer_v > shoe_half + tolerance:
+            raise ValueError("A coil reaching the shoe underside must not reach beyond the shoe")
+        if coil_on_root and outer_v > corner_v + tolerance:
+            raise ValueError("Coil blocks must stay inside their half of the gap between poles")
+        coil_at_tip = coil_on_under and abs(outer_v - shoe_half) <= tolerance
+        coil_shared = coil_on_root and abs(outer_v - corner_v) <= tolerance
+        for u, v in ((start, outer_v), (end, outer_v)):
+            if not math.atan2(v, u) < half_pitch + 1e-12 or math.hypot(u, v) >= outer_radius:
+                raise ValueError("Coil blocks must stay inside their half of the gap between poles")
+        for s in (-1, 1):
+            points["coil_start", s] = points["root", s] if start == root_u else (start, s * body_half)
+            points["coil_end", s] = points["under", s] if coil_on_under else (end, s * body_half)
+            points["coil_start_out", s] = (start, s * outer_v)
+            points["coil_end_out", s] = points["shoe", s] if coil_at_tip else (end, s * outer_v)
+    # Every pole's points are computed once, and each gap's corner once, so neighbouring poles join exactly.
+    poles = [{key: _rotated(point, first_pole_angle + k * pitch) for key, point in points.items()} for k in range(pole_count)]
+    corners = [_rotated((root_u, corner_v), first_pole_angle + k * pitch) if root_shape == "polygon" else None
+               for k in range(pole_count)]
+    if coil_shared:
+        for k, pole in enumerate(poles):
+            pole["coil_start_out", 1], pole["coil_start_out", -1] = corners[k], corners[k - 1]
+
+    def chain(pole, keys):
+        for a, b in zip(keys, keys[1:]):
+            m.segment(pole[a], pole[b], group=group)
+
+    for k, pole in enumerate(poles):
+        m.arc(pole["face", -1], pole["face", 1], 2 * math.degrees(math.asin(shoe_half / face_radius)), face_max_segment, group=group)
+        for s in (-1, 1):
+            body = [("root", s)]
+            if coils and pole["coil_start", s] != pole["root", s]:
+                body.append(("coil_start", s))
+            if coils and pole["coil_end", s] != pole["under", s]:
+                body.append(("coil_end", s))
+            chain(pole, body + [("under", s)])
+            chain(pole, [("under", s)] + ([("coil_end_out", s)] if coil_on_under and not coil_at_tip else []) + [("shoe", s)])
+            if shoe_tip_height > 0:
+                chain(pole, [("shoe", s), ("face", s)])
+            if coils:
+                if not coil_on_root:
+                    chain(pole, [("coil_start", s), ("coil_start_out", s)])
+                chain(pole, [("coil_start_out", s), ("coil_end_out", s)])
+                if not coil_on_under:
+                    chain(pole, [("coil_end_out", s), ("coil_end", s)])
+        following = poles[(k + 1) % pole_count]
+        if root_shape == "polygon":
+            # The core sides from this pole's body to the corner and on to the next pole's body, split where coils sit on them.
+            ahead = [pole["root", 1]] + ([pole["coil_start_out", 1]] if coil_on_root and not coil_shared else []) + [corners[k]]
+            behind = [corners[k]] + ([following["coil_start_out", -1]] if coil_on_root and not coil_shared else []) + \
+                [following["root", -1]]
+            path = ahead + behind[1:]
+            for a, b in zip(path, path[1:]):
+                m.segment(a, b, group=group)
+        else:
+            span = pitch - 2 * math.degrees(math.atan2(body_half, root_u))
+            m.arc(pole["root", 1], following["root", -1], span, root_max_segment, group=group)
+        if interpolar_material:
+            # The closure lies on the circle of the face corners, between this pole's corner and the next one's.
+            span = pitch - 2 * math.degrees(math.atan2(shoe_half, corner_u))
+            m.arc(pole["face", 1], following["face", -1], span, face_max_segment, group=group)
+            inside = ((root_u / math.cos(half_pitch) if root_shape == "polygon" else root_distance) + math.hypot(corner_u, shoe_half)) / 2
+            m.label(*_rotated((inside, 0), first_pole_angle + (k + 0.5) * pitch), interpolar_material, mesh=interpolar_mesh, group=group)
+    if damper_bars:
+        if not float(damper_bars).is_integer() or damper_bars < 0 or None in (damper_pitch, damper_radius, damper_diameter):
+            raise ValueError("Damper bars need a whole count, a pitch, a centre radius and a diameter")
+        if not damper_material:
+            raise ValueError("Damper bars need a material")
+        bar_half = damper_diameter / 2
+        if damper_bars > 1 and 2 * damper_radius * math.sin(math.radians(damper_pitch) / 2) <= damper_diameter:
+            raise ValueError("Neighbouring damper bars overlap")
+        for j in range(int(damper_bars)):
+            angle = (j - (damper_bars - 1) / 2) * damper_pitch
+            u, v = damper_radius * math.cos(math.radians(angle)), damper_radius * math.sin(math.radians(angle))
+            if not (u - bar_half > under_u and abs(v) + bar_half < shoe_half and math.hypot(u - centre_u, v) + bar_half < face_radius):
+                raise ValueError("Damper bars must lie inside the pole shoes")
+        for k in range(pole_count):
+            for j in range(int(damper_bars)):
+                angle = first_pole_angle + k * pitch + (j - (damper_bars - 1) / 2) * damper_pitch
+                centre = _rotated((damper_radius, 0), angle)
+                outward = _rotated((damper_radius + bar_half, 0), angle)
+                inward = _rotated((damper_radius - bar_half, 0), angle)
+                m.arc(outward, inward, 180, damper_max_segment, group=group)
+                m.arc(inward, outward, 180, damper_max_segment, group=group)
+                m.label(centre[0], centre[1], damper_material, mesh=damper_mesh, group=group)
+    if shaft_radius is not None:
+        reach = root_u if root_shape == "polygon" else root_distance
+        if not 0 < shaft_radius < reach or not shaft_material:
+            raise ValueError("A shaft lies inside the core and needs a material")
+        circle(m, shaft_radius, max_segment=shaft_max_segment, group=group)
+        m.label(0.0, 0.0, shaft_material, mesh=shaft_mesh, group=group)
+    if iron_material:
+        m.label(*_rotated(((root_u + under_u) / 2, 0), first_pole_angle), iron_material, mesh=iron_mesh, group=group)
 
 
 def belt_winding(m, inner_radius, outer_radius, belts, material, gap_material, max_segment=1, mesh=None, gap_mesh=None, group=0):
@@ -1630,7 +1830,7 @@ IMPLEMENTATIONS = {function.__name__: function for function in (
     fixed_potential_boundary, mixed_boundary, convection_boundary, iabc_open_boundary, axisymmetric_coil_section,
     bar_magnet, air_gap_element, kelvin_periodic_exterior, segment_boundary, fixed_point_potential, magnet_array,
     slotted_stator, trapezoidal_slot_stator, cage_rotor, tooth_coil_winding, slot_winding, surface_magnet_rotor, salient_poles, salient_pole_winding,
-    belt_winding, entity_pattern, sector_air_gap, arc_boundary, ring_sectors, flux_barrier_rotor, linear_slotted_core,
+    salient_pole_rotor, belt_winding, entity_pattern, sector_air_gap, arc_boundary, ring_sectors, flux_barrier_rotor, linear_slotted_core,
     linear_winding)}
 
 
