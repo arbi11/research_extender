@@ -55,9 +55,10 @@ class IndexTests(unittest.TestCase):
         sets = [entry["set"] for entry in entries]
         # The development set grew from 6 to 8 on 2026-10-26 (the magnetic gear and the double-cage bar, promoted from the
         # unassigned candidates), to 9 with the Tlali 2020 Vernier generator and to 10 with Ibrahim 2017's four SynRM prototypes
-        # (promoted from the candidates), and to 11 with Aleksandrov 2019's linear induction motor (the first linear induction
-        # machine); the held-out set stays at the same four papers.
-        self.assertEqual((sets.count("development"), sets.count("held_out")), (11, 4))
+        # (promoted from the candidates), to 11 with Aleksandrov 2019's linear induction motor (the first linear induction
+        # machine) and to 12 with Bazzo 2021's salient-pole generator (the first wound-field synchronous machine); the
+        # held-out set stays at the same four papers.
+        self.assertEqual((sets.count("development"), sets.count("held_out")), (12, 4))
         self.assertTrue(all(entry["set"] in ("development", "held_out", "unassigned") for entry in entries))
 
     def test_index_entries_need_planning_fields_and_the_screening_vocabulary(self):
