@@ -5988,6 +5988,785 @@
      ]
     }
    }
+  },
+  {
+   "id": "design-linear-periodic-double-layer",
+   "title": "Periodic slotted linear primary with a double-layer winding over an aluminium sheet",
+   "source_ids": [
+    "manual5"
+   ],
+   "source_url": null,
+   "purpose": "A linear induction machine's primary over one 192 mm period (linear_slotted_core with half teeth at the periodic ends, semi-closed slots, two layers; linear_winding's coils pitched 5 of 6 slots and wrapped round the period) above an aluminium sheet on laminated iron, at standstill and 50 Hz. A third of a period carries phase A's coils onto B's, so the phase flux linkages are balanced and 120 degrees apart in the order the construction gives, and the field travels in the direction the slot phases predict, dragging the sheet: forward toward +x, reversed toward -x.",
+   "steps": [
+    {
+     "label": "fwd",
+     "modify": []
+    },
+    {
+     "label": "rev",
+     "modify": [
+      {
+       "function": "modifycircprop",
+       "name": "B",
+       "property": 1,
+       "value": [
+        "=current_A*cos(radians(120))",
+        "=current_A*sin(radians(120))"
+       ]
+      },
+      {
+       "function": "modifycircprop",
+       "name": "C",
+       "property": 1,
+       "value": [
+        "=current_A*cos(radians(-120))",
+        "=current_A*sin(radians(-120))"
+       ]
+      }
+     ]
+    }
+   ],
+   "measurements": [
+    {
+     "id": "A",
+     "op": "circuit",
+     "name": "A"
+    },
+    {
+     "id": "B",
+     "op": "circuit",
+     "name": "B"
+    },
+    {
+     "id": "C",
+     "op": "circuit",
+     "name": "C"
+    },
+    {
+     "id": "sheet_fx",
+     "op": "block_integral",
+     "select": {
+      "material": "Aluminium"
+     },
+     "type": 11
+    },
+    {
+     "id": "sheet_fy",
+     "op": "block_integral",
+     "select": {
+      "material": "Aluminium"
+     },
+     "type": 12
+    }
+   ],
+   "metrics": [
+    {
+     "name": "psiB_over_psiA_re",
+     "value": [
+      "B",
+      2
+     ],
+     "divide": [
+      "A",
+      2
+     ],
+     "unit": "ratio",
+     "steps": [
+      "fwd"
+     ]
+    },
+    {
+     "name": "psiB_over_psiA_im",
+     "value": [
+      "B",
+      2
+     ],
+     "divide": [
+      "A",
+      2
+     ],
+     "part": "im",
+     "unit": "ratio",
+     "steps": [
+      "fwd"
+     ]
+    },
+    {
+     "name": "psiC_over_psiA_re",
+     "value": [
+      "C",
+      2
+     ],
+     "divide": [
+      "A",
+      2
+     ],
+     "unit": "ratio",
+     "steps": [
+      "fwd"
+     ]
+    },
+    {
+     "name": "psiC_over_psiA_im",
+     "value": [
+      "C",
+      2
+     ],
+     "divide": [
+      "A",
+      2
+     ],
+     "part": "im",
+     "unit": "ratio",
+     "steps": [
+      "fwd"
+     ]
+    },
+    {
+     "name": "sheet_thrust_N",
+     "value": [
+      "sheet_fx",
+      0
+     ],
+     "unit": "N"
+    },
+    {
+     "name": "sheet_thrust_abs_N",
+     "value": [
+      "sheet_fx",
+      0
+     ],
+     "part": "abs",
+     "unit": "N"
+    },
+    {
+     "name": "sheet_normal_N",
+     "value": [
+      "sheet_fy",
+      0
+     ],
+     "unit": "N"
+    }
+   ],
+   "targets": [
+    {
+     "metric": "psiB_over_psiA_re@fwd",
+     "value": -0.5,
+     "absolute_tolerance": 0.005,
+     "kind": "analytic",
+     "used_for_acceptance": true,
+     "quote": "Symmetry of the construction: the periodic core and winding repeat a third of a period (4 slots) along with phase B, so under balanced currents psi_B = psi_A exp(-j 120 deg) and psi_C = psi_A exp(+j 120 deg)"
+    },
+    {
+     "metric": "psiB_over_psiA_im@fwd",
+     "value": -0.8660254037844386,
+     "absolute_tolerance": 0.005,
+     "kind": "analytic",
+     "used_for_acceptance": true,
+     "quote": "Symmetry of the construction: the periodic core and winding repeat a third of a period (4 slots) along with phase B, so under balanced currents psi_B = psi_A exp(-j 120 deg) and psi_C = psi_A exp(+j 120 deg)"
+    },
+    {
+     "metric": "psiC_over_psiA_re@fwd",
+     "value": -0.5,
+     "absolute_tolerance": 0.005,
+     "kind": "analytic",
+     "used_for_acceptance": true,
+     "quote": "Symmetry of the construction: the periodic core and winding repeat a third of a period (4 slots) along with phase B, so under balanced currents psi_B = psi_A exp(-j 120 deg) and psi_C = psi_A exp(+j 120 deg)"
+    },
+    {
+     "metric": "psiC_over_psiA_im@fwd",
+     "value": 0.8660254037844386,
+     "absolute_tolerance": 0.005,
+     "kind": "analytic",
+     "used_for_acceptance": true,
+     "quote": "Symmetry of the construction: the periodic core and winding repeat a third of a period (4 slots) along with phase B, so under balanced currents psi_B = psi_A exp(-j 120 deg) and psi_C = psi_A exp(+j 120 deg)"
+    }
+   ],
+   "assessors": [
+    {
+     "kind": "metric_relation",
+     "name": "forward_field_drags_the_sheet_toward_plus_x",
+     "value": 0,
+     "absolute_tolerance": 1e-09,
+     "value_kind": "analytic",
+     "used_for_acceptance": true,
+     "pairs": [
+      {
+       "metric": "sheet_thrust_N@fwd",
+       "reference": "sheet_thrust_abs_N@fwd"
+      }
+     ],
+     "quote": "Construction: phase A, then C-, then B along +x (slot phases falling 60 degrees per two slots) make a field travelling toward +x, which drags the sheet that way: its thrust equals its magnitude"
+    },
+    {
+     "kind": "metric_relation",
+     "name": "reversed_field_drags_the_sheet_toward_minus_x",
+     "value": 0,
+     "absolute_tolerance": 1e-09,
+     "value_kind": "analytic",
+     "used_for_acceptance": true,
+     "pairs": [
+      {
+       "metric": "sheet_thrust_N@rev",
+       "reference": "sheet_thrust_abs_N@rev",
+       "factor": -1
+      }
+     ],
+     "quote": "Construction: with B and C swapped the field travels toward -x and drags the sheet that way"
+    }
+   ],
+   "article": {
+    "parameters": {
+     "slot_count": {
+      "value": 12,
+      "unit": "count",
+      "quote": "Design choice",
+      "note": "Twelve slots per period: two poles, q = 2"
+     },
+     "slot_width_mm": {
+      "value": 10,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Slot width"
+     },
+     "tooth_width_mm": {
+      "value": 6,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Tooth width"
+     },
+     "slot_depth_mm": {
+      "value": 20,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Slot depth"
+     },
+     "yoke_height_mm": {
+      "value": 8,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Yoke height"
+     },
+     "opening_width_mm": {
+      "value": 4,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Semi-closed slots: 4 mm openings between tooth shoes"
+     },
+     "shoe_height_mm": {
+      "value": 1.5,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Shoe height"
+     },
+     "coil_pitch": {
+      "value": 5,
+      "unit": "slots",
+      "quote": "Design choice",
+      "note": "Coils pitched 5 of the 6 slots of a pole pitch"
+     },
+     "turns": {
+      "value": 20,
+      "unit": "turns",
+      "quote": "Design choice",
+      "note": "Turns per coil"
+     },
+     "air_gap_mm": {
+      "value": 1.5,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Gap from the shoe faces to the sheet"
+     },
+     "sheet_mm": {
+      "value": 2,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Aluminium sheet"
+     },
+     "back_plate_mm": {
+      "value": 10,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Laminated iron behind the sheet (no eddy currents)"
+     },
+     "air_mm": {
+      "value": 60,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Air above and below, closed by A = 0"
+     },
+     "frequency_hz": {
+      "value": 50,
+      "unit": "Hz",
+      "quote": "Design choice",
+      "note": "Supply frequency (standstill)"
+     },
+     "current_A": {
+      "value": 5,
+      "unit": "A",
+      "quote": "Design choice",
+      "note": "Peak phase current"
+     },
+     "depth_mm": {
+      "value": 100,
+      "unit": "mm",
+      "quote": "Design choice",
+      "note": "Stack width"
+     },
+     "period_mm": {
+      "value": 192.0,
+      "unit": "mm",
+      "provenance": "derived",
+      "expression": "slot_count*(slot_width_mm+tooth_width_mm)",
+      "inputs": [
+       "slot_count",
+       "slot_width_mm",
+       "tooth_width_mm"
+      ]
+     }
+    },
+    "assembly": {
+     "problem": {
+      "physics": "magnetics",
+      "units": "millimeters",
+      "type": "planar",
+      "frequency": "$frequency_hz",
+      "depth": "$depth_mm"
+     },
+     "steps": [
+      {
+       "use": "material",
+       "name": "Air"
+      },
+      {
+       "use": "material",
+       "name": "Coil"
+      },
+      {
+       "use": "material",
+       "name": "CoreIron",
+       "values": {
+        "Mu_x": 1000,
+        "Mu_y": 1000
+       }
+      },
+      {
+       "use": "material",
+       "name": "BackPlate",
+       "values": {
+        "Mu_x": 1000,
+        "Mu_y": 1000
+       }
+      },
+      {
+       "use": "material",
+       "name": "Aluminium",
+       "values": {
+        "Sigma": 35
+       }
+      },
+      {
+       "use": "circuit",
+       "name": "A",
+       "current": [
+        "=current_A*cos(radians(0))",
+        "=current_A*sin(radians(0))"
+       ]
+      },
+      {
+       "use": "circuit",
+       "name": "B",
+       "current": [
+        "=current_A*cos(radians(-120))",
+        "=current_A*sin(radians(-120))"
+       ]
+      },
+      {
+       "use": "circuit",
+       "name": "C",
+       "current": [
+        "=current_A*cos(radians(120))",
+        "=current_A*sin(radians(120))"
+       ]
+      },
+      {
+       "use": "fixed_potential_boundary",
+       "name": "A=0"
+      },
+      {
+       "use": "boundary",
+       "name": "periodic_air_below",
+       "values": {
+        "BdryType": 4
+       }
+      },
+      {
+       "use": "boundary",
+       "name": "periodic_back_plate",
+       "values": {
+        "BdryType": 4
+       }
+      },
+      {
+       "use": "boundary",
+       "name": "periodic_sheet",
+       "values": {
+        "BdryType": 4
+       }
+      },
+      {
+       "use": "boundary",
+       "name": "periodic_gap",
+       "values": {
+        "BdryType": 4
+       }
+      },
+      {
+       "use": "boundary",
+       "name": "periodic_air_above",
+       "values": {
+        "BdryType": 4
+       }
+      },
+      {
+       "use": "boundary",
+       "name": "periodic_core",
+       "values": {
+        "BdryType": 4
+       }
+      },
+      {
+       "use": "linear_slotted_core",
+       "yoke_height": "$yoke_height_mm",
+       "opening_width": "$opening_width_mm",
+       "opening_material": "Air",
+       "opening_mesh": 0.4,
+       "iron_material": "CoreIron",
+       "iron_mesh": 1.0,
+       "group": 1,
+       "start": "=-period_mm/2",
+       "face": 0,
+       "slot_count": "$slot_count",
+       "slot_width": "$slot_width_mm",
+       "tooth_width": "$tooth_width_mm",
+       "slot_depth": "$slot_depth_mm",
+       "end_tooth_width": "=tooth_width_mm/2",
+       "facing": "down",
+       "shoe_height": "$shoe_height_mm",
+       "layers": 2
+      },
+      {
+       "use": "linear_winding",
+       "material": "Coil",
+       "sequence": [
+        [
+         "A",
+         1
+        ],
+        [
+         "A",
+         1
+        ],
+        [
+         "C",
+         -1
+        ],
+        [
+         "C",
+         -1
+        ],
+        [
+         "B",
+         1
+        ],
+        [
+         "B",
+         1
+        ],
+        [
+         "A",
+         -1
+        ],
+        [
+         "A",
+         -1
+        ],
+        [
+         "C",
+         1
+        ],
+        [
+         "C",
+         1
+        ],
+        [
+         "B",
+         -1
+        ],
+        [
+         "B",
+         -1
+        ]
+       ],
+       "coil_pitch": "$coil_pitch",
+       "first_slot": 0,
+       "coil_count": "$slot_count",
+       "turns": "$turns",
+       "go_layer": 1,
+       "return_layer": 0,
+       "wrap": true,
+       "mesh": 1.0,
+       "group": 1,
+       "start": "=-period_mm/2",
+       "face": 0,
+       "slot_count": "$slot_count",
+       "slot_width": "$slot_width_mm",
+       "tooth_width": "$tooth_width_mm",
+       "slot_depth": "$slot_depth_mm",
+       "end_tooth_width": "=tooth_width_mm/2",
+       "facing": "down",
+       "shoe_height": "$shoe_height_mm",
+       "layers": 2
+      },
+      {
+       "use": "segment_boundary",
+       "name": "periodic_core",
+       "at": [
+        [
+         "=-period_mm/2",
+         "=(slot_depth_mm+yoke_height_mm)/2"
+        ],
+        [
+         "=period_mm/2",
+         "=(slot_depth_mm+yoke_height_mm)/2"
+        ]
+       ]
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=-period_mm/2",
+        "=-air_gap_mm-sheet_mm-back_plate_mm-air_mm"
+       ],
+       "end": [
+        "=period_mm/2",
+        "=-air_gap_mm-sheet_mm-back_plate_mm-air_mm"
+       ],
+       "boundary": "A=0"
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=-period_mm/2",
+        "=-air_gap_mm-sheet_mm-back_plate_mm"
+       ],
+       "end": [
+        "=period_mm/2",
+        "=-air_gap_mm-sheet_mm-back_plate_mm"
+       ]
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=-period_mm/2",
+        "=slot_depth_mm+yoke_height_mm+air_mm"
+       ],
+       "end": [
+        "=period_mm/2",
+        "=slot_depth_mm+yoke_height_mm+air_mm"
+       ],
+       "boundary": "A=0"
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=-period_mm/2",
+        "=-air_gap_mm-sheet_mm"
+       ],
+       "end": [
+        "=period_mm/2",
+        "=-air_gap_mm-sheet_mm"
+       ]
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=-period_mm/2",
+        "=-air_gap_mm"
+       ],
+       "end": [
+        "=period_mm/2",
+        "=-air_gap_mm"
+       ]
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=-period_mm/2",
+        "=-air_gap_mm-sheet_mm-back_plate_mm-air_mm"
+       ],
+       "end": [
+        "=-period_mm/2",
+        "=-air_gap_mm-sheet_mm-back_plate_mm"
+       ],
+       "boundary": "periodic_air_below"
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=period_mm/2",
+        "=-air_gap_mm-sheet_mm-back_plate_mm-air_mm"
+       ],
+       "end": [
+        "=period_mm/2",
+        "=-air_gap_mm-sheet_mm-back_plate_mm"
+       ],
+       "boundary": "periodic_air_below"
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=-period_mm/2",
+        "=-air_gap_mm-sheet_mm-back_plate_mm"
+       ],
+       "end": [
+        "=-period_mm/2",
+        "=-air_gap_mm-sheet_mm"
+       ],
+       "boundary": "periodic_back_plate"
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=period_mm/2",
+        "=-air_gap_mm-sheet_mm-back_plate_mm"
+       ],
+       "end": [
+        "=period_mm/2",
+        "=-air_gap_mm-sheet_mm"
+       ],
+       "boundary": "periodic_back_plate"
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=-period_mm/2",
+        "=-air_gap_mm-sheet_mm"
+       ],
+       "end": [
+        "=-period_mm/2",
+        "=-air_gap_mm"
+       ],
+       "boundary": "periodic_sheet"
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=period_mm/2",
+        "=-air_gap_mm-sheet_mm"
+       ],
+       "end": [
+        "=period_mm/2",
+        "=-air_gap_mm"
+       ],
+       "boundary": "periodic_sheet"
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=-period_mm/2",
+        "=-air_gap_mm"
+       ],
+       "end": [
+        "=-period_mm/2",
+        0
+       ],
+       "boundary": "periodic_gap"
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=period_mm/2",
+        "=-air_gap_mm"
+       ],
+       "end": [
+        "=period_mm/2",
+        0
+       ],
+       "boundary": "periodic_gap"
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=-period_mm/2",
+        "=slot_depth_mm+yoke_height_mm"
+       ],
+       "end": [
+        "=-period_mm/2",
+        "=slot_depth_mm+yoke_height_mm+air_mm"
+       ],
+       "boundary": "periodic_air_above"
+      },
+      {
+       "use": "segment",
+       "start": [
+        "=period_mm/2",
+        "=slot_depth_mm+yoke_height_mm"
+       ],
+       "end": [
+        "=period_mm/2",
+        "=slot_depth_mm+yoke_height_mm+air_mm"
+       ],
+       "boundary": "periodic_air_above"
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=(-air_gap_mm-sheet_mm-back_plate_mm-air_mm)/2+(-air_gap_mm-sheet_mm-back_plate_mm)/2"
+       ],
+       "material": "Air",
+       "mesh": 4.0
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=(-air_gap_mm-sheet_mm-back_plate_mm)/2+(-air_gap_mm-sheet_mm)/2"
+       ],
+       "material": "BackPlate",
+       "mesh": 1.0
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=(-air_gap_mm-sheet_mm)/2+(-air_gap_mm)/2"
+       ],
+       "material": "Aluminium",
+       "mesh": 0.4
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=(-air_gap_mm)/2+(0)/2"
+       ],
+       "material": "Air",
+       "mesh": 0.3
+      },
+      {
+       "use": "block_label",
+       "at": [
+        0,
+        "=(slot_depth_mm+yoke_height_mm)/2+(slot_depth_mm+yoke_height_mm+air_mm)/2"
+       ],
+       "material": "Air",
+       "mesh": 4.0
+      }
+     ]
+    }
+   }
   }
  ]
 }
