@@ -57,6 +57,23 @@ contradicts it.
   machine the net torque is a near-cancellation of counter-rotating waves, so
   higher orders carry 40-230% of it: never stop at the fundamental.
   (`team-30-induction`, `design-rotating-cylinder-belt-winding`)
+- **A linear induction machine at standstill needs no velocity term.** At slip
+  1 the secondary sees the supply frequency, so one time-harmonic solve per
+  frequency gives the time-averaged thrust and normal force: the weighted
+  stress tensor on the whole primary (its group of iron, coils and slot air,
+  surrounded by air), the finite primary inside a periodic domain with A = 0
+  far above and below. The double-frequency block integrals give the force at
+  t = 0; a 0 Hz point plotted with an AC curve is that curve's limit (solve at
+  1 mHz), not a static instant (9% apart here). 156k elements took 6.6 s per
+  frequency. (`aleksandrov-2019-linear-induction`)
+- **Read a discrepancy's signature against frequency too.** A deficit that falls
+  with frequency (7.3% at 0-5 Hz, 2.3-3.2% at 100 Hz) with the field's shape
+  reproduced is a magnetic-gap signature: of eight single-input solves only
+  gap-shortening ones (iron permeability, air gap, plate thickness) fell that
+  way, while the sheet's or back iron's conductivity tilt thrust and normal
+  force apart and turns scale all alike. A back iron 0.2 mm closer at the same
+  sheet conductance then reproduced 17 unfitted frequencies within 1.5%.
+  (`aleksandrov-2019-linear-induction`)
 
 - **FEMM stores what it is given by its own rules.** `addbhpoint` starts every
   B-H curve at the origin, and `addarc` keeps at most 10 degrees as an arc's
@@ -189,6 +206,16 @@ contradicts it.
   model ideal iron as natural boundaries when the paper does. Periodic and
   natural boundaries alone leave the potential undetermined: fix it at one node
   with `fixed_point_potential`. (`wang-2005-tubular-halbach`)
+- **A finite linear primary is the whole primary in a longer period.** End
+  effects need the real primary with air beyond its ends, inside a periodic
+  domain over an unbroken secondary (the paper's own FE domain, 12 pole
+  pitches here; 11 moved the forces by 1e-4, A = 0 twice as far by 0.1%). Build it with
+  `linear_slotted_core` (teeth and slots along x, end teeth and end slots of
+  their own widths, open or shoed slots, stacked layers) and `linear_winding`
+  (a slot-by-slot layer pattern as a drawing labels it, or coils with a pitch,
+  go and return layers, and wrap for a periodic core); give a periodic core's
+  end edges their boundary with `segment_boundary`. (`aleksandrov-2019-linear-induction`,
+  `design-linear-periodic-double-layer`)
 - **Halbach directions decide which side the field is on.** Read each block's
   arrow from the figure, then confirm with an independent sign in the paper's
   results before trusting the reading. (`wang-2005-tubular-halbach`)
@@ -375,6 +402,36 @@ contradicts it.
   dq currents are sqrt(3) times rms; check a convention by recomputing one
   published number from another (psi_m from the EMF fundamental) before
   freezing. (`ieej-2012-d-model-ipmsm`)
+- **Winding labels may name coils, not conductors.** A double-layer drawing that
+  repeats A+, C-, B+ ... in both layers, one row two slots after the other,
+  read as conductor directions puts the layers 120 electrical degrees apart
+  (winding factor 0.5); read as coil names (each coil's return side, two slots
+  on, carries the opposite current) 60 degrees apart (0.866) and twice the
+  forces. The paper's own forces and field plots decided it. Settle what a
+  drawing's labels mean before freezing and keep the other reading as a
+  control. (`aleksandrov-2019-linear-induction`)
+- **A coarse host-side model of the cross-section is a strong pre-solve
+  estimate.** A 2D finite-difference eddy-current solve on a grid (scipy, 15 s
+  a frequency) with a table's literal inputs reproduced a paper's force curves
+  within 1-6% and its field plots point by point, and settled a label's
+  meaning, which component each plot shows, the plotted instant and the plots'
+  x-origin before freezing; FEMM later agreed with it within 1-4%. A layered
+  Fourier estimate that let the primary's iron span the whole period
+  overstated the long-wavelength flux: half the thrust, and a normal force
+  falling far too fast with frequency. (`aleksandrov-2019-linear-induction`)
+- **An axis label and a caption can disagree.** Two field plots labelled Bx and
+  By on their axes carried each other's components in their captions; the
+  physics sided with the axes (the captions' reading missed by 49-86%). Freeze
+  one reading with the other as comparators. (`aleksandrov-2019-linear-induction`)
+- **Compare a profile whose x-origin is unknown by its rms.** The rms over a
+  window that holds the whole field does not depend on where the curve sits
+  along x or on how finely its peaks were sampled (decimating the vector
+  curve moved it 0.35%); the peaks of a mid-gap field over open slots move by
+  several percent with sampling and mesh. (`aleksandrov-2019-linear-induction`)
+- **A text value can belong to another model than the text says.** A thrust
+  the text attributes to its hybrid model (20.4 N) is the FEA's marker on the
+  same figure (20.409 N), not the hybrid one (20.693 N).
+  (`aleksandrov-2019-linear-induction`)
 - **Text values are rounded readings of a figure.** "A maximum torque of 75 Nm"
   was 73.8 N m on the paper's own FE points. Freeze the figure's points and keep
   the text as a comparator; check pole counts against field plots too (one
