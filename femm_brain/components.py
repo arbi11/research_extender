@@ -1342,6 +1342,196 @@ def flux_barrier_rotor(m, pole_count, outer_radius, barriers, rib, first_q_angle
             m.label(*place((p + width / 2, 0)), material, mesh=mesh, group=group)
 
 
+def _end_pair(value, default, what):
+    """A [left, right] pair from a number, a pair or None (the default for both ends)."""
+    pair = [default, default] if value is None else list(value) if isinstance(value, (list, tuple)) else [value, value]
+    if len(pair) != 2 or not all(_finite(v) and v > 0 for v in pair):
+        raise ValueError(f"The {what} is a positive number or a [left, right] pair of them")
+    return pair
+
+
+def linear_slots(start, slot_count, slot_width, tooth_width, end_tooth_width=None, end_slot_width=None):
+    """Slot edges [(left, right), ...] along x and the core's length, for a straight slotted core.
+
+    From ``start``: an end tooth (``end_tooth_width``, the iron between the
+    core's end and its first slot, a yoke overhang included), then slots and
+    teeth alternately, the first and last slots ``end_slot_width`` wide, and an
+    end tooth at the other end. A number gives both ends; [left, right] each.
+    """
+    if not (_finite(slot_count) and float(slot_count).is_integer() and slot_count >= 1):
+        raise ValueError("A slotted core needs a whole number of slots, at least one")
+    if not all(_finite(v) and v > 0 for v in (slot_width, tooth_width)) or not _finite(start):
+        raise ValueError("Slot and tooth widths must be positive and the start finite")
+    ends = _end_pair(end_tooth_width, tooth_width, "end tooth width")
+    end_slots = _end_pair(end_slot_width, slot_width, "end slot width")
+    slot_count = int(slot_count)
+    if slot_count == 1 and end_slots[0] != end_slots[1]:
+        raise ValueError("A single slot has one width")
+    slots, x = [], start + ends[0]
+    for k in range(slot_count):
+        width = end_slots[0] if k == 0 else end_slots[1] if k == slot_count - 1 else slot_width
+        slots.append((x, x + width))
+        x += width + (tooth_width if k < slot_count - 1 else 0)
+    return slots, x + ends[1] - start
+
+
+def _linear_slot_levels(face, facing, slot_depth, shoe_height, layers):
+    """Depth direction (+1 when the slots open downward) and the y of the shoe tops and each layer boundary."""
+    if facing not in ("down", "up"):
+        raise ValueError("A linear core faces down (slots open toward -y) or up")
+    if not (_finite(face) and _finite(slot_depth) and slot_depth > 0):
+        raise ValueError("The face must be finite and the slot depth positive")
+    if not (_finite(shoe_height) and 0 <= shoe_height < slot_depth):
+        raise ValueError("Shoes lie between the face and the slot bottom: 0 <= shoe height < slot depth")
+    if not (_finite(layers) and float(layers).is_integer() and layers >= 1):
+        raise ValueError("A slot holds a whole number of layers, at least one")
+    d = 1 if facing == "down" else -1
+    layers = int(layers)
+    levels = [face + d * (shoe_height + k * (slot_depth - shoe_height) / layers) for k in range(layers + 1)]
+    return d, levels
+
+
+def linear_slotted_core(m, start, face, slot_count, slot_width, tooth_width, slot_depth, yoke_height, end_tooth_width=None,
+                        end_slot_width=None, facing="down", opening_width=None, shoe_height=0, layers=1, close_slots=True,
+                        iron_material=None, iron_mesh=None, opening_material=None, opening_mesh=None, group=0):
+    """A straight slotted core (the primary of a linear machine): teeth and slots along x, a yoke behind them.
+
+    The teeth tips lie on y = ``face``; with ``facing`` "down" the core lies
+    above the face and its slots open toward -y (a primary over a track), with
+    "up" below it. Slots are rectangular, open by default; ``opening_width``
+    and ``shoe_height`` give every slot tooth shoes (semi-closed slots). The
+    end teeth and the first and last slots may differ from the rest (see
+    ``linear_slots``). With ``close_slots`` a segment closes each slot opening
+    on the face, and with shoes another closes the coil area at the shoe tops,
+    the opening between them labelled ``opening_material``. ``layers`` divides
+    each slot's coil area into that many equal layers stacked along y, for
+    windings placed by ``linear_winding``. The iron is one region, labelled
+    ``iron_material`` in the yoke when given.
+    """
+    slots, length = linear_slots(start, slot_count, slot_width, tooth_width, end_tooth_width, end_slot_width)
+    d, levels = _linear_slot_levels(face, facing, slot_depth, shoe_height, layers)
+    if not (_finite(yoke_height) and yoke_height > 0):
+        raise ValueError("The yoke height must be positive")
+    shoes = shoe_height > 0
+    if shoes != (opening_width is not None):
+        raise ValueError("Tooth shoes need both an opening width and a shoe height")
+    if shoes and not all(_finite(opening_width) and 0 < opening_width < right - left for left, right in slots):
+        raise ValueError("A slot opening is positive and narrower than every slot")
+    if shoes and close_slots and not opening_material:
+        raise ValueError("Closed semi-closed slots need an opening material for the region between the shoes")
+    if layers > 1 and not close_slots:
+        raise ValueError("Layer dividers need closed slots")
+    top = face + d * (slot_depth + yoke_height)
+    outline = [(start, face)]
+    for left, right in slots:
+        centre = (left + right) / 2
+        if shoes:
+            o_left, o_right = centre - opening_width / 2, centre + opening_width / 2
+            outline += [(o_left, face), (o_left, levels[0]), (left, levels[0])]
+            outline += [(left, y) for y in levels[1:]] + [(right, y) for y in reversed(levels)]
+            outline += [(o_right, levels[0]), (o_right, face)]
+        else:
+            outline += [(left, y) for y in levels] + [(right, y) for y in reversed(levels)]
+    outline += [(start + length, face), (start + length, top), (start, top)]
+    for a, b in zip(outline, outline[1:] + outline[:1]):
+        m.segment(a, b, group=group)
+    if close_slots:
+        for left, right in slots:
+            centre = (left + right) / 2
+            if shoes:
+                m.segment((centre - opening_width / 2, face), (centre + opening_width / 2, face), group=group)
+                m.segment((centre - opening_width / 2, levels[0]), (centre + opening_width / 2, levels[0]), group=group)
+                m.label(centre, (face + levels[0]) / 2, opening_material, mesh=opening_mesh, group=group)
+            else:
+                m.segment((left, face), (right, face), group=group)
+            for y in levels[1:-1]:
+                m.segment((left, y), (right, y), group=group)
+    if iron_material:
+        m.label(start + length / 2, face + d * (slot_depth + yoke_height / 2), iron_material, mesh=iron_mesh, group=group)
+
+
+def linear_winding(m, start, face, slot_count, slot_width, tooth_width, slot_depth, material, end_tooth_width=None,
+                   end_slot_width=None, facing="down", shoe_height=0, layers=1, pattern=None, sequence=None, coil_pitch=None,
+                   first_slot=0, coil_count=None, turns=None, go_layer=None, return_layer=None, wrap=False,
+                   empty_material=None, mesh=None, group=0):
+    """Block labels of a winding in the slots of a straight slotted core (``linear_slotted_core``, same geometry).
+
+    Layers are numbered from the face (0, at the air gap) toward the yoke. The
+    winding is either a ``pattern`` that lists, for every slot, each layer's
+    [circuit, signed turns] or null for an empty layer (as a drawing labels its
+    conductors), or coils: coil k has its go side in slot ``first_slot`` + k,
+    layer ``go_layer``, with +turns times the polarity of entry k of
+    ``sequence`` ([circuit, +1 or -1], repeated), and its return side
+    ``coil_pitch`` slots along (negative: toward -x) in ``return_layer`` with
+    the opposite sign, for ``coil_count`` coils. A finite core refuses a coil
+    side beyond its slots; with ``wrap`` (a periodic core) slot indices wrap
+    around. Two coil sides may not share a layer. Every empty layer region is
+    labelled ``empty_material``.
+    """
+    slots, _ = linear_slots(start, slot_count, slot_width, tooth_width, end_tooth_width, end_slot_width)
+    d, levels = _linear_slot_levels(face, facing, slot_depth, shoe_height, layers)
+    count, layers = len(slots), int(layers)
+    fill = [[None] * layers for _ in range(count)]
+
+    def turns_of(value):
+        if not _finite(value) or not float(value).is_integer() or not value:
+            raise ValueError("Each coil side carries a nonzero whole number of signed turns")
+        return int(value)
+
+    coil_options = (sequence, coil_pitch, coil_count, turns, go_layer, return_layer)
+    if pattern is None and all(option is None for option in coil_options):
+        raise ValueError("Give either a slot pattern or coils (sequence, pitch, count, turns and layers)")
+    if pattern is not None:
+        if any(option is not None for option in coil_options) or wrap or first_slot:
+            raise ValueError("A slot pattern excludes the coil options")
+        if not isinstance(pattern, list) or len(pattern) != count:
+            raise ValueError(f"The pattern lists every slot: {count} entries")
+        for k, slot in enumerate(pattern):
+            if not isinstance(slot, list) or len(slot) != layers:
+                raise ValueError(f"Slot {k} of the pattern lists {layers} layer(s)")
+            for layer, side in enumerate(slot):
+                if side is None:
+                    continue
+                if not (isinstance(side, list) and len(side) == 2 and isinstance(side[0], str) and side[0].strip()):
+                    raise ValueError("A coil side is [circuit, signed turns] or null")
+                fill[k][layer] = (side[0], turns_of(side[1]))
+    else:
+        if any(option is None for option in coil_options):
+            raise ValueError("Coils need a sequence, a coil pitch, a coil count, turns and the go and return layers")
+        if not (isinstance(sequence, list) and sequence and all(isinstance(item, list) and len(item) == 2 and isinstance(item[0], str)
+                                                                and item[0].strip() and item[1] in (1, -1) for item in sequence)):
+            raise ValueError("The coil sequence lists [circuit, polarity +1 or -1]")
+        for name, value, low in (("coil pitch", coil_pitch, None), ("coil count", coil_count, 1), ("first slot", first_slot, 0)):
+            if not (_finite(value) and float(value).is_integer() and (value >= low if low is not None else value != 0)):
+                raise ValueError(f"The {name} must be a whole number" + (" other than zero" if low is None else f" of at least {low}"))
+        for name, value in (("go layer", go_layer), ("return layer", return_layer)):
+            if not (_finite(value) and float(value).is_integer() and 0 <= value < layers):
+                raise ValueError(f"The {name} is a layer index from 0 to {layers - 1}")
+        size = turns_of(turns)
+        if size < 0:
+            raise ValueError("Turns per coil are positive; the sequence gives each coil's polarity")
+        for k in range(int(coil_count)):
+            circuit_name, polarity = sequence[k % len(sequence)]
+            for slot, layer, sign in ((int(first_slot) + k, int(go_layer), polarity),
+                                      (int(first_slot) + k + int(coil_pitch), int(return_layer), -polarity)):
+                if wrap:
+                    slot %= count
+                elif not 0 <= slot < count:
+                    raise ValueError(f"Coil {k} has a side in slot {slot}, outside the core's {count} slots (wrap a periodic core)")
+                if fill[slot][layer] is not None:
+                    raise ValueError(f"Two coil sides share layer {layer} of slot {slot}")
+                fill[slot][layer] = (circuit_name, sign * size)
+    for k, (left, right) in enumerate(slots):
+        for layer in range(layers):
+            x, y = (left + right) / 2, (levels[layer] + levels[layer + 1]) / 2
+            if fill[k][layer] is None:
+                if not empty_material:
+                    raise ValueError(f"Layer {layer} of slot {k} is empty: give an empty material for its region")
+                m.label(x, y, empty_material, mesh=mesh, group=group)
+            else:
+                m.label(x, y, material, mesh=mesh, circuit=fill[k][layer][0], turns=fill[k][layer][1], group=group)
+
+
 def entity_pattern(m, entities, copies=1, angle_step=0, first_angle=0, snap=1e-9, max_segment=1, max_segment_bands=None,
                    min_segment_length=0, group=0):
     """Contours given as data (from a drawing a paper supplies), repeated around the axis as a polar array.
@@ -1440,7 +1630,8 @@ IMPLEMENTATIONS = {function.__name__: function for function in (
     fixed_potential_boundary, mixed_boundary, convection_boundary, iabc_open_boundary, axisymmetric_coil_section,
     bar_magnet, air_gap_element, kelvin_periodic_exterior, segment_boundary, fixed_point_potential, magnet_array,
     slotted_stator, trapezoidal_slot_stator, cage_rotor, tooth_coil_winding, slot_winding, surface_magnet_rotor, salient_poles, salient_pole_winding,
-    belt_winding, entity_pattern, sector_air_gap, arc_boundary, ring_sectors, flux_barrier_rotor)}
+    belt_winding, entity_pattern, sector_air_gap, arc_boundary, ring_sectors, flux_barrier_rotor, linear_slotted_core,
+    linear_winding)}
 
 
 def direction_function(from_radial):
@@ -1479,7 +1670,7 @@ def check_parameter(component, spec, value):
               "boolean": lambda v: isinstance(v, bool), "string": lambda v: isinstance(v, str) and bool(v.strip()),
               "point": point, "points": lambda v: isinstance(v, list) and len(v) >= 2 and all(point(p) for p in v),
               "list": lambda v: isinstance(v, list), "object": lambda v: isinstance(v, dict),
-              "number_or_complex": lambda v: _finite(v) or point(v)}
+              "number_or_complex": lambda v: _finite(v) or point(v), "number_or_pair": lambda v: _finite(v) or point(v)}
     if not checks[spec["type"]](value):
         raise ValueError(f"{component}.{spec['name']} must be a {spec['type'].replace('_', ' ')}; got {value!r}")
     if spec["type"] in ("number", "integer"):

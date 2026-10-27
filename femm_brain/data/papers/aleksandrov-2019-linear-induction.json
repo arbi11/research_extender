@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "aleksandrov-2019-linear-induction",
  "set": "development",
- "status": "extracting",
+ "status": "frozen",
  "skill_version": "1679c10",
  "title": "2D hybrid steady-state magnetic field model for linear induction motors",
  "source": {
@@ -13,13 +13,11617 @@
   "licence": "CC BY 4.0",
   "pdf_sha256": "255ffa8ed5160c01f8eea353009346a96b0997ddc6006a617b0cd666128f3b14",
   "pages": 13,
-  "accessed": "2026-10-27"
+  "accessed": "2026-10-27",
+  "related": [
+   {
+    "citation": "T. Overboom, J. Smeets, J. Jansen, E. Lomonova, Decoupled control of thrust and normal force in a double-layer single-sided linear induction motor, Mechatronics 23:213-221, 2013 (ref. [14])",
+    "use": "The test rig and winding; not cached, not fetched."
+   },
+   {
+    "citation": "H. Bolton, Transverse edge effect in sheet-rotor induction motors, Proc. IEE 116:725-731, 1969 (ref. [18])",
+    "use": "The plate conductivity's edge-effect reduction; not cached, not fetched."
+   }
+  ]
  },
  "machine": {
-  "family": "induction",
-  "topology": "linear, single-sided flat: a finite slotted primary over an infinitely long aluminium plate on solid back iron",
+  "family": "linear_induction",
+  "topology": "linear, single-sided flat: a finite slotted primary (moving) over an infinitely long aluminium plate on solid back iron",
   "problem": "planar",
   "slots": 16,
-  "phases": 3
- }
+  "poles": 6,
+  "phases": 3,
+  "symmetry": "None along x (a finite primary with end effects): the whole primary in a periodic domain of tau_per = 576 mm, A = 0 far above and below, as the paper's FEA. Standstill (slip 1): one time-harmonic solve per frequency."
+ },
+ "components_map": [
+  {
+   "part": "slotted primary core (16 open slots, 10 mm end teeth, 8 mm end slots, two layers per slot)",
+   "component": "linear_slotted_core"
+  },
+  {
+   "part": "double-layer winding (12 coils of 57 turns, coil pitch 2 slots) as Fig. 1 labels it",
+   "component": "linear_winding"
+  },
+  {
+   "part": "aluminium plate, back iron (with a fine skin layer), air gap and air",
+   "component": "segment, block_label, material"
+  },
+  {
+   "part": "periodic ends of every layer and the distant A = 0 boundaries",
+   "component": "boundary, fixed_potential_boundary, segment"
+  },
+  {
+   "part": "three-phase phasor currents",
+   "component": "circuit"
+  }
+ ],
+ "article": {
+  "parameters": {
+   "slot_count": {
+    "value": 16,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Number of slots z1 16",
+    "location": "Table 1, p. 8"
+   },
+   "phases": {
+    "value": 3,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "Number of phases Np 3",
+    "location": "Table 1, p. 8"
+   },
+   "turns_per_coil": {
+    "value": 57,
+    "unit": "turns",
+    "provenance": "quoted",
+    "quote": "Number of turns per coil Nt 57",
+    "location": "Table 1, p. 8",
+    "note": "Each of the 12 coils drawn in Fig. 1 (a side in each layer) has 57 turns."
+   },
+   "stack_width_mm": {
+    "value": 50,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Stack width Ls 50 mm",
+    "location": "Table 1, p. 8",
+    "note": "The model's depth: forces are per 50 mm of stack, as the paper's are."
+   },
+   "tooth_width_mm": {
+    "value": 6,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Primary tooth width wt 6 mm",
+    "location": "Table 1, p. 8"
+   },
+   "slot_width_mm": {
+    "value": 10,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Primary slot width ws 10 mm",
+    "location": "Table 1, p. 8",
+    "note": "Open rectangular slots (Figs. 1-2), filled by the coils."
+   },
+   "slot_height_mm": {
+    "value": 20,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Primary slot height hs 20 mm",
+    "location": "Table 1, p. 8",
+    "note": "Two equal layers of 10 mm, one coil side each (Figs. 1, 2 and 5)."
+   },
+   "yoke_height_mm": {
+    "value": 6.5,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Primary yoke height hy 6.5 mm",
+    "location": "Table 1, p. 8"
+   },
+   "air_gap_mm": {
+    "value": 2.7,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Air gap length hg 2.7 mm",
+    "location": "Table 1, p. 8",
+    "note": "From the teeth tips to the aluminium plate (Fig. 2)."
+   },
+   "plate_thickness_mm": {
+    "value": 2,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Thickness of the aluminum plate h Al 2 mm",
+    "location": "Table 1, p. 8"
+   },
+   "back_iron_mm": {
+    "value": 8,
+    "unit": "mm",
+    "provenance": "quoted",
+    "quote": "Thickness of the back-iron plate hbi 8 mm",
+    "location": "Table 1, p. 8"
+   },
+   "al_conductivity_MS_per_m": {
+    "value": 17,
+    "unit": "MS/m",
+    "provenance": "quoted",
+    "quote": "Conductivity of aluminum σAl 17 × 106",
+    "location": "Table 1, p. 8",
+    "note": "Table 1's parameters are those 'used for both simulations' (p. 8), and the text says the plate's conductivity 'was reduced accordingly' for the transverse edge effect, citing Bolton [18]: 17 MS/m is read as the reduced value the FEA used (a 6000-series plate of about 25 MS/m times a Russell-Norsworthy factor of 0.70 gives 17.5). The further correction is a control (transverse_edge_factor)."
+   },
+   "iron_conductivity_MS_per_m": {
+    "value": 4.5,
+    "unit": "MS/m",
+    "provenance": "quoted",
+    "quote": "Conductivity of iron σFe 4.5 × 106",
+    "location": "Table 1, p. 8",
+    "note": "The solid back iron of the secondary."
+   },
+   "iron_mu_r": {
+    "value": 1000,
+    "unit": "ratio",
+    "provenance": "quoted",
+    "quote": "Relative permeability iron µr 1000",
+    "location": "Table 1, p. 8",
+    "note": "Linear iron (the table prints the unit mm), for the laminated primary and the solid back iron alike."
+   },
+   "primary_conductivity_MS_per_m": {
+    "value": 0,
+    "unit": "MS/m",
+    "provenance": "quoted",
+    "quote": "a rewound laminated core",
+    "location": "Section 1, p. 2",
+    "note": "The primary is laminated, so no eddy currents flow in it (the paper's MEC region has none either)."
+   },
+   "peak_current_A": {
+    "value": 10,
+    "unit": "A",
+    "provenance": "quoted",
+    "quote": "peak current I p = 10 A",
+    "location": "Section 3, p. 8",
+    "note": "Peak phase current, as FEMM's phasors are."
+   },
+   "phase_b_deg": {
+    "value": -120,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "I phB (t) = Ip e e , (2)",
+    "location": "Eq. (2), p. 3",
+    "note": "I_B = I_p exp(-j 2 pi/3) exp(j 2 pi f t) (read from the page image)."
+   },
+   "phase_c_deg": {
+    "value": 120,
+    "unit": "deg",
+    "provenance": "quoted",
+    "quote": "I phC (t) = Ip e e , (3)",
+    "location": "Eq. (3), p. 3",
+    "note": "I_C = I_p exp(+j 2 pi/3) exp(j 2 pi f t)."
+   },
+   "period_pole_pitches": {
+    "value": 12,
+    "unit": "count",
+    "provenance": "quoted",
+    "quote": "τper = 12 × τ1",
+    "location": "Section 3, p. 8",
+    "note": "The periodic length of both the hybrid model and the FEA, in pole pitches (24 slot pitches here); control period-528."
+   },
+   "slots_per_pole": {
+    "value": 3,
+    "unit": "slots",
+    "provenance": "figure",
+    "figure": "Figs. 1 and 2 (winding labels) and Fig. 2's tau_1 arrow",
+    "scale_reference": "slot labels",
+    "uncertainty": 0,
+    "discrete": true,
+    "note": "The labels repeat A+, C-, B+, A-, C+, B- every six slots (one slot per pole and phase), and Fig. 2's tau_1 arrow spans three slot pitches (63.70 pt = 48.0 mm at the drawing's 1.3271 pt/mm). Table 1's 'fundamental pitch' of 12 mm cannot be this: see the gaps."
+   },
+   "end_tooth_width_mm": {
+    "value": 10,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 2, p. 3 (vector drawing, to scale along x): the primary outline (69 vertices)",
+    "scale_reference": "slot pitch 16 mm (21.233 pt), checked by the 10 mm slots, 6 mm teeth and 48 mm tau_1 arrow (each within 0.011 mm)",
+    "uncertainty": 0.02,
+    "note": "Full-height iron from each end of the primary to its first or last slot (a yoke overhang down to the tooth tips). Fig. 1 draws the same outline (266.0 mm at its own scale). The drawings' y is schematic (slot 24, yoke 10 and gap 8 mm drawn), their x to scale. Control ends-regular."
+   },
+   "end_slot_width_mm": {
+    "value": 8,
+    "unit": "mm",
+    "provenance": "figure",
+    "figure": "Fig. 2, p. 3 (vector drawing, to scale along x): the primary outline",
+    "scale_reference": "as end_tooth_width_mm",
+    "uncertainty": 0.02,
+    "note": "The first and last slots (empty in Fig. 1) are 8 mm wide, the other fourteen 10 mm."
+   },
+   "gap_layer_current_sign": {
+    "value": -1,
+    "unit": "sign",
+    "provenance": "figure",
+    "figure": "Figs. 1 and 2 (winding labels) with Table 1's turns per coil",
+    "scale_reference": "slot labels",
+    "uncertainty": 0,
+    "discrete": true,
+    "note": "Each label names a coil: the coil in the yoke-side layer of slot k returns in the gap-side layer of slot k + 2, where the drawing repeats its name, so that conductor carries the opposite current (-1 times the drawn sign). Read as conductor directions instead (+1, control conductor-reading), the two layers' currents would lie 120 electrical degrees apart (winding factor 0.5) instead of 60 (0.866). Decided before freezing by the pre-solve estimate (gaps)."
+   },
+   "transverse_edge_factor": {
+    "value": 1.0,
+    "unit": "ratio",
+    "provenance": "assumed",
+    "reason": "No further transverse edge-effect correction: Table 1's conductivity is the reduced one both simulations used. The paper gives neither the secondary width nor its correction factor.",
+    "sensitivity_control": "russell-norsworthy"
+   },
+   "air_height_mm": {
+    "value": 150,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Air above the primary and below the back iron, closed by A = 0 (the paper's Dirichlet boundary at y = +-infinity); the slowest harmonic of the 576 mm period decays 5e-3 over it. Control air-300."
+   },
+   "dc_limit_frequency_hz": {
+    "value": 0.001,
+    "unit": "Hz",
+    "provenance": "numerical",
+    "reason": "The 0 Hz point of Fig. 9 is the AC solution's limit (the time average of a field travelling infinitely slowly): solved at 1 mHz, where the plate's eddy currents change the field by about 1e-5. A static solve would give one instant instead (comparator normal_t0_N)."
+   },
+   "back_iron_skin_mm": {
+    "value": 2,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "The back iron's top 2 mm carries the fine mesh: the skin depth is 0.75 mm at 100 Hz (mu_r 1000, 4.5 MS/m) and 3.4 mm at 5 Hz."
+   },
+   "gap_mesh_mm": {
+    "value": 0.35,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Air-gap elements: eight across the 2.7 mm gap."
+   },
+   "plate_mesh_mm": {
+    "value": 0.4,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Plate elements: five across 2 mm (the skin depth is 12 mm at 100 Hz)."
+   },
+   "skin_mesh_mm": {
+    "value": 0.25,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Back-iron skin layer: three elements per skin depth at 100 Hz."
+   },
+   "back_iron_mesh_mm": {
+    "value": 0.8,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "The rest of the back iron."
+   },
+   "primary_mesh_mm": {
+    "value": 1.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Primary iron and slot layers."
+   },
+   "far_air_mesh_mm": {
+    "value": 6.0,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Air far above and below."
+   },
+   "field_line_spacing_mm": {
+    "value": 0.25,
+    "unit": "mm",
+    "provenance": "numerical",
+    "reason": "Samples along the mid-gap line, 2112 over Figs. 6-7's 528 mm window (the paper's curves have vertices every 0.5 mm)."
+   },
+   "slot_pitch_mm": {
+    "value": 16,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "slot_width_mm+tooth_width_mm",
+    "inputs": [
+     "slot_width_mm",
+     "tooth_width_mm"
+    ]
+   },
+   "pole_pitch_mm": {
+    "value": 48,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "slots_per_pole*(slot_width_mm+tooth_width_mm)",
+    "inputs": [
+     "slot_width_mm",
+     "slots_per_pole",
+     "tooth_width_mm"
+    ],
+    "note": "tau_1 = 48 mm: three slot pitches, as Fig. 2's arrow and Eq. (30) with Case 2 (10 m/s at 154.1667 Hz is a 50 Hz slip only for 2 tau_1 = 96 mm) both give."
+   },
+   "period_mm": {
+    "value": 576,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "period_pole_pitches*slots_per_pole*(slot_width_mm+tooth_width_mm)",
+    "inputs": [
+     "period_pole_pitches",
+     "slot_width_mm",
+     "slots_per_pole",
+     "tooth_width_mm"
+    ],
+    "note": "tau_per = 12 tau_1 = 576 mm."
+   },
+   "primary_length_mm": {
+    "value": 266,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "2*end_tooth_width_mm+2*end_slot_width_mm+(slot_count-2)*slot_width_mm+(slot_count-1)*tooth_width_mm",
+    "inputs": [
+     "end_slot_width_mm",
+     "end_tooth_width_mm",
+     "slot_count",
+     "slot_width_mm",
+     "tooth_width_mm"
+    ],
+    "note": "266 mm, as Fig. 2 draws it."
+   },
+   "primary_start_mm": {
+    "value": -133.0,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "-(2*end_tooth_width_mm+2*end_slot_width_mm+(slot_count-2)*slot_width_mm+(slot_count-1)*tooth_width_mm)/2",
+    "inputs": [
+     "end_slot_width_mm",
+     "end_tooth_width_mm",
+     "slot_count",
+     "slot_width_mm",
+     "tooth_width_mm"
+    ],
+    "note": "The primary is centred on x = 0, as Figs. 6-7 show it in their 528 mm window."
+   },
+   "plate_conductivity_MS_per_m": {
+    "value": 17.0,
+    "unit": "MS/m",
+    "provenance": "derived",
+    "expression": "al_conductivity_MS_per_m*transverse_edge_factor",
+    "inputs": [
+     "al_conductivity_MS_per_m",
+     "transverse_edge_factor"
+    ]
+   },
+   "field_line_y_mm": {
+    "value": -1.35,
+    "unit": "mm",
+    "provenance": "derived",
+    "expression": "-air_gap_mm/2",
+    "inputs": [
+     "air_gap_mm"
+    ],
+    "note": "The middle of the air gap (Figs. 6 and 7)."
+   },
+   "phase_b_re_A": {
+    "value": -4.999999999999998,
+    "unit": "A",
+    "provenance": "derived",
+    "expression": "peak_current_A*cos(radians(phase_b_deg))",
+    "inputs": [
+     "peak_current_A",
+     "phase_b_deg"
+    ]
+   },
+   "phase_b_im_A": {
+    "value": -8.660254037844387,
+    "unit": "A",
+    "provenance": "derived",
+    "expression": "peak_current_A*sin(radians(phase_b_deg))",
+    "inputs": [
+     "peak_current_A",
+     "phase_b_deg"
+    ]
+   },
+   "phase_c_re_A": {
+    "value": -4.999999999999998,
+    "unit": "A",
+    "provenance": "derived",
+    "expression": "peak_current_A*cos(radians(phase_c_deg))",
+    "inputs": [
+     "peak_current_A",
+     "phase_c_deg"
+    ]
+   },
+   "phase_c_im_A": {
+    "value": 8.660254037844387,
+    "unit": "A",
+    "provenance": "derived",
+    "expression": "peak_current_A*sin(radians(phase_c_deg))",
+    "inputs": [
+     "peak_current_A",
+     "phase_c_deg"
+    ]
+   }
+  },
+  "assembly": {
+   "problem": {
+    "physics": "magnetics",
+    "units": "millimeters",
+    "type": "planar",
+    "frequency": "$dc_limit_frequency_hz",
+    "depth": "$stack_width_mm"
+   },
+   "steps": [
+    {
+     "use": "material",
+     "name": "Air"
+    },
+    {
+     "use": "material",
+     "name": "Coil"
+    },
+    {
+     "use": "material",
+     "name": "PrimaryIron",
+     "values": {
+      "Mu_x": "$iron_mu_r",
+      "Mu_y": "$iron_mu_r",
+      "Sigma": "$primary_conductivity_MS_per_m"
+     }
+    },
+    {
+     "use": "material",
+     "name": "BackIron",
+     "values": {
+      "Mu_x": "$iron_mu_r",
+      "Mu_y": "$iron_mu_r",
+      "Sigma": "$iron_conductivity_MS_per_m"
+     }
+    },
+    {
+     "use": "material",
+     "name": "Aluminium",
+     "values": {
+      "Sigma": "$plate_conductivity_MS_per_m"
+     }
+    },
+    {
+     "use": "circuit",
+     "name": "A",
+     "current": [
+      "$peak_current_A",
+      0
+     ]
+    },
+    {
+     "use": "circuit",
+     "name": "B",
+     "current": [
+      "$phase_b_re_A",
+      "$phase_b_im_A"
+     ]
+    },
+    {
+     "use": "circuit",
+     "name": "C",
+     "current": [
+      "$phase_c_re_A",
+      "$phase_c_im_A"
+     ]
+    },
+    {
+     "use": "fixed_potential_boundary",
+     "name": "A=0"
+    },
+    {
+     "use": "boundary",
+     "name": "periodic_air_below",
+     "values": {
+      "BdryType": 4
+     }
+    },
+    {
+     "use": "boundary",
+     "name": "periodic_back_iron",
+     "values": {
+      "BdryType": 4
+     }
+    },
+    {
+     "use": "boundary",
+     "name": "periodic_skin",
+     "values": {
+      "BdryType": 4
+     }
+    },
+    {
+     "use": "boundary",
+     "name": "periodic_plate",
+     "values": {
+      "BdryType": 4
+     }
+    },
+    {
+     "use": "boundary",
+     "name": "periodic_gap",
+     "values": {
+      "BdryType": 4
+     }
+    },
+    {
+     "use": "boundary",
+     "name": "periodic_air_above",
+     "values": {
+      "BdryType": 4
+     }
+    },
+    {
+     "use": "linear_slotted_core",
+     "yoke_height": "$yoke_height_mm",
+     "iron_material": "PrimaryIron",
+     "iron_mesh": "$primary_mesh_mm",
+     "group": 1,
+     "start": "$primary_start_mm",
+     "face": 0,
+     "slot_count": "$slot_count",
+     "slot_width": "$slot_width_mm",
+     "tooth_width": "$tooth_width_mm",
+     "slot_depth": "$slot_height_mm",
+     "end_tooth_width": "$end_tooth_width_mm",
+     "end_slot_width": "$end_slot_width_mm",
+     "facing": "down",
+     "layers": 2
+    },
+    {
+     "use": "linear_winding",
+     "material": "Coil",
+     "pattern": [
+      [
+       null,
+       null
+      ],
+      [
+       null,
+       [
+        "A",
+        "=turns_per_coil"
+       ]
+      ],
+      [
+       null,
+       [
+        "C",
+        "=-turns_per_coil"
+       ]
+      ],
+      [
+       [
+        "A",
+        "=gap_layer_current_sign*turns_per_coil"
+       ],
+       [
+        "B",
+        "=turns_per_coil"
+       ]
+      ],
+      [
+       [
+        "C",
+        "=-gap_layer_current_sign*turns_per_coil"
+       ],
+       [
+        "A",
+        "=-turns_per_coil"
+       ]
+      ],
+      [
+       [
+        "B",
+        "=gap_layer_current_sign*turns_per_coil"
+       ],
+       [
+        "C",
+        "=turns_per_coil"
+       ]
+      ],
+      [
+       [
+        "A",
+        "=-gap_layer_current_sign*turns_per_coil"
+       ],
+       [
+        "B",
+        "=-turns_per_coil"
+       ]
+      ],
+      [
+       [
+        "C",
+        "=gap_layer_current_sign*turns_per_coil"
+       ],
+       [
+        "A",
+        "=turns_per_coil"
+       ]
+      ],
+      [
+       [
+        "B",
+        "=-gap_layer_current_sign*turns_per_coil"
+       ],
+       [
+        "C",
+        "=-turns_per_coil"
+       ]
+      ],
+      [
+       [
+        "A",
+        "=gap_layer_current_sign*turns_per_coil"
+       ],
+       [
+        "B",
+        "=turns_per_coil"
+       ]
+      ],
+      [
+       [
+        "C",
+        "=-gap_layer_current_sign*turns_per_coil"
+       ],
+       [
+        "A",
+        "=-turns_per_coil"
+       ]
+      ],
+      [
+       [
+        "B",
+        "=gap_layer_current_sign*turns_per_coil"
+       ],
+       [
+        "C",
+        "=turns_per_coil"
+       ]
+      ],
+      [
+       [
+        "A",
+        "=-gap_layer_current_sign*turns_per_coil"
+       ],
+       [
+        "B",
+        "=-turns_per_coil"
+       ]
+      ],
+      [
+       [
+        "C",
+        "=gap_layer_current_sign*turns_per_coil"
+       ],
+       null
+      ],
+      [
+       [
+        "B",
+        "=-gap_layer_current_sign*turns_per_coil"
+       ],
+       null
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "empty_material": "Air",
+     "mesh": "$primary_mesh_mm",
+     "group": 1,
+     "start": "$primary_start_mm",
+     "face": 0,
+     "slot_count": "$slot_count",
+     "slot_width": "$slot_width_mm",
+     "tooth_width": "$tooth_width_mm",
+     "slot_depth": "$slot_height_mm",
+     "end_tooth_width": "$end_tooth_width_mm",
+     "end_slot_width": "$end_slot_width_mm",
+     "facing": "down",
+     "layers": 2
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-period_mm/2",
+      0
+     ],
+     "end": [
+      "$primary_start_mm",
+      0
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-primary_start_mm",
+      0
+     ],
+     "end": [
+      "=period_mm/2",
+      0
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-period_mm/2",
+      "=slot_height_mm+yoke_height_mm+air_height_mm"
+     ],
+     "end": [
+      "=period_mm/2",
+      "=slot_height_mm+yoke_height_mm+air_height_mm"
+     ],
+     "boundary": "A=0"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_mm-air_height_mm"
+     ],
+     "end": [
+      "=period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_mm-air_height_mm"
+     ],
+     "boundary": "A=0"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_mm"
+     ],
+     "end": [
+      "=period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_mm"
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_skin_mm"
+     ],
+     "end": [
+      "=period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_skin_mm"
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm"
+     ],
+     "end": [
+      "=period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm"
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-period_mm/2",
+      "=-air_gap_mm"
+     ],
+     "end": [
+      "=period_mm/2",
+      "=-air_gap_mm"
+     ]
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_mm-air_height_mm"
+     ],
+     "end": [
+      "=-period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_mm"
+     ],
+     "boundary": "periodic_air_below"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_mm-air_height_mm"
+     ],
+     "end": [
+      "=period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_mm"
+     ],
+     "boundary": "periodic_air_below"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_mm"
+     ],
+     "end": [
+      "=-period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_skin_mm"
+     ],
+     "boundary": "periodic_back_iron"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_mm"
+     ],
+     "end": [
+      "=period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_skin_mm"
+     ],
+     "boundary": "periodic_back_iron"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_skin_mm"
+     ],
+     "end": [
+      "=-period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm"
+     ],
+     "boundary": "periodic_skin"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm-back_iron_skin_mm"
+     ],
+     "end": [
+      "=period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm"
+     ],
+     "boundary": "periodic_skin"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm"
+     ],
+     "end": [
+      "=-period_mm/2",
+      "=-air_gap_mm"
+     ],
+     "boundary": "periodic_plate"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=period_mm/2",
+      "=-air_gap_mm-plate_thickness_mm"
+     ],
+     "end": [
+      "=period_mm/2",
+      "=-air_gap_mm"
+     ],
+     "boundary": "periodic_plate"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-period_mm/2",
+      "=-air_gap_mm"
+     ],
+     "end": [
+      "=-period_mm/2",
+      0
+     ],
+     "boundary": "periodic_gap"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=period_mm/2",
+      "=-air_gap_mm"
+     ],
+     "end": [
+      "=period_mm/2",
+      0
+     ],
+     "boundary": "periodic_gap"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=-period_mm/2",
+      0
+     ],
+     "end": [
+      "=-period_mm/2",
+      "=slot_height_mm+yoke_height_mm+air_height_mm"
+     ],
+     "boundary": "periodic_air_above"
+    },
+    {
+     "use": "segment",
+     "start": [
+      "=period_mm/2",
+      0
+     ],
+     "end": [
+      "=period_mm/2",
+      "=slot_height_mm+yoke_height_mm+air_height_mm"
+     ],
+     "boundary": "periodic_air_above"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      "=-air_gap_mm-plate_thickness_mm-back_iron_mm-air_height_mm/2"
+     ],
+     "material": "Air",
+     "mesh": "$far_air_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      "=-air_gap_mm-plate_thickness_mm-(back_iron_mm+back_iron_skin_mm)/2"
+     ],
+     "material": "BackIron",
+     "mesh": "$back_iron_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      "=-air_gap_mm-plate_thickness_mm-back_iron_skin_mm/2"
+     ],
+     "material": "BackIron",
+     "mesh": "$skin_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      "=-air_gap_mm-plate_thickness_mm/2"
+     ],
+     "material": "Aluminium",
+     "mesh": "$plate_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      "=-air_gap_mm/2"
+     ],
+     "material": "Air",
+     "mesh": "$gap_mesh_mm"
+    },
+    {
+     "use": "block_label",
+     "at": [
+      0,
+      "=slot_height_mm+yoke_height_mm+air_height_mm/2"
+     ],
+     "material": "Air",
+     "mesh": "$far_air_mesh_mm"
+    }
+   ]
+  }
+ },
+ "gaps": [
+  {
+   "item": "Table 1's 'fundamental pitch of the primary' (12 mm)",
+   "affects": "the period of the FE domain only",
+   "decision": "resolved",
+   "note": "tau_1 is the pole pitch, 48 mm: three 16 mm slot pitches (the labels repeat every six slots), Fig. 2's tau_1 arrow (48.0 mm at the drawing's scale), Eq. (30) with Case 2 (154.1667 - 50 Hz = 10 m/s / (2 tau_1)), the text's sixth field harmonic as the fundamental and K = 576 MEC elements over tau_per (1 mm each). 12 mm cannot be built: tau_per = 144 mm would be shorter than the 266 mm primary. The period moves the forces by under 1e-5 in the pre-solve estimate; control period-528."
+  },
+  {
+   "item": "what the winding labels of Figs. 1-2 denote",
+   "affects": "every force and field, by a factor of about two",
+   "decision": "resolved",
+   "note": "Each layer shows A+, C-, B+, A-, C+, B- twice, the gap-side row two slots after the yoke-side one. Read as conductor directions, the two layers' currents lie 120 electrical degrees apart and the winding factor is 0.5; read as coil names (the coil in the yoke-side layer of slot k returns in the gap-side layer of slot k + 2, a short-pitched double layer with q = 1 and twelve coils of 57 turns), they lie 60 degrees apart (0.866). The pre-solve estimate (coarse finite differences, literal Table 1 inputs, no fitting) gives, under the coil reading, -75.0/-73.5, -46.5 and -24.1 N normal force at 0, 50 and 100 Hz (Fig. 9's FEA: -77.8, -47.6, -24.2) and 19.8-20.0 and 22.1-22.3 N thrust at 50 and 100 Hz (20.4, 22.5), and reproduces Figs. 6-7 point by point in shape, sign and size; under the conductor reading it gives -60, -18 and -7.6 N and 9.3 and 8.9 N. The coil reading is frozen (gap_layer_current_sign -1), the conductor reading is control conductor-reading."
+  },
+  {
+   "item": "the plate's conductivity and the transverse edge effect (secondary width not given)",
+   "affects": "thrust and normal force with frequency",
+   "decision": "assumed",
+   "note": "Table 1's 17 MS/m is read as the reduced value both simulations used (transverse_edge_factor 1). Bracketed before freezing: treating it as the raw conductivity and applying a Russell-Norsworthy factor (0.695 for a 100 mm plate) lowers the thrust 17% and raises the normal force 18% at 50 Hz and 48% at 100 Hz in the pre-solve estimate; control russell-norsworthy. Bolton's correction [18], which the paper cites, is not cached and was not fetched."
+  },
+  {
+   "item": "end teeth and end slots",
+   "affects": "end effects, the normal force at low frequency",
+   "decision": "figure",
+   "note": "Read from Fig. 2's outline, to scale along x: 10 mm end teeth (full height) and 8 mm end slots. Under 0.1% in the pre-solve estimate; control ends-regular."
+  },
+  {
+   "item": "the FE domain: periodic length and the distant boundaries",
+   "affects": "end effects",
+   "decision": "resolved",
+   "note": "Periodic in x over tau_per = 12 tau_1 = 576 mm, as the text gives for both models; A = 0 at 150 mm above the primary and below the back iron for the paper's Dirichlet boundary at infinity. Figs. 6-7 span 528 mm with the primary at their centre (the pre-solve estimate lines up), so the field targets use rms over that window, which does not depend on the period; controls period-528 and air-300."
+  },
+  {
+   "item": "the field plots: component and instant",
+   "affects": "Figs. 6-7 targets",
+   "decision": "resolved",
+   "note": "Fig. 6's axis reads Bx and its caption 'normal'; Fig. 7's axis By and its caption 'longitudinal'. The axis labels are taken: the pre-solve estimate's B_x and B_y at the middle of the gap, as phasor real parts at t = 0 under Eqs. (1)-(3) with '+' conductors along +z, match Figs. 6 and 7 in shape and sign. Comparators label 'caption' hold the other reading."
+  },
+  {
+   "item": "the sign of the thrust",
+   "affects": "thrust targets' sign",
+   "decision": "resolved",
+   "note": "Under Eqs. (1)-(3) and Fig. 1 the current sheet's phase falls 60 degrees per slot along +x, so the field travels toward the front end and pushes the primary toward the rear end (-x); the text says the propulsion on the primary is along +x and Fig. 9 plots it positive, while Figs. 6-7 (above) follow the drawing's frame. The metric is the propulsion, -F_x."
+  },
+  {
+   "item": "what 0 Hz means",
+   "affects": "the 0 Hz normal force",
+   "decision": "resolved",
+   "note": "The AC solution's limit (time average), as for the other frequencies; solved at 1 mHz. The instant t = 0 is comparator normal_t0_N@f000."
+  },
+  {
+   "item": "the FE tool and its mesh",
+   "affects": "FEA targets at 1%",
+   "decision": "resolved",
+   "note": "Not named; a mesh study (mesh-0p75, mesh-1p4) bounds the model's own discretization."
+  },
+  {
+   "item": "Case 2 (v = 10 m/s) and Fig. 10's harmonic decomposition",
+   "affects": "the hybrid model's moving results",
+   "decision": "out_of_scope",
+   "note": "FEMM's time-harmonic solver has no velocity term; Fig. 10 is the hybrid model's Fourier decomposition."
+  },
+  {
+   "item": "the secondary's Joule losses",
+   "affects": "none",
+   "decision": "out_of_scope",
+   "note": "The paper reports only that the models agree within 3.1%, without a value."
+  }
+ ],
+ "steps": [
+  {
+   "label": "f000",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": "$dc_limit_frequency_hz"
+    }
+   ]
+  },
+  {
+   "label": "f005",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 5
+    }
+   ]
+  },
+  {
+   "label": "f010",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 10
+    }
+   ]
+  },
+  {
+   "label": "f015",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 15
+    }
+   ]
+  },
+  {
+   "label": "f020",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 20
+    }
+   ]
+  },
+  {
+   "label": "f025",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 25
+    }
+   ]
+  },
+  {
+   "label": "f030",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 30
+    }
+   ]
+  },
+  {
+   "label": "f035",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 35
+    }
+   ]
+  },
+  {
+   "label": "f040",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 40
+    }
+   ]
+  },
+  {
+   "label": "f045",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 45
+    }
+   ]
+  },
+  {
+   "label": "f050",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 50
+    }
+   ]
+  },
+  {
+   "label": "f055",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 55
+    }
+   ]
+  },
+  {
+   "label": "f060",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 60
+    }
+   ]
+  },
+  {
+   "label": "f065",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 65
+    }
+   ]
+  },
+  {
+   "label": "f070",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 70
+    }
+   ]
+  },
+  {
+   "label": "f075",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 75
+    }
+   ]
+  },
+  {
+   "label": "f080",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 80
+    }
+   ]
+  },
+  {
+   "label": "f085",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 85
+    }
+   ]
+  },
+  {
+   "label": "f090",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 90
+    }
+   ]
+  },
+  {
+   "label": "f095",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 95
+    }
+   ]
+  },
+  {
+   "label": "f100",
+   "modify": [
+    {
+     "function": "set_frequency",
+     "value": 100
+    }
+   ]
+  }
+ ],
+ "measurements": [
+  {
+   "id": "fx_primary",
+   "op": "block_integral",
+   "select": {
+    "group": 1
+   },
+   "type": 18,
+   "note": "Time-averaged x force on the whole primary (iron, coils and slot air): weighted stress tensor."
+  },
+  {
+   "id": "fy_primary",
+   "op": "block_integral",
+   "select": {
+    "group": 1
+   },
+   "type": 19
+  },
+  {
+   "id": "fx2_primary",
+   "op": "block_integral",
+   "select": {
+    "group": 1
+   },
+   "type": 20,
+   "note": "The force's double-frequency phasor."
+  },
+  {
+   "id": "fy2_primary",
+   "op": "block_integral",
+   "select": {
+    "group": 1
+   },
+   "type": 21
+  },
+  {
+   "id": "plate_lorentz_x",
+   "op": "block_integral",
+   "select": {
+    "material": "Aluminium"
+   },
+   "type": 11,
+   "note": "J x B on the plate's eddy currents alone (diagnostic: the back iron's share is not in it)."
+  },
+  {
+   "id": "plate_lorentz_y",
+   "op": "block_integral",
+   "select": {
+    "material": "Aluminium"
+   },
+   "type": 12
+  },
+  {
+   "id": "plate_loss",
+   "op": "block_integral",
+   "select": {
+    "material": "Aluminium"
+   },
+   "type": 4
+  },
+  {
+   "id": "back_iron_loss",
+   "op": "block_integral",
+   "select": {
+    "material": "BackIron"
+   },
+   "type": 4
+  },
+  {
+   "id": "A",
+   "op": "circuit",
+   "name": "A"
+  },
+  {
+   "id": "B",
+   "op": "circuit",
+   "name": "B"
+  },
+  {
+   "id": "C",
+   "op": "circuit",
+   "name": "C"
+  },
+  {
+   "id": "gapline",
+   "op": "point_values",
+   "points": [
+    [
+     -263.875,
+     -1.35
+    ],
+    [
+     -263.625,
+     -1.35
+    ],
+    [
+     -263.375,
+     -1.35
+    ],
+    [
+     -263.125,
+     -1.35
+    ],
+    [
+     -262.875,
+     -1.35
+    ],
+    [
+     -262.625,
+     -1.35
+    ],
+    [
+     -262.375,
+     -1.35
+    ],
+    [
+     -262.125,
+     -1.35
+    ],
+    [
+     -261.875,
+     -1.35
+    ],
+    [
+     -261.625,
+     -1.35
+    ],
+    [
+     -261.375,
+     -1.35
+    ],
+    [
+     -261.125,
+     -1.35
+    ],
+    [
+     -260.875,
+     -1.35
+    ],
+    [
+     -260.625,
+     -1.35
+    ],
+    [
+     -260.375,
+     -1.35
+    ],
+    [
+     -260.125,
+     -1.35
+    ],
+    [
+     -259.875,
+     -1.35
+    ],
+    [
+     -259.625,
+     -1.35
+    ],
+    [
+     -259.375,
+     -1.35
+    ],
+    [
+     -259.125,
+     -1.35
+    ],
+    [
+     -258.875,
+     -1.35
+    ],
+    [
+     -258.625,
+     -1.35
+    ],
+    [
+     -258.375,
+     -1.35
+    ],
+    [
+     -258.125,
+     -1.35
+    ],
+    [
+     -257.875,
+     -1.35
+    ],
+    [
+     -257.625,
+     -1.35
+    ],
+    [
+     -257.375,
+     -1.35
+    ],
+    [
+     -257.125,
+     -1.35
+    ],
+    [
+     -256.875,
+     -1.35
+    ],
+    [
+     -256.625,
+     -1.35
+    ],
+    [
+     -256.375,
+     -1.35
+    ],
+    [
+     -256.125,
+     -1.35
+    ],
+    [
+     -255.875,
+     -1.35
+    ],
+    [
+     -255.625,
+     -1.35
+    ],
+    [
+     -255.375,
+     -1.35
+    ],
+    [
+     -255.125,
+     -1.35
+    ],
+    [
+     -254.875,
+     -1.35
+    ],
+    [
+     -254.625,
+     -1.35
+    ],
+    [
+     -254.375,
+     -1.35
+    ],
+    [
+     -254.125,
+     -1.35
+    ],
+    [
+     -253.875,
+     -1.35
+    ],
+    [
+     -253.625,
+     -1.35
+    ],
+    [
+     -253.375,
+     -1.35
+    ],
+    [
+     -253.125,
+     -1.35
+    ],
+    [
+     -252.875,
+     -1.35
+    ],
+    [
+     -252.625,
+     -1.35
+    ],
+    [
+     -252.375,
+     -1.35
+    ],
+    [
+     -252.125,
+     -1.35
+    ],
+    [
+     -251.875,
+     -1.35
+    ],
+    [
+     -251.625,
+     -1.35
+    ],
+    [
+     -251.375,
+     -1.35
+    ],
+    [
+     -251.125,
+     -1.35
+    ],
+    [
+     -250.875,
+     -1.35
+    ],
+    [
+     -250.625,
+     -1.35
+    ],
+    [
+     -250.375,
+     -1.35
+    ],
+    [
+     -250.125,
+     -1.35
+    ],
+    [
+     -249.875,
+     -1.35
+    ],
+    [
+     -249.625,
+     -1.35
+    ],
+    [
+     -249.375,
+     -1.35
+    ],
+    [
+     -249.125,
+     -1.35
+    ],
+    [
+     -248.875,
+     -1.35
+    ],
+    [
+     -248.625,
+     -1.35
+    ],
+    [
+     -248.375,
+     -1.35
+    ],
+    [
+     -248.125,
+     -1.35
+    ],
+    [
+     -247.875,
+     -1.35
+    ],
+    [
+     -247.625,
+     -1.35
+    ],
+    [
+     -247.375,
+     -1.35
+    ],
+    [
+     -247.125,
+     -1.35
+    ],
+    [
+     -246.875,
+     -1.35
+    ],
+    [
+     -246.625,
+     -1.35
+    ],
+    [
+     -246.375,
+     -1.35
+    ],
+    [
+     -246.125,
+     -1.35
+    ],
+    [
+     -245.875,
+     -1.35
+    ],
+    [
+     -245.625,
+     -1.35
+    ],
+    [
+     -245.375,
+     -1.35
+    ],
+    [
+     -245.125,
+     -1.35
+    ],
+    [
+     -244.875,
+     -1.35
+    ],
+    [
+     -244.625,
+     -1.35
+    ],
+    [
+     -244.375,
+     -1.35
+    ],
+    [
+     -244.125,
+     -1.35
+    ],
+    [
+     -243.875,
+     -1.35
+    ],
+    [
+     -243.625,
+     -1.35
+    ],
+    [
+     -243.375,
+     -1.35
+    ],
+    [
+     -243.125,
+     -1.35
+    ],
+    [
+     -242.875,
+     -1.35
+    ],
+    [
+     -242.625,
+     -1.35
+    ],
+    [
+     -242.375,
+     -1.35
+    ],
+    [
+     -242.125,
+     -1.35
+    ],
+    [
+     -241.875,
+     -1.35
+    ],
+    [
+     -241.625,
+     -1.35
+    ],
+    [
+     -241.375,
+     -1.35
+    ],
+    [
+     -241.125,
+     -1.35
+    ],
+    [
+     -240.875,
+     -1.35
+    ],
+    [
+     -240.625,
+     -1.35
+    ],
+    [
+     -240.375,
+     -1.35
+    ],
+    [
+     -240.125,
+     -1.35
+    ],
+    [
+     -239.875,
+     -1.35
+    ],
+    [
+     -239.625,
+     -1.35
+    ],
+    [
+     -239.375,
+     -1.35
+    ],
+    [
+     -239.125,
+     -1.35
+    ],
+    [
+     -238.875,
+     -1.35
+    ],
+    [
+     -238.625,
+     -1.35
+    ],
+    [
+     -238.375,
+     -1.35
+    ],
+    [
+     -238.125,
+     -1.35
+    ],
+    [
+     -237.875,
+     -1.35
+    ],
+    [
+     -237.625,
+     -1.35
+    ],
+    [
+     -237.375,
+     -1.35
+    ],
+    [
+     -237.125,
+     -1.35
+    ],
+    [
+     -236.875,
+     -1.35
+    ],
+    [
+     -236.625,
+     -1.35
+    ],
+    [
+     -236.375,
+     -1.35
+    ],
+    [
+     -236.125,
+     -1.35
+    ],
+    [
+     -235.875,
+     -1.35
+    ],
+    [
+     -235.625,
+     -1.35
+    ],
+    [
+     -235.375,
+     -1.35
+    ],
+    [
+     -235.125,
+     -1.35
+    ],
+    [
+     -234.875,
+     -1.35
+    ],
+    [
+     -234.625,
+     -1.35
+    ],
+    [
+     -234.375,
+     -1.35
+    ],
+    [
+     -234.125,
+     -1.35
+    ],
+    [
+     -233.875,
+     -1.35
+    ],
+    [
+     -233.625,
+     -1.35
+    ],
+    [
+     -233.375,
+     -1.35
+    ],
+    [
+     -233.125,
+     -1.35
+    ],
+    [
+     -232.875,
+     -1.35
+    ],
+    [
+     -232.625,
+     -1.35
+    ],
+    [
+     -232.375,
+     -1.35
+    ],
+    [
+     -232.125,
+     -1.35
+    ],
+    [
+     -231.875,
+     -1.35
+    ],
+    [
+     -231.625,
+     -1.35
+    ],
+    [
+     -231.375,
+     -1.35
+    ],
+    [
+     -231.125,
+     -1.35
+    ],
+    [
+     -230.875,
+     -1.35
+    ],
+    [
+     -230.625,
+     -1.35
+    ],
+    [
+     -230.375,
+     -1.35
+    ],
+    [
+     -230.125,
+     -1.35
+    ],
+    [
+     -229.875,
+     -1.35
+    ],
+    [
+     -229.625,
+     -1.35
+    ],
+    [
+     -229.375,
+     -1.35
+    ],
+    [
+     -229.125,
+     -1.35
+    ],
+    [
+     -228.875,
+     -1.35
+    ],
+    [
+     -228.625,
+     -1.35
+    ],
+    [
+     -228.375,
+     -1.35
+    ],
+    [
+     -228.125,
+     -1.35
+    ],
+    [
+     -227.875,
+     -1.35
+    ],
+    [
+     -227.625,
+     -1.35
+    ],
+    [
+     -227.375,
+     -1.35
+    ],
+    [
+     -227.125,
+     -1.35
+    ],
+    [
+     -226.875,
+     -1.35
+    ],
+    [
+     -226.625,
+     -1.35
+    ],
+    [
+     -226.375,
+     -1.35
+    ],
+    [
+     -226.125,
+     -1.35
+    ],
+    [
+     -225.875,
+     -1.35
+    ],
+    [
+     -225.625,
+     -1.35
+    ],
+    [
+     -225.375,
+     -1.35
+    ],
+    [
+     -225.125,
+     -1.35
+    ],
+    [
+     -224.875,
+     -1.35
+    ],
+    [
+     -224.625,
+     -1.35
+    ],
+    [
+     -224.375,
+     -1.35
+    ],
+    [
+     -224.125,
+     -1.35
+    ],
+    [
+     -223.875,
+     -1.35
+    ],
+    [
+     -223.625,
+     -1.35
+    ],
+    [
+     -223.375,
+     -1.35
+    ],
+    [
+     -223.125,
+     -1.35
+    ],
+    [
+     -222.875,
+     -1.35
+    ],
+    [
+     -222.625,
+     -1.35
+    ],
+    [
+     -222.375,
+     -1.35
+    ],
+    [
+     -222.125,
+     -1.35
+    ],
+    [
+     -221.875,
+     -1.35
+    ],
+    [
+     -221.625,
+     -1.35
+    ],
+    [
+     -221.375,
+     -1.35
+    ],
+    [
+     -221.125,
+     -1.35
+    ],
+    [
+     -220.875,
+     -1.35
+    ],
+    [
+     -220.625,
+     -1.35
+    ],
+    [
+     -220.375,
+     -1.35
+    ],
+    [
+     -220.125,
+     -1.35
+    ],
+    [
+     -219.875,
+     -1.35
+    ],
+    [
+     -219.625,
+     -1.35
+    ],
+    [
+     -219.375,
+     -1.35
+    ],
+    [
+     -219.125,
+     -1.35
+    ],
+    [
+     -218.875,
+     -1.35
+    ],
+    [
+     -218.625,
+     -1.35
+    ],
+    [
+     -218.375,
+     -1.35
+    ],
+    [
+     -218.125,
+     -1.35
+    ],
+    [
+     -217.875,
+     -1.35
+    ],
+    [
+     -217.625,
+     -1.35
+    ],
+    [
+     -217.375,
+     -1.35
+    ],
+    [
+     -217.125,
+     -1.35
+    ],
+    [
+     -216.875,
+     -1.35
+    ],
+    [
+     -216.625,
+     -1.35
+    ],
+    [
+     -216.375,
+     -1.35
+    ],
+    [
+     -216.125,
+     -1.35
+    ],
+    [
+     -215.875,
+     -1.35
+    ],
+    [
+     -215.625,
+     -1.35
+    ],
+    [
+     -215.375,
+     -1.35
+    ],
+    [
+     -215.125,
+     -1.35
+    ],
+    [
+     -214.875,
+     -1.35
+    ],
+    [
+     -214.625,
+     -1.35
+    ],
+    [
+     -214.375,
+     -1.35
+    ],
+    [
+     -214.125,
+     -1.35
+    ],
+    [
+     -213.875,
+     -1.35
+    ],
+    [
+     -213.625,
+     -1.35
+    ],
+    [
+     -213.375,
+     -1.35
+    ],
+    [
+     -213.125,
+     -1.35
+    ],
+    [
+     -212.875,
+     -1.35
+    ],
+    [
+     -212.625,
+     -1.35
+    ],
+    [
+     -212.375,
+     -1.35
+    ],
+    [
+     -212.125,
+     -1.35
+    ],
+    [
+     -211.875,
+     -1.35
+    ],
+    [
+     -211.625,
+     -1.35
+    ],
+    [
+     -211.375,
+     -1.35
+    ],
+    [
+     -211.125,
+     -1.35
+    ],
+    [
+     -210.875,
+     -1.35
+    ],
+    [
+     -210.625,
+     -1.35
+    ],
+    [
+     -210.375,
+     -1.35
+    ],
+    [
+     -210.125,
+     -1.35
+    ],
+    [
+     -209.875,
+     -1.35
+    ],
+    [
+     -209.625,
+     -1.35
+    ],
+    [
+     -209.375,
+     -1.35
+    ],
+    [
+     -209.125,
+     -1.35
+    ],
+    [
+     -208.875,
+     -1.35
+    ],
+    [
+     -208.625,
+     -1.35
+    ],
+    [
+     -208.375,
+     -1.35
+    ],
+    [
+     -208.125,
+     -1.35
+    ],
+    [
+     -207.875,
+     -1.35
+    ],
+    [
+     -207.625,
+     -1.35
+    ],
+    [
+     -207.375,
+     -1.35
+    ],
+    [
+     -207.125,
+     -1.35
+    ],
+    [
+     -206.875,
+     -1.35
+    ],
+    [
+     -206.625,
+     -1.35
+    ],
+    [
+     -206.375,
+     -1.35
+    ],
+    [
+     -206.125,
+     -1.35
+    ],
+    [
+     -205.875,
+     -1.35
+    ],
+    [
+     -205.625,
+     -1.35
+    ],
+    [
+     -205.375,
+     -1.35
+    ],
+    [
+     -205.125,
+     -1.35
+    ],
+    [
+     -204.875,
+     -1.35
+    ],
+    [
+     -204.625,
+     -1.35
+    ],
+    [
+     -204.375,
+     -1.35
+    ],
+    [
+     -204.125,
+     -1.35
+    ],
+    [
+     -203.875,
+     -1.35
+    ],
+    [
+     -203.625,
+     -1.35
+    ],
+    [
+     -203.375,
+     -1.35
+    ],
+    [
+     -203.125,
+     -1.35
+    ],
+    [
+     -202.875,
+     -1.35
+    ],
+    [
+     -202.625,
+     -1.35
+    ],
+    [
+     -202.375,
+     -1.35
+    ],
+    [
+     -202.125,
+     -1.35
+    ],
+    [
+     -201.875,
+     -1.35
+    ],
+    [
+     -201.625,
+     -1.35
+    ],
+    [
+     -201.375,
+     -1.35
+    ],
+    [
+     -201.125,
+     -1.35
+    ],
+    [
+     -200.875,
+     -1.35
+    ],
+    [
+     -200.625,
+     -1.35
+    ],
+    [
+     -200.375,
+     -1.35
+    ],
+    [
+     -200.125,
+     -1.35
+    ],
+    [
+     -199.875,
+     -1.35
+    ],
+    [
+     -199.625,
+     -1.35
+    ],
+    [
+     -199.375,
+     -1.35
+    ],
+    [
+     -199.125,
+     -1.35
+    ],
+    [
+     -198.875,
+     -1.35
+    ],
+    [
+     -198.625,
+     -1.35
+    ],
+    [
+     -198.375,
+     -1.35
+    ],
+    [
+     -198.125,
+     -1.35
+    ],
+    [
+     -197.875,
+     -1.35
+    ],
+    [
+     -197.625,
+     -1.35
+    ],
+    [
+     -197.375,
+     -1.35
+    ],
+    [
+     -197.125,
+     -1.35
+    ],
+    [
+     -196.875,
+     -1.35
+    ],
+    [
+     -196.625,
+     -1.35
+    ],
+    [
+     -196.375,
+     -1.35
+    ],
+    [
+     -196.125,
+     -1.35
+    ],
+    [
+     -195.875,
+     -1.35
+    ],
+    [
+     -195.625,
+     -1.35
+    ],
+    [
+     -195.375,
+     -1.35
+    ],
+    [
+     -195.125,
+     -1.35
+    ],
+    [
+     -194.875,
+     -1.35
+    ],
+    [
+     -194.625,
+     -1.35
+    ],
+    [
+     -194.375,
+     -1.35
+    ],
+    [
+     -194.125,
+     -1.35
+    ],
+    [
+     -193.875,
+     -1.35
+    ],
+    [
+     -193.625,
+     -1.35
+    ],
+    [
+     -193.375,
+     -1.35
+    ],
+    [
+     -193.125,
+     -1.35
+    ],
+    [
+     -192.875,
+     -1.35
+    ],
+    [
+     -192.625,
+     -1.35
+    ],
+    [
+     -192.375,
+     -1.35
+    ],
+    [
+     -192.125,
+     -1.35
+    ],
+    [
+     -191.875,
+     -1.35
+    ],
+    [
+     -191.625,
+     -1.35
+    ],
+    [
+     -191.375,
+     -1.35
+    ],
+    [
+     -191.125,
+     -1.35
+    ],
+    [
+     -190.875,
+     -1.35
+    ],
+    [
+     -190.625,
+     -1.35
+    ],
+    [
+     -190.375,
+     -1.35
+    ],
+    [
+     -190.125,
+     -1.35
+    ],
+    [
+     -189.875,
+     -1.35
+    ],
+    [
+     -189.625,
+     -1.35
+    ],
+    [
+     -189.375,
+     -1.35
+    ],
+    [
+     -189.125,
+     -1.35
+    ],
+    [
+     -188.875,
+     -1.35
+    ],
+    [
+     -188.625,
+     -1.35
+    ],
+    [
+     -188.375,
+     -1.35
+    ],
+    [
+     -188.125,
+     -1.35
+    ],
+    [
+     -187.875,
+     -1.35
+    ],
+    [
+     -187.625,
+     -1.35
+    ],
+    [
+     -187.375,
+     -1.35
+    ],
+    [
+     -187.125,
+     -1.35
+    ],
+    [
+     -186.875,
+     -1.35
+    ],
+    [
+     -186.625,
+     -1.35
+    ],
+    [
+     -186.375,
+     -1.35
+    ],
+    [
+     -186.125,
+     -1.35
+    ],
+    [
+     -185.875,
+     -1.35
+    ],
+    [
+     -185.625,
+     -1.35
+    ],
+    [
+     -185.375,
+     -1.35
+    ],
+    [
+     -185.125,
+     -1.35
+    ],
+    [
+     -184.875,
+     -1.35
+    ],
+    [
+     -184.625,
+     -1.35
+    ],
+    [
+     -184.375,
+     -1.35
+    ],
+    [
+     -184.125,
+     -1.35
+    ],
+    [
+     -183.875,
+     -1.35
+    ],
+    [
+     -183.625,
+     -1.35
+    ],
+    [
+     -183.375,
+     -1.35
+    ],
+    [
+     -183.125,
+     -1.35
+    ],
+    [
+     -182.875,
+     -1.35
+    ],
+    [
+     -182.625,
+     -1.35
+    ],
+    [
+     -182.375,
+     -1.35
+    ],
+    [
+     -182.125,
+     -1.35
+    ],
+    [
+     -181.875,
+     -1.35
+    ],
+    [
+     -181.625,
+     -1.35
+    ],
+    [
+     -181.375,
+     -1.35
+    ],
+    [
+     -181.125,
+     -1.35
+    ],
+    [
+     -180.875,
+     -1.35
+    ],
+    [
+     -180.625,
+     -1.35
+    ],
+    [
+     -180.375,
+     -1.35
+    ],
+    [
+     -180.125,
+     -1.35
+    ],
+    [
+     -179.875,
+     -1.35
+    ],
+    [
+     -179.625,
+     -1.35
+    ],
+    [
+     -179.375,
+     -1.35
+    ],
+    [
+     -179.125,
+     -1.35
+    ],
+    [
+     -178.875,
+     -1.35
+    ],
+    [
+     -178.625,
+     -1.35
+    ],
+    [
+     -178.375,
+     -1.35
+    ],
+    [
+     -178.125,
+     -1.35
+    ],
+    [
+     -177.875,
+     -1.35
+    ],
+    [
+     -177.625,
+     -1.35
+    ],
+    [
+     -177.375,
+     -1.35
+    ],
+    [
+     -177.125,
+     -1.35
+    ],
+    [
+     -176.875,
+     -1.35
+    ],
+    [
+     -176.625,
+     -1.35
+    ],
+    [
+     -176.375,
+     -1.35
+    ],
+    [
+     -176.125,
+     -1.35
+    ],
+    [
+     -175.875,
+     -1.35
+    ],
+    [
+     -175.625,
+     -1.35
+    ],
+    [
+     -175.375,
+     -1.35
+    ],
+    [
+     -175.125,
+     -1.35
+    ],
+    [
+     -174.875,
+     -1.35
+    ],
+    [
+     -174.625,
+     -1.35
+    ],
+    [
+     -174.375,
+     -1.35
+    ],
+    [
+     -174.125,
+     -1.35
+    ],
+    [
+     -173.875,
+     -1.35
+    ],
+    [
+     -173.625,
+     -1.35
+    ],
+    [
+     -173.375,
+     -1.35
+    ],
+    [
+     -173.125,
+     -1.35
+    ],
+    [
+     -172.875,
+     -1.35
+    ],
+    [
+     -172.625,
+     -1.35
+    ],
+    [
+     -172.375,
+     -1.35
+    ],
+    [
+     -172.125,
+     -1.35
+    ],
+    [
+     -171.875,
+     -1.35
+    ],
+    [
+     -171.625,
+     -1.35
+    ],
+    [
+     -171.375,
+     -1.35
+    ],
+    [
+     -171.125,
+     -1.35
+    ],
+    [
+     -170.875,
+     -1.35
+    ],
+    [
+     -170.625,
+     -1.35
+    ],
+    [
+     -170.375,
+     -1.35
+    ],
+    [
+     -170.125,
+     -1.35
+    ],
+    [
+     -169.875,
+     -1.35
+    ],
+    [
+     -169.625,
+     -1.35
+    ],
+    [
+     -169.375,
+     -1.35
+    ],
+    [
+     -169.125,
+     -1.35
+    ],
+    [
+     -168.875,
+     -1.35
+    ],
+    [
+     -168.625,
+     -1.35
+    ],
+    [
+     -168.375,
+     -1.35
+    ],
+    [
+     -168.125,
+     -1.35
+    ],
+    [
+     -167.875,
+     -1.35
+    ],
+    [
+     -167.625,
+     -1.35
+    ],
+    [
+     -167.375,
+     -1.35
+    ],
+    [
+     -167.125,
+     -1.35
+    ],
+    [
+     -166.875,
+     -1.35
+    ],
+    [
+     -166.625,
+     -1.35
+    ],
+    [
+     -166.375,
+     -1.35
+    ],
+    [
+     -166.125,
+     -1.35
+    ],
+    [
+     -165.875,
+     -1.35
+    ],
+    [
+     -165.625,
+     -1.35
+    ],
+    [
+     -165.375,
+     -1.35
+    ],
+    [
+     -165.125,
+     -1.35
+    ],
+    [
+     -164.875,
+     -1.35
+    ],
+    [
+     -164.625,
+     -1.35
+    ],
+    [
+     -164.375,
+     -1.35
+    ],
+    [
+     -164.125,
+     -1.35
+    ],
+    [
+     -163.875,
+     -1.35
+    ],
+    [
+     -163.625,
+     -1.35
+    ],
+    [
+     -163.375,
+     -1.35
+    ],
+    [
+     -163.125,
+     -1.35
+    ],
+    [
+     -162.875,
+     -1.35
+    ],
+    [
+     -162.625,
+     -1.35
+    ],
+    [
+     -162.375,
+     -1.35
+    ],
+    [
+     -162.125,
+     -1.35
+    ],
+    [
+     -161.875,
+     -1.35
+    ],
+    [
+     -161.625,
+     -1.35
+    ],
+    [
+     -161.375,
+     -1.35
+    ],
+    [
+     -161.125,
+     -1.35
+    ],
+    [
+     -160.875,
+     -1.35
+    ],
+    [
+     -160.625,
+     -1.35
+    ],
+    [
+     -160.375,
+     -1.35
+    ],
+    [
+     -160.125,
+     -1.35
+    ],
+    [
+     -159.875,
+     -1.35
+    ],
+    [
+     -159.625,
+     -1.35
+    ],
+    [
+     -159.375,
+     -1.35
+    ],
+    [
+     -159.125,
+     -1.35
+    ],
+    [
+     -158.875,
+     -1.35
+    ],
+    [
+     -158.625,
+     -1.35
+    ],
+    [
+     -158.375,
+     -1.35
+    ],
+    [
+     -158.125,
+     -1.35
+    ],
+    [
+     -157.875,
+     -1.35
+    ],
+    [
+     -157.625,
+     -1.35
+    ],
+    [
+     -157.375,
+     -1.35
+    ],
+    [
+     -157.125,
+     -1.35
+    ],
+    [
+     -156.875,
+     -1.35
+    ],
+    [
+     -156.625,
+     -1.35
+    ],
+    [
+     -156.375,
+     -1.35
+    ],
+    [
+     -156.125,
+     -1.35
+    ],
+    [
+     -155.875,
+     -1.35
+    ],
+    [
+     -155.625,
+     -1.35
+    ],
+    [
+     -155.375,
+     -1.35
+    ],
+    [
+     -155.125,
+     -1.35
+    ],
+    [
+     -154.875,
+     -1.35
+    ],
+    [
+     -154.625,
+     -1.35
+    ],
+    [
+     -154.375,
+     -1.35
+    ],
+    [
+     -154.125,
+     -1.35
+    ],
+    [
+     -153.875,
+     -1.35
+    ],
+    [
+     -153.625,
+     -1.35
+    ],
+    [
+     -153.375,
+     -1.35
+    ],
+    [
+     -153.125,
+     -1.35
+    ],
+    [
+     -152.875,
+     -1.35
+    ],
+    [
+     -152.625,
+     -1.35
+    ],
+    [
+     -152.375,
+     -1.35
+    ],
+    [
+     -152.125,
+     -1.35
+    ],
+    [
+     -151.875,
+     -1.35
+    ],
+    [
+     -151.625,
+     -1.35
+    ],
+    [
+     -151.375,
+     -1.35
+    ],
+    [
+     -151.125,
+     -1.35
+    ],
+    [
+     -150.875,
+     -1.35
+    ],
+    [
+     -150.625,
+     -1.35
+    ],
+    [
+     -150.375,
+     -1.35
+    ],
+    [
+     -150.125,
+     -1.35
+    ],
+    [
+     -149.875,
+     -1.35
+    ],
+    [
+     -149.625,
+     -1.35
+    ],
+    [
+     -149.375,
+     -1.35
+    ],
+    [
+     -149.125,
+     -1.35
+    ],
+    [
+     -148.875,
+     -1.35
+    ],
+    [
+     -148.625,
+     -1.35
+    ],
+    [
+     -148.375,
+     -1.35
+    ],
+    [
+     -148.125,
+     -1.35
+    ],
+    [
+     -147.875,
+     -1.35
+    ],
+    [
+     -147.625,
+     -1.35
+    ],
+    [
+     -147.375,
+     -1.35
+    ],
+    [
+     -147.125,
+     -1.35
+    ],
+    [
+     -146.875,
+     -1.35
+    ],
+    [
+     -146.625,
+     -1.35
+    ],
+    [
+     -146.375,
+     -1.35
+    ],
+    [
+     -146.125,
+     -1.35
+    ],
+    [
+     -145.875,
+     -1.35
+    ],
+    [
+     -145.625,
+     -1.35
+    ],
+    [
+     -145.375,
+     -1.35
+    ],
+    [
+     -145.125,
+     -1.35
+    ],
+    [
+     -144.875,
+     -1.35
+    ],
+    [
+     -144.625,
+     -1.35
+    ],
+    [
+     -144.375,
+     -1.35
+    ],
+    [
+     -144.125,
+     -1.35
+    ],
+    [
+     -143.875,
+     -1.35
+    ],
+    [
+     -143.625,
+     -1.35
+    ],
+    [
+     -143.375,
+     -1.35
+    ],
+    [
+     -143.125,
+     -1.35
+    ],
+    [
+     -142.875,
+     -1.35
+    ],
+    [
+     -142.625,
+     -1.35
+    ],
+    [
+     -142.375,
+     -1.35
+    ],
+    [
+     -142.125,
+     -1.35
+    ],
+    [
+     -141.875,
+     -1.35
+    ],
+    [
+     -141.625,
+     -1.35
+    ],
+    [
+     -141.375,
+     -1.35
+    ],
+    [
+     -141.125,
+     -1.35
+    ],
+    [
+     -140.875,
+     -1.35
+    ],
+    [
+     -140.625,
+     -1.35
+    ],
+    [
+     -140.375,
+     -1.35
+    ],
+    [
+     -140.125,
+     -1.35
+    ],
+    [
+     -139.875,
+     -1.35
+    ],
+    [
+     -139.625,
+     -1.35
+    ],
+    [
+     -139.375,
+     -1.35
+    ],
+    [
+     -139.125,
+     -1.35
+    ],
+    [
+     -138.875,
+     -1.35
+    ],
+    [
+     -138.625,
+     -1.35
+    ],
+    [
+     -138.375,
+     -1.35
+    ],
+    [
+     -138.125,
+     -1.35
+    ],
+    [
+     -137.875,
+     -1.35
+    ],
+    [
+     -137.625,
+     -1.35
+    ],
+    [
+     -137.375,
+     -1.35
+    ],
+    [
+     -137.125,
+     -1.35
+    ],
+    [
+     -136.875,
+     -1.35
+    ],
+    [
+     -136.625,
+     -1.35
+    ],
+    [
+     -136.375,
+     -1.35
+    ],
+    [
+     -136.125,
+     -1.35
+    ],
+    [
+     -135.875,
+     -1.35
+    ],
+    [
+     -135.625,
+     -1.35
+    ],
+    [
+     -135.375,
+     -1.35
+    ],
+    [
+     -135.125,
+     -1.35
+    ],
+    [
+     -134.875,
+     -1.35
+    ],
+    [
+     -134.625,
+     -1.35
+    ],
+    [
+     -134.375,
+     -1.35
+    ],
+    [
+     -134.125,
+     -1.35
+    ],
+    [
+     -133.875,
+     -1.35
+    ],
+    [
+     -133.625,
+     -1.35
+    ],
+    [
+     -133.375,
+     -1.35
+    ],
+    [
+     -133.125,
+     -1.35
+    ],
+    [
+     -132.875,
+     -1.35
+    ],
+    [
+     -132.625,
+     -1.35
+    ],
+    [
+     -132.375,
+     -1.35
+    ],
+    [
+     -132.125,
+     -1.35
+    ],
+    [
+     -131.875,
+     -1.35
+    ],
+    [
+     -131.625,
+     -1.35
+    ],
+    [
+     -131.375,
+     -1.35
+    ],
+    [
+     -131.125,
+     -1.35
+    ],
+    [
+     -130.875,
+     -1.35
+    ],
+    [
+     -130.625,
+     -1.35
+    ],
+    [
+     -130.375,
+     -1.35
+    ],
+    [
+     -130.125,
+     -1.35
+    ],
+    [
+     -129.875,
+     -1.35
+    ],
+    [
+     -129.625,
+     -1.35
+    ],
+    [
+     -129.375,
+     -1.35
+    ],
+    [
+     -129.125,
+     -1.35
+    ],
+    [
+     -128.875,
+     -1.35
+    ],
+    [
+     -128.625,
+     -1.35
+    ],
+    [
+     -128.375,
+     -1.35
+    ],
+    [
+     -128.125,
+     -1.35
+    ],
+    [
+     -127.875,
+     -1.35
+    ],
+    [
+     -127.625,
+     -1.35
+    ],
+    [
+     -127.375,
+     -1.35
+    ],
+    [
+     -127.125,
+     -1.35
+    ],
+    [
+     -126.875,
+     -1.35
+    ],
+    [
+     -126.625,
+     -1.35
+    ],
+    [
+     -126.375,
+     -1.35
+    ],
+    [
+     -126.125,
+     -1.35
+    ],
+    [
+     -125.875,
+     -1.35
+    ],
+    [
+     -125.625,
+     -1.35
+    ],
+    [
+     -125.375,
+     -1.35
+    ],
+    [
+     -125.125,
+     -1.35
+    ],
+    [
+     -124.875,
+     -1.35
+    ],
+    [
+     -124.625,
+     -1.35
+    ],
+    [
+     -124.375,
+     -1.35
+    ],
+    [
+     -124.125,
+     -1.35
+    ],
+    [
+     -123.875,
+     -1.35
+    ],
+    [
+     -123.625,
+     -1.35
+    ],
+    [
+     -123.375,
+     -1.35
+    ],
+    [
+     -123.125,
+     -1.35
+    ],
+    [
+     -122.875,
+     -1.35
+    ],
+    [
+     -122.625,
+     -1.35
+    ],
+    [
+     -122.375,
+     -1.35
+    ],
+    [
+     -122.125,
+     -1.35
+    ],
+    [
+     -121.875,
+     -1.35
+    ],
+    [
+     -121.625,
+     -1.35
+    ],
+    [
+     -121.375,
+     -1.35
+    ],
+    [
+     -121.125,
+     -1.35
+    ],
+    [
+     -120.875,
+     -1.35
+    ],
+    [
+     -120.625,
+     -1.35
+    ],
+    [
+     -120.375,
+     -1.35
+    ],
+    [
+     -120.125,
+     -1.35
+    ],
+    [
+     -119.875,
+     -1.35
+    ],
+    [
+     -119.625,
+     -1.35
+    ],
+    [
+     -119.375,
+     -1.35
+    ],
+    [
+     -119.125,
+     -1.35
+    ],
+    [
+     -118.875,
+     -1.35
+    ],
+    [
+     -118.625,
+     -1.35
+    ],
+    [
+     -118.375,
+     -1.35
+    ],
+    [
+     -118.125,
+     -1.35
+    ],
+    [
+     -117.875,
+     -1.35
+    ],
+    [
+     -117.625,
+     -1.35
+    ],
+    [
+     -117.375,
+     -1.35
+    ],
+    [
+     -117.125,
+     -1.35
+    ],
+    [
+     -116.875,
+     -1.35
+    ],
+    [
+     -116.625,
+     -1.35
+    ],
+    [
+     -116.375,
+     -1.35
+    ],
+    [
+     -116.125,
+     -1.35
+    ],
+    [
+     -115.875,
+     -1.35
+    ],
+    [
+     -115.625,
+     -1.35
+    ],
+    [
+     -115.375,
+     -1.35
+    ],
+    [
+     -115.125,
+     -1.35
+    ],
+    [
+     -114.875,
+     -1.35
+    ],
+    [
+     -114.625,
+     -1.35
+    ],
+    [
+     -114.375,
+     -1.35
+    ],
+    [
+     -114.125,
+     -1.35
+    ],
+    [
+     -113.875,
+     -1.35
+    ],
+    [
+     -113.625,
+     -1.35
+    ],
+    [
+     -113.375,
+     -1.35
+    ],
+    [
+     -113.125,
+     -1.35
+    ],
+    [
+     -112.875,
+     -1.35
+    ],
+    [
+     -112.625,
+     -1.35
+    ],
+    [
+     -112.375,
+     -1.35
+    ],
+    [
+     -112.125,
+     -1.35
+    ],
+    [
+     -111.875,
+     -1.35
+    ],
+    [
+     -111.625,
+     -1.35
+    ],
+    [
+     -111.375,
+     -1.35
+    ],
+    [
+     -111.125,
+     -1.35
+    ],
+    [
+     -110.875,
+     -1.35
+    ],
+    [
+     -110.625,
+     -1.35
+    ],
+    [
+     -110.375,
+     -1.35
+    ],
+    [
+     -110.125,
+     -1.35
+    ],
+    [
+     -109.875,
+     -1.35
+    ],
+    [
+     -109.625,
+     -1.35
+    ],
+    [
+     -109.375,
+     -1.35
+    ],
+    [
+     -109.125,
+     -1.35
+    ],
+    [
+     -108.875,
+     -1.35
+    ],
+    [
+     -108.625,
+     -1.35
+    ],
+    [
+     -108.375,
+     -1.35
+    ],
+    [
+     -108.125,
+     -1.35
+    ],
+    [
+     -107.875,
+     -1.35
+    ],
+    [
+     -107.625,
+     -1.35
+    ],
+    [
+     -107.375,
+     -1.35
+    ],
+    [
+     -107.125,
+     -1.35
+    ],
+    [
+     -106.875,
+     -1.35
+    ],
+    [
+     -106.625,
+     -1.35
+    ],
+    [
+     -106.375,
+     -1.35
+    ],
+    [
+     -106.125,
+     -1.35
+    ],
+    [
+     -105.875,
+     -1.35
+    ],
+    [
+     -105.625,
+     -1.35
+    ],
+    [
+     -105.375,
+     -1.35
+    ],
+    [
+     -105.125,
+     -1.35
+    ],
+    [
+     -104.875,
+     -1.35
+    ],
+    [
+     -104.625,
+     -1.35
+    ],
+    [
+     -104.375,
+     -1.35
+    ],
+    [
+     -104.125,
+     -1.35
+    ],
+    [
+     -103.875,
+     -1.35
+    ],
+    [
+     -103.625,
+     -1.35
+    ],
+    [
+     -103.375,
+     -1.35
+    ],
+    [
+     -103.125,
+     -1.35
+    ],
+    [
+     -102.875,
+     -1.35
+    ],
+    [
+     -102.625,
+     -1.35
+    ],
+    [
+     -102.375,
+     -1.35
+    ],
+    [
+     -102.125,
+     -1.35
+    ],
+    [
+     -101.875,
+     -1.35
+    ],
+    [
+     -101.625,
+     -1.35
+    ],
+    [
+     -101.375,
+     -1.35
+    ],
+    [
+     -101.125,
+     -1.35
+    ],
+    [
+     -100.875,
+     -1.35
+    ],
+    [
+     -100.625,
+     -1.35
+    ],
+    [
+     -100.375,
+     -1.35
+    ],
+    [
+     -100.125,
+     -1.35
+    ],
+    [
+     -99.875,
+     -1.35
+    ],
+    [
+     -99.625,
+     -1.35
+    ],
+    [
+     -99.375,
+     -1.35
+    ],
+    [
+     -99.125,
+     -1.35
+    ],
+    [
+     -98.875,
+     -1.35
+    ],
+    [
+     -98.625,
+     -1.35
+    ],
+    [
+     -98.375,
+     -1.35
+    ],
+    [
+     -98.125,
+     -1.35
+    ],
+    [
+     -97.875,
+     -1.35
+    ],
+    [
+     -97.625,
+     -1.35
+    ],
+    [
+     -97.375,
+     -1.35
+    ],
+    [
+     -97.125,
+     -1.35
+    ],
+    [
+     -96.875,
+     -1.35
+    ],
+    [
+     -96.625,
+     -1.35
+    ],
+    [
+     -96.375,
+     -1.35
+    ],
+    [
+     -96.125,
+     -1.35
+    ],
+    [
+     -95.875,
+     -1.35
+    ],
+    [
+     -95.625,
+     -1.35
+    ],
+    [
+     -95.375,
+     -1.35
+    ],
+    [
+     -95.125,
+     -1.35
+    ],
+    [
+     -94.875,
+     -1.35
+    ],
+    [
+     -94.625,
+     -1.35
+    ],
+    [
+     -94.375,
+     -1.35
+    ],
+    [
+     -94.125,
+     -1.35
+    ],
+    [
+     -93.875,
+     -1.35
+    ],
+    [
+     -93.625,
+     -1.35
+    ],
+    [
+     -93.375,
+     -1.35
+    ],
+    [
+     -93.125,
+     -1.35
+    ],
+    [
+     -92.875,
+     -1.35
+    ],
+    [
+     -92.625,
+     -1.35
+    ],
+    [
+     -92.375,
+     -1.35
+    ],
+    [
+     -92.125,
+     -1.35
+    ],
+    [
+     -91.875,
+     -1.35
+    ],
+    [
+     -91.625,
+     -1.35
+    ],
+    [
+     -91.375,
+     -1.35
+    ],
+    [
+     -91.125,
+     -1.35
+    ],
+    [
+     -90.875,
+     -1.35
+    ],
+    [
+     -90.625,
+     -1.35
+    ],
+    [
+     -90.375,
+     -1.35
+    ],
+    [
+     -90.125,
+     -1.35
+    ],
+    [
+     -89.875,
+     -1.35
+    ],
+    [
+     -89.625,
+     -1.35
+    ],
+    [
+     -89.375,
+     -1.35
+    ],
+    [
+     -89.125,
+     -1.35
+    ],
+    [
+     -88.875,
+     -1.35
+    ],
+    [
+     -88.625,
+     -1.35
+    ],
+    [
+     -88.375,
+     -1.35
+    ],
+    [
+     -88.125,
+     -1.35
+    ],
+    [
+     -87.875,
+     -1.35
+    ],
+    [
+     -87.625,
+     -1.35
+    ],
+    [
+     -87.375,
+     -1.35
+    ],
+    [
+     -87.125,
+     -1.35
+    ],
+    [
+     -86.875,
+     -1.35
+    ],
+    [
+     -86.625,
+     -1.35
+    ],
+    [
+     -86.375,
+     -1.35
+    ],
+    [
+     -86.125,
+     -1.35
+    ],
+    [
+     -85.875,
+     -1.35
+    ],
+    [
+     -85.625,
+     -1.35
+    ],
+    [
+     -85.375,
+     -1.35
+    ],
+    [
+     -85.125,
+     -1.35
+    ],
+    [
+     -84.875,
+     -1.35
+    ],
+    [
+     -84.625,
+     -1.35
+    ],
+    [
+     -84.375,
+     -1.35
+    ],
+    [
+     -84.125,
+     -1.35
+    ],
+    [
+     -83.875,
+     -1.35
+    ],
+    [
+     -83.625,
+     -1.35
+    ],
+    [
+     -83.375,
+     -1.35
+    ],
+    [
+     -83.125,
+     -1.35
+    ],
+    [
+     -82.875,
+     -1.35
+    ],
+    [
+     -82.625,
+     -1.35
+    ],
+    [
+     -82.375,
+     -1.35
+    ],
+    [
+     -82.125,
+     -1.35
+    ],
+    [
+     -81.875,
+     -1.35
+    ],
+    [
+     -81.625,
+     -1.35
+    ],
+    [
+     -81.375,
+     -1.35
+    ],
+    [
+     -81.125,
+     -1.35
+    ],
+    [
+     -80.875,
+     -1.35
+    ],
+    [
+     -80.625,
+     -1.35
+    ],
+    [
+     -80.375,
+     -1.35
+    ],
+    [
+     -80.125,
+     -1.35
+    ],
+    [
+     -79.875,
+     -1.35
+    ],
+    [
+     -79.625,
+     -1.35
+    ],
+    [
+     -79.375,
+     -1.35
+    ],
+    [
+     -79.125,
+     -1.35
+    ],
+    [
+     -78.875,
+     -1.35
+    ],
+    [
+     -78.625,
+     -1.35
+    ],
+    [
+     -78.375,
+     -1.35
+    ],
+    [
+     -78.125,
+     -1.35
+    ],
+    [
+     -77.875,
+     -1.35
+    ],
+    [
+     -77.625,
+     -1.35
+    ],
+    [
+     -77.375,
+     -1.35
+    ],
+    [
+     -77.125,
+     -1.35
+    ],
+    [
+     -76.875,
+     -1.35
+    ],
+    [
+     -76.625,
+     -1.35
+    ],
+    [
+     -76.375,
+     -1.35
+    ],
+    [
+     -76.125,
+     -1.35
+    ],
+    [
+     -75.875,
+     -1.35
+    ],
+    [
+     -75.625,
+     -1.35
+    ],
+    [
+     -75.375,
+     -1.35
+    ],
+    [
+     -75.125,
+     -1.35
+    ],
+    [
+     -74.875,
+     -1.35
+    ],
+    [
+     -74.625,
+     -1.35
+    ],
+    [
+     -74.375,
+     -1.35
+    ],
+    [
+     -74.125,
+     -1.35
+    ],
+    [
+     -73.875,
+     -1.35
+    ],
+    [
+     -73.625,
+     -1.35
+    ],
+    [
+     -73.375,
+     -1.35
+    ],
+    [
+     -73.125,
+     -1.35
+    ],
+    [
+     -72.875,
+     -1.35
+    ],
+    [
+     -72.625,
+     -1.35
+    ],
+    [
+     -72.375,
+     -1.35
+    ],
+    [
+     -72.125,
+     -1.35
+    ],
+    [
+     -71.875,
+     -1.35
+    ],
+    [
+     -71.625,
+     -1.35
+    ],
+    [
+     -71.375,
+     -1.35
+    ],
+    [
+     -71.125,
+     -1.35
+    ],
+    [
+     -70.875,
+     -1.35
+    ],
+    [
+     -70.625,
+     -1.35
+    ],
+    [
+     -70.375,
+     -1.35
+    ],
+    [
+     -70.125,
+     -1.35
+    ],
+    [
+     -69.875,
+     -1.35
+    ],
+    [
+     -69.625,
+     -1.35
+    ],
+    [
+     -69.375,
+     -1.35
+    ],
+    [
+     -69.125,
+     -1.35
+    ],
+    [
+     -68.875,
+     -1.35
+    ],
+    [
+     -68.625,
+     -1.35
+    ],
+    [
+     -68.375,
+     -1.35
+    ],
+    [
+     -68.125,
+     -1.35
+    ],
+    [
+     -67.875,
+     -1.35
+    ],
+    [
+     -67.625,
+     -1.35
+    ],
+    [
+     -67.375,
+     -1.35
+    ],
+    [
+     -67.125,
+     -1.35
+    ],
+    [
+     -66.875,
+     -1.35
+    ],
+    [
+     -66.625,
+     -1.35
+    ],
+    [
+     -66.375,
+     -1.35
+    ],
+    [
+     -66.125,
+     -1.35
+    ],
+    [
+     -65.875,
+     -1.35
+    ],
+    [
+     -65.625,
+     -1.35
+    ],
+    [
+     -65.375,
+     -1.35
+    ],
+    [
+     -65.125,
+     -1.35
+    ],
+    [
+     -64.875,
+     -1.35
+    ],
+    [
+     -64.625,
+     -1.35
+    ],
+    [
+     -64.375,
+     -1.35
+    ],
+    [
+     -64.125,
+     -1.35
+    ],
+    [
+     -63.875,
+     -1.35
+    ],
+    [
+     -63.625,
+     -1.35
+    ],
+    [
+     -63.375,
+     -1.35
+    ],
+    [
+     -63.125,
+     -1.35
+    ],
+    [
+     -62.875,
+     -1.35
+    ],
+    [
+     -62.625,
+     -1.35
+    ],
+    [
+     -62.375,
+     -1.35
+    ],
+    [
+     -62.125,
+     -1.35
+    ],
+    [
+     -61.875,
+     -1.35
+    ],
+    [
+     -61.625,
+     -1.35
+    ],
+    [
+     -61.375,
+     -1.35
+    ],
+    [
+     -61.125,
+     -1.35
+    ],
+    [
+     -60.875,
+     -1.35
+    ],
+    [
+     -60.625,
+     -1.35
+    ],
+    [
+     -60.375,
+     -1.35
+    ],
+    [
+     -60.125,
+     -1.35
+    ],
+    [
+     -59.875,
+     -1.35
+    ],
+    [
+     -59.625,
+     -1.35
+    ],
+    [
+     -59.375,
+     -1.35
+    ],
+    [
+     -59.125,
+     -1.35
+    ],
+    [
+     -58.875,
+     -1.35
+    ],
+    [
+     -58.625,
+     -1.35
+    ],
+    [
+     -58.375,
+     -1.35
+    ],
+    [
+     -58.125,
+     -1.35
+    ],
+    [
+     -57.875,
+     -1.35
+    ],
+    [
+     -57.625,
+     -1.35
+    ],
+    [
+     -57.375,
+     -1.35
+    ],
+    [
+     -57.125,
+     -1.35
+    ],
+    [
+     -56.875,
+     -1.35
+    ],
+    [
+     -56.625,
+     -1.35
+    ],
+    [
+     -56.375,
+     -1.35
+    ],
+    [
+     -56.125,
+     -1.35
+    ],
+    [
+     -55.875,
+     -1.35
+    ],
+    [
+     -55.625,
+     -1.35
+    ],
+    [
+     -55.375,
+     -1.35
+    ],
+    [
+     -55.125,
+     -1.35
+    ],
+    [
+     -54.875,
+     -1.35
+    ],
+    [
+     -54.625,
+     -1.35
+    ],
+    [
+     -54.375,
+     -1.35
+    ],
+    [
+     -54.125,
+     -1.35
+    ],
+    [
+     -53.875,
+     -1.35
+    ],
+    [
+     -53.625,
+     -1.35
+    ],
+    [
+     -53.375,
+     -1.35
+    ],
+    [
+     -53.125,
+     -1.35
+    ],
+    [
+     -52.875,
+     -1.35
+    ],
+    [
+     -52.625,
+     -1.35
+    ],
+    [
+     -52.375,
+     -1.35
+    ],
+    [
+     -52.125,
+     -1.35
+    ],
+    [
+     -51.875,
+     -1.35
+    ],
+    [
+     -51.625,
+     -1.35
+    ],
+    [
+     -51.375,
+     -1.35
+    ],
+    [
+     -51.125,
+     -1.35
+    ],
+    [
+     -50.875,
+     -1.35
+    ],
+    [
+     -50.625,
+     -1.35
+    ],
+    [
+     -50.375,
+     -1.35
+    ],
+    [
+     -50.125,
+     -1.35
+    ],
+    [
+     -49.875,
+     -1.35
+    ],
+    [
+     -49.625,
+     -1.35
+    ],
+    [
+     -49.375,
+     -1.35
+    ],
+    [
+     -49.125,
+     -1.35
+    ],
+    [
+     -48.875,
+     -1.35
+    ],
+    [
+     -48.625,
+     -1.35
+    ],
+    [
+     -48.375,
+     -1.35
+    ],
+    [
+     -48.125,
+     -1.35
+    ],
+    [
+     -47.875,
+     -1.35
+    ],
+    [
+     -47.625,
+     -1.35
+    ],
+    [
+     -47.375,
+     -1.35
+    ],
+    [
+     -47.125,
+     -1.35
+    ],
+    [
+     -46.875,
+     -1.35
+    ],
+    [
+     -46.625,
+     -1.35
+    ],
+    [
+     -46.375,
+     -1.35
+    ],
+    [
+     -46.125,
+     -1.35
+    ],
+    [
+     -45.875,
+     -1.35
+    ],
+    [
+     -45.625,
+     -1.35
+    ],
+    [
+     -45.375,
+     -1.35
+    ],
+    [
+     -45.125,
+     -1.35
+    ],
+    [
+     -44.875,
+     -1.35
+    ],
+    [
+     -44.625,
+     -1.35
+    ],
+    [
+     -44.375,
+     -1.35
+    ],
+    [
+     -44.125,
+     -1.35
+    ],
+    [
+     -43.875,
+     -1.35
+    ],
+    [
+     -43.625,
+     -1.35
+    ],
+    [
+     -43.375,
+     -1.35
+    ],
+    [
+     -43.125,
+     -1.35
+    ],
+    [
+     -42.875,
+     -1.35
+    ],
+    [
+     -42.625,
+     -1.35
+    ],
+    [
+     -42.375,
+     -1.35
+    ],
+    [
+     -42.125,
+     -1.35
+    ],
+    [
+     -41.875,
+     -1.35
+    ],
+    [
+     -41.625,
+     -1.35
+    ],
+    [
+     -41.375,
+     -1.35
+    ],
+    [
+     -41.125,
+     -1.35
+    ],
+    [
+     -40.875,
+     -1.35
+    ],
+    [
+     -40.625,
+     -1.35
+    ],
+    [
+     -40.375,
+     -1.35
+    ],
+    [
+     -40.125,
+     -1.35
+    ],
+    [
+     -39.875,
+     -1.35
+    ],
+    [
+     -39.625,
+     -1.35
+    ],
+    [
+     -39.375,
+     -1.35
+    ],
+    [
+     -39.125,
+     -1.35
+    ],
+    [
+     -38.875,
+     -1.35
+    ],
+    [
+     -38.625,
+     -1.35
+    ],
+    [
+     -38.375,
+     -1.35
+    ],
+    [
+     -38.125,
+     -1.35
+    ],
+    [
+     -37.875,
+     -1.35
+    ],
+    [
+     -37.625,
+     -1.35
+    ],
+    [
+     -37.375,
+     -1.35
+    ],
+    [
+     -37.125,
+     -1.35
+    ],
+    [
+     -36.875,
+     -1.35
+    ],
+    [
+     -36.625,
+     -1.35
+    ],
+    [
+     -36.375,
+     -1.35
+    ],
+    [
+     -36.125,
+     -1.35
+    ],
+    [
+     -35.875,
+     -1.35
+    ],
+    [
+     -35.625,
+     -1.35
+    ],
+    [
+     -35.375,
+     -1.35
+    ],
+    [
+     -35.125,
+     -1.35
+    ],
+    [
+     -34.875,
+     -1.35
+    ],
+    [
+     -34.625,
+     -1.35
+    ],
+    [
+     -34.375,
+     -1.35
+    ],
+    [
+     -34.125,
+     -1.35
+    ],
+    [
+     -33.875,
+     -1.35
+    ],
+    [
+     -33.625,
+     -1.35
+    ],
+    [
+     -33.375,
+     -1.35
+    ],
+    [
+     -33.125,
+     -1.35
+    ],
+    [
+     -32.875,
+     -1.35
+    ],
+    [
+     -32.625,
+     -1.35
+    ],
+    [
+     -32.375,
+     -1.35
+    ],
+    [
+     -32.125,
+     -1.35
+    ],
+    [
+     -31.875,
+     -1.35
+    ],
+    [
+     -31.625,
+     -1.35
+    ],
+    [
+     -31.375,
+     -1.35
+    ],
+    [
+     -31.125,
+     -1.35
+    ],
+    [
+     -30.875,
+     -1.35
+    ],
+    [
+     -30.625,
+     -1.35
+    ],
+    [
+     -30.375,
+     -1.35
+    ],
+    [
+     -30.125,
+     -1.35
+    ],
+    [
+     -29.875,
+     -1.35
+    ],
+    [
+     -29.625,
+     -1.35
+    ],
+    [
+     -29.375,
+     -1.35
+    ],
+    [
+     -29.125,
+     -1.35
+    ],
+    [
+     -28.875,
+     -1.35
+    ],
+    [
+     -28.625,
+     -1.35
+    ],
+    [
+     -28.375,
+     -1.35
+    ],
+    [
+     -28.125,
+     -1.35
+    ],
+    [
+     -27.875,
+     -1.35
+    ],
+    [
+     -27.625,
+     -1.35
+    ],
+    [
+     -27.375,
+     -1.35
+    ],
+    [
+     -27.125,
+     -1.35
+    ],
+    [
+     -26.875,
+     -1.35
+    ],
+    [
+     -26.625,
+     -1.35
+    ],
+    [
+     -26.375,
+     -1.35
+    ],
+    [
+     -26.125,
+     -1.35
+    ],
+    [
+     -25.875,
+     -1.35
+    ],
+    [
+     -25.625,
+     -1.35
+    ],
+    [
+     -25.375,
+     -1.35
+    ],
+    [
+     -25.125,
+     -1.35
+    ],
+    [
+     -24.875,
+     -1.35
+    ],
+    [
+     -24.625,
+     -1.35
+    ],
+    [
+     -24.375,
+     -1.35
+    ],
+    [
+     -24.125,
+     -1.35
+    ],
+    [
+     -23.875,
+     -1.35
+    ],
+    [
+     -23.625,
+     -1.35
+    ],
+    [
+     -23.375,
+     -1.35
+    ],
+    [
+     -23.125,
+     -1.35
+    ],
+    [
+     -22.875,
+     -1.35
+    ],
+    [
+     -22.625,
+     -1.35
+    ],
+    [
+     -22.375,
+     -1.35
+    ],
+    [
+     -22.125,
+     -1.35
+    ],
+    [
+     -21.875,
+     -1.35
+    ],
+    [
+     -21.625,
+     -1.35
+    ],
+    [
+     -21.375,
+     -1.35
+    ],
+    [
+     -21.125,
+     -1.35
+    ],
+    [
+     -20.875,
+     -1.35
+    ],
+    [
+     -20.625,
+     -1.35
+    ],
+    [
+     -20.375,
+     -1.35
+    ],
+    [
+     -20.125,
+     -1.35
+    ],
+    [
+     -19.875,
+     -1.35
+    ],
+    [
+     -19.625,
+     -1.35
+    ],
+    [
+     -19.375,
+     -1.35
+    ],
+    [
+     -19.125,
+     -1.35
+    ],
+    [
+     -18.875,
+     -1.35
+    ],
+    [
+     -18.625,
+     -1.35
+    ],
+    [
+     -18.375,
+     -1.35
+    ],
+    [
+     -18.125,
+     -1.35
+    ],
+    [
+     -17.875,
+     -1.35
+    ],
+    [
+     -17.625,
+     -1.35
+    ],
+    [
+     -17.375,
+     -1.35
+    ],
+    [
+     -17.125,
+     -1.35
+    ],
+    [
+     -16.875,
+     -1.35
+    ],
+    [
+     -16.625,
+     -1.35
+    ],
+    [
+     -16.375,
+     -1.35
+    ],
+    [
+     -16.125,
+     -1.35
+    ],
+    [
+     -15.875,
+     -1.35
+    ],
+    [
+     -15.625,
+     -1.35
+    ],
+    [
+     -15.375,
+     -1.35
+    ],
+    [
+     -15.125,
+     -1.35
+    ],
+    [
+     -14.875,
+     -1.35
+    ],
+    [
+     -14.625,
+     -1.35
+    ],
+    [
+     -14.375,
+     -1.35
+    ],
+    [
+     -14.125,
+     -1.35
+    ],
+    [
+     -13.875,
+     -1.35
+    ],
+    [
+     -13.625,
+     -1.35
+    ],
+    [
+     -13.375,
+     -1.35
+    ],
+    [
+     -13.125,
+     -1.35
+    ],
+    [
+     -12.875,
+     -1.35
+    ],
+    [
+     -12.625,
+     -1.35
+    ],
+    [
+     -12.375,
+     -1.35
+    ],
+    [
+     -12.125,
+     -1.35
+    ],
+    [
+     -11.875,
+     -1.35
+    ],
+    [
+     -11.625,
+     -1.35
+    ],
+    [
+     -11.375,
+     -1.35
+    ],
+    [
+     -11.125,
+     -1.35
+    ],
+    [
+     -10.875,
+     -1.35
+    ],
+    [
+     -10.625,
+     -1.35
+    ],
+    [
+     -10.375,
+     -1.35
+    ],
+    [
+     -10.125,
+     -1.35
+    ],
+    [
+     -9.875,
+     -1.35
+    ],
+    [
+     -9.625,
+     -1.35
+    ],
+    [
+     -9.375,
+     -1.35
+    ],
+    [
+     -9.125,
+     -1.35
+    ],
+    [
+     -8.875,
+     -1.35
+    ],
+    [
+     -8.625,
+     -1.35
+    ],
+    [
+     -8.375,
+     -1.35
+    ],
+    [
+     -8.125,
+     -1.35
+    ],
+    [
+     -7.875,
+     -1.35
+    ],
+    [
+     -7.625,
+     -1.35
+    ],
+    [
+     -7.375,
+     -1.35
+    ],
+    [
+     -7.125,
+     -1.35
+    ],
+    [
+     -6.875,
+     -1.35
+    ],
+    [
+     -6.625,
+     -1.35
+    ],
+    [
+     -6.375,
+     -1.35
+    ],
+    [
+     -6.125,
+     -1.35
+    ],
+    [
+     -5.875,
+     -1.35
+    ],
+    [
+     -5.625,
+     -1.35
+    ],
+    [
+     -5.375,
+     -1.35
+    ],
+    [
+     -5.125,
+     -1.35
+    ],
+    [
+     -4.875,
+     -1.35
+    ],
+    [
+     -4.625,
+     -1.35
+    ],
+    [
+     -4.375,
+     -1.35
+    ],
+    [
+     -4.125,
+     -1.35
+    ],
+    [
+     -3.875,
+     -1.35
+    ],
+    [
+     -3.625,
+     -1.35
+    ],
+    [
+     -3.375,
+     -1.35
+    ],
+    [
+     -3.125,
+     -1.35
+    ],
+    [
+     -2.875,
+     -1.35
+    ],
+    [
+     -2.625,
+     -1.35
+    ],
+    [
+     -2.375,
+     -1.35
+    ],
+    [
+     -2.125,
+     -1.35
+    ],
+    [
+     -1.875,
+     -1.35
+    ],
+    [
+     -1.625,
+     -1.35
+    ],
+    [
+     -1.375,
+     -1.35
+    ],
+    [
+     -1.125,
+     -1.35
+    ],
+    [
+     -0.875,
+     -1.35
+    ],
+    [
+     -0.625,
+     -1.35
+    ],
+    [
+     -0.375,
+     -1.35
+    ],
+    [
+     -0.125,
+     -1.35
+    ],
+    [
+     0.125,
+     -1.35
+    ],
+    [
+     0.375,
+     -1.35
+    ],
+    [
+     0.625,
+     -1.35
+    ],
+    [
+     0.875,
+     -1.35
+    ],
+    [
+     1.125,
+     -1.35
+    ],
+    [
+     1.375,
+     -1.35
+    ],
+    [
+     1.625,
+     -1.35
+    ],
+    [
+     1.875,
+     -1.35
+    ],
+    [
+     2.125,
+     -1.35
+    ],
+    [
+     2.375,
+     -1.35
+    ],
+    [
+     2.625,
+     -1.35
+    ],
+    [
+     2.875,
+     -1.35
+    ],
+    [
+     3.125,
+     -1.35
+    ],
+    [
+     3.375,
+     -1.35
+    ],
+    [
+     3.625,
+     -1.35
+    ],
+    [
+     3.875,
+     -1.35
+    ],
+    [
+     4.125,
+     -1.35
+    ],
+    [
+     4.375,
+     -1.35
+    ],
+    [
+     4.625,
+     -1.35
+    ],
+    [
+     4.875,
+     -1.35
+    ],
+    [
+     5.125,
+     -1.35
+    ],
+    [
+     5.375,
+     -1.35
+    ],
+    [
+     5.625,
+     -1.35
+    ],
+    [
+     5.875,
+     -1.35
+    ],
+    [
+     6.125,
+     -1.35
+    ],
+    [
+     6.375,
+     -1.35
+    ],
+    [
+     6.625,
+     -1.35
+    ],
+    [
+     6.875,
+     -1.35
+    ],
+    [
+     7.125,
+     -1.35
+    ],
+    [
+     7.375,
+     -1.35
+    ],
+    [
+     7.625,
+     -1.35
+    ],
+    [
+     7.875,
+     -1.35
+    ],
+    [
+     8.125,
+     -1.35
+    ],
+    [
+     8.375,
+     -1.35
+    ],
+    [
+     8.625,
+     -1.35
+    ],
+    [
+     8.875,
+     -1.35
+    ],
+    [
+     9.125,
+     -1.35
+    ],
+    [
+     9.375,
+     -1.35
+    ],
+    [
+     9.625,
+     -1.35
+    ],
+    [
+     9.875,
+     -1.35
+    ],
+    [
+     10.125,
+     -1.35
+    ],
+    [
+     10.375,
+     -1.35
+    ],
+    [
+     10.625,
+     -1.35
+    ],
+    [
+     10.875,
+     -1.35
+    ],
+    [
+     11.125,
+     -1.35
+    ],
+    [
+     11.375,
+     -1.35
+    ],
+    [
+     11.625,
+     -1.35
+    ],
+    [
+     11.875,
+     -1.35
+    ],
+    [
+     12.125,
+     -1.35
+    ],
+    [
+     12.375,
+     -1.35
+    ],
+    [
+     12.625,
+     -1.35
+    ],
+    [
+     12.875,
+     -1.35
+    ],
+    [
+     13.125,
+     -1.35
+    ],
+    [
+     13.375,
+     -1.35
+    ],
+    [
+     13.625,
+     -1.35
+    ],
+    [
+     13.875,
+     -1.35
+    ],
+    [
+     14.125,
+     -1.35
+    ],
+    [
+     14.375,
+     -1.35
+    ],
+    [
+     14.625,
+     -1.35
+    ],
+    [
+     14.875,
+     -1.35
+    ],
+    [
+     15.125,
+     -1.35
+    ],
+    [
+     15.375,
+     -1.35
+    ],
+    [
+     15.625,
+     -1.35
+    ],
+    [
+     15.875,
+     -1.35
+    ],
+    [
+     16.125,
+     -1.35
+    ],
+    [
+     16.375,
+     -1.35
+    ],
+    [
+     16.625,
+     -1.35
+    ],
+    [
+     16.875,
+     -1.35
+    ],
+    [
+     17.125,
+     -1.35
+    ],
+    [
+     17.375,
+     -1.35
+    ],
+    [
+     17.625,
+     -1.35
+    ],
+    [
+     17.875,
+     -1.35
+    ],
+    [
+     18.125,
+     -1.35
+    ],
+    [
+     18.375,
+     -1.35
+    ],
+    [
+     18.625,
+     -1.35
+    ],
+    [
+     18.875,
+     -1.35
+    ],
+    [
+     19.125,
+     -1.35
+    ],
+    [
+     19.375,
+     -1.35
+    ],
+    [
+     19.625,
+     -1.35
+    ],
+    [
+     19.875,
+     -1.35
+    ],
+    [
+     20.125,
+     -1.35
+    ],
+    [
+     20.375,
+     -1.35
+    ],
+    [
+     20.625,
+     -1.35
+    ],
+    [
+     20.875,
+     -1.35
+    ],
+    [
+     21.125,
+     -1.35
+    ],
+    [
+     21.375,
+     -1.35
+    ],
+    [
+     21.625,
+     -1.35
+    ],
+    [
+     21.875,
+     -1.35
+    ],
+    [
+     22.125,
+     -1.35
+    ],
+    [
+     22.375,
+     -1.35
+    ],
+    [
+     22.625,
+     -1.35
+    ],
+    [
+     22.875,
+     -1.35
+    ],
+    [
+     23.125,
+     -1.35
+    ],
+    [
+     23.375,
+     -1.35
+    ],
+    [
+     23.625,
+     -1.35
+    ],
+    [
+     23.875,
+     -1.35
+    ],
+    [
+     24.125,
+     -1.35
+    ],
+    [
+     24.375,
+     -1.35
+    ],
+    [
+     24.625,
+     -1.35
+    ],
+    [
+     24.875,
+     -1.35
+    ],
+    [
+     25.125,
+     -1.35
+    ],
+    [
+     25.375,
+     -1.35
+    ],
+    [
+     25.625,
+     -1.35
+    ],
+    [
+     25.875,
+     -1.35
+    ],
+    [
+     26.125,
+     -1.35
+    ],
+    [
+     26.375,
+     -1.35
+    ],
+    [
+     26.625,
+     -1.35
+    ],
+    [
+     26.875,
+     -1.35
+    ],
+    [
+     27.125,
+     -1.35
+    ],
+    [
+     27.375,
+     -1.35
+    ],
+    [
+     27.625,
+     -1.35
+    ],
+    [
+     27.875,
+     -1.35
+    ],
+    [
+     28.125,
+     -1.35
+    ],
+    [
+     28.375,
+     -1.35
+    ],
+    [
+     28.625,
+     -1.35
+    ],
+    [
+     28.875,
+     -1.35
+    ],
+    [
+     29.125,
+     -1.35
+    ],
+    [
+     29.375,
+     -1.35
+    ],
+    [
+     29.625,
+     -1.35
+    ],
+    [
+     29.875,
+     -1.35
+    ],
+    [
+     30.125,
+     -1.35
+    ],
+    [
+     30.375,
+     -1.35
+    ],
+    [
+     30.625,
+     -1.35
+    ],
+    [
+     30.875,
+     -1.35
+    ],
+    [
+     31.125,
+     -1.35
+    ],
+    [
+     31.375,
+     -1.35
+    ],
+    [
+     31.625,
+     -1.35
+    ],
+    [
+     31.875,
+     -1.35
+    ],
+    [
+     32.125,
+     -1.35
+    ],
+    [
+     32.375,
+     -1.35
+    ],
+    [
+     32.625,
+     -1.35
+    ],
+    [
+     32.875,
+     -1.35
+    ],
+    [
+     33.125,
+     -1.35
+    ],
+    [
+     33.375,
+     -1.35
+    ],
+    [
+     33.625,
+     -1.35
+    ],
+    [
+     33.875,
+     -1.35
+    ],
+    [
+     34.125,
+     -1.35
+    ],
+    [
+     34.375,
+     -1.35
+    ],
+    [
+     34.625,
+     -1.35
+    ],
+    [
+     34.875,
+     -1.35
+    ],
+    [
+     35.125,
+     -1.35
+    ],
+    [
+     35.375,
+     -1.35
+    ],
+    [
+     35.625,
+     -1.35
+    ],
+    [
+     35.875,
+     -1.35
+    ],
+    [
+     36.125,
+     -1.35
+    ],
+    [
+     36.375,
+     -1.35
+    ],
+    [
+     36.625,
+     -1.35
+    ],
+    [
+     36.875,
+     -1.35
+    ],
+    [
+     37.125,
+     -1.35
+    ],
+    [
+     37.375,
+     -1.35
+    ],
+    [
+     37.625,
+     -1.35
+    ],
+    [
+     37.875,
+     -1.35
+    ],
+    [
+     38.125,
+     -1.35
+    ],
+    [
+     38.375,
+     -1.35
+    ],
+    [
+     38.625,
+     -1.35
+    ],
+    [
+     38.875,
+     -1.35
+    ],
+    [
+     39.125,
+     -1.35
+    ],
+    [
+     39.375,
+     -1.35
+    ],
+    [
+     39.625,
+     -1.35
+    ],
+    [
+     39.875,
+     -1.35
+    ],
+    [
+     40.125,
+     -1.35
+    ],
+    [
+     40.375,
+     -1.35
+    ],
+    [
+     40.625,
+     -1.35
+    ],
+    [
+     40.875,
+     -1.35
+    ],
+    [
+     41.125,
+     -1.35
+    ],
+    [
+     41.375,
+     -1.35
+    ],
+    [
+     41.625,
+     -1.35
+    ],
+    [
+     41.875,
+     -1.35
+    ],
+    [
+     42.125,
+     -1.35
+    ],
+    [
+     42.375,
+     -1.35
+    ],
+    [
+     42.625,
+     -1.35
+    ],
+    [
+     42.875,
+     -1.35
+    ],
+    [
+     43.125,
+     -1.35
+    ],
+    [
+     43.375,
+     -1.35
+    ],
+    [
+     43.625,
+     -1.35
+    ],
+    [
+     43.875,
+     -1.35
+    ],
+    [
+     44.125,
+     -1.35
+    ],
+    [
+     44.375,
+     -1.35
+    ],
+    [
+     44.625,
+     -1.35
+    ],
+    [
+     44.875,
+     -1.35
+    ],
+    [
+     45.125,
+     -1.35
+    ],
+    [
+     45.375,
+     -1.35
+    ],
+    [
+     45.625,
+     -1.35
+    ],
+    [
+     45.875,
+     -1.35
+    ],
+    [
+     46.125,
+     -1.35
+    ],
+    [
+     46.375,
+     -1.35
+    ],
+    [
+     46.625,
+     -1.35
+    ],
+    [
+     46.875,
+     -1.35
+    ],
+    [
+     47.125,
+     -1.35
+    ],
+    [
+     47.375,
+     -1.35
+    ],
+    [
+     47.625,
+     -1.35
+    ],
+    [
+     47.875,
+     -1.35
+    ],
+    [
+     48.125,
+     -1.35
+    ],
+    [
+     48.375,
+     -1.35
+    ],
+    [
+     48.625,
+     -1.35
+    ],
+    [
+     48.875,
+     -1.35
+    ],
+    [
+     49.125,
+     -1.35
+    ],
+    [
+     49.375,
+     -1.35
+    ],
+    [
+     49.625,
+     -1.35
+    ],
+    [
+     49.875,
+     -1.35
+    ],
+    [
+     50.125,
+     -1.35
+    ],
+    [
+     50.375,
+     -1.35
+    ],
+    [
+     50.625,
+     -1.35
+    ],
+    [
+     50.875,
+     -1.35
+    ],
+    [
+     51.125,
+     -1.35
+    ],
+    [
+     51.375,
+     -1.35
+    ],
+    [
+     51.625,
+     -1.35
+    ],
+    [
+     51.875,
+     -1.35
+    ],
+    [
+     52.125,
+     -1.35
+    ],
+    [
+     52.375,
+     -1.35
+    ],
+    [
+     52.625,
+     -1.35
+    ],
+    [
+     52.875,
+     -1.35
+    ],
+    [
+     53.125,
+     -1.35
+    ],
+    [
+     53.375,
+     -1.35
+    ],
+    [
+     53.625,
+     -1.35
+    ],
+    [
+     53.875,
+     -1.35
+    ],
+    [
+     54.125,
+     -1.35
+    ],
+    [
+     54.375,
+     -1.35
+    ],
+    [
+     54.625,
+     -1.35
+    ],
+    [
+     54.875,
+     -1.35
+    ],
+    [
+     55.125,
+     -1.35
+    ],
+    [
+     55.375,
+     -1.35
+    ],
+    [
+     55.625,
+     -1.35
+    ],
+    [
+     55.875,
+     -1.35
+    ],
+    [
+     56.125,
+     -1.35
+    ],
+    [
+     56.375,
+     -1.35
+    ],
+    [
+     56.625,
+     -1.35
+    ],
+    [
+     56.875,
+     -1.35
+    ],
+    [
+     57.125,
+     -1.35
+    ],
+    [
+     57.375,
+     -1.35
+    ],
+    [
+     57.625,
+     -1.35
+    ],
+    [
+     57.875,
+     -1.35
+    ],
+    [
+     58.125,
+     -1.35
+    ],
+    [
+     58.375,
+     -1.35
+    ],
+    [
+     58.625,
+     -1.35
+    ],
+    [
+     58.875,
+     -1.35
+    ],
+    [
+     59.125,
+     -1.35
+    ],
+    [
+     59.375,
+     -1.35
+    ],
+    [
+     59.625,
+     -1.35
+    ],
+    [
+     59.875,
+     -1.35
+    ],
+    [
+     60.125,
+     -1.35
+    ],
+    [
+     60.375,
+     -1.35
+    ],
+    [
+     60.625,
+     -1.35
+    ],
+    [
+     60.875,
+     -1.35
+    ],
+    [
+     61.125,
+     -1.35
+    ],
+    [
+     61.375,
+     -1.35
+    ],
+    [
+     61.625,
+     -1.35
+    ],
+    [
+     61.875,
+     -1.35
+    ],
+    [
+     62.125,
+     -1.35
+    ],
+    [
+     62.375,
+     -1.35
+    ],
+    [
+     62.625,
+     -1.35
+    ],
+    [
+     62.875,
+     -1.35
+    ],
+    [
+     63.125,
+     -1.35
+    ],
+    [
+     63.375,
+     -1.35
+    ],
+    [
+     63.625,
+     -1.35
+    ],
+    [
+     63.875,
+     -1.35
+    ],
+    [
+     64.125,
+     -1.35
+    ],
+    [
+     64.375,
+     -1.35
+    ],
+    [
+     64.625,
+     -1.35
+    ],
+    [
+     64.875,
+     -1.35
+    ],
+    [
+     65.125,
+     -1.35
+    ],
+    [
+     65.375,
+     -1.35
+    ],
+    [
+     65.625,
+     -1.35
+    ],
+    [
+     65.875,
+     -1.35
+    ],
+    [
+     66.125,
+     -1.35
+    ],
+    [
+     66.375,
+     -1.35
+    ],
+    [
+     66.625,
+     -1.35
+    ],
+    [
+     66.875,
+     -1.35
+    ],
+    [
+     67.125,
+     -1.35
+    ],
+    [
+     67.375,
+     -1.35
+    ],
+    [
+     67.625,
+     -1.35
+    ],
+    [
+     67.875,
+     -1.35
+    ],
+    [
+     68.125,
+     -1.35
+    ],
+    [
+     68.375,
+     -1.35
+    ],
+    [
+     68.625,
+     -1.35
+    ],
+    [
+     68.875,
+     -1.35
+    ],
+    [
+     69.125,
+     -1.35
+    ],
+    [
+     69.375,
+     -1.35
+    ],
+    [
+     69.625,
+     -1.35
+    ],
+    [
+     69.875,
+     -1.35
+    ],
+    [
+     70.125,
+     -1.35
+    ],
+    [
+     70.375,
+     -1.35
+    ],
+    [
+     70.625,
+     -1.35
+    ],
+    [
+     70.875,
+     -1.35
+    ],
+    [
+     71.125,
+     -1.35
+    ],
+    [
+     71.375,
+     -1.35
+    ],
+    [
+     71.625,
+     -1.35
+    ],
+    [
+     71.875,
+     -1.35
+    ],
+    [
+     72.125,
+     -1.35
+    ],
+    [
+     72.375,
+     -1.35
+    ],
+    [
+     72.625,
+     -1.35
+    ],
+    [
+     72.875,
+     -1.35
+    ],
+    [
+     73.125,
+     -1.35
+    ],
+    [
+     73.375,
+     -1.35
+    ],
+    [
+     73.625,
+     -1.35
+    ],
+    [
+     73.875,
+     -1.35
+    ],
+    [
+     74.125,
+     -1.35
+    ],
+    [
+     74.375,
+     -1.35
+    ],
+    [
+     74.625,
+     -1.35
+    ],
+    [
+     74.875,
+     -1.35
+    ],
+    [
+     75.125,
+     -1.35
+    ],
+    [
+     75.375,
+     -1.35
+    ],
+    [
+     75.625,
+     -1.35
+    ],
+    [
+     75.875,
+     -1.35
+    ],
+    [
+     76.125,
+     -1.35
+    ],
+    [
+     76.375,
+     -1.35
+    ],
+    [
+     76.625,
+     -1.35
+    ],
+    [
+     76.875,
+     -1.35
+    ],
+    [
+     77.125,
+     -1.35
+    ],
+    [
+     77.375,
+     -1.35
+    ],
+    [
+     77.625,
+     -1.35
+    ],
+    [
+     77.875,
+     -1.35
+    ],
+    [
+     78.125,
+     -1.35
+    ],
+    [
+     78.375,
+     -1.35
+    ],
+    [
+     78.625,
+     -1.35
+    ],
+    [
+     78.875,
+     -1.35
+    ],
+    [
+     79.125,
+     -1.35
+    ],
+    [
+     79.375,
+     -1.35
+    ],
+    [
+     79.625,
+     -1.35
+    ],
+    [
+     79.875,
+     -1.35
+    ],
+    [
+     80.125,
+     -1.35
+    ],
+    [
+     80.375,
+     -1.35
+    ],
+    [
+     80.625,
+     -1.35
+    ],
+    [
+     80.875,
+     -1.35
+    ],
+    [
+     81.125,
+     -1.35
+    ],
+    [
+     81.375,
+     -1.35
+    ],
+    [
+     81.625,
+     -1.35
+    ],
+    [
+     81.875,
+     -1.35
+    ],
+    [
+     82.125,
+     -1.35
+    ],
+    [
+     82.375,
+     -1.35
+    ],
+    [
+     82.625,
+     -1.35
+    ],
+    [
+     82.875,
+     -1.35
+    ],
+    [
+     83.125,
+     -1.35
+    ],
+    [
+     83.375,
+     -1.35
+    ],
+    [
+     83.625,
+     -1.35
+    ],
+    [
+     83.875,
+     -1.35
+    ],
+    [
+     84.125,
+     -1.35
+    ],
+    [
+     84.375,
+     -1.35
+    ],
+    [
+     84.625,
+     -1.35
+    ],
+    [
+     84.875,
+     -1.35
+    ],
+    [
+     85.125,
+     -1.35
+    ],
+    [
+     85.375,
+     -1.35
+    ],
+    [
+     85.625,
+     -1.35
+    ],
+    [
+     85.875,
+     -1.35
+    ],
+    [
+     86.125,
+     -1.35
+    ],
+    [
+     86.375,
+     -1.35
+    ],
+    [
+     86.625,
+     -1.35
+    ],
+    [
+     86.875,
+     -1.35
+    ],
+    [
+     87.125,
+     -1.35
+    ],
+    [
+     87.375,
+     -1.35
+    ],
+    [
+     87.625,
+     -1.35
+    ],
+    [
+     87.875,
+     -1.35
+    ],
+    [
+     88.125,
+     -1.35
+    ],
+    [
+     88.375,
+     -1.35
+    ],
+    [
+     88.625,
+     -1.35
+    ],
+    [
+     88.875,
+     -1.35
+    ],
+    [
+     89.125,
+     -1.35
+    ],
+    [
+     89.375,
+     -1.35
+    ],
+    [
+     89.625,
+     -1.35
+    ],
+    [
+     89.875,
+     -1.35
+    ],
+    [
+     90.125,
+     -1.35
+    ],
+    [
+     90.375,
+     -1.35
+    ],
+    [
+     90.625,
+     -1.35
+    ],
+    [
+     90.875,
+     -1.35
+    ],
+    [
+     91.125,
+     -1.35
+    ],
+    [
+     91.375,
+     -1.35
+    ],
+    [
+     91.625,
+     -1.35
+    ],
+    [
+     91.875,
+     -1.35
+    ],
+    [
+     92.125,
+     -1.35
+    ],
+    [
+     92.375,
+     -1.35
+    ],
+    [
+     92.625,
+     -1.35
+    ],
+    [
+     92.875,
+     -1.35
+    ],
+    [
+     93.125,
+     -1.35
+    ],
+    [
+     93.375,
+     -1.35
+    ],
+    [
+     93.625,
+     -1.35
+    ],
+    [
+     93.875,
+     -1.35
+    ],
+    [
+     94.125,
+     -1.35
+    ],
+    [
+     94.375,
+     -1.35
+    ],
+    [
+     94.625,
+     -1.35
+    ],
+    [
+     94.875,
+     -1.35
+    ],
+    [
+     95.125,
+     -1.35
+    ],
+    [
+     95.375,
+     -1.35
+    ],
+    [
+     95.625,
+     -1.35
+    ],
+    [
+     95.875,
+     -1.35
+    ],
+    [
+     96.125,
+     -1.35
+    ],
+    [
+     96.375,
+     -1.35
+    ],
+    [
+     96.625,
+     -1.35
+    ],
+    [
+     96.875,
+     -1.35
+    ],
+    [
+     97.125,
+     -1.35
+    ],
+    [
+     97.375,
+     -1.35
+    ],
+    [
+     97.625,
+     -1.35
+    ],
+    [
+     97.875,
+     -1.35
+    ],
+    [
+     98.125,
+     -1.35
+    ],
+    [
+     98.375,
+     -1.35
+    ],
+    [
+     98.625,
+     -1.35
+    ],
+    [
+     98.875,
+     -1.35
+    ],
+    [
+     99.125,
+     -1.35
+    ],
+    [
+     99.375,
+     -1.35
+    ],
+    [
+     99.625,
+     -1.35
+    ],
+    [
+     99.875,
+     -1.35
+    ],
+    [
+     100.125,
+     -1.35
+    ],
+    [
+     100.375,
+     -1.35
+    ],
+    [
+     100.625,
+     -1.35
+    ],
+    [
+     100.875,
+     -1.35
+    ],
+    [
+     101.125,
+     -1.35
+    ],
+    [
+     101.375,
+     -1.35
+    ],
+    [
+     101.625,
+     -1.35
+    ],
+    [
+     101.875,
+     -1.35
+    ],
+    [
+     102.125,
+     -1.35
+    ],
+    [
+     102.375,
+     -1.35
+    ],
+    [
+     102.625,
+     -1.35
+    ],
+    [
+     102.875,
+     -1.35
+    ],
+    [
+     103.125,
+     -1.35
+    ],
+    [
+     103.375,
+     -1.35
+    ],
+    [
+     103.625,
+     -1.35
+    ],
+    [
+     103.875,
+     -1.35
+    ],
+    [
+     104.125,
+     -1.35
+    ],
+    [
+     104.375,
+     -1.35
+    ],
+    [
+     104.625,
+     -1.35
+    ],
+    [
+     104.875,
+     -1.35
+    ],
+    [
+     105.125,
+     -1.35
+    ],
+    [
+     105.375,
+     -1.35
+    ],
+    [
+     105.625,
+     -1.35
+    ],
+    [
+     105.875,
+     -1.35
+    ],
+    [
+     106.125,
+     -1.35
+    ],
+    [
+     106.375,
+     -1.35
+    ],
+    [
+     106.625,
+     -1.35
+    ],
+    [
+     106.875,
+     -1.35
+    ],
+    [
+     107.125,
+     -1.35
+    ],
+    [
+     107.375,
+     -1.35
+    ],
+    [
+     107.625,
+     -1.35
+    ],
+    [
+     107.875,
+     -1.35
+    ],
+    [
+     108.125,
+     -1.35
+    ],
+    [
+     108.375,
+     -1.35
+    ],
+    [
+     108.625,
+     -1.35
+    ],
+    [
+     108.875,
+     -1.35
+    ],
+    [
+     109.125,
+     -1.35
+    ],
+    [
+     109.375,
+     -1.35
+    ],
+    [
+     109.625,
+     -1.35
+    ],
+    [
+     109.875,
+     -1.35
+    ],
+    [
+     110.125,
+     -1.35
+    ],
+    [
+     110.375,
+     -1.35
+    ],
+    [
+     110.625,
+     -1.35
+    ],
+    [
+     110.875,
+     -1.35
+    ],
+    [
+     111.125,
+     -1.35
+    ],
+    [
+     111.375,
+     -1.35
+    ],
+    [
+     111.625,
+     -1.35
+    ],
+    [
+     111.875,
+     -1.35
+    ],
+    [
+     112.125,
+     -1.35
+    ],
+    [
+     112.375,
+     -1.35
+    ],
+    [
+     112.625,
+     -1.35
+    ],
+    [
+     112.875,
+     -1.35
+    ],
+    [
+     113.125,
+     -1.35
+    ],
+    [
+     113.375,
+     -1.35
+    ],
+    [
+     113.625,
+     -1.35
+    ],
+    [
+     113.875,
+     -1.35
+    ],
+    [
+     114.125,
+     -1.35
+    ],
+    [
+     114.375,
+     -1.35
+    ],
+    [
+     114.625,
+     -1.35
+    ],
+    [
+     114.875,
+     -1.35
+    ],
+    [
+     115.125,
+     -1.35
+    ],
+    [
+     115.375,
+     -1.35
+    ],
+    [
+     115.625,
+     -1.35
+    ],
+    [
+     115.875,
+     -1.35
+    ],
+    [
+     116.125,
+     -1.35
+    ],
+    [
+     116.375,
+     -1.35
+    ],
+    [
+     116.625,
+     -1.35
+    ],
+    [
+     116.875,
+     -1.35
+    ],
+    [
+     117.125,
+     -1.35
+    ],
+    [
+     117.375,
+     -1.35
+    ],
+    [
+     117.625,
+     -1.35
+    ],
+    [
+     117.875,
+     -1.35
+    ],
+    [
+     118.125,
+     -1.35
+    ],
+    [
+     118.375,
+     -1.35
+    ],
+    [
+     118.625,
+     -1.35
+    ],
+    [
+     118.875,
+     -1.35
+    ],
+    [
+     119.125,
+     -1.35
+    ],
+    [
+     119.375,
+     -1.35
+    ],
+    [
+     119.625,
+     -1.35
+    ],
+    [
+     119.875,
+     -1.35
+    ],
+    [
+     120.125,
+     -1.35
+    ],
+    [
+     120.375,
+     -1.35
+    ],
+    [
+     120.625,
+     -1.35
+    ],
+    [
+     120.875,
+     -1.35
+    ],
+    [
+     121.125,
+     -1.35
+    ],
+    [
+     121.375,
+     -1.35
+    ],
+    [
+     121.625,
+     -1.35
+    ],
+    [
+     121.875,
+     -1.35
+    ],
+    [
+     122.125,
+     -1.35
+    ],
+    [
+     122.375,
+     -1.35
+    ],
+    [
+     122.625,
+     -1.35
+    ],
+    [
+     122.875,
+     -1.35
+    ],
+    [
+     123.125,
+     -1.35
+    ],
+    [
+     123.375,
+     -1.35
+    ],
+    [
+     123.625,
+     -1.35
+    ],
+    [
+     123.875,
+     -1.35
+    ],
+    [
+     124.125,
+     -1.35
+    ],
+    [
+     124.375,
+     -1.35
+    ],
+    [
+     124.625,
+     -1.35
+    ],
+    [
+     124.875,
+     -1.35
+    ],
+    [
+     125.125,
+     -1.35
+    ],
+    [
+     125.375,
+     -1.35
+    ],
+    [
+     125.625,
+     -1.35
+    ],
+    [
+     125.875,
+     -1.35
+    ],
+    [
+     126.125,
+     -1.35
+    ],
+    [
+     126.375,
+     -1.35
+    ],
+    [
+     126.625,
+     -1.35
+    ],
+    [
+     126.875,
+     -1.35
+    ],
+    [
+     127.125,
+     -1.35
+    ],
+    [
+     127.375,
+     -1.35
+    ],
+    [
+     127.625,
+     -1.35
+    ],
+    [
+     127.875,
+     -1.35
+    ],
+    [
+     128.125,
+     -1.35
+    ],
+    [
+     128.375,
+     -1.35
+    ],
+    [
+     128.625,
+     -1.35
+    ],
+    [
+     128.875,
+     -1.35
+    ],
+    [
+     129.125,
+     -1.35
+    ],
+    [
+     129.375,
+     -1.35
+    ],
+    [
+     129.625,
+     -1.35
+    ],
+    [
+     129.875,
+     -1.35
+    ],
+    [
+     130.125,
+     -1.35
+    ],
+    [
+     130.375,
+     -1.35
+    ],
+    [
+     130.625,
+     -1.35
+    ],
+    [
+     130.875,
+     -1.35
+    ],
+    [
+     131.125,
+     -1.35
+    ],
+    [
+     131.375,
+     -1.35
+    ],
+    [
+     131.625,
+     -1.35
+    ],
+    [
+     131.875,
+     -1.35
+    ],
+    [
+     132.125,
+     -1.35
+    ],
+    [
+     132.375,
+     -1.35
+    ],
+    [
+     132.625,
+     -1.35
+    ],
+    [
+     132.875,
+     -1.35
+    ],
+    [
+     133.125,
+     -1.35
+    ],
+    [
+     133.375,
+     -1.35
+    ],
+    [
+     133.625,
+     -1.35
+    ],
+    [
+     133.875,
+     -1.35
+    ],
+    [
+     134.125,
+     -1.35
+    ],
+    [
+     134.375,
+     -1.35
+    ],
+    [
+     134.625,
+     -1.35
+    ],
+    [
+     134.875,
+     -1.35
+    ],
+    [
+     135.125,
+     -1.35
+    ],
+    [
+     135.375,
+     -1.35
+    ],
+    [
+     135.625,
+     -1.35
+    ],
+    [
+     135.875,
+     -1.35
+    ],
+    [
+     136.125,
+     -1.35
+    ],
+    [
+     136.375,
+     -1.35
+    ],
+    [
+     136.625,
+     -1.35
+    ],
+    [
+     136.875,
+     -1.35
+    ],
+    [
+     137.125,
+     -1.35
+    ],
+    [
+     137.375,
+     -1.35
+    ],
+    [
+     137.625,
+     -1.35
+    ],
+    [
+     137.875,
+     -1.35
+    ],
+    [
+     138.125,
+     -1.35
+    ],
+    [
+     138.375,
+     -1.35
+    ],
+    [
+     138.625,
+     -1.35
+    ],
+    [
+     138.875,
+     -1.35
+    ],
+    [
+     139.125,
+     -1.35
+    ],
+    [
+     139.375,
+     -1.35
+    ],
+    [
+     139.625,
+     -1.35
+    ],
+    [
+     139.875,
+     -1.35
+    ],
+    [
+     140.125,
+     -1.35
+    ],
+    [
+     140.375,
+     -1.35
+    ],
+    [
+     140.625,
+     -1.35
+    ],
+    [
+     140.875,
+     -1.35
+    ],
+    [
+     141.125,
+     -1.35
+    ],
+    [
+     141.375,
+     -1.35
+    ],
+    [
+     141.625,
+     -1.35
+    ],
+    [
+     141.875,
+     -1.35
+    ],
+    [
+     142.125,
+     -1.35
+    ],
+    [
+     142.375,
+     -1.35
+    ],
+    [
+     142.625,
+     -1.35
+    ],
+    [
+     142.875,
+     -1.35
+    ],
+    [
+     143.125,
+     -1.35
+    ],
+    [
+     143.375,
+     -1.35
+    ],
+    [
+     143.625,
+     -1.35
+    ],
+    [
+     143.875,
+     -1.35
+    ],
+    [
+     144.125,
+     -1.35
+    ],
+    [
+     144.375,
+     -1.35
+    ],
+    [
+     144.625,
+     -1.35
+    ],
+    [
+     144.875,
+     -1.35
+    ],
+    [
+     145.125,
+     -1.35
+    ],
+    [
+     145.375,
+     -1.35
+    ],
+    [
+     145.625,
+     -1.35
+    ],
+    [
+     145.875,
+     -1.35
+    ],
+    [
+     146.125,
+     -1.35
+    ],
+    [
+     146.375,
+     -1.35
+    ],
+    [
+     146.625,
+     -1.35
+    ],
+    [
+     146.875,
+     -1.35
+    ],
+    [
+     147.125,
+     -1.35
+    ],
+    [
+     147.375,
+     -1.35
+    ],
+    [
+     147.625,
+     -1.35
+    ],
+    [
+     147.875,
+     -1.35
+    ],
+    [
+     148.125,
+     -1.35
+    ],
+    [
+     148.375,
+     -1.35
+    ],
+    [
+     148.625,
+     -1.35
+    ],
+    [
+     148.875,
+     -1.35
+    ],
+    [
+     149.125,
+     -1.35
+    ],
+    [
+     149.375,
+     -1.35
+    ],
+    [
+     149.625,
+     -1.35
+    ],
+    [
+     149.875,
+     -1.35
+    ],
+    [
+     150.125,
+     -1.35
+    ],
+    [
+     150.375,
+     -1.35
+    ],
+    [
+     150.625,
+     -1.35
+    ],
+    [
+     150.875,
+     -1.35
+    ],
+    [
+     151.125,
+     -1.35
+    ],
+    [
+     151.375,
+     -1.35
+    ],
+    [
+     151.625,
+     -1.35
+    ],
+    [
+     151.875,
+     -1.35
+    ],
+    [
+     152.125,
+     -1.35
+    ],
+    [
+     152.375,
+     -1.35
+    ],
+    [
+     152.625,
+     -1.35
+    ],
+    [
+     152.875,
+     -1.35
+    ],
+    [
+     153.125,
+     -1.35
+    ],
+    [
+     153.375,
+     -1.35
+    ],
+    [
+     153.625,
+     -1.35
+    ],
+    [
+     153.875,
+     -1.35
+    ],
+    [
+     154.125,
+     -1.35
+    ],
+    [
+     154.375,
+     -1.35
+    ],
+    [
+     154.625,
+     -1.35
+    ],
+    [
+     154.875,
+     -1.35
+    ],
+    [
+     155.125,
+     -1.35
+    ],
+    [
+     155.375,
+     -1.35
+    ],
+    [
+     155.625,
+     -1.35
+    ],
+    [
+     155.875,
+     -1.35
+    ],
+    [
+     156.125,
+     -1.35
+    ],
+    [
+     156.375,
+     -1.35
+    ],
+    [
+     156.625,
+     -1.35
+    ],
+    [
+     156.875,
+     -1.35
+    ],
+    [
+     157.125,
+     -1.35
+    ],
+    [
+     157.375,
+     -1.35
+    ],
+    [
+     157.625,
+     -1.35
+    ],
+    [
+     157.875,
+     -1.35
+    ],
+    [
+     158.125,
+     -1.35
+    ],
+    [
+     158.375,
+     -1.35
+    ],
+    [
+     158.625,
+     -1.35
+    ],
+    [
+     158.875,
+     -1.35
+    ],
+    [
+     159.125,
+     -1.35
+    ],
+    [
+     159.375,
+     -1.35
+    ],
+    [
+     159.625,
+     -1.35
+    ],
+    [
+     159.875,
+     -1.35
+    ],
+    [
+     160.125,
+     -1.35
+    ],
+    [
+     160.375,
+     -1.35
+    ],
+    [
+     160.625,
+     -1.35
+    ],
+    [
+     160.875,
+     -1.35
+    ],
+    [
+     161.125,
+     -1.35
+    ],
+    [
+     161.375,
+     -1.35
+    ],
+    [
+     161.625,
+     -1.35
+    ],
+    [
+     161.875,
+     -1.35
+    ],
+    [
+     162.125,
+     -1.35
+    ],
+    [
+     162.375,
+     -1.35
+    ],
+    [
+     162.625,
+     -1.35
+    ],
+    [
+     162.875,
+     -1.35
+    ],
+    [
+     163.125,
+     -1.35
+    ],
+    [
+     163.375,
+     -1.35
+    ],
+    [
+     163.625,
+     -1.35
+    ],
+    [
+     163.875,
+     -1.35
+    ],
+    [
+     164.125,
+     -1.35
+    ],
+    [
+     164.375,
+     -1.35
+    ],
+    [
+     164.625,
+     -1.35
+    ],
+    [
+     164.875,
+     -1.35
+    ],
+    [
+     165.125,
+     -1.35
+    ],
+    [
+     165.375,
+     -1.35
+    ],
+    [
+     165.625,
+     -1.35
+    ],
+    [
+     165.875,
+     -1.35
+    ],
+    [
+     166.125,
+     -1.35
+    ],
+    [
+     166.375,
+     -1.35
+    ],
+    [
+     166.625,
+     -1.35
+    ],
+    [
+     166.875,
+     -1.35
+    ],
+    [
+     167.125,
+     -1.35
+    ],
+    [
+     167.375,
+     -1.35
+    ],
+    [
+     167.625,
+     -1.35
+    ],
+    [
+     167.875,
+     -1.35
+    ],
+    [
+     168.125,
+     -1.35
+    ],
+    [
+     168.375,
+     -1.35
+    ],
+    [
+     168.625,
+     -1.35
+    ],
+    [
+     168.875,
+     -1.35
+    ],
+    [
+     169.125,
+     -1.35
+    ],
+    [
+     169.375,
+     -1.35
+    ],
+    [
+     169.625,
+     -1.35
+    ],
+    [
+     169.875,
+     -1.35
+    ],
+    [
+     170.125,
+     -1.35
+    ],
+    [
+     170.375,
+     -1.35
+    ],
+    [
+     170.625,
+     -1.35
+    ],
+    [
+     170.875,
+     -1.35
+    ],
+    [
+     171.125,
+     -1.35
+    ],
+    [
+     171.375,
+     -1.35
+    ],
+    [
+     171.625,
+     -1.35
+    ],
+    [
+     171.875,
+     -1.35
+    ],
+    [
+     172.125,
+     -1.35
+    ],
+    [
+     172.375,
+     -1.35
+    ],
+    [
+     172.625,
+     -1.35
+    ],
+    [
+     172.875,
+     -1.35
+    ],
+    [
+     173.125,
+     -1.35
+    ],
+    [
+     173.375,
+     -1.35
+    ],
+    [
+     173.625,
+     -1.35
+    ],
+    [
+     173.875,
+     -1.35
+    ],
+    [
+     174.125,
+     -1.35
+    ],
+    [
+     174.375,
+     -1.35
+    ],
+    [
+     174.625,
+     -1.35
+    ],
+    [
+     174.875,
+     -1.35
+    ],
+    [
+     175.125,
+     -1.35
+    ],
+    [
+     175.375,
+     -1.35
+    ],
+    [
+     175.625,
+     -1.35
+    ],
+    [
+     175.875,
+     -1.35
+    ],
+    [
+     176.125,
+     -1.35
+    ],
+    [
+     176.375,
+     -1.35
+    ],
+    [
+     176.625,
+     -1.35
+    ],
+    [
+     176.875,
+     -1.35
+    ],
+    [
+     177.125,
+     -1.35
+    ],
+    [
+     177.375,
+     -1.35
+    ],
+    [
+     177.625,
+     -1.35
+    ],
+    [
+     177.875,
+     -1.35
+    ],
+    [
+     178.125,
+     -1.35
+    ],
+    [
+     178.375,
+     -1.35
+    ],
+    [
+     178.625,
+     -1.35
+    ],
+    [
+     178.875,
+     -1.35
+    ],
+    [
+     179.125,
+     -1.35
+    ],
+    [
+     179.375,
+     -1.35
+    ],
+    [
+     179.625,
+     -1.35
+    ],
+    [
+     179.875,
+     -1.35
+    ],
+    [
+     180.125,
+     -1.35
+    ],
+    [
+     180.375,
+     -1.35
+    ],
+    [
+     180.625,
+     -1.35
+    ],
+    [
+     180.875,
+     -1.35
+    ],
+    [
+     181.125,
+     -1.35
+    ],
+    [
+     181.375,
+     -1.35
+    ],
+    [
+     181.625,
+     -1.35
+    ],
+    [
+     181.875,
+     -1.35
+    ],
+    [
+     182.125,
+     -1.35
+    ],
+    [
+     182.375,
+     -1.35
+    ],
+    [
+     182.625,
+     -1.35
+    ],
+    [
+     182.875,
+     -1.35
+    ],
+    [
+     183.125,
+     -1.35
+    ],
+    [
+     183.375,
+     -1.35
+    ],
+    [
+     183.625,
+     -1.35
+    ],
+    [
+     183.875,
+     -1.35
+    ],
+    [
+     184.125,
+     -1.35
+    ],
+    [
+     184.375,
+     -1.35
+    ],
+    [
+     184.625,
+     -1.35
+    ],
+    [
+     184.875,
+     -1.35
+    ],
+    [
+     185.125,
+     -1.35
+    ],
+    [
+     185.375,
+     -1.35
+    ],
+    [
+     185.625,
+     -1.35
+    ],
+    [
+     185.875,
+     -1.35
+    ],
+    [
+     186.125,
+     -1.35
+    ],
+    [
+     186.375,
+     -1.35
+    ],
+    [
+     186.625,
+     -1.35
+    ],
+    [
+     186.875,
+     -1.35
+    ],
+    [
+     187.125,
+     -1.35
+    ],
+    [
+     187.375,
+     -1.35
+    ],
+    [
+     187.625,
+     -1.35
+    ],
+    [
+     187.875,
+     -1.35
+    ],
+    [
+     188.125,
+     -1.35
+    ],
+    [
+     188.375,
+     -1.35
+    ],
+    [
+     188.625,
+     -1.35
+    ],
+    [
+     188.875,
+     -1.35
+    ],
+    [
+     189.125,
+     -1.35
+    ],
+    [
+     189.375,
+     -1.35
+    ],
+    [
+     189.625,
+     -1.35
+    ],
+    [
+     189.875,
+     -1.35
+    ],
+    [
+     190.125,
+     -1.35
+    ],
+    [
+     190.375,
+     -1.35
+    ],
+    [
+     190.625,
+     -1.35
+    ],
+    [
+     190.875,
+     -1.35
+    ],
+    [
+     191.125,
+     -1.35
+    ],
+    [
+     191.375,
+     -1.35
+    ],
+    [
+     191.625,
+     -1.35
+    ],
+    [
+     191.875,
+     -1.35
+    ],
+    [
+     192.125,
+     -1.35
+    ],
+    [
+     192.375,
+     -1.35
+    ],
+    [
+     192.625,
+     -1.35
+    ],
+    [
+     192.875,
+     -1.35
+    ],
+    [
+     193.125,
+     -1.35
+    ],
+    [
+     193.375,
+     -1.35
+    ],
+    [
+     193.625,
+     -1.35
+    ],
+    [
+     193.875,
+     -1.35
+    ],
+    [
+     194.125,
+     -1.35
+    ],
+    [
+     194.375,
+     -1.35
+    ],
+    [
+     194.625,
+     -1.35
+    ],
+    [
+     194.875,
+     -1.35
+    ],
+    [
+     195.125,
+     -1.35
+    ],
+    [
+     195.375,
+     -1.35
+    ],
+    [
+     195.625,
+     -1.35
+    ],
+    [
+     195.875,
+     -1.35
+    ],
+    [
+     196.125,
+     -1.35
+    ],
+    [
+     196.375,
+     -1.35
+    ],
+    [
+     196.625,
+     -1.35
+    ],
+    [
+     196.875,
+     -1.35
+    ],
+    [
+     197.125,
+     -1.35
+    ],
+    [
+     197.375,
+     -1.35
+    ],
+    [
+     197.625,
+     -1.35
+    ],
+    [
+     197.875,
+     -1.35
+    ],
+    [
+     198.125,
+     -1.35
+    ],
+    [
+     198.375,
+     -1.35
+    ],
+    [
+     198.625,
+     -1.35
+    ],
+    [
+     198.875,
+     -1.35
+    ],
+    [
+     199.125,
+     -1.35
+    ],
+    [
+     199.375,
+     -1.35
+    ],
+    [
+     199.625,
+     -1.35
+    ],
+    [
+     199.875,
+     -1.35
+    ],
+    [
+     200.125,
+     -1.35
+    ],
+    [
+     200.375,
+     -1.35
+    ],
+    [
+     200.625,
+     -1.35
+    ],
+    [
+     200.875,
+     -1.35
+    ],
+    [
+     201.125,
+     -1.35
+    ],
+    [
+     201.375,
+     -1.35
+    ],
+    [
+     201.625,
+     -1.35
+    ],
+    [
+     201.875,
+     -1.35
+    ],
+    [
+     202.125,
+     -1.35
+    ],
+    [
+     202.375,
+     -1.35
+    ],
+    [
+     202.625,
+     -1.35
+    ],
+    [
+     202.875,
+     -1.35
+    ],
+    [
+     203.125,
+     -1.35
+    ],
+    [
+     203.375,
+     -1.35
+    ],
+    [
+     203.625,
+     -1.35
+    ],
+    [
+     203.875,
+     -1.35
+    ],
+    [
+     204.125,
+     -1.35
+    ],
+    [
+     204.375,
+     -1.35
+    ],
+    [
+     204.625,
+     -1.35
+    ],
+    [
+     204.875,
+     -1.35
+    ],
+    [
+     205.125,
+     -1.35
+    ],
+    [
+     205.375,
+     -1.35
+    ],
+    [
+     205.625,
+     -1.35
+    ],
+    [
+     205.875,
+     -1.35
+    ],
+    [
+     206.125,
+     -1.35
+    ],
+    [
+     206.375,
+     -1.35
+    ],
+    [
+     206.625,
+     -1.35
+    ],
+    [
+     206.875,
+     -1.35
+    ],
+    [
+     207.125,
+     -1.35
+    ],
+    [
+     207.375,
+     -1.35
+    ],
+    [
+     207.625,
+     -1.35
+    ],
+    [
+     207.875,
+     -1.35
+    ],
+    [
+     208.125,
+     -1.35
+    ],
+    [
+     208.375,
+     -1.35
+    ],
+    [
+     208.625,
+     -1.35
+    ],
+    [
+     208.875,
+     -1.35
+    ],
+    [
+     209.125,
+     -1.35
+    ],
+    [
+     209.375,
+     -1.35
+    ],
+    [
+     209.625,
+     -1.35
+    ],
+    [
+     209.875,
+     -1.35
+    ],
+    [
+     210.125,
+     -1.35
+    ],
+    [
+     210.375,
+     -1.35
+    ],
+    [
+     210.625,
+     -1.35
+    ],
+    [
+     210.875,
+     -1.35
+    ],
+    [
+     211.125,
+     -1.35
+    ],
+    [
+     211.375,
+     -1.35
+    ],
+    [
+     211.625,
+     -1.35
+    ],
+    [
+     211.875,
+     -1.35
+    ],
+    [
+     212.125,
+     -1.35
+    ],
+    [
+     212.375,
+     -1.35
+    ],
+    [
+     212.625,
+     -1.35
+    ],
+    [
+     212.875,
+     -1.35
+    ],
+    [
+     213.125,
+     -1.35
+    ],
+    [
+     213.375,
+     -1.35
+    ],
+    [
+     213.625,
+     -1.35
+    ],
+    [
+     213.875,
+     -1.35
+    ],
+    [
+     214.125,
+     -1.35
+    ],
+    [
+     214.375,
+     -1.35
+    ],
+    [
+     214.625,
+     -1.35
+    ],
+    [
+     214.875,
+     -1.35
+    ],
+    [
+     215.125,
+     -1.35
+    ],
+    [
+     215.375,
+     -1.35
+    ],
+    [
+     215.625,
+     -1.35
+    ],
+    [
+     215.875,
+     -1.35
+    ],
+    [
+     216.125,
+     -1.35
+    ],
+    [
+     216.375,
+     -1.35
+    ],
+    [
+     216.625,
+     -1.35
+    ],
+    [
+     216.875,
+     -1.35
+    ],
+    [
+     217.125,
+     -1.35
+    ],
+    [
+     217.375,
+     -1.35
+    ],
+    [
+     217.625,
+     -1.35
+    ],
+    [
+     217.875,
+     -1.35
+    ],
+    [
+     218.125,
+     -1.35
+    ],
+    [
+     218.375,
+     -1.35
+    ],
+    [
+     218.625,
+     -1.35
+    ],
+    [
+     218.875,
+     -1.35
+    ],
+    [
+     219.125,
+     -1.35
+    ],
+    [
+     219.375,
+     -1.35
+    ],
+    [
+     219.625,
+     -1.35
+    ],
+    [
+     219.875,
+     -1.35
+    ],
+    [
+     220.125,
+     -1.35
+    ],
+    [
+     220.375,
+     -1.35
+    ],
+    [
+     220.625,
+     -1.35
+    ],
+    [
+     220.875,
+     -1.35
+    ],
+    [
+     221.125,
+     -1.35
+    ],
+    [
+     221.375,
+     -1.35
+    ],
+    [
+     221.625,
+     -1.35
+    ],
+    [
+     221.875,
+     -1.35
+    ],
+    [
+     222.125,
+     -1.35
+    ],
+    [
+     222.375,
+     -1.35
+    ],
+    [
+     222.625,
+     -1.35
+    ],
+    [
+     222.875,
+     -1.35
+    ],
+    [
+     223.125,
+     -1.35
+    ],
+    [
+     223.375,
+     -1.35
+    ],
+    [
+     223.625,
+     -1.35
+    ],
+    [
+     223.875,
+     -1.35
+    ],
+    [
+     224.125,
+     -1.35
+    ],
+    [
+     224.375,
+     -1.35
+    ],
+    [
+     224.625,
+     -1.35
+    ],
+    [
+     224.875,
+     -1.35
+    ],
+    [
+     225.125,
+     -1.35
+    ],
+    [
+     225.375,
+     -1.35
+    ],
+    [
+     225.625,
+     -1.35
+    ],
+    [
+     225.875,
+     -1.35
+    ],
+    [
+     226.125,
+     -1.35
+    ],
+    [
+     226.375,
+     -1.35
+    ],
+    [
+     226.625,
+     -1.35
+    ],
+    [
+     226.875,
+     -1.35
+    ],
+    [
+     227.125,
+     -1.35
+    ],
+    [
+     227.375,
+     -1.35
+    ],
+    [
+     227.625,
+     -1.35
+    ],
+    [
+     227.875,
+     -1.35
+    ],
+    [
+     228.125,
+     -1.35
+    ],
+    [
+     228.375,
+     -1.35
+    ],
+    [
+     228.625,
+     -1.35
+    ],
+    [
+     228.875,
+     -1.35
+    ],
+    [
+     229.125,
+     -1.35
+    ],
+    [
+     229.375,
+     -1.35
+    ],
+    [
+     229.625,
+     -1.35
+    ],
+    [
+     229.875,
+     -1.35
+    ],
+    [
+     230.125,
+     -1.35
+    ],
+    [
+     230.375,
+     -1.35
+    ],
+    [
+     230.625,
+     -1.35
+    ],
+    [
+     230.875,
+     -1.35
+    ],
+    [
+     231.125,
+     -1.35
+    ],
+    [
+     231.375,
+     -1.35
+    ],
+    [
+     231.625,
+     -1.35
+    ],
+    [
+     231.875,
+     -1.35
+    ],
+    [
+     232.125,
+     -1.35
+    ],
+    [
+     232.375,
+     -1.35
+    ],
+    [
+     232.625,
+     -1.35
+    ],
+    [
+     232.875,
+     -1.35
+    ],
+    [
+     233.125,
+     -1.35
+    ],
+    [
+     233.375,
+     -1.35
+    ],
+    [
+     233.625,
+     -1.35
+    ],
+    [
+     233.875,
+     -1.35
+    ],
+    [
+     234.125,
+     -1.35
+    ],
+    [
+     234.375,
+     -1.35
+    ],
+    [
+     234.625,
+     -1.35
+    ],
+    [
+     234.875,
+     -1.35
+    ],
+    [
+     235.125,
+     -1.35
+    ],
+    [
+     235.375,
+     -1.35
+    ],
+    [
+     235.625,
+     -1.35
+    ],
+    [
+     235.875,
+     -1.35
+    ],
+    [
+     236.125,
+     -1.35
+    ],
+    [
+     236.375,
+     -1.35
+    ],
+    [
+     236.625,
+     -1.35
+    ],
+    [
+     236.875,
+     -1.35
+    ],
+    [
+     237.125,
+     -1.35
+    ],
+    [
+     237.375,
+     -1.35
+    ],
+    [
+     237.625,
+     -1.35
+    ],
+    [
+     237.875,
+     -1.35
+    ],
+    [
+     238.125,
+     -1.35
+    ],
+    [
+     238.375,
+     -1.35
+    ],
+    [
+     238.625,
+     -1.35
+    ],
+    [
+     238.875,
+     -1.35
+    ],
+    [
+     239.125,
+     -1.35
+    ],
+    [
+     239.375,
+     -1.35
+    ],
+    [
+     239.625,
+     -1.35
+    ],
+    [
+     239.875,
+     -1.35
+    ],
+    [
+     240.125,
+     -1.35
+    ],
+    [
+     240.375,
+     -1.35
+    ],
+    [
+     240.625,
+     -1.35
+    ],
+    [
+     240.875,
+     -1.35
+    ],
+    [
+     241.125,
+     -1.35
+    ],
+    [
+     241.375,
+     -1.35
+    ],
+    [
+     241.625,
+     -1.35
+    ],
+    [
+     241.875,
+     -1.35
+    ],
+    [
+     242.125,
+     -1.35
+    ],
+    [
+     242.375,
+     -1.35
+    ],
+    [
+     242.625,
+     -1.35
+    ],
+    [
+     242.875,
+     -1.35
+    ],
+    [
+     243.125,
+     -1.35
+    ],
+    [
+     243.375,
+     -1.35
+    ],
+    [
+     243.625,
+     -1.35
+    ],
+    [
+     243.875,
+     -1.35
+    ],
+    [
+     244.125,
+     -1.35
+    ],
+    [
+     244.375,
+     -1.35
+    ],
+    [
+     244.625,
+     -1.35
+    ],
+    [
+     244.875,
+     -1.35
+    ],
+    [
+     245.125,
+     -1.35
+    ],
+    [
+     245.375,
+     -1.35
+    ],
+    [
+     245.625,
+     -1.35
+    ],
+    [
+     245.875,
+     -1.35
+    ],
+    [
+     246.125,
+     -1.35
+    ],
+    [
+     246.375,
+     -1.35
+    ],
+    [
+     246.625,
+     -1.35
+    ],
+    [
+     246.875,
+     -1.35
+    ],
+    [
+     247.125,
+     -1.35
+    ],
+    [
+     247.375,
+     -1.35
+    ],
+    [
+     247.625,
+     -1.35
+    ],
+    [
+     247.875,
+     -1.35
+    ],
+    [
+     248.125,
+     -1.35
+    ],
+    [
+     248.375,
+     -1.35
+    ],
+    [
+     248.625,
+     -1.35
+    ],
+    [
+     248.875,
+     -1.35
+    ],
+    [
+     249.125,
+     -1.35
+    ],
+    [
+     249.375,
+     -1.35
+    ],
+    [
+     249.625,
+     -1.35
+    ],
+    [
+     249.875,
+     -1.35
+    ],
+    [
+     250.125,
+     -1.35
+    ],
+    [
+     250.375,
+     -1.35
+    ],
+    [
+     250.625,
+     -1.35
+    ],
+    [
+     250.875,
+     -1.35
+    ],
+    [
+     251.125,
+     -1.35
+    ],
+    [
+     251.375,
+     -1.35
+    ],
+    [
+     251.625,
+     -1.35
+    ],
+    [
+     251.875,
+     -1.35
+    ],
+    [
+     252.125,
+     -1.35
+    ],
+    [
+     252.375,
+     -1.35
+    ],
+    [
+     252.625,
+     -1.35
+    ],
+    [
+     252.875,
+     -1.35
+    ],
+    [
+     253.125,
+     -1.35
+    ],
+    [
+     253.375,
+     -1.35
+    ],
+    [
+     253.625,
+     -1.35
+    ],
+    [
+     253.875,
+     -1.35
+    ],
+    [
+     254.125,
+     -1.35
+    ],
+    [
+     254.375,
+     -1.35
+    ],
+    [
+     254.625,
+     -1.35
+    ],
+    [
+     254.875,
+     -1.35
+    ],
+    [
+     255.125,
+     -1.35
+    ],
+    [
+     255.375,
+     -1.35
+    ],
+    [
+     255.625,
+     -1.35
+    ],
+    [
+     255.875,
+     -1.35
+    ],
+    [
+     256.125,
+     -1.35
+    ],
+    [
+     256.375,
+     -1.35
+    ],
+    [
+     256.625,
+     -1.35
+    ],
+    [
+     256.875,
+     -1.35
+    ],
+    [
+     257.125,
+     -1.35
+    ],
+    [
+     257.375,
+     -1.35
+    ],
+    [
+     257.625,
+     -1.35
+    ],
+    [
+     257.875,
+     -1.35
+    ],
+    [
+     258.125,
+     -1.35
+    ],
+    [
+     258.375,
+     -1.35
+    ],
+    [
+     258.625,
+     -1.35
+    ],
+    [
+     258.875,
+     -1.35
+    ],
+    [
+     259.125,
+     -1.35
+    ],
+    [
+     259.375,
+     -1.35
+    ],
+    [
+     259.625,
+     -1.35
+    ],
+    [
+     259.875,
+     -1.35
+    ],
+    [
+     260.125,
+     -1.35
+    ],
+    [
+     260.375,
+     -1.35
+    ],
+    [
+     260.625,
+     -1.35
+    ],
+    [
+     260.875,
+     -1.35
+    ],
+    [
+     261.125,
+     -1.35
+    ],
+    [
+     261.375,
+     -1.35
+    ],
+    [
+     261.625,
+     -1.35
+    ],
+    [
+     261.875,
+     -1.35
+    ],
+    [
+     262.125,
+     -1.35
+    ],
+    [
+     262.375,
+     -1.35
+    ],
+    [
+     262.625,
+     -1.35
+    ],
+    [
+     262.875,
+     -1.35
+    ],
+    [
+     263.125,
+     -1.35
+    ],
+    [
+     263.375,
+     -1.35
+    ],
+    [
+     263.625,
+     -1.35
+    ],
+    [
+     263.875,
+     -1.35
+    ]
+   ],
+   "fields": [
+    "B1",
+    "B2"
+   ],
+   "steps": [
+    "f100"
+   ],
+   "note": "2112 points every 0.25 mm along the middle of the gap, over Figs. 6-7's 528 mm window centred on the primary."
+  }
+ ],
+ "metrics": [
+  {
+   "name": "thrust_N",
+   "value": [
+    "fx_primary",
+    0
+   ],
+   "scale": -1,
+   "unit": "N",
+   "note": "Propulsion: the force on the primary opposite to the travelling field (which moves toward +x, the front end, under Eqs. (1)-(3) and Fig. 1), so -F_x in the drawing's frame; the paper plots it positive."
+  },
+  {
+   "name": "normal_N",
+   "value": [
+    "fy_primary",
+    0
+   ],
+   "unit": "N",
+   "note": "F_y on the primary; negative is attraction toward the secondary."
+  },
+  {
+   "name": "normal_t0_N",
+   "terms": [
+    [
+     "fy_primary",
+     0,
+     1
+    ],
+    [
+     "fy2_primary",
+     0,
+     1
+    ]
+   ],
+   "unit": "N",
+   "note": "The normal force at t = 0 (i_A = I_p): the mean plus the double-frequency part's real part."
+  },
+  {
+   "name": "thrust_t0_N",
+   "terms": [
+    [
+     "fx_primary",
+     0,
+     -1
+    ],
+    [
+     "fx2_primary",
+     0,
+     -1
+    ]
+   ],
+   "unit": "N"
+  },
+  {
+   "name": "plate_thrust_lorentz_N",
+   "value": [
+    "plate_lorentz_x",
+    0
+   ],
+   "unit": "N"
+  },
+  {
+   "name": "plate_normal_lorentz_N",
+   "value": [
+    "plate_lorentz_y",
+    0
+   ],
+   "unit": "N"
+  },
+  {
+   "name": "plate_loss_W",
+   "value": [
+    "plate_loss",
+    0
+   ],
+   "unit": "W"
+  },
+  {
+   "name": "back_iron_loss_W",
+   "value": [
+    "back_iron_loss",
+    0
+   ],
+   "unit": "W"
+  },
+  {
+   "name": "flux_linkage_A_Wb",
+   "value": [
+    "A",
+    2
+   ],
+   "part": "abs",
+   "unit": "Wb"
+  },
+  {
+   "name": "flux_linkage_B_Wb",
+   "value": [
+    "B",
+    2
+   ],
+   "part": "abs",
+   "unit": "Wb"
+  },
+  {
+   "name": "flux_linkage_C_Wb",
+   "value": [
+    "C",
+    2
+   ],
+   "part": "abs",
+   "unit": "Wb"
+  },
+  {
+   "name": "voltage_A_V",
+   "value": [
+    "A",
+    1
+   ],
+   "part": "abs",
+   "unit": "V"
+  },
+  {
+   "name": "voltage_B_V",
+   "value": [
+    "B",
+    1
+   ],
+   "part": "abs",
+   "unit": "V"
+  },
+  {
+   "name": "voltage_C_V",
+   "value": [
+    "C",
+    1
+   ],
+   "part": "abs",
+   "unit": "V"
+  }
+ ],
+ "targets": [
+  {
+   "metric": "thrust_N@f000",
+   "value": 0.0,
+   "unit": "N",
+   "kind": "digitized",
+   "absolute_tolerance": 0.05,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 0 Hz",
+   "note": "No thrust without eddy currents; a comparator."
+  },
+  {
+   "metric": "normal_N@f000",
+   "value": -77.815,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 0 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f005",
+   "value": 3.731,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 5 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f005",
+   "value": -74.664,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 5 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f010",
+   "value": 6.71,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 10 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f010",
+   "value": -71.83,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 10 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f015",
+   "value": 9.38,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 15 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f015",
+   "value": -69.123,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 15 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f020",
+   "value": 11.755,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 20 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f020",
+   "value": -66.253,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 20 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f025",
+   "value": 13.837,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 25 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f025",
+   "value": -63.225,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 25 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f030",
+   "value": 15.637,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 30 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f030",
+   "value": -60.089,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 30 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f035",
+   "value": 17.174,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 35 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f035",
+   "value": -56.908,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 35 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f040",
+   "value": 18.465,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 40 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f040",
+   "value": -53.734,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 40 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f045",
+   "value": 19.535,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 45 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f045",
+   "value": -50.612,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 45 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f050",
+   "value": 20.409,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 50 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f050",
+   "value": -47.571,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 50 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f055",
+   "value": 21.105,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 55 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f055",
+   "value": -44.639,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 55 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f060",
+   "value": 21.649,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 60 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f060",
+   "value": -41.83,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 60 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f065",
+   "value": 22.06,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 65 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f065",
+   "value": -39.154,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 65 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f070",
+   "value": 22.354,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 70 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f070",
+   "value": -36.616,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 70 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f075",
+   "value": 22.55,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 75 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f075",
+   "value": -34.216,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 75 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f080",
+   "value": 22.661,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 80 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f080",
+   "value": -31.953,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 80 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f085",
+   "value": 22.699,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 85 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f085",
+   "value": -29.826,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 85 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f090",
+   "value": 22.678,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 90 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f090",
+   "value": -27.825,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 90 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f095",
+   "value": 22.603,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 95 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f095",
+   "value": -25.947,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 95 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "thrust_N@f100",
+   "value": 22.486,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx FEM' marker at 100 Hz",
+   "note": "The paper's 2D FEA thrust (the cross marker's centre on Fig. 9's gridlines, 0.534 N per point)."
+  },
+  {
+   "metric": "normal_N@f100",
+   "value": -24.187,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 100 Hz",
+   "note": "The paper's 2D FEA normal force on the primary (the circle marker's centre)."
+  },
+  {
+   "metric": "normal_N@f000",
+   "value": -77.999,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 0 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f000",
+   "value": -78.0,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 0 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f005",
+   "value": 3.757,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 5 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f005",
+   "value": -75.43,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 5 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f005",
+   "value": 3.5,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 5 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f005",
+   "value": -76.0,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 5 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f010",
+   "value": 6.768,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 10 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f010",
+   "value": -72.688,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 10 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f010",
+   "value": 6.6,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 10 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f010",
+   "value": -73.5,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 10 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates. The exported line has no vertex here (collinear points dropped): read on the straight line between its neighbours."
+  },
+  {
+   "metric": "thrust_N@f015",
+   "value": 9.475,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 15 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f015",
+   "value": -69.997,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 15 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f015",
+   "value": 9.6,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 15 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f015",
+   "value": -71.0,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 15 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f020",
+   "value": 11.886,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 20 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f020",
+   "value": -67.105,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 20 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f020",
+   "value": 12.2,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 20 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f020",
+   "value": -69.0,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 20 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f025",
+   "value": 14.002,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 25 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f025",
+   "value": -64.033,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 25 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f025",
+   "value": 14.5,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 25 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f025",
+   "value": -65.0,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 25 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f030",
+   "value": 15.834,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 30 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f030",
+   "value": -60.85,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 30 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f030",
+   "value": 16.4,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 30 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f030",
+   "value": -62.0,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 30 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f035",
+   "value": 17.398,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 35 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f035",
+   "value": -57.62,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 35 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f035",
+   "value": 18.0,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 35 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f035",
+   "value": -58.5,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 35 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f040",
+   "value": 18.714,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 40 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f040",
+   "value": -54.4,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 40 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f040",
+   "value": 19.4,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 40 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f040",
+   "value": -55.3,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 40 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f045",
+   "value": 19.805,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 45 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f045",
+   "value": -51.234,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 45 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f045",
+   "value": 20.4,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 45 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f045",
+   "value": -52.0,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 45 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f050",
+   "value": 20.693,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 50 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f050",
+   "value": -48.158,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 50 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f050",
+   "value": 21.3,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 50 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f050",
+   "value": -49.8,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 50 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f055",
+   "value": 21.404,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 55 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f055",
+   "value": -45.195,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 55 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f055",
+   "value": 22.0,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 55 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f055",
+   "value": -45.7,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 55 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f060",
+   "value": 21.961,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 60 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f060",
+   "value": -42.361,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 60 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f060",
+   "value": 22.4,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 60 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f060",
+   "value": -43.0,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 60 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f065",
+   "value": 22.38,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 65 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f065",
+   "value": -39.664,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 65 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f065",
+   "value": 22.7,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 65 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f065",
+   "value": -40.2,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 65 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f070",
+   "value": 22.683,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 70 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f070",
+   "value": -37.107,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 70 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f070",
+   "value": 22.9,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 70 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f070",
+   "value": -37.7,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 70 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f075",
+   "value": 22.883,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 75 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f075",
+   "value": -34.692,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 75 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f075",
+   "value": 23.1,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 75 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f075",
+   "value": -35.3,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 75 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f080",
+   "value": 22.999,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 80 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f080",
+   "value": -32.417,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 80 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f080",
+   "value": 23.1,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 80 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f080",
+   "value": -33.3,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 80 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f085",
+   "value": 23.04,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 85 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f085",
+   "value": -30.275,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 85 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f085",
+   "value": 23.2,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 85 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f085",
+   "value": -31.6,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 85 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f090",
+   "value": 23.021,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 90 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f090",
+   "value": -28.263,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 90 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f090",
+   "value": 23.1,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 90 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates. The exported line has no vertex here (collinear points dropped): read on the straight line between its neighbours."
+  },
+  {
+   "metric": "normal_N@f090",
+   "value": -29.4,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 90 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f095",
+   "value": 22.948,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 95 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f095",
+   "value": -26.375,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 95 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f095",
+   "value": 23.0,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 95 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f095",
+   "value": -27.6,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 95 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates. The exported line has no vertex here (collinear points dropped): read on the straight line between its neighbours."
+  },
+  {
+   "metric": "thrust_N@f100",
+   "value": 22.831,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx HAM' marker at 100 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "normal_N@f100",
+   "value": -24.603,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy HAM' marker at 100 Hz",
+   "note": "The hybrid analytic model, a comparator at the 1.7% the paper reports between it and its FEA (the triangle marker's centroid for F_y)."
+  },
+  {
+   "metric": "thrust_N@f100",
+   "value": 22.7,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fx meas' line at 100 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "normal_N@f100",
+   "value": -25.8,
+   "unit": "N",
+   "kind": "measured",
+   "relative_tolerance": 0.03,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy meas' line at 100 Hz",
+   "note": "Static measurement (load cell, fixed secondary and primary), a comparator: it includes the 3D transverse edge and end-winding effects the 2D model only approximates."
+  },
+  {
+   "metric": "thrust_N@f050",
+   "value": 20.4,
+   "unit": "N",
+   "kind": "analytic",
+   "relative_tolerance": 0.017,
+   "used_for_acceptance": false,
+   "quote": "the total thrust force in Case 1 was Fx = 20.4 N",
+   "location": "Section 3, p. 11",
+   "note": "Attributed to the hybrid model (Case 1: v = 0, 50 Hz); Fig. 9's FEA marker reads 20.409 N there and its HAM marker 20.693 N, so the text's value is the FEA's. A comparator."
+  },
+  {
+   "metric": "normal_t0_N@f000",
+   "value": -77.815,
+   "unit": "N",
+   "kind": "digitized",
+   "relative_tolerance": 0.01,
+   "absolute_digitization_uncertainty": 0.01,
+   "used_for_acceptance": false,
+   "quote": "Normal and thrust force for different frequency",
+   "location": "Fig. 9, p. 10 (vector art): the 'Fy FEM' marker at 0 Hz",
+   "note": "The other reading of '0 Hz': a static solve at the instant i_A = I_p, i_B = i_C = -I_p/2 instead of the AC limit's time average. A comparator."
+  }
+ ],
+ "assessors": [
+  {
+   "kind": "field_statistic",
+   "measurement": "gapline",
+   "field": "B1",
+   "step": "f100",
+   "statistic": "rms",
+   "value": 0.03127,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Magnetic flux density in normal direction in the middle of the air gap",
+   "location": "Fig. 6, p. 9 (vector art), FEM curve, labelled Bx",
+   "note": "B_x (tangential): Fig. 6's axis reads Bx while its caption says normal; the axis label is taken (gaps). The rms over the 528 mm window of the FEM curve (752 vertices, every 0.5 mm, read on the gridlines; the field outside the window is below 0.0004 T). It does not depend on where the curve sits along x or on its sampling at the sharp peaks (decimating the curve to 1 mm moves it 0.35%). The plotted field is the phasor's real part at t = 0 under Eqs. (1)-(3).",
+   "digitization_uncertainty": 0.002
+  },
+  {
+   "kind": "field_statistic",
+   "measurement": "gapline",
+   "field": "B2",
+   "step": "f100",
+   "statistic": "rms",
+   "value": 0.0598,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": true,
+   "quote": "Magnetic flux density in longitudinal direction in the middle of the air gap",
+   "location": "Fig. 7, p. 9 (vector art), FEM curve, labelled By",
+   "note": "B_y (normal), by the same reading. The rms over the 528 mm window of the FEM curve (752 vertices, every 0.5 mm, read on the gridlines; the field outside the window is below 0.0004 T). It does not depend on where the curve sits along x or on its sampling at the sharp peaks (decimating the curve to 1 mm moves it 0.35%). The plotted field is the phasor's real part at t = 0 under Eqs. (1)-(3).",
+   "digitization_uncertainty": 0.002
+  },
+  {
+   "kind": "field_statistic",
+   "measurement": "gapline",
+   "field": "B2",
+   "step": "f100",
+   "statistic": "rms",
+   "value": 0.03127,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "Magnetic flux density in normal direction in the middle of the air gap",
+   "location": "Fig. 6, p. 9 (vector art)",
+   "note": "The caption's reading (Fig. 6 normal, B_y), a comparator.",
+   "digitization_uncertainty": 0.002,
+   "label": "caption"
+  },
+  {
+   "kind": "field_statistic",
+   "measurement": "gapline",
+   "field": "B1",
+   "step": "f100",
+   "statistic": "rms",
+   "value": 0.0598,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.01,
+   "used_for_acceptance": false,
+   "quote": "Magnetic flux density in longitudinal direction in the middle of the air gap",
+   "location": "Fig. 7, p. 9 (vector art)",
+   "note": "The caption's reading (Fig. 7 longitudinal, B_x), a comparator.",
+   "digitization_uncertainty": 0.002,
+   "label": "caption"
+  },
+  {
+   "kind": "field_statistic",
+   "measurement": "gapline",
+   "field": "B1",
+   "step": "f100",
+   "statistic": "maximum",
+   "value": 0.12066,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.05,
+   "used_for_acceptance": false,
+   "quote": "Magnetic flux density in normal direction in the middle of the air gap",
+   "location": "Fig. 6, p. 9 (vector art), FEM curve",
+   "note": "The curve's maximum at 0.5 mm sampling: its peaks are a millimetre wide, so the sampling and the mesh near the slot corners move it by several percent; a comparator."
+  },
+  {
+   "kind": "field_statistic",
+   "measurement": "gapline",
+   "field": "B1",
+   "step": "f100",
+   "statistic": "minimum",
+   "value": -0.12123,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.05,
+   "used_for_acceptance": false,
+   "quote": "Magnetic flux density in normal direction in the middle of the air gap",
+   "location": "Fig. 6, p. 9 (vector art), FEM curve",
+   "note": "The curve's minimum at 0.5 mm sampling: its peaks are a millimetre wide, so the sampling and the mesh near the slot corners move it by several percent; a comparator."
+  },
+  {
+   "kind": "field_statistic",
+   "measurement": "gapline",
+   "field": "B2",
+   "step": "f100",
+   "statistic": "maximum",
+   "value": 0.20681,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.05,
+   "used_for_acceptance": false,
+   "quote": "Magnetic flux density in longitudinal direction in the middle of the air gap",
+   "location": "Fig. 7, p. 9 (vector art), FEM curve",
+   "note": "The curve's maximum at 0.5 mm sampling: its peaks are a millimetre wide, so the sampling and the mesh near the slot corners move it by several percent; a comparator."
+  },
+  {
+   "kind": "field_statistic",
+   "measurement": "gapline",
+   "field": "B2",
+   "step": "f100",
+   "statistic": "minimum",
+   "value": -0.21379,
+   "value_kind": "digitized",
+   "relative_tolerance": 0.05,
+   "used_for_acceptance": false,
+   "quote": "Magnetic flux density in longitudinal direction in the middle of the air gap",
+   "location": "Fig. 7, p. 9 (vector art), FEM curve",
+   "note": "The curve's minimum at 0.5 mm sampling: its peaks are a millimetre wide, so the sampling and the mesh near the slot corners move it by several percent; a comparator."
+  }
+ ],
+ "controls": [
+  {
+   "id": "mesh-0p75",
+   "level": "article",
+   "mesh_scale": 0.75,
+   "purpose": "Every explicit element size at 0.75 times (about 1.8 times the elements)."
+  },
+  {
+   "id": "mesh-1p4",
+   "level": "article",
+   "mesh_scale": 1.4,
+   "purpose": "Every explicit element size at 1.4 times: the coarse side of the mesh study."
+  },
+  {
+   "id": "conductor-reading",
+   "level": "article",
+   "parameters": {
+    "gap_layer_current_sign": 1
+   },
+   "purpose": "The labels as conductor directions: the gap-side layer carries its drawn sign, 120 electrical degrees from the yoke-side layer (pre-solve estimate: thrust -55%, normal force -23% at 0 Hz and -62% at 50 Hz)."
+  },
+  {
+   "id": "russell-norsworthy",
+   "level": "article",
+   "parameters": {
+    "transverse_edge_factor": 0.6953
+   },
+   "purpose": "Table 1's 17 MS/m read as the plate's own conductivity, reduced by the Russell-Norsworthy factor for a 100 mm wide plate (25 mm overhang each side of the 50 mm stack; tau 48 mm): 1 - tanh(ka)/(ka (1 + tanh(ka) tanh(k c'))) = 0.6953 with k = pi/tau, a = 25 mm, c' = 25 mm (pre-solve estimate: thrust -17%, normal force +18% at 50 Hz)."
+  },
+  {
+   "id": "period-528",
+   "level": "article",
+   "parameters": {
+    "period_pole_pitches": 11
+   },
+   "purpose": "A 528 mm period, the window Figs. 6-7 draw with the primary at its centre (pre-solve estimate: forces unchanged to 5 digits)."
+  },
+  {
+   "id": "air-300",
+   "level": "article",
+   "parameters": {
+    "air_height_mm": 300
+   },
+   "purpose": "A = 0 twice as far above and below."
+  },
+  {
+   "id": "ends-regular",
+   "level": "article",
+   "parameters": {
+    "end_tooth_width_mm": 6,
+    "end_slot_width_mm": 10
+   },
+   "purpose": "Regular end teeth and end slots instead of the drawing's 10 and 8 mm (a 262 mm primary; pre-solve estimate: under 0.1%)."
+  }
+ ],
+ "engine": {
+  "solves_per_process": 7
+ },
+ "coverage": {
+  "scope": "partial",
+  "reproduced": "The 2D FEA thrust and normal force from 0 to 100 Hz at standstill (Fig. 9, 41 acceptance values) and the mid-gap flux density components at 100 Hz (Figs. 6-7, rms over the plotted window); the hybrid model's and the measured forces and the text's 20.4 N as comparators.",
+  "not_reproduced": "The moving case (Case 2, v = 10 m/s: FEMM has no velocity term), Fig. 10's harmonic decomposition and the Joule losses (no value given); the transverse edge effect is in the plate's reduced conductivity, as in the paper."
+ },
+ "geometry_checks": [
+  {
+   "quantity": "slot pitch (mm)",
+   "paper_value": 16,
+   "model_value": 16,
+   "location": "Table 1 (ws + wt)"
+  },
+  {
+   "quantity": "pole pitch tau_1 (mm)",
+   "paper_value": 12,
+   "model_value": 48,
+   "location": "Table 1; Fig. 2; Eq. (30)",
+   "note": "Table 1's 12 mm conflicts with everything else (gaps); 48 mm is Fig. 2's arrow and the slip definition's."
+  },
+  {
+   "quantity": "periodic length tau_per (mm)",
+   "paper_value": 576,
+   "model_value": 576,
+   "location": "Section 3 (12 tau_1)",
+   "note": "K = 576 MEC elements over it; Figs. 6-7 draw a 528 mm window."
+  },
+  {
+   "quantity": "primary length (mm)",
+   "paper_value": 266.0,
+   "model_value": 266,
+   "location": "Figs. 1 and 2",
+   "note": "266.0 mm in both drawings at their own x scales."
+  },
+  {
+   "quantity": "coils x turns",
+   "paper_value": 684,
+   "model_value": 684,
+   "location": "Fig. 1; Table 1",
+   "note": "Twelve coils of 57 turns: four per phase."
+  },
+  {
+   "quantity": "Fx HAM/FEM at 100 Hz",
+   "paper_value": 1.015,
+   "model_value": 1.0153,
+   "location": "Section 3 ('within 1.5%') against Fig. 9",
+   "note": "The text's agreement is Fig. 9's (22.831 against 22.486 N)."
+  },
+  {
+   "quantity": "Fy HAM/FEM at 100 Hz",
+   "paper_value": 1.017,
+   "model_value": 1.0172,
+   "location": "Section 3 ('1.7%') against Fig. 9",
+   "note": "-24.603 against -24.187 N."
+  },
+  {
+   "quantity": "Fx at 50 Hz (N)",
+   "paper_value": 20.4,
+   "model_value": 20.409,
+   "location": "Section 3 text against Fig. 9",
+   "note": "The text's 'Case 1' thrust is Fig. 9's FEA marker (20.409 N), not its HAM marker (20.693 N)."
+  }
+ ],
+ "findings": [],
+ "retrospective": []
 }

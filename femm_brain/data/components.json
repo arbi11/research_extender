@@ -3399,6 +3399,412 @@
     "Barriers lie outside one another (each p at least the previous p plus width), end inside their pole and keep their ends beyond their bends.",
     "The rotor surface, core label and shaft are drawn separately; the rib must leave the barrier ends inside the rotor."
    ]
+  },
+  {
+   "id": "linear_slotted_core",
+   "layer": 2,
+   "title": "Straight slotted core of a linear machine",
+   "description": "The slotted primary (or stator) of a linear machine: rectangular slots and teeth along x with their tips on one face and a yoke behind them, end teeth (yoke overhangs) and first and last slots that may differ from the rest, open slots or tooth shoes (semi-closed), closures across the slot openings and, with shoes, across the shoe tops, and layer dividers that split each slot's coil area into equal layers stacked along y. The iron is one region. Windings are placed in the same geometry by linear_winding.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "start",
+     "type": "number",
+     "description": "x of the core's first (left) end",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "face",
+     "type": "number",
+     "description": "y of the tooth tips (the face toward the air gap)",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "slot_count",
+     "type": "integer",
+     "description": "Number of slots",
+     "required": true,
+     "minimum": 1
+    },
+    {
+     "name": "slot_width",
+     "type": "number",
+     "description": "Width of the slots along x",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "tooth_width",
+     "type": "number",
+     "description": "Width of the teeth between slots",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "slot_depth",
+     "type": "number",
+     "description": "Depth of the slots from the face to the slot bottom",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "yoke_height",
+     "type": "number",
+     "description": "Height of the yoke behind the slot bottoms",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "end_tooth_width",
+     "type": "number_or_pair",
+     "description": "Iron between each end of the core and its first or last slot (a yoke overhang included): one width or [left, right]; the tooth width by default",
+     "required": false,
+     "unit": "model length",
+     "default": null
+    },
+    {
+     "name": "end_slot_width",
+     "type": "number_or_pair",
+     "description": "Width of the first and last slots: one width or [left, right]; the slot width by default",
+     "required": false,
+     "unit": "model length",
+     "default": null
+    },
+    {
+     "name": "facing",
+     "type": "string",
+     "description": "Which way the slots open: down (the core lies above the face, toward -y openings) or up",
+     "required": false,
+     "choices": [
+      "down",
+      "up"
+     ],
+     "default": "down"
+    },
+    {
+     "name": "opening_width",
+     "type": "number",
+     "description": "Width of each slot's opening between tooth shoes (semi-closed slots); open slots by default",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0,
+     "default": null
+    },
+    {
+     "name": "shoe_height",
+     "type": "number",
+     "description": "Height of the tooth shoes from the face; zero for open slots",
+     "required": false,
+     "unit": "model length",
+     "minimum": 0,
+     "default": 0
+    },
+    {
+     "name": "layers",
+     "type": "integer",
+     "description": "Equal layers stacked along y in each slot's coil area",
+     "required": false,
+     "minimum": 1,
+     "default": 1
+    },
+    {
+     "name": "close_slots",
+     "type": "boolean",
+     "description": "Close each slot on the face (and at the shoe tops), so its regions can be labelled",
+     "required": false,
+     "default": true
+    },
+    {
+     "name": "iron_material",
+     "type": "string",
+     "description": "Material of the core's iron, labelled in the yoke",
+     "required": false,
+     "default": null
+    },
+    {
+     "name": "iron_mesh",
+     "type": "number",
+     "description": "Element size in the iron",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0,
+     "default": null
+    },
+    {
+     "name": "opening_material",
+     "type": "string",
+     "description": "Material between the tooth shoes (needed with shoes and closed slots)",
+     "required": false,
+     "default": null
+    },
+    {
+     "name": "opening_mesh",
+     "type": "number",
+     "description": "Element size between the shoes",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0,
+     "default": null
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the core's contours and labels",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addnode",
+    "addsegment",
+    "addblocklabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "segment",
+    "block_label"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": [
+    "At least one slot; slot, tooth, end-tooth and end-slot widths positive; a single slot has one width.",
+    "Shoes need both an opening width and a shoe height, the opening narrower than every slot and the shoes lower than the slot depth.",
+    "Closed semi-closed slots label the region between the shoes; layer dividers need closed slots.",
+    "Every slot has the same depth and the same layers; the air around the core and the gap are separate components."
+   ]
+  },
+  {
+   "id": "linear_winding",
+   "layer": 2,
+   "title": "Winding in the slots of a straight core",
+   "description": "Places block labels with circuits and signed turns in the layers of a linear_slotted_core's slots (the same geometry parameters), layers numbered from the face toward the yoke. The winding is a slot-by-slot pattern of each layer's [circuit, signed turns] or null, as a drawing labels its conductors, or coils from a repeated [circuit, polarity] sequence: coil k's go side in slot first_slot + k and layer go_layer, its return side coil_pitch slots along in return_layer with the opposite sign. Double-layer lap windings with any coil pitch, single-layer windings (go and return in one layer) and the half-filled end slots of a finite primary follow; a periodic core wraps coil sides around. Empty layers are labelled with empty_material.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "start",
+     "type": "number",
+     "description": "x of the core's first (left) end",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "face",
+     "type": "number",
+     "description": "y of the tooth tips (the face toward the air gap)",
+     "required": true,
+     "unit": "model length"
+    },
+    {
+     "name": "slot_count",
+     "type": "integer",
+     "description": "Number of slots",
+     "required": true,
+     "minimum": 1
+    },
+    {
+     "name": "slot_width",
+     "type": "number",
+     "description": "Width of the slots along x",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "tooth_width",
+     "type": "number",
+     "description": "Width of the teeth between slots",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "slot_depth",
+     "type": "number",
+     "description": "Depth of the slots from the face to the slot bottom",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "material",
+     "type": "string",
+     "description": "Material of the coil sides",
+     "required": true
+    },
+    {
+     "name": "end_tooth_width",
+     "type": "number_or_pair",
+     "description": "Iron between each end of the core and its first or last slot (a yoke overhang included): one width or [left, right]; the tooth width by default",
+     "required": false,
+     "unit": "model length",
+     "default": null
+    },
+    {
+     "name": "end_slot_width",
+     "type": "number_or_pair",
+     "description": "Width of the first and last slots: one width or [left, right]; the slot width by default",
+     "required": false,
+     "unit": "model length",
+     "default": null
+    },
+    {
+     "name": "facing",
+     "type": "string",
+     "description": "Which way the slots open: down (the core lies above the face, toward -y openings) or up",
+     "required": false,
+     "choices": [
+      "down",
+      "up"
+     ],
+     "default": "down"
+    },
+    {
+     "name": "shoe_height",
+     "type": "number",
+     "description": "Height of the core's tooth shoes, below the coil area",
+     "required": false,
+     "unit": "model length",
+     "minimum": 0,
+     "default": 0
+    },
+    {
+     "name": "layers",
+     "type": "integer",
+     "description": "Layers in each slot's coil area, as the core divides it",
+     "required": false,
+     "minimum": 1,
+     "default": 1
+    },
+    {
+     "name": "pattern",
+     "type": "list",
+     "description": "For every slot, each layer's [circuit, signed turns] or null for an empty layer",
+     "required": false,
+     "default": null
+    },
+    {
+     "name": "sequence",
+     "type": "list",
+     "description": "[circuit, polarity +1 or -1] of consecutive coils, repeated",
+     "required": false,
+     "default": null
+    },
+    {
+     "name": "coil_pitch",
+     "type": "integer",
+     "description": "Slots from a coil's go side to its return side (negative toward -x)",
+     "required": false,
+     "default": null
+    },
+    {
+     "name": "first_slot",
+     "type": "integer",
+     "description": "Slot index of the first coil's go side",
+     "required": false,
+     "minimum": 0,
+     "default": 0
+    },
+    {
+     "name": "coil_count",
+     "type": "integer",
+     "description": "Number of coils",
+     "required": false,
+     "minimum": 1,
+     "default": null
+    },
+    {
+     "name": "turns",
+     "type": "integer",
+     "description": "Turns per coil",
+     "required": false,
+     "minimum": 1,
+     "default": null
+    },
+    {
+     "name": "go_layer",
+     "type": "integer",
+     "description": "Layer of the go sides",
+     "required": false,
+     "minimum": 0,
+     "default": null
+    },
+    {
+     "name": "return_layer",
+     "type": "integer",
+     "description": "Layer of the return sides",
+     "required": false,
+     "minimum": 0,
+     "default": null
+    },
+    {
+     "name": "wrap",
+     "type": "boolean",
+     "description": "Wrap coil sides around the slots (a periodic core)",
+     "required": false,
+     "default": false
+    },
+    {
+     "name": "empty_material",
+     "type": "string",
+     "description": "Material of empty layer regions",
+     "required": false,
+     "default": null
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Element size in the slot layers",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0,
+     "default": null
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the labels",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addblocklabel",
+    "selectlabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "block_label"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "excitation",
+   "constraints": [
+    "Either a pattern with an entry per slot and per layer, or coils with a sequence, pitch, count, turns and go and return layers.",
+    "A coil side outside a finite core's slots is refused unless the core is periodic (wrap); two coil sides may not share a layer.",
+    "Every layer region gets a label: empty ones need an empty material.",
+    "Phase circuits and their currents are defined separately; the core is linear_slotted_core with the same geometry."
+   ]
   }
  ]
 }

@@ -738,6 +738,10 @@ class PartialModelAndSymmetryTests(unittest.TestCase):
         self.assertAlmostEqual(observe(statistic="peak_to_peak", scale=0.13), 0.13 * 0.0694)
         self.assertEqual(assessor_metric(dict(base, statistic="maximum")), "gap:A@sim:maximum")
         self.assertIn("error", run_assessor(dict(base, statistic="mean"), case, raw, {}, {}))
+        # The rms of the samples' real parts: an imaginary part (another instant of a phasor field) does not enter it.
+        self.assertAlmostEqual(observe(statistic="rms"), math.sqrt(sum(v * v for v in values) / 8))
+        shifted = {key: value + 0.5j for key, value in raw.items()}
+        self.assertAlmostEqual(run_assessor(dict(base, statistic="rms"), case, shifted, {}, {})["observed"], observe(statistic="rms"))
 
     def test_step_statistic_reads_a_curve_at_the_steps_a_test_used(self):
         steps = [{"label": f"lr{amps}_a{angle}"} for amps in (50, 250) for angle in range(90, 136, 2)]

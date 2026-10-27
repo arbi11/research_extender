@@ -937,11 +937,15 @@ def _metric_series(assessor, case, raw, metrics, model):
 
 
 def _field_statistic(assessor, case, raw, metrics, model):
-    """The largest, smallest or peak-to-peak value of one field over a point_values or circle_values measurement.
+    """The largest, smallest, peak-to-peak or root-mean-square value of one field over a point_values or circle_values measurement.
 
     For a quantity defined at a field's extremes, such as the flux per pole
     from the vector potential's largest and smallest values on a gap circle
-    (times the depth: ``scale``), read at ``step``.
+    (times the depth: ``scale``), read at ``step``. The rms of samples evenly
+    spread over a stretch is the field's rms over it, a statistic that does not
+    depend on where a published profile sits along the stretch or on how finely
+    it was sampled near its peaks. Time-harmonic fields are read at their real
+    part (the instant the phasors are referred to).
     """
     measurement = next(m for m in case["measurements"] if m["id"] == assessor["measurement"])
     if measurement["op"] not in ("point_values", "circle_values"):
@@ -956,6 +960,8 @@ def _field_statistic(assessor, case, raw, metrics, model):
         observed = min(values)
     elif statistic == "peak_to_peak":
         observed = max(values) - min(values)
+    elif statistic == "rms":
+        observed = math.sqrt(sum(v * v for v in values) / len(values))
     else:
         raise ValueError("Unknown field statistic: " + str(statistic))
     return _compare(assessor, "field_statistic", observed * assessor.get("scale", 1), statistic, count)
