@@ -128,6 +128,25 @@ contradicts it.
   only 8% because arc pieces and small features set much of the mesh. Count
   about 2.5 area / h^2, and size mesh controls and engine.solves_per_process
   from the timed first solve's count. (`tlali-2020-vernier-wind-generator`)
+- **Test a uniform factor against current and against current angle.** An
+  effective gap and a scale both lower torque, but differently: the drawn-gap
+  build exceeded Ibrahim 2017's Maxwell torque by 16.7% at half current and 7.5%
+  at rated, with Fig. 5's torque-angle curve distorted (+5 to +26%); a 0.06 mm
+  longer gap (0.36 against 0.30 mm) brought three currents within 1.3%, seven
+  further angles within 3.2% (the eighth, at 2.4 N m, 5.8%) and an unfitted
+  variant within 0.5%. Ibrahim 2016's results are the opposite kind: a flat ratio over
+  current angle at the drawn gap (1.28-1.30), tilted by that same gap
+  (1.09-1.21): a scale. A gap of a few tenths of a millimetre makes SynRM torque
+  steep in it (here -16% per 0.1 mm), so a reference's mesh or arc
+  discretization in the gap can matter as much as its inputs.
+  (`ibrahim-2017-ferrite-pmasynrm`, `ibrahim-2016-synrm`)
+- **Torque at the optimal current angle is a maximum over a sweep.** Papers give
+  MTPA torque without the angle; sweep in 5-degree steps around the expected
+  optimum (from the paper's torque-angle figure) and take a parabola's vertex
+  through the largest point and its neighbours (dq_linkage points, over_points
+  maximum, refine parabolic): within 0.1% of the curve's top, and the angle is a
+  check of its own (46.6 and 56.4 degrees against Fig. 5's 46.2 and 54.6).
+  (`ibrahim-2017-ferrite-pmasynrm`)
 
 ## Construction
 
@@ -217,6 +236,14 @@ contradicts it.
   (coil_pitch, return_layer_radius); read which layer holds the go sides from
   the drawing: the lower layer repeats the upper one a slot or more along.
   (`tlali-2020-vernier-wind-generator`)
+- **Combined star-delta windings are slot patterns with two circuit families.**
+  Star coils carry the line currents and delta coils (i_a - i_b)/3 and so on
+  (their fundamental; a delta's circulating third harmonic adds ripple, no
+  fundamental MMF), so 45 delta turns match 26 star turns. Read the slot labels
+  from the drawing and pick the delta convention under which the slot phasors
+  progress evenly (kd 0.960 to 0.990, the paper's 5% torque gain reproduced
+  within 0.7 points); a phasor diagram may use another one. A winding no star
+  of slots produces is `slot_winding`. (`ibrahim-2017-ferrite-pmasynrm`)
 
 ## Materials
 
@@ -233,6 +260,13 @@ contradicts it.
   and give it a control. A paper that names a FEMM library steel without a
   fill may still have set one: the SRM's FE curves fit fill 0.96, not the
   library's 1. (`gierczynski-2024-prius-gen4-ipm`, `hamouda-2019-srm-8-6`)
+- **A library entry carries its own lamination fill.** FEMM's Silicon Iron
+  grades hold LamFill 0.955 (14 mil) or 0.965 (18 mil), and copying the entry
+  copies it; its Metals Handbook DC curves hold 1 and lie lower below the knee.
+  State the fill a case builds with, and set it (library_material values) when
+  the case assumes another: a solid instead of a 0.97 fill raised the SynRM's
+  rated torque 2.1%, the lower curves lowered it 4.7%.
+  (`ibrahim-2017-ferrite-pmasynrm`, `ibrahim-2016-synrm`)
 - A 33-point library curve read back natively within 0.06% in B
   (`design-nonlinear-ring-bh`), so library B-H transfer is trustworthy.
 
@@ -302,8 +336,35 @@ contradicts it.
   length, a current or voltage convention) rather than at geometry or materials:
   the SynRM's torque was 1.28-1.36 times the paper's at two currents while its
   torque-angle curve matched within 1.1%, and no geometry or steel control moved
-  it more than 3.2%. Check the paper's operating point against its own rating
-  too (15.63 N m at 6000 rpm is the stated 10 kW). (`ibrahim-2016-synrm`)
+  it more than 3.2%. A rating is no independent check when it is the FE torque
+  times the speed (15.63 N m x 6000 rpm is the stated 10 kW, Ibrahim 2017's
+  17.50 N m x 3000 rpm its 5.5 kW). (`ibrahim-2016-synrm`, `ibrahim-2017-ferrite-pmasynrm`)
+- **A sibling paper on the same hardware is a transfer standard.** When a case
+  fails by a scale no control moves, replicate the authors' other paper on the
+  same lamination with the same construction before calling the cause open: the
+  two factors and their signatures separate what is shared (a gap-like 7.5-16.7%
+  in Ibrahim 2017) from what lies in one paper (a uniform 0.77 in Ibrahim 2016).
+  Check the papers' shared quantities first (here slot ampere-turns 165 and 159
+  A, the same copper loading, the same drawn stator within 0.05 mm).
+  (`ibrahim-2016-synrm`, `ibrahim-2017-ferrite-pmasynrm`)
+- **A schematic can be the authors' CAD drawing at scale.** Ibrahim 2017's
+  Fig. 3a names its parts only, yet its stator, rotor and shaft circles check
+  against the stated diameters within 0.05 mm with one scale per axis, and its
+  barriers lie on the authors' Maxwell plot (99.5% of the plot's barrier pixels
+  within 0.4 mm). Fit every vector drawing's circles before treating it as a
+  sketch; when they check, read what the text omits from it, and register a
+  second drawing of the same parts to it by their corners (Fig. 4's magnets, 24
+  corners, 0.18 pt rms). (`ibrahim-2017-ferrite-pmasynrm`)
+- **Data tips are exact values.** A plot's data tip prints a curve vertex to its
+  displayed digits; OCR the embedded image at 4x (the 300 dpi page OCR garbled
+  three of four) and append that to the cached OCR so quotes are checked, then
+  confirm the tip on the curve (Fig. 8's inset within 0.02 N m).
+  (`ibrahim-2017-ferrite-pmasynrm`)
+- **Score candidate geometries against an FE plot's low-field pixels.** Ibrahim
+  2016's flux plot overlaps the case's reading of its Table A1 prototype with
+  IoU 0.85 and the 2017 rotor with 0.58: the plot shows the prototype and the
+  reading stands. Map the plot by its stator and shaft circles first.
+  (`ibrahim-2016-synrm`)
 - **A table row can be mislabelled.** The D model's EMF table labels its last
   row 9; digitizing the figure it summarizes gave orders 1-7 within 4% of the
   table, a 9th of 1.4 V and an 11th equal to that row. When a value looks
