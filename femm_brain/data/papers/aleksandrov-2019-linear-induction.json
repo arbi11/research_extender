@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "aleksandrov-2019-linear-induction",
  "set": "development",
- "status": "frozen",
+ "status": "failed",
  "skill_version": "1679c10",
  "title": "2D hybrid steady-state magnetic field model for linear induction motors",
  "source": {
@@ -11622,8 +11622,46 @@
    "model_value": 20.409,
    "location": "Section 3 text against Fig. 9",
    "note": "The text's 'Case 1' thrust is Fig. 9's FEA marker (20.409 N), not its HAM marker (20.693 N)."
+  },
+  {
+   "quantity": "elements (frozen mesh)",
+   "paper_value": null,
+   "model_value": 155896,
+   "location": "run1, timed first solve",
+   "note": "Estimated about 140k before freezing (2.5 area/h^2 per region); 6.6 s per frequency."
+  },
+  {
+   "quantity": "pre-solve estimate, normal force at 0 Hz (N)",
+   "paper_value": -77.815,
+   "model_value": -72.305,
+   "location": "Fig. 9; run1",
+   "note": "The coarse finite-difference estimate gave -73.5 to -75.0 N; FEMM's converged build -72.3 N."
+  },
+  {
+   "quantity": "Fig. 7 field shape: correlation of B_y at 100 Hz",
+   "paper_value": 1.0,
+   "model_value": 0.9998,
+   "location": "Fig. 7; run1",
+   "note": "With the primary centred in the plot's 528 mm window; B_x correlates 0.9998 with Fig. 6."
   }
  ],
- "findings": [],
- "retrospective": []
+ "findings": [
+  "Failed: none of the 43 acceptance values passes. With Table 1's inputs the build lies below Fig. 9's 2D FEA at every frequency, by less as the frequency rises: thrust 3.460 against 3.731 N at 5 Hz (-7.3%), 19.557 against 20.409 N at 50 Hz (-4.2%), 21.964 against 22.486 N at 100 Hz (-2.3%); normal force -72.30 against -77.82 N at 0 Hz (-7.1%), -45.13 against -47.57 N at 50 Hz (-5.1%), -23.40 against -24.19 N at 100 Hz (-3.2%). The curves' shapes follow the paper's (thrust peaking near 90 Hz, the normal force falling almost linearly), and the deficit falls smoothly from 7.3% to 2.3-3.2%.",
+  "Figs. 6-7's mid-gap fields at 100 Hz are reproduced point by point: with the primary centred in their 528 mm window, the phasors' real parts at t = 0 correlate 0.9998 with both FEM curves, in shape, sign and the position of every slot feature; their rms is 1.9% (B_x, 0.03068 against 0.03127 T) and 2.5% (B_y, 0.05832 against 0.05980 T) lower, and their extremes 3-4% lower (comparators, passed at 5%). This confirms the readings settled before freezing: the labels name coils (the conductor reading gives an uncorrelated profile, correlation -0.01 to -0.03), Fig. 6 is B_x and Fig. 7 is B_y as their axes say (the captions' reading misses by 49% and 86%), and the plots show t = 0 under Eqs. (1)-(3) with '+' conductors along +z.",
+  "The build is converged: 83k, 156k and 259k elements (mesh 1.4, frozen, 0.75) give 72.15, 72.30 and 72.40 N at 0 Hz and 21.93, 21.96 and 21.98 N thrust at 100 Hz (under 0.3%). A 528 mm period, A = 0 at 300 instead of 150 mm and regular end teeth and slots move every force by at most 0.2% (the pre-solve estimate predicted under 0.1%).",
+  "The other readings of the inputs are far worse: labels as conductor directions give 25-70% less force (-58.2 N at 0 Hz, 9.1 N thrust at 50 Hz); Table 1's 17 MS/m taken as the plate's raw conductivity and reduced by a Russell-Norsworthy factor (0.695) gives 30% less thrust at 5 Hz and 43% more normal force at 100 Hz. Both confirm the frozen readings (coil names; 17 MS/m as the reduced value both simulations used).",
+  "Likely cause (diagnostics outside the frozen case, papers/aleksandrov/diag): of eight single-input changes solved at 0, 5, 50 and 100 Hz, only those that shorten the iron-to-iron (magnetic) gap give the deficit's falling signature: ideal primary iron +4.9% at 0 Hz and +2.4% at 100 Hz, a 0.1 mm shorter air gap +3.9% and +1.8%; changes to the plate or back-iron conductivity, the back iron's permeability or the turns give other signatures (turns scale every value alike). A magnetic gap about 0.2 mm shorter at unchanged sheet conductance fits the seven readings within 0.3% rms; solved at all 21 frequencies with the field line, a 1.8 mm plate of 18.9 MS/m (or a 2.5 mm air gap) reproduces Fig. 9 within -0.5 to +1.3% (-0.5 to +1.5%) at the 17 unfitted frequencies, B_y's rms within 0.8%, while B_x's stays 1.9% low. The paper's FEA, hybrid model and measurements all behave as if the back iron were about 0.2 mm (4%) closer to the primary than Table 1's 2.7 mm gap and 2 mm plate put it; the paper gives no tolerance or measured gap. A likely cause, not a reading: the frozen gap and plate stay.",
+  "Comparators: the hybrid model lies 0.2-1.7% above its FEA in Fig. 9 (1.53% thrust and 1.72% normal force at 100 Hz, the text's 'within 1.5%, 1.7%'), so the build misses it by 3.8-8.1%; the measurements lie within 7% of the FEA (-6.2% to +5.1% in thrust, up to +6.7% in normal force at 100 Hz) and the build misses them by 1.2-9.9% (one of 41 within 3%). The text's 'Case 1' 20.4 N is Fig. 9's FEA value at 50 Hz (20.409 N), not its hybrid one (20.693 N); the build gives 19.557 N (-4.1%). The 0 Hz normal force as the instant i_A = I_p (-70.48 N, -9.4%) is further from Fig. 9 than the AC limit's time average (-72.30 N, -7.1%), as frozen.",
+  "Thrust sign: the metric is the propulsion (-F_x on the primary); in the drawing's frame the field travels toward the front end and pushes the primary toward the rear end, while the paper says the propulsion is along +x. The field figures follow the drawing's frame (finding 2), so the paper's thrust sign is its own convention; magnitudes are unaffected.",
+  "Where the thrust acts: at 100 Hz the Lorentz force on the plate's eddy currents is 20.92 of the 21.96 N (95%), the back iron's eddy currents and magnetization the rest; the plate dissipates 212 W and the back iron 10.5 W (96 and 6.7 W at 50 Hz). The finite primary unbalances the phases: at 50 Hz phase B (the middle of the sequence along the primary) links 0.0665 Wb against 0.0615 (A) and 0.0634 Wb (C), at 0 Hz C links 2.3% more than A and B; a 3D or circuit-coupled model would carry these unbalanced impedances.",
+  "Linear machines need no new physics in FEMM at standstill: one time-harmonic solve per frequency (6.6 s for 156k elements), the weighted stress tensor on the whole primary group, a periodic domain with the finite primary and A = 0 far away. The moving case (Case 2) and Fig. 10's harmonic decomposition stay out of scope (no velocity term)."
+ ],
+ "retrospective": [
+  "Time: intake, reading and vector digitization about 25 minutes (Figs. 6, 7 and 9 are MATLAB vector art: every marker and curve vertex read on the gridlines; Figs. 1-2 are drawn to scale in x); the pre-solve estimate about 25 minutes; the two components, their tests and records about 20 minutes; the case generator and freeze about 25 minutes; the synthetic design and the 13 designs re-run about 10 minutes; run1 with seven controls about 25 minutes (168 solves of 83-259k elements); the signature diagnostics and their confirmation about 15 minutes.",
+  "What decided the case was the pre-solve estimate. The layered Fourier model the skill suggests (a magnetic-circuit or analytic estimate) gave half the paper's thrust and a normal force that fell far too fast with frequency: it let the primary's iron span the whole period. A coarse finite-difference eddy-current model of the actual cross-section (scipy, 15 s per frequency) then reproduced the paper's force curves within 1-6% and its field plots point by point under one reading of the winding labels and not the other, and settled which axis each field plot shows, the plotted instant and the plots' x-origin. Proposed for SKILL.md (stage 3): when a convention the paper leaves open changes the outcome, a coarse host-side 2D model of the same cross-section can compare whole published curves before freezing; record its numbers in the gaps and keep the rejected reading as a control.",
+  "The skill's conventions list (rms or peak, per unit depth, orientation) lacked the meaning of winding labels in a drawing: coil names or conductor directions. Proposed for SKILL.md (stage 4, conventions): a double-layer drawing's labels may name coils, so a return side carries the opposite current; decide from the turns per coil, the winding factor the reading implies and the paper's results.",
+  "Lessons that held: vector figures (the skill's 0.7 addition) gave Fig. 9's 126 values and the field curves to about 0.01 N and 1e-5 T; recomputing a text value from its figure found the 20.4 N to be the FEA's, not the hybrid model's; bracketing each assumed input before freezing showed the period, boundary and end geometry to be negligible and the edge-effect reading to be decisive; the timed first solve (6.6 s) was quick; reading a discrepancy's signature against frequency (as against current in the SRM and SynRM cases) separated a magnetic-gap-like cause from material and source scales, and the fitted gap was confirmed on unfitted frequencies. Uniform scale lessons did not apply: the factor here varies with frequency.",
+  "Generic changes: linear_slotted_core and linear_winding (components, knowledge records, contract and geometry tests, and the synthetic design design-linear-periodic-double-layer, which checks them natively), a number_or_pair parameter type, field_statistic's rms, the schema's linear_induction family, and lessons on linear machines at standstill, winding labels, host-side pre-solve models, axis labels against captions, rms comparisons of profiles and text values that belong to another model.",
+  "Process notes: a synthetic design cannot be committed before its evidence (the designs audit has no pending state), so it went into its own commit after its native run; the freeze commit carried the components and the case. The index's pdf_sha256 lives in the case's source, as in the other cases. The paper was read before the index entry was updated (the brief asked for the reverse); nothing depended on the order. Proposed for the brain: a pending state for frozen synthetic designs, like the papers'."
+ ]
 }
