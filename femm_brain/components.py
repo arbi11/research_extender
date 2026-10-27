@@ -250,8 +250,12 @@ def material(m, name, values=None, curve=None):
     m.property("materials", name, curve=curve, **(values or {}))
 
 
-def library_material(m, name, library, as_name=None, folder=None):
-    """Copy an official library entry exactly; ``as_name`` names it in the model, ``folder`` disambiguates."""
+def library_material(m, name, library, as_name=None, folder=None, values=None):
+    """Copy an official library entry exactly; ``as_name`` names it in the model, ``folder`` disambiguates.
+
+    ``values`` overrides named properties of the copy (a lamination fill the source states, say) and keeps the
+    curve; only properties the entry already has may be overridden.
+    """
     if LIBRARY_PHYSICS.get(library) != m.physics:
         raise ValueError(f"{library} holds {LIBRARY_PHYSICS.get(library, 'unknown')} materials; this is a {m.physics} model")
     entries = json.loads((DATA / "library_materials.json").read_text())["materials"]
@@ -265,7 +269,15 @@ def library_material(m, name, library, as_name=None, folder=None):
     dropped = set(entry["properties"]) - set(keys)
     if dropped:
         raise ValueError(f"Library entry {name} has properties this model cannot represent: {sorted(dropped)}")
-    m.property("materials", as_name or name, curve=entry["curve"], **entry["properties"])
+    properties = dict(entry["properties"])
+    unknown = sorted(set(values or {}) - set(properties))
+    if unknown:
+        raise ValueError(f"{name} has no properties {unknown} to override")
+    for key, value in (values or {}).items():
+        if not _finite(value):
+            raise ValueError(f"The override of {key} must be a finite number")
+        properties[key] = value
+    m.property("materials", as_name or name, curve=entry["curve"], **properties)
 
 
 def circuit(m, name, current, series=True):
@@ -876,6 +888,32 @@ def tooth_coil_winding(m, slot_count, pole_pairs, turns, material, label_radius,
         m.label(*_rotated((label_radius, 0), tooth + offset), material, mesh=mesh, circuit=phase, turns=int(-polarity * turns), group=group)
 
 
+def slot_winding(m, slot_count, pattern, label_radius, material, first_slot_angle=0, alternate=True, mesh=None, group=0):
+    """Block labels for a winding given slot by slot, as a drawing labels its slots.
+
+    ``pattern`` lists [circuit, signed turns] for consecutive slots counterclockwise from the slot centred at
+    ``first_slot_angle``. It repeats around the stator; with ``alternate`` every other repeat reverses its signs, so
+    a pattern drawn over one pole pitch serves the whole machine. Slots of one pattern may belong to circuits with
+    different turns (the star and delta coils of a combined star-delta winding).
+    """
+    if not (isinstance(pattern, list) and pattern and all(isinstance(item, list) and len(item) == 2 for item in pattern)):
+        raise ValueError("A slot pattern lists [circuit, signed turns] for each slot")
+    for circuit_name, turns in pattern:
+        if not (isinstance(circuit_name, str) and circuit_name.strip()) or not _finite(turns) or not float(turns).is_integer() or not turns:
+            raise ValueError("Each slot names a circuit and a nonzero whole number of signed turns")
+    if slot_count % len(pattern):
+        raise ValueError("The pattern must repeat a whole number of times around the stator")
+    repeats = slot_count // len(pattern)
+    if alternate and repeats % 2:
+        raise ValueError("Alternating repeats need an even number of them")
+    pitch = 360 / slot_count
+    for k in range(slot_count):
+        circuit_name, turns = pattern[k % len(pattern)]
+        sign = -1 if alternate and (k // len(pattern)) % 2 else 1
+        m.label(*_rotated((label_radius, 0), first_slot_angle + k * pitch), material, mesh=mesh, circuit=circuit_name,
+                turns=int(sign * turns), group=group)
+
+
 def surface_magnet_rotor(m, pole_count, magnet_material, thickness, magnet_shape="block", width=None, near_face_distance=None,
                          inner_radius=None, arc_angle=None, air_gap_side="inner", magnetization="radial",
                          first_pole_polarity="outward", first_pole_angle=0, rotor_angle=0, mesh=None, air_gap_face_mesh=None,
@@ -1401,7 +1439,7 @@ IMPLEMENTATIONS = {function.__name__: function for function in (
     segment, polyline, arc, circle, point, block_label, hole, material, library_material, circuit, conductor, boundary,
     fixed_potential_boundary, mixed_boundary, convection_boundary, iabc_open_boundary, axisymmetric_coil_section,
     bar_magnet, air_gap_element, kelvin_periodic_exterior, segment_boundary, fixed_point_potential, magnet_array,
-    slotted_stator, trapezoidal_slot_stator, cage_rotor, tooth_coil_winding, surface_magnet_rotor, salient_poles, salient_pole_winding,
+    slotted_stator, trapezoidal_slot_stator, cage_rotor, tooth_coil_winding, slot_winding, surface_magnet_rotor, salient_poles, salient_pole_winding,
     belt_winding, entity_pattern, sector_air_gap, arc_boundary, ring_sectors, flux_barrier_rotor)}
 
 

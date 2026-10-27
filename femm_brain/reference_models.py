@@ -629,8 +629,18 @@ def _dq_linkage(assessor, case, raw, metrics, model):
     transform's scaling. ``transform: power_invariant`` reports psi_d and psi_q
     on the power-invariant scale (the square root of 3/2 times the
     amplitude-invariant values), as some benchmarks state magnet flux.
+
+    ``points`` with ``over_points: maximum`` takes the largest of several
+    points' position averages instead of one point's: the torque at the optimal
+    current angle (maximum torque per ampere) from a sweep of current angles at
+    one current. ``refine: parabolic`` puts a parabola through the largest
+    value and its two neighbours in current angle (atan2(iq, id) of each point's
+    steps) and takes its vertex, when it lies between them.
     """
-    point, quantity = assessor["point"], assessor["quantity"]
+    quantity = assessor["quantity"]
+    if "points" in assessor:
+        return _dq_maximum(assessor, case, raw, metrics, model)
+    point = assessor["point"]
     if assessor.get("transform", "amplitude_invariant") not in ("amplitude_invariant", "power_invariant"):
         raise ValueError("The dq transform is amplitude_invariant or power_invariant")
 
@@ -701,6 +711,43 @@ def _dq_linkage(assessor, case, raw, metrics, model):
             "statistic": f"mean over {len(rows)} rotor positions", "observed": observed, "expected": assessor["value"],
             "absolute_error": error, "relative_error": error / abs(assessor["value"]) if assessor["value"] else None,
             "absolute_tolerance": tolerance, "samples": len(rows), "position_spread": spread, "rows": rows, "target": target}
+
+
+def _dq_maximum(assessor, case, raw, metrics, model):
+    """The largest position average of a dq quantity over several operating points (see _dq_linkage)."""
+    names = assessor["points"]
+    if assessor.get("over_points") != "maximum":
+        raise ValueError("Several points are combined by over_points: maximum")
+    if not isinstance(names, list) or len(names) < 2 or len(set(names)) != len(names) or "point" in assessor:
+        raise ValueError("points lists two or more distinct operating points, in place of point")
+    if assessor["quantity"] in ("L_d", "L_q"):
+        raise ValueError("Inductances are taken at one point")
+    found = []
+    for name in names:
+        single = {key: value for key, value in assessor.items() if key not in ("points", "over_points", "refine")}
+        result = _dq_linkage(dict(single, point=name), case, raw, metrics, model)
+        steps = [s for s in case.get("steps") or [] if (s.get("dq") or {}).get("point") == name]
+        angle = math.degrees(math.atan2(steps[0]["dq"]["iq"], steps[0]["dq"]["id"]))
+        found.append({"point": name, "current_angle_deg": angle, "value": result["observed"], "samples": result["samples"]})
+    found.sort(key=lambda item: item["current_angle_deg"])
+    k = max(range(len(found)), key=lambda i: found[i]["value"])
+    observed, at, method = found[k]["value"], found[k]["current_angle_deg"], "largest point"
+    if assessor.get("refine", "none") not in ("none", "parabolic"):
+        raise ValueError("refine is none or parabolic")
+    if assessor.get("refine") == "parabolic" and 0 < k < len(found) - 1:
+        (a0, v0), (a1, v1), (a2, v2) = [(found[i]["current_angle_deg"], found[i]["value"]) for i in (k - 1, k, k + 1)]
+        # Divided differences give the parabola through the three points; its vertex is the refined maximum.
+        d1, d2 = (v1 - v0) / (a1 - a0), (v2 - v1) / (a2 - a1)
+        curvature = (d2 - d1) / (a2 - a0)
+        if curvature < 0:
+            vertex = (a0 + a1) / 2 - d1 / (2 * curvature)
+            if a0 <= vertex <= a2:
+                at = vertex
+                observed = v1 + d1 * (vertex - a1) + curvature * (vertex - a0) * (vertex - a1)
+                method = "parabolic vertex"
+    result = _compare(assessor, "dq_linkage", observed, f"maximum over {len(found)} current angles ({method})",
+                      sum(item["samples"] for item in found), points=found, optimal_current_angle_deg=at)
+    return result
 
 
 def _metric_relation(assessor, case, raw, metrics, model):
@@ -939,6 +986,8 @@ def assessor_metric(assessor):
         return f"{assessor['name']}@{assessor['step']}:{assessor['statistic']}{order}{derivative}{label}"
     if kind == "field_statistic":
         return f"{assessor['measurement']}:{assessor['field']}@{assessor['step']}:{assessor['statistic']}{label}"
+    if kind == "dq_linkage" and "points" in assessor:
+        return f"max[{assessor['points'][0]}..{assessor['points'][-1]}]:{assessor['quantity']}{label}"
     if kind == "dq_linkage":
         return f"{assessor['point']}:{assessor['quantity']}" + (":first_position" if assessor.get("average") == "first" else "") + label
     return None

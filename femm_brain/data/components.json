@@ -560,7 +560,7 @@
    "id": "library_material",
    "layer": 3,
    "title": "Official library material",
-   "description": "Copies a named entry exactly from FEMM's official material libraries (all 513 magnetic, electrostatic and heat-flow entries are bundled), including B-H or k(T) curves.",
+   "description": "Copies a named entry exactly from FEMM's official material libraries (all 513 magnetic, electrostatic and heat-flow entries are bundled), including B-H or k(T) curves; named properties may be overridden (values), the curve kept.",
    "physics": [
     "magnetics",
     "electrostatics",
@@ -599,6 +599,12 @@
      "type": "string",
      "description": "Library folder, when the name is ambiguous",
      "required": false
+    },
+    {
+     "name": "values",
+     "type": "object",
+     "description": "Overrides of named properties of the copied entry (a lamination fill, say); the curve is kept",
+     "required": false
     }
    ],
    "femm_functions": [
@@ -614,7 +620,8 @@
    "stage": "materials",
    "constraints": [
     "The library must match the problem's physics; entries whose properties the model cannot represent are refused.",
-    "Ambiguous names need their folder."
+    "Ambiguous names need their folder.",
+    "Only properties the entry already has may be overridden, with finite numbers."
    ]
   },
   {
@@ -2231,6 +2238,94 @@
     "Tooth-coil double layers need slots divided by the stator's slot divider; single-layer tooth coils need an even slot count.",
     "A distributed double layer needs a coil pitch and a return-layer radius, and slots split by a layer divider.",
     "Phase circuits and their currents are defined separately."
+   ]
+  },
+  {
+   "id": "slot_winding",
+   "layer": 2,
+   "title": "Winding given slot by slot",
+   "description": "Places one label per slot with the circuit and signed turns a drawing gives it: a pattern of [circuit, signed turns] for consecutive slots from the slot centred at first_slot_angle, repeated around the stator, its signs reversed on alternate repeats when the pattern spans one pole pitch. Serves windings no star of slots produces, such as a combined star-delta winding whose star and delta coils have their own circuits and turns.",
+   "physics": [
+    "magnetics"
+   ],
+   "problem_types": [
+    "planar"
+   ],
+   "parameters": [
+    {
+     "name": "slot_count",
+     "type": "integer",
+     "description": "Number of slots",
+     "required": true,
+     "minimum": 1
+    },
+    {
+     "name": "pattern",
+     "type": "list",
+     "description": "[circuit, signed turns] for consecutive slots counterclockwise from the first",
+     "required": true
+    },
+    {
+     "name": "label_radius",
+     "type": "number",
+     "description": "Radius of the slot labels",
+     "required": true,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "material",
+     "type": "string",
+     "description": "Winding material",
+     "required": true
+    },
+    {
+     "name": "first_slot_angle",
+     "type": "number",
+     "description": "Angle of the first slot's centre",
+     "required": false,
+     "unit": "degrees",
+     "default": 0
+    },
+    {
+     "name": "alternate",
+     "type": "boolean",
+     "description": "Reverse the signs on every other repeat of the pattern (a pattern over one pole pitch)",
+     "required": false,
+     "default": true
+    },
+    {
+     "name": "mesh",
+     "type": "number",
+     "description": "Winding element size",
+     "required": false,
+     "unit": "model length",
+     "exclusive_minimum": 0
+    },
+    {
+     "name": "group",
+     "type": "integer",
+     "description": "Group of the winding labels",
+     "required": false,
+     "default": 0
+    }
+   ],
+   "femm_functions": [
+    "addblocklabel",
+    "selectlabel",
+    "setblockprop"
+   ],
+   "uses_components": [
+    "block_label"
+   ],
+   "source_ids": [
+    "manual5"
+   ],
+   "node_id": null,
+   "stage": "geometry",
+   "constraints": [
+    "The pattern repeats a whole number of times around the stator, an even number when its signs alternate.",
+    "Each slot names a circuit and a nonzero whole number of signed turns; the circuits are defined by other components."
    ]
   },
   {

@@ -54,8 +54,9 @@ class IndexTests(unittest.TestCase):
         entries = papers.load_index()["papers"]
         sets = [entry["set"] for entry in entries]
         # The development set grew from 6 to 8 on 2026-10-26 (the magnetic gear and the double-cage bar, promoted from the
-        # unassigned candidates), and to 9 with the Tlali 2020 Vernier generator; the held-out set stays at the same four papers.
-        self.assertEqual((sets.count("development"), sets.count("held_out")), (9, 4))
+        # unassigned candidates), to 9 with the Tlali 2020 Vernier generator and to 10 with Ibrahim 2017's four SynRM prototypes
+        # (promoted from the candidates); the held-out set stays at the same four papers.
+        self.assertEqual((sets.count("development"), sets.count("held_out")), (10, 4))
         self.assertTrue(all(entry["set"] in ("development", "held_out", "unassigned") for entry in entries))
 
     def test_index_entries_need_planning_fields_and_the_screening_vocabulary(self):
