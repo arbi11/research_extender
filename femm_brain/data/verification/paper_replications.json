@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "generated_at": "2026-10-27T10:29:31.868007+00:00",
+ "generated_at": "2026-10-28T18:44:31.579969+00:00",
  "catalog_sha256": "f544d0d596ecc18b384b2669e1bbf221f96741fa194f57024c68457d129a9238",
  "catalog": "papers",
  "scope": "Machines rebuilt from papers and reports with reusable components, from parameters whose provenance is recorded, against targets frozen before solving. Comparators are reported but never used for acceptance.",
@@ -1567,7 +1567,1414 @@
    "case_id": "bazzo-2021-salient-pole-generator",
    "example_id": null,
    "title": "A Step-by-Step Procedure to Perform Preliminary Designs of Salient-Pole Synchronous Generators",
-   "status": "not_run"
+   "source_url": "https://www.mdpi.com/1996-1073/14/16/4989",
+   "status": "failed",
+   "coverage": {
+    "scope": "core",
+    "reproduced": "The 2D FEA's no-load flux density in the pole body (Table 6), its d and q inductances as the paper defines them (Table 3, Fig. 7), its no-load phase EMF (Fig. 12) and its full-load mean torque (text, Fig. 15) at the FEA's own currents; the winding sign and phase order against the construction.",
+    "not_reproduced": "The FEA's load circuit (not described): its terminal voltage, power, power factor and V_d, V_q (Table 6, Fig. 13) are comparators with and without the design's R_A and L_Tend; its current harmonics and damper currents (the static solves carry sinusoidal currents and none in the bars), so torque ripple and voltage THD are comparators; Table 5's analytic load points and Table 6's design column are comparators of the analytic model; losses and efficiency (Table 4), the V curves (Fig. 8) and the analytic torque-angle curves (Fig. 9) are out of scope.",
+    "pre_solve_estimate": "Host-side magnetic circuit (gap with Carter factor and the paper's K_AG, pole body and shoe, core, teeth and yoke on the library curves, a 4.5% pole leakage): B_PB 1.27 T at 485 x 2.5 A per pole (FEA 1.28), 0.21 T with 485 turns in total; steel M-45 -0.6%, fill 1 +0.2%, solid 1010 -6.4%, a solid 1010 rotor -3.1%; the shaft 0.03%. A winding-function estimate gives L_d 41.7 mH unsaturated, about 41.0 with the iron at 21.66 A (the paper: 40.78) and about -5% at the 30.63 A peak; L_q about 20 mH (crude interpolar term; the paper 26.10). The full-load torque from the paper's own L_d, L_q and the unsaturated EMF at 4.78 A is 132.2 N m (FEA 131.6). About 50k elements (thin gap layers 12k, stator iron 10-14k, rotor iron 8-11k, coils 6k, openings 3k): 139 solves per level, 11 levels. The timed first solve meshed 147,575 elements (6 s per solve)."
+   },
+   "case_binding_sha256": "73b14405271e4abab08b92443c8e7753b784c2c38624d93093a4ada375e6c22b",
+   "levels_passed": [],
+   "levels": {
+    "article": {
+     "status": "failed",
+     "build": "passed",
+     "build_differences": 0,
+     "solve": "passed",
+     "targets": [
+      {
+       "assessor": "step_statistic",
+       "status": "failed",
+       "acceptance": true,
+       "metric": "body_B_T:mean:nl",
+       "statistic": "mean over 36 steps",
+       "observed": 1.3824732198322471,
+       "expected": 1.28,
+       "relative_error": 0.08005720299394305,
+       "absolute_tolerance": 0.0128,
+       "samples": 36
+      },
+      {
+       "assessor": "step_statistic",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "body_B_T:mean:nl:design",
+       "statistic": "mean over 36 steps",
+       "observed": 1.3824732198322471,
+       "expected": 1.25,
+       "relative_error": 0.1059785758657977,
+       "absolute_tolerance": 0.0375,
+       "samples": 36
+      },
+      {
+       "assessor": "step_statistic",
+       "status": "failed",
+       "acceptance": true,
+       "metric": "L2ps_H:maximum:ls",
+       "statistic": "maximum over 37 steps",
+       "observed": 44.364059448018935,
+       "expected": 40.78,
+       "relative_error": 0.08788767650855649,
+       "absolute_tolerance": 0.4078,
+       "samples": 37
+      },
+      {
+       "assessor": "step_statistic",
+       "status": "failed",
+       "acceptance": true,
+       "metric": "L2ps_H:minimum:ls",
+       "statistic": "minimum over 37 steps",
+       "observed": 27.838691479948064,
+       "expected": 26.1,
+       "relative_error": 0.06661653179877634,
+       "absolute_tolerance": 0.261,
+       "samples": 37
+      },
+      {
+       "assessor": "waveform_statistic",
+       "status": "failed",
+       "acceptance": true,
+       "metric": "flux_A_Wb:fundamental_rms",
+       "statistic": "fundamental_rms",
+       "observed": 259.77486351208165,
+       "expected": 230.51,
+       "relative_error": 0.1269570236088745,
+       "absolute_tolerance": 2.3051,
+       "samples": 36
+      },
+      {
+       "assessor": "waveform_statistic",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "flux_A_Wb:rms:with_harmonics",
+       "statistic": "rms",
+       "observed": 260.4274274978572,
+       "expected": 231.09,
+       "relative_error": 0.12695238867046255,
+       "absolute_tolerance": 2.3109,
+       "samples": 36
+      },
+      {
+       "assessor": "waveform_statistic",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "flux_A_Wb:harmonic_peak:h3",
+       "statistic": "harmonic_peak 3",
+       "observed": 20.34981077358127,
+       "expected": 17.22,
+       "relative_error": 0.18175440032411574,
+       "absolute_tolerance": 1.7,
+       "samples": 36
+      },
+      {
+       "assessor": "waveform_statistic",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "flux_A_Wb:harmonic_peak:h13",
+       "statistic": "harmonic_peak 13",
+       "observed": 11.158856618226395,
+       "expected": 8.97,
+       "relative_error": 0.24401968988031147,
+       "absolute_tolerance": 1.8,
+       "samples": 36
+      },
+      {
+       "assessor": "phase_linkage",
+       "status": "passed",
+       "acceptance": true,
+       "amplitude_imbalance": 7.407358448809068e-06,
+       "winding_imbalance": 6.323269747758651e-11,
+       "predicted_sequence_check": true,
+       "measured_sequence_check": true,
+       "expected_sequence": [
+        "A",
+        "B",
+        "C"
+       ],
+       "rotor_positions": 72,
+       "rows": [
+        {
+         "phase": "A",
+         "predicted_phase_deg": -15.000000001018835,
+         "measured_phase_deg": -14.99830771352773,
+         "phase_error_deg": 0.0016922874910960672,
+         "fundamental_Wb": 1.169397740737062,
+         "passed": true
+        },
+        {
+         "phase": "B",
+         "predicted_phase_deg": 105.00000000341372,
+         "measured_phase_deg": 105.00119738210225,
+         "phase_error_deg": 0.0011973786885164373,
+         "fundamental_Wb": 1.1694019583397455,
+         "passed": true
+        },
+        {
+         "phase": "C",
+         "predicted_phase_deg": -135.00000000239484,
+         "measured_phase_deg": -134.998323693209,
+         "phase_error_deg": 0.0016763091858535972,
+         "fundamental_Wb": 1.1694064029170985,
+         "passed": true
+        }
+       ]
+      },
+      {
+       "assessor": "waveform_statistic",
+       "status": "failed",
+       "acceptance": true,
+       "metric": "torque_Nm:mean",
+       "statistic": "mean",
+       "observed": 119.68611788911332,
+       "expected": 131.6,
+       "relative_error": 0.09053101907968598,
+       "absolute_tolerance": 1.316,
+       "samples": 18
+      },
+      {
+       "assessor": "waveform_statistic",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "torque_Nm:mean:fig15",
+       "statistic": "mean",
+       "observed": 119.68611788911332,
+       "expected": 131.73,
+       "relative_error": 0.09142854407414158,
+       "absolute_tolerance": 1.3173,
+       "samples": 18
+      },
+      {
+       "assessor": "waveform_statistic",
+       "status": "passed",
+       "acceptance": false,
+       "metric": "torque_Nm:peak_to_peak",
+       "statistic": "peak_to_peak",
+       "observed": 32.20283138487001,
+       "expected": 34.81,
+       "relative_error": 0.07489711620597508,
+       "absolute_tolerance": 10.443,
+       "samples": 18
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "full_load:torque:flux_linkage",
+       "statistic": "mean over 18 rotor positions",
+       "observed": 119.62215859995507,
+       "expected": 131.6,
+       "relative_error": 0.09101703191523498,
+       "absolute_tolerance": 2.632,
+       "samples": 18,
+       "rows": [
+        {
+         "step": "fl00"
+        },
+        {
+         "step": "fl01"
+        },
+        {
+         "step": "fl02"
+        },
+        {
+         "step": "fl03"
+        },
+        {
+         "step": "fl04"
+        },
+        {
+         "step": "fl05"
+        },
+        {
+         "step": "fl06"
+        },
+        {
+         "step": "fl07"
+        },
+        {
+         "step": "fl08"
+        },
+        {
+         "step": "fl09"
+        },
+        {
+         "step": "fl10"
+        },
+        {
+         "step": "fl11"
+        },
+        {
+         "step": "fl12"
+        },
+        {
+         "step": "fl13"
+        },
+        {
+         "step": "fl14"
+        },
+        {
+         "step": "fl15"
+        },
+        {
+         "step": "fl16"
+        },
+        {
+         "step": "fl17"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "full_load:v_d:no_external",
+       "statistic": "mean over 18 rotor positions",
+       "observed": 73.27432811795151,
+       "expected": 104.94,
+       "relative_error": 0.3017502561658899,
+       "absolute_tolerance": 3.1481999999999997,
+       "samples": 18,
+       "rows": [
+        {
+         "step": "fl00"
+        },
+        {
+         "step": "fl01"
+        },
+        {
+         "step": "fl02"
+        },
+        {
+         "step": "fl03"
+        },
+        {
+         "step": "fl04"
+        },
+        {
+         "step": "fl05"
+        },
+        {
+         "step": "fl06"
+        },
+        {
+         "step": "fl07"
+        },
+        {
+         "step": "fl08"
+        },
+        {
+         "step": "fl09"
+        },
+        {
+         "step": "fl10"
+        },
+        {
+         "step": "fl11"
+        },
+        {
+         "step": "fl12"
+        },
+        {
+         "step": "fl13"
+        },
+        {
+         "step": "fl14"
+        },
+        {
+         "step": "fl15"
+        },
+        {
+         "step": "fl16"
+        },
+        {
+         "step": "fl17"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "full_load:v_q:no_external",
+       "statistic": "mean over 18 rotor positions",
+       "observed": 231.12798761446854,
+       "expected": 210.37,
+       "relative_error": 0.09867370639572436,
+       "absolute_tolerance": 6.3111,
+       "samples": 18,
+       "rows": [
+        {
+         "step": "fl00"
+        },
+        {
+         "step": "fl01"
+        },
+        {
+         "step": "fl02"
+        },
+        {
+         "step": "fl03"
+        },
+        {
+         "step": "fl04"
+        },
+        {
+         "step": "fl05"
+        },
+        {
+         "step": "fl06"
+        },
+        {
+         "step": "fl07"
+        },
+        {
+         "step": "fl08"
+        },
+        {
+         "step": "fl09"
+        },
+        {
+         "step": "fl10"
+        },
+        {
+         "step": "fl11"
+        },
+        {
+         "step": "fl12"
+        },
+        {
+         "step": "fl13"
+        },
+        {
+         "step": "fl14"
+        },
+        {
+         "step": "fl15"
+        },
+        {
+         "step": "fl16"
+        },
+        {
+         "step": "fl17"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "full_load:v_d:design_circuit",
+       "statistic": "mean over 18 rotor positions",
+       "observed": 67.39856019555116,
+       "expected": 104.94,
+       "relative_error": 0.3577419459162268,
+       "absolute_tolerance": 3.1481999999999997,
+       "samples": 18,
+       "rows": [
+        {
+         "step": "fl00"
+        },
+        {
+         "step": "fl01"
+        },
+        {
+         "step": "fl02"
+        },
+        {
+         "step": "fl03"
+        },
+        {
+         "step": "fl04"
+        },
+        {
+         "step": "fl05"
+        },
+        {
+         "step": "fl06"
+        },
+        {
+         "step": "fl07"
+        },
+        {
+         "step": "fl08"
+        },
+        {
+         "step": "fl09"
+        },
+        {
+         "step": "fl10"
+        },
+        {
+         "step": "fl11"
+        },
+        {
+         "step": "fl12"
+        },
+        {
+         "step": "fl13"
+        },
+        {
+         "step": "fl14"
+        },
+        {
+         "step": "fl15"
+        },
+        {
+         "step": "fl16"
+        },
+        {
+         "step": "fl17"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "full_load:v_q:design_circuit",
+       "statistic": "mean over 18 rotor positions",
+       "observed": 216.8926305350748,
+       "expected": 210.37,
+       "relative_error": 0.031005516637708782,
+       "absolute_tolerance": 6.3111,
+       "samples": 18,
+       "rows": [
+        {
+         "step": "fl00"
+        },
+        {
+         "step": "fl01"
+        },
+        {
+         "step": "fl02"
+        },
+        {
+         "step": "fl03"
+        },
+        {
+         "step": "fl04"
+        },
+        {
+         "step": "fl05"
+        },
+        {
+         "step": "fl06"
+        },
+        {
+         "step": "fl07"
+        },
+        {
+         "step": "fl08"
+        },
+        {
+         "step": "fl09"
+        },
+        {
+         "step": "fl10"
+        },
+        {
+         "step": "fl11"
+        },
+        {
+         "step": "fl12"
+        },
+        {
+         "step": "fl13"
+        },
+        {
+         "step": "fl14"
+        },
+        {
+         "step": "fl15"
+        },
+        {
+         "step": "fl16"
+        },
+        {
+         "step": "fl17"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "full_load:line_voltage:no_external",
+       "statistic": "mean over 18 rotor positions",
+       "observed": 419.97532109341256,
+       "expected": 405.98,
+       "relative_error": 0.0344729323942375,
+       "absolute_tolerance": 12.1794,
+       "samples": 18,
+       "rows": [
+        {
+         "step": "fl00"
+        },
+        {
+         "step": "fl01"
+        },
+        {
+         "step": "fl02"
+        },
+        {
+         "step": "fl03"
+        },
+        {
+         "step": "fl04"
+        },
+        {
+         "step": "fl05"
+        },
+        {
+         "step": "fl06"
+        },
+        {
+         "step": "fl07"
+        },
+        {
+         "step": "fl08"
+        },
+        {
+         "step": "fl09"
+        },
+        {
+         "step": "fl10"
+        },
+        {
+         "step": "fl11"
+        },
+        {
+         "step": "fl12"
+        },
+        {
+         "step": "fl13"
+        },
+        {
+         "step": "fl14"
+        },
+        {
+         "step": "fl15"
+        },
+        {
+         "step": "fl16"
+        },
+        {
+         "step": "fl17"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "full_load:line_voltage:design_circuit",
+       "statistic": "mean over 18 rotor positions",
+       "observed": 393.4035673758061,
+       "expected": 405.98,
+       "relative_error": 0.03097796104289349,
+       "absolute_tolerance": 12.1794,
+       "samples": 18,
+       "rows": [
+        {
+         "step": "fl00"
+        },
+        {
+         "step": "fl01"
+        },
+        {
+         "step": "fl02"
+        },
+        {
+         "step": "fl03"
+        },
+        {
+         "step": "fl04"
+        },
+        {
+         "step": "fl05"
+        },
+        {
+         "step": "fl06"
+        },
+        {
+         "step": "fl07"
+        },
+        {
+         "step": "fl08"
+        },
+        {
+         "step": "fl09"
+        },
+        {
+         "step": "fl10"
+        },
+        {
+         "step": "fl11"
+        },
+        {
+         "step": "fl12"
+        },
+        {
+         "step": "fl13"
+        },
+        {
+         "step": "fl14"
+        },
+        {
+         "step": "fl15"
+        },
+        {
+         "step": "fl16"
+        },
+        {
+         "step": "fl17"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "full_load:electrical_power:no_external",
+       "statistic": "mean over 18 rotor positions",
+       "observed": 12526.803155472398,
+       "expected": 13220,
+       "relative_error": 0.05243546479028756,
+       "absolute_tolerance": 396.59999999999997,
+       "samples": 18,
+       "rows": [
+        {
+         "step": "fl00"
+        },
+        {
+         "step": "fl01"
+        },
+        {
+         "step": "fl02"
+        },
+        {
+         "step": "fl03"
+        },
+        {
+         "step": "fl04"
+        },
+        {
+         "step": "fl05"
+        },
+        {
+         "step": "fl06"
+        },
+        {
+         "step": "fl07"
+        },
+        {
+         "step": "fl08"
+        },
+        {
+         "step": "fl09"
+        },
+        {
+         "step": "fl10"
+        },
+        {
+         "step": "fl11"
+        },
+        {
+         "step": "fl12"
+        },
+        {
+         "step": "fl13"
+        },
+        {
+         "step": "fl14"
+        },
+        {
+         "step": "fl15"
+        },
+        {
+         "step": "fl16"
+        },
+        {
+         "step": "fl17"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "full_load:electrical_power:design_circuit",
+       "statistic": "mean over 18 rotor positions",
+       "observed": 11686.274375232399,
+       "expected": 13220,
+       "relative_error": 0.1160155540671408,
+       "absolute_tolerance": 396.59999999999997,
+       "samples": 18,
+       "rows": [
+        {
+         "step": "fl00"
+        },
+        {
+         "step": "fl01"
+        },
+        {
+         "step": "fl02"
+        },
+        {
+         "step": "fl03"
+        },
+        {
+         "step": "fl04"
+        },
+        {
+         "step": "fl05"
+        },
+        {
+         "step": "fl06"
+        },
+        {
+         "step": "fl07"
+        },
+        {
+         "step": "fl08"
+        },
+        {
+         "step": "fl09"
+        },
+        {
+         "step": "fl10"
+        },
+        {
+         "step": "fl11"
+        },
+        {
+         "step": "fl12"
+        },
+        {
+         "step": "fl13"
+        },
+        {
+         "step": "fl14"
+        },
+        {
+         "step": "fl15"
+        },
+        {
+         "step": "fl16"
+        },
+        {
+         "step": "fl17"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "full_load:terminal_power_factor:no_external",
+       "statistic": "mean over 18 rotor positions",
+       "observed": 0.814985573329048,
+       "expected": 0.89,
+       "relative_error": 0.08428587266399105,
+       "absolute_tolerance": 0.02,
+       "samples": 18,
+       "rows": [
+        {
+         "step": "fl00"
+        },
+        {
+         "step": "fl01"
+        },
+        {
+         "step": "fl02"
+        },
+        {
+         "step": "fl03"
+        },
+        {
+         "step": "fl04"
+        },
+        {
+         "step": "fl05"
+        },
+        {
+         "step": "fl06"
+        },
+        {
+         "step": "fl07"
+        },
+        {
+         "step": "fl08"
+        },
+        {
+         "step": "fl09"
+        },
+        {
+         "step": "fl10"
+        },
+        {
+         "step": "fl11"
+        },
+        {
+         "step": "fl12"
+        },
+        {
+         "step": "fl13"
+        },
+        {
+         "step": "fl14"
+        },
+        {
+         "step": "fl15"
+        },
+        {
+         "step": "fl16"
+        },
+        {
+         "step": "fl17"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "full_load:terminal_power_factor:design_circuit",
+       "statistic": "mean over 18 rotor positions",
+       "observed": 0.8116555775408714,
+       "expected": 0.89,
+       "relative_error": 0.08802744096531309,
+       "absolute_tolerance": 0.02,
+       "samples": 18,
+       "rows": [
+        {
+         "step": "fl00"
+        },
+        {
+         "step": "fl01"
+        },
+        {
+         "step": "fl02"
+        },
+        {
+         "step": "fl03"
+        },
+        {
+         "step": "fl04"
+        },
+        {
+         "step": "fl05"
+        },
+        {
+         "step": "fl06"
+        },
+        {
+         "step": "fl07"
+        },
+        {
+         "step": "fl08"
+        },
+        {
+         "step": "fl09"
+        },
+        {
+         "step": "fl10"
+        },
+        {
+         "step": "fl11"
+        },
+        {
+         "step": "fl12"
+        },
+        {
+         "step": "fl13"
+        },
+        {
+         "step": "fl14"
+        },
+        {
+         "step": "fl15"
+        },
+        {
+         "step": "fl16"
+        },
+        {
+         "step": "fl17"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "lp025:line_voltage",
+       "statistic": "mean over 6 rotor positions",
+       "observed": 441.82508981461257,
+       "expected": 400.0,
+       "relative_error": 0.10456272453653143,
+       "absolute_tolerance": 4.0,
+       "samples": 6,
+       "rows": [
+        {
+         "step": "lp025_0"
+        },
+        {
+         "step": "lp025_1"
+        },
+        {
+         "step": "lp025_2"
+        },
+        {
+         "step": "lp025_3"
+        },
+        {
+         "step": "lp025_4"
+        },
+        {
+         "step": "lp025_5"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "lp050:line_voltage",
+       "statistic": "mean over 6 rotor positions",
+       "observed": 426.91186214364524,
+       "expected": 400.0,
+       "relative_error": 0.0672796553591131,
+       "absolute_tolerance": 4.0,
+       "samples": 6,
+       "rows": [
+        {
+         "step": "lp050_0"
+        },
+        {
+         "step": "lp050_1"
+        },
+        {
+         "step": "lp050_2"
+        },
+        {
+         "step": "lp050_3"
+        },
+        {
+         "step": "lp050_4"
+        },
+        {
+         "step": "lp050_5"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "lp075:line_voltage",
+       "statistic": "mean over 6 rotor positions",
+       "observed": 408.9039687969919,
+       "expected": 400.0,
+       "relative_error": 0.02225992199247969,
+       "absolute_tolerance": 4.0,
+       "samples": 6,
+       "rows": [
+        {
+         "step": "lp075_0"
+        },
+        {
+         "step": "lp075_1"
+        },
+        {
+         "step": "lp075_2"
+        },
+        {
+         "step": "lp075_3"
+        },
+        {
+         "step": "lp075_4"
+        },
+        {
+         "step": "lp075_5"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "lp100:line_voltage",
+       "statistic": "mean over 6 rotor positions",
+       "observed": 389.94472824277915,
+       "expected": 400.0,
+       "relative_error": 0.025138179393052126,
+       "absolute_tolerance": 4.0,
+       "samples": 6,
+       "rows": [
+        {
+         "step": "lp100_0"
+        },
+        {
+         "step": "lp100_1"
+        },
+        {
+         "step": "lp100_2"
+        },
+        {
+         "step": "lp100_3"
+        },
+        {
+         "step": "lp100_4"
+        },
+        {
+         "step": "lp100_5"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "lp125:line_voltage",
+       "statistic": "mean over 6 rotor positions",
+       "observed": 369.5699289138716,
+       "expected": 400.0,
+       "relative_error": 0.07607517771532102,
+       "absolute_tolerance": 4.0,
+       "samples": 6,
+       "rows": [
+        {
+         "step": "lp125_0"
+        },
+        {
+         "step": "lp125_1"
+        },
+        {
+         "step": "lp125_2"
+        },
+        {
+         "step": "lp125_3"
+        },
+        {
+         "step": "lp125_4"
+        },
+        {
+         "step": "lp125_5"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "lp100:electrical_power:design",
+       "statistic": "mean over 6 rotor positions",
+       "observed": 12145.488967491425,
+       "expected": 13500,
+       "relative_error": 0.10033415055619076,
+       "absolute_tolerance": 270.0,
+       "samples": 6,
+       "rows": [
+        {
+         "step": "lp100_0"
+        },
+        {
+         "step": "lp100_1"
+        },
+        {
+         "step": "lp100_2"
+        },
+        {
+         "step": "lp100_3"
+        },
+        {
+         "step": "lp100_4"
+        },
+        {
+         "step": "lp100_5"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "lp100:line_voltage:design",
+       "statistic": "mean over 6 rotor positions",
+       "observed": 389.94472824277915,
+       "expected": 400.3,
+       "relative_error": 0.025868777809694883,
+       "absolute_tolerance": 4.003,
+       "samples": 6,
+       "rows": [
+        {
+         "step": "lp100_0"
+        },
+        {
+         "step": "lp100_1"
+        },
+        {
+         "step": "lp100_2"
+        },
+        {
+         "step": "lp100_3"
+        },
+        {
+         "step": "lp100_4"
+        },
+        {
+         "step": "lp100_5"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "sd:L_d:single_axis",
+       "statistic": "mean over 6 rotor positions",
+       "observed": 44.01368174904266,
+       "expected": 40.78,
+       "relative_error": 0.07929577609226728,
+       "absolute_tolerance": 1.2234,
+       "samples": 6,
+       "rows": [
+        {
+         "step": "sd0"
+        },
+        {
+         "step": "sd1"
+        },
+        {
+         "step": "sd2"
+        },
+        {
+         "step": "sd3"
+        },
+        {
+         "step": "sd4"
+        },
+        {
+         "step": "sd5"
+        }
+       ]
+      },
+      {
+       "assessor": "dq_linkage",
+       "status": "failed",
+       "acceptance": false,
+       "metric": "sq:L_q:single_axis",
+       "statistic": "mean over 6 rotor positions",
+       "observed": 28.011419754591245,
+       "expected": 26.1,
+       "relative_error": 0.07323447335598633,
+       "absolute_tolerance": 0.783,
+       "samples": 6,
+       "rows": [
+        {
+         "step": "sq0"
+        },
+        {
+         "step": "sq1"
+        },
+        {
+         "step": "sq2"
+        },
+        {
+         "step": "sq3"
+        },
+        {
+         "step": "sq4"
+        },
+        {
+         "step": "sq5"
+        }
+       ]
+      }
+     ],
+     "mesh_nodes": {
+      "mesh_nodes@nl00": 75448.0,
+      "mesh_nodes@nl01": 75448.0,
+      "mesh_nodes@nl02": 75448.0,
+      "mesh_nodes@nl03": 75448.0,
+      "mesh_nodes@nl04": 75448.0,
+      "mesh_nodes@nl05": 75448.0,
+      "mesh_nodes@nl06": 75448.0,
+      "mesh_nodes@nl07": 75448.0,
+      "mesh_nodes@nl08": 75448.0,
+      "mesh_nodes@nl09": 75448.0,
+      "mesh_nodes@nl10": 75448.0,
+      "mesh_nodes@nl11": 75448.0,
+      "mesh_nodes@nl12": 75448.0,
+      "mesh_nodes@nl13": 75448.0,
+      "mesh_nodes@nl14": 75448.0,
+      "mesh_nodes@nl15": 75448.0,
+      "mesh_nodes@nl16": 75448.0,
+      "mesh_nodes@nl17": 75448.0,
+      "mesh_nodes@nl18": 75448.0,
+      "mesh_nodes@nl19": 75448.0,
+      "mesh_nodes@nl20": 75448.0,
+      "mesh_nodes@nl21": 75448.0,
+      "mesh_nodes@nl22": 75448.0,
+      "mesh_nodes@nl23": 75448.0,
+      "mesh_nodes@nl24": 75448.0,
+      "mesh_nodes@nl25": 75448.0,
+      "mesh_nodes@nl26": 75448.0,
+      "mesh_nodes@nl27": 75448.0,
+      "mesh_nodes@nl28": 75448.0,
+      "mesh_nodes@nl29": 75448.0,
+      "mesh_nodes@nl30": 75448.0,
+      "mesh_nodes@nl31": 75448.0,
+      "mesh_nodes@nl32": 75448.0,
+      "mesh_nodes@nl33": 75448.0,
+      "mesh_nodes@nl34": 75448.0,
+      "mesh_nodes@nl35": 75448.0,
+      "mesh_nodes@ls00": 75448.0,
+      "mesh_nodes@ls01": 75448.0,
+      "mesh_nodes@ls02": 75448.0,
+      "mesh_nodes@ls03": 75448.0,
+      "mesh_nodes@ls04": 75448.0,
+      "mesh_nodes@ls05": 75448.0,
+      "mesh_nodes@ls06": 75448.0,
+      "mesh_nodes@ls07": 75448.0,
+      "mesh_nodes@ls08": 75448.0,
+      "mesh_nodes@ls09": 75448.0,
+      "mesh_nodes@ls10": 75448.0,
+      "mesh_nodes@ls11": 75448.0,
+      "mesh_nodes@ls12": 75448.0,
+      "mesh_nodes@ls13": 75448.0,
+      "mesh_nodes@ls14": 75448.0,
+      "mesh_nodes@ls15": 75448.0,
+      "mesh_nodes@ls16": 75448.0,
+      "mesh_nodes@ls17": 75448.0,
+      "mesh_nodes@ls18": 75448.0,
+      "mesh_nodes@ls19": 75448.0,
+      "mesh_nodes@ls20": 75448.0,
+      "mesh_nodes@ls21": 75448.0,
+      "mesh_nodes@ls22": 75448.0,
+      "mesh_nodes@ls23": 75448.0,
+      "mesh_nodes@ls24": 75448.0,
+      "mesh_nodes@ls25": 75448.0,
+      "mesh_nodes@ls26": 75448.0,
+      "mesh_nodes@ls27": 75448.0,
+      "mesh_nodes@ls28": 75448.0,
+      "mesh_nodes@ls29": 75448.0,
+      "mesh_nodes@ls30": 75448.0,
+      "mesh_nodes@ls31": 75448.0,
+      "mesh_nodes@ls32": 75448.0,
+      "mesh_nodes@ls33": 75448.0,
+      "mesh_nodes@ls34": 75448.0,
+      "mesh_nodes@ls35": 75448.0,
+      "mesh_nodes@ls36": 75448.0,
+      "mesh_nodes@fl00": 75448.0,
+      "mesh_nodes@fl01": 75448.0,
+      "mesh_nodes@fl02": 75448.0,
+      "mesh_nodes@fl03": 75448.0,
+      "mesh_nodes@fl04": 75448.0,
+      "mesh_nodes@fl05": 75448.0,
+      "mesh_nodes@fl06": 75448.0,
+      "mesh_nodes@fl07": 75448.0,
+      "mesh_nodes@fl08": 75448.0,
+      "mesh_nodes@fl09": 75448.0,
+      "mesh_nodes@fl10": 75448.0,
+      "mesh_nodes@fl11": 75448.0,
+      "mesh_nodes@fl12": 75448.0,
+      "mesh_nodes@fl13": 75448.0,
+      "mesh_nodes@fl14": 75448.0,
+      "mesh_nodes@fl15": 75448.0,
+      "mesh_nodes@fl16": 75448.0,
+      "mesh_nodes@fl17": 75448.0,
+      "mesh_nodes@lp025_0": 75448.0,
+      "mesh_nodes@lp025_1": 75448.0,
+      "mesh_nodes@lp025_2": 75448.0,
+      "mesh_nodes@lp025_3": 75448.0,
+      "mesh_nodes@lp025_4": 75448.0,
+      "mesh_nodes@lp025_5": 75448.0,
+      "mesh_nodes@lp050_0": 75448.0,
+      "mesh_nodes@lp050_1": 75448.0,
+      "mesh_nodes@lp050_2": 75448.0,
+      "mesh_nodes@lp050_3": 75448.0,
+      "mesh_nodes@lp050_4": 75448.0,
+      "mesh_nodes@lp050_5": 75448.0,
+      "mesh_nodes@lp075_0": 75448.0,
+      "mesh_nodes@lp075_1": 75448.0,
+      "mesh_nodes@lp075_2": 75448.0,
+      "mesh_nodes@lp075_3": 75448.0,
+      "mesh_nodes@lp075_4": 75448.0,
+      "mesh_nodes@lp075_5": 75448.0,
+      "mesh_nodes@lp100_0": 75448.0,
+      "mesh_nodes@lp100_1": 75448.0,
+      "mesh_nodes@lp100_2": 75448.0,
+      "mesh_nodes@lp100_3": 75448.0,
+      "mesh_nodes@lp100_4": 75448.0,
+      "mesh_nodes@lp100_5": 75448.0,
+      "mesh_nodes@lp125_0": 75448.0,
+      "mesh_nodes@lp125_1": 75448.0,
+      "mesh_nodes@lp125_2": 75448.0,
+      "mesh_nodes@lp125_3": 75448.0,
+      "mesh_nodes@lp125_4": 75448.0,
+      "mesh_nodes@lp125_5": 75448.0,
+      "mesh_nodes@sd0": 75448.0,
+      "mesh_nodes@sd1": 75448.0,
+      "mesh_nodes@sd2": 75448.0,
+      "mesh_nodes@sd3": 75448.0,
+      "mesh_nodes@sd4": 75448.0,
+      "mesh_nodes@sd5": 75448.0,
+      "mesh_nodes@sq0": 75448.0,
+      "mesh_nodes@sq1": 75448.0,
+      "mesh_nodes@sq2": 75448.0,
+      "mesh_nodes@sq3": 75448.0,
+      "mesh_nodes@sq4": 75448.0,
+      "mesh_nodes@sq5": 75448.0,
+      "mesh_nodes@s00": 75448.0,
+      "mesh_nodes@s01": 75448.0,
+      "mesh_nodes@s02": 75448.0,
+      "mesh_nodes@s03": 75448.0,
+      "mesh_nodes@s04": 75448.0,
+      "mesh_nodes@s05": 75448.0
+     },
+     "plan_sha256": "4e432b2add8998f5200ade763fd79f9f740d9b4abe676400de2f241d467d2700",
+     "components_used": [
+      "library_material",
+      "material",
+      "circuit",
+      "fixed_potential_boundary",
+      "trapezoidal_slot_stator",
+      "circle",
+      "tooth_coil_winding",
+      "air_gap_element",
+      "block_label",
+      "salient_pole_rotor",
+      "salient_pole_winding"
+     ],
+     "component_digests": {
+      "library_material": "764a31e51b1bfa420a43e7c27359077bba1bbeafaaa29a37701158b72f0c2379",
+      "material": "25930c00a664225967750432711f7ada34b5b559f70bd9ebbbc6808e229c81a3",
+      "circuit": "efd5b10f8742e1668fbfc3b9998b1ea51904fd9108cfa85dea729c4aee53bce1",
+      "fixed_potential_boundary": "05402b98eca781ed34c76784fb457b5af1be20170675d06656022fbf8cb9a6c5",
+      "arc": "ae7026f3ed6b717bfe5c6ffe417d87483cc673af3dd6a8c883630c1d967a1dba",
+      "block_label": "acd0ab8def0806e6a6bc6d259c69b9e17f9eb4cab2a9d46dd3235f9a43d649e8",
+      "segment": "17d71c49c4505da3ca142ce610352c4367df85973a67d413c32777b422fae4ad",
+      "trapezoidal_slot_stator": "1e235f7697dd711a2c1a547e5f618cc132432ab19a9e650bfc0ecda3e2b7f4b7",
+      "circle": "360ad16dfd3c61097292b257fb2c6cf4003440ecdd8b38d2b24ff6e086c4c57d",
+      "tooth_coil_winding": "fd051a2b53b2f8a8d34a3899253116bda12e8545d85003442f97d5fd900f3fe3",
+      "boundary": "7056b1bb11fd8273afed942ae894b9dc28cdb8f09578c7f8cd21fdb74232d169",
+      "hole": "9a734855ccc6b670368f7a917dfd2fa47994d5c2227985f52d43b7ac59ccb658",
+      "air_gap_element": "ffd07fc725d5cf3413c6d1ec235cc1d8f4c62ed854b831c20fbd941837a0a2d7",
+      "salient_pole_rotor": "9ee3bb417e886b2be28d7128004e6d1723afc5b1b077f43c458c0815d315f1fd",
+      "salient_pole_winding": "173819200f04791ed74bf698cc97f5ff5fee44bbcc3d3291e3fd5233963534df"
+     },
+     "case_binding_sha256": "73b14405271e4abab08b92443c8e7753b784c2c38624d93093a4ada375e6c22b",
+     "report_sha256": "b741c09a826fbb19cf8e68868cc501ed495c1a9f2d960ff7809ed47d59847ea0",
+     "engine_image_id": "sha256:85f07dce379bff58dc539f8ed49ffba53a94eba332fbf81d4c9fd6c3df94725d",
+     "errors": {}
+    }
+   },
+   "rebuild_matches_original": null,
+   "components_match_original": null,
+   "article_model_vs_original": null
   },
   {
    "case_id": "elrefaie-2006-fscw-spm",
@@ -27223,7 +28630,7 @@
  "totals": {
   "cases": 20,
   "passed": 1,
-  "failed": 18,
+  "failed": 19,
   "comparators_only": 0,
   "level_passes": {
    "original": 0,
@@ -27450,6 +28857,31 @@
     "aleksandrov-2019-linear-induction",
     "article",
     "gapline:B2@f100:rms"
+   ],
+   [
+    "bazzo-2021-salient-pole-generator",
+    "article",
+    "body_B_T:mean:nl"
+   ],
+   [
+    "bazzo-2021-salient-pole-generator",
+    "article",
+    "L2ps_H:maximum:ls"
+   ],
+   [
+    "bazzo-2021-salient-pole-generator",
+    "article",
+    "L2ps_H:minimum:ls"
+   ],
+   [
+    "bazzo-2021-salient-pole-generator",
+    "article",
+    "flux_A_Wb:fundamental_rms"
+   ],
+   [
+    "bazzo-2021-salient-pole-generator",
+    "article",
+    "torque_Nm:mean"
    ],
    [
     "elrefaie-2006-fscw-spm",
@@ -28076,9 +29508,6 @@
     "variant-design-5",
     "torque_outer_Nm:maximum"
    ]
-  ],
-  "pending_first_run": [
-   "bazzo-2021-salient-pole-generator"
   ],
   "note": "A passing audit means the record is complete and current and every failure is a reviewed finding within its regression bound, not that all published targets passed."
  }
