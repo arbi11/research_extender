@@ -145,6 +145,16 @@ contradicts it.
   only 8% because arc pieces and small features set much of the mesh. Count
   about 2.5 area / h^2, and size mesh controls and engine.solves_per_process
   from the timed first solve's count. (`tlali-2020-vernier-wind-generator`)
+  Fine arcs all round the gap raise it further: the salient-pole generator
+  (0.25 degree pieces on four gap circles, 0.4 mm gap layers) counted 50k that
+  way and meshed 147,575. (`bazzo-2021-salient-pole-generator`)
+- **Time one step of every kind before the sweep, and restrict a metric that
+  divides by a current to the steps that carry it.** An inductance metric,
+  (psi_A - psi_B) / I_A, divided by zero at the no-load steps; metrics are
+  computed after all of a level's solves, so the error would have cost the
+  whole level. The timed first solve (one no-load, two inductance and one load
+  step) found it, and the metric's `steps` fixed it before the run.
+  (`bazzo-2021-salient-pole-generator`)
 - **Test a uniform factor against current and against current angle.** An
   effective gap and a scale both lower torque, but differently: the drawn-gap
   build exceeded Ibrahim 2017's Maxwell torque by 16.7% at half current and 7.5%
@@ -193,12 +203,25 @@ contradicts it.
   compare region by region rather than entity by entity.
   (`lrkanalysis-flux-sweep`)
 
-- **Salient-pole machines** (switched reluctance, wound-field rotors) are
-  `salient_poles` for the stator and the rotor (coil blocks share the pole
+- **Salient-pole machines** (switched reluctance, wound-field rotors without
+  shoes; with shoes see the next lesson) are `salient_poles` for the stator and the rotor (coil blocks share the pole
   sides, so no sliver of air separates them) and `salient_pole_winding`. A
   switched-reluctance phase's opposite poles carry opposite polarity: one
   series circuit with ±turns. Build the rotor unaligned and turn it toward
   alignment counterclockwise, so motoring torque is positive. (`hamouda-2019-srm-8-6`)
+- **Wound-field rotors with pole shoes** are `salient_pole_rotor`: a face arc
+  through the outer radius (concentric, or eccentric with a smaller
+  `face_radius`), straight shoe tips and a flat underside, a parallel body on a
+  polygon or round core, field coil blocks that share edges with body, shoe and
+  core, round damper bars and a shaft; `salient_pole_winding` labels the coils
+  (one circuit, alternating polarity). Where coils fill the body sides up to
+  the shoe tips, take the polygon's apothem from the shoe's chord (a design's
+  "apothem equation"), so neighbouring coils meet at one corner node rather than
+  two a few micrometres apart, and close the interpolar spaces
+  (`interpolar_material`) so the thin gap layers take a fine mesh without the
+  interpolar air. For the phase-linkage prediction the field coils' current
+  distribution is the rotor's source, a quarter period ahead of the equivalent
+  magnetization. (`bazzo-2021-salient-pole-generator`)
 
 - **Tubular and linear machines are one period with periodic ends.** Build the
   armature with `magnet_array`, pair the two end edges of each region with a
@@ -294,6 +317,18 @@ contradicts it.
   the case assumes another: a solid instead of a 0.97 fill raised the SynRM's
   rated torque 2.1%, the lower curves lowered it 4.7%.
   (`ibrahim-2017-ferrite-pmasynrm`, `ibrahim-2016-synrm`)
+- **Read a reference FEA's saturation from its load point before trusting a
+  no-load steel bracket.** Electrical steels lay within 0.6% of each other at
+  a salient-pole generator's no load, yet at full load M-19 cross-saturated
+  the q axis (L_q 27.8 mH without field current, 18.3 mH under load) and the
+  torque came out 9% low, while the paper's own V_d / (w I_q) gave its
+  no-field L_q, 26-28 mH: its FEA's iron hardly saturated, with less no-load
+  flux (7-13%) than any library steel gives. Solid 1010 came closest
+  (2.0-6.7%); linear iron restored the q axis but not the d axis; no input or
+  pair reproduced both. When a paper names no steel, read the load point's
+  inductances from its own voltages and currents before freezing, and expect
+  a miss if they disagree with the library curves' at the same point.
+  (`bazzo-2021-salient-pole-generator`)
 - A 33-point library curve read back natively within 0.06% in B
   (`design-nonlinear-ring-bh`), so library B-H transfer is trustworthy.
 
@@ -432,6 +467,27 @@ contradicts it.
   the text attributes to its hybrid model (20.4 N) is the FEA's marker on the
   same figure (20.409 N), not the hybrid one (20.693 N).
   (`aleksandrov-2019-linear-induction`)
+- **Recompute a design procedure's tables from its own equations.** A
+  step-by-step design paper tabulates what its equations give, slips included:
+  its 156 turns per phase follow from eq. (29) only with the distribution factor
+  taken at the mechanical slot angle (0.9962, not 0.9659), a damper-pitch
+  equation printed as alpha_S (1 - K_Dp) cannot place the four bars its figure
+  shows at K_Dp alpha_S, and its field resistance is one pole coil's (six in
+  series give 22.8 ohm, not 3.80). Settle a reading such as turns per pole or
+  in total from the paper's own flux equation and flux density (485 per pole
+  gives its 1.25 T, 485 in total 0.21 T), and build from the tabulated values.
+  (`bazzo-2021-salient-pole-generator`)
+- **Drive an undisclosed load point with the FEA's own currents.** When a
+  paper's FEA ran into a load circuit it does not describe, its Park-component
+  plots (vector art: 0.05 A) give the currents it carried; check them against
+  the phase currents' fundamental (21.13 against 21.11 A) and the table (21.19
+  A, the total rms with a 9% THD). Torque then depends only on the 2D field at
+  those currents and is an acceptance target; terminal voltage, power and power
+  factor depend on the circuit's resistance and end-winding inductance, so
+  compare them with and without those elements as comparators, and use the
+  table's own load-point equations (V_d = X_q I_q - R I_d) to read what the FEA
+  implies about the machine (its q-axis inductance under load).
+  (`bazzo-2021-salient-pole-generator`)
 - **Text values are rounded readings of a figure.** "A maximum torque of 75 Nm"
   was 73.8 N m on the paper's own FE points. Freeze the figure's points and keep
   the text as a comparator; check pole counts against field plots too (one
