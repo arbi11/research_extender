@@ -2,7 +2,7 @@
  "schema_version": 1,
  "id": "bazzo-2021-salient-pole-generator",
  "set": "development",
- "status": "frozen",
+ "status": "failed",
  "skill_version": "3199b36",
  "title": "A Step-by-Step Procedure to Perform Preliminary Designs of Salient-Pole Synchronous Generators",
  "source": {
@@ -7205,6 +7205,178 @@
    },
    "purpose": "Magnetic slot wedges (mu_r 5)."
   }
+ ],
+ "findings": [
+  "Failed: one of six acceptance values passes, the winding sign and phase order against the construction (phases within 0.002 electrical degrees of the field-winding prediction, amplitudes within 7e-6). Every FE value the paper gives is missed by 7-13%, the no-load ones high and the full-load torque low: B_PB 1.3825 T against 1.28 (+8.0%), L_d 44.36 mH against 40.78 (+8.8%), L_q 27.84 against 26.10 (+6.7%), the no-load EMF fundamental 259.77 V against Fig. 12's 230.51 (+12.7%), and the full-load mean torque 119.69 N m against 131.6 (-9.1%; Fig. 15: 131.73). The mesh is settled (0.75: 190k elements, 1.4: 107k, all within 0.1%; a 2.5 times coarser diagnostic, 97k, the same), and the stress-tensor and flux-linkage torques agree (119.69, 119.62).",
+  "What matches: the shapes. The L_2ps sweep peaks on the d axis and bottoms on the q axis like Fig. 7 (its ratio 1.594 against 1.562); the no-load EMF's THD is the FEA's, 7.1% (Fig. 12: 7.1%; 3rd harmonic 5.5% against 5.3%, 13th 3.0% against 2.75%); the full-load torque ripple is 32.2 against 34.8 N m peak to peak (comparator passed at 30%) though the FEA's currents carried a 9% THD; and the inductances from single-axis currents (44.01 and 28.01 mH) confirm the two-phase definition's (44.36, 27.84) within 1%.",
+  "The field-turn reading is confirmed: with 485 turns in total (81 per pole) B_PB is 0.221 T and the EMF 44.5 V (control field-turns-total), against 1.28 T and 230.5 V; the paper's 485 are per pole.",
+  "The assumed inputs' controls bracket the miss without closing it. Steel: M-45 (18 mil) moves B_PB, the EMF and the inductances by under 0.8% and the torque to -7.6%; solid M-19 (fill 1) raises the no-load values (B_PB +9.5%, EMF +14.2%) and the torque to -6.4%; solid hot-rolled 1010 throughout, the low end of the bracket, comes closest: B_PB +2.6%, L_d +2.0%, L_q +3.0%, EMF +6.4%, torque -6.7% (the pre-solve estimate said -6.4% in B_PB; FEMM gave -5.1%); a solid 1010 rotor under M-19: +4.5, +5.0, +5.3, +9.1% and -5.3%. The inductance test at the nominal current's peak lowers L_d to 43.43 and L_q to 27.54 mH (+6.5, +5.5%). A steel shaft changes nothing (under 0.01%); magnetic wedges (mu_r 5) raise the inductances by 19-23%. No control passes any FE target.",
+  "The full-load point shows how the FEA's machine differs. Driven by the FEA's own currents, FEMM's internal voltage is V_d = 73.3 and V_q = 231.1 V (rms) against Fig. 13's 104.9 and 210.4: its q-axis inductance under load is V_d / (w I_q) = 18.3 mH, a third below its 27.8 mH without field current (M-19's cross-saturation, the pole body at 1.48 T), whereas the FEA's V_d gives 26.3 mH (28 mH if its circuit held 0.44 ohm), its own no-field L_q: the FEA's iron hardly saturates at full load (Fig. 11 shows the pole body at 1.2-1.4 T). FEMM's power factor is 0.815 against 0.89, its line voltage 420.0 V without and 393.4 V with the design's R_A and L_Tend against 405.98 (comparators). The FEA's output (13.21 kW) is 0.59 kW below its torque times speed (13.80 kW): losses in its circuit and bars, about 0.44 ohm per phase if all copper, between the design's 20 C winding (0.48 ohm) and its active length alone (0.32).",
+  "Diagnostics outside the frozen case (bazzo/diag, 20-solve reductions of the case's steps; the base reproduces the run within 0.1%, its 6-position torque within 0.4%) read the signature. A longer gap lowers all four no-load values together (+0.25 mm: B_PB +3.5%, EMF +7.2%, L_d +2.6%, L_q +2.1%; +0.5 mm: -1.0, +1.7, -2.8, -1.9%) but lowers the torque further (-11.8%, -14.1%); Fig. 10 shows the drawn gap at 3.52 +/- 0.1 mm. Another full-load field current cannot give both voltages: 4.0 A gives 106.5 N m and V_q 175.7 V, 5.5 A 125.7 N m and 258.7 V. Linear iron (no B-H curve) restores the FEA's q axis: at mu_r 600 V_d is 104.4 V (-0.5%), the EMF +0.4%, L_q -0.5% and the torque +3.8%, but B_PB -4.1%, L_d -4.5% and V_q +12.7%; mu_r 1000 gives +1.9, +7.0, +0.9, +2.5% and +9.9% in torque. Linear iron with a longer gap (mu_r 2000, +0.6 mm) gives the torque within 0.2% but B_PB -6.1% and L_d -7.4%. No single input, and no pair tried, reproduces the no-load values and the load point together. The FEA's iron model is the most likely seat of the difference (the paper names no steel, and its FEA behaves as if its iron hardly saturated while its no-load flux is lower than any library steel gives); it stays a reviewed failure.",
+  "Table 5's analytic load points, as comparators: at the design's field currents and currents (PF 0.9 and its load angles) FEMM gives 441.8, 426.9, 408.9, 389.9 and 369.6 V line to line at 25, 50, 75, 100 and 125% load against the 400 V the design model holds, with R_A and L_Tend outside the 2D model: the linear design model (E proportional to I_F, constant X_d and X_q) misses saturation and cross-saturation, which take 70 V off between light and 125% load. At the design's rated point the output is 12.15 kW against 13.50 and the line voltage 389.9 against 400.3; the design's B_PB (1.25 T, no iron, no leakage) is 10.6% below FEMM's.",
+  "The paper's own procedure has three slips the replication found by recomputing its tables: eq. (29) yields Table 3's 156 turns per phase only with eq. (28)'s distribution factor taken at the mechanical slot angle (0.9962 instead of 0.9659), so the design's EMF (230.9 V at I_Fnl) is 3% optimistic; eq. (55) prints the damper pitch as alpha_S (1 - K_Dp), 2 degrees, where Fig. 10 and the four bars need K_Dp alpha_S = 8; and eq. (41) with the 485 turns per pole gives one pole coil's resistance, so Table 3's 3.80 ohm and Table 4's 87.5 W field loss are a sixth of the field winding's (22.8 ohm, 521 W at 4.78 A). Table 3's h_PS (13.81 mm) is 0.02 mm above eqs. (2), (5), (6)."
+ ],
+ "geometry_checks": [
+  {
+   "quantity": "stator bore and outer diameters (mm): eqs. (14) and (23) against Table 3",
+   "paper_value": [
+    257,
+    349.6
+   ],
+   "model_value": [
+    257.0,
+    349.62
+   ],
+   "location": "Table 3",
+   "note": "The radial build (128.5 + 2 + 2.24 + 17.2 + 24.87) closes at 174.81 mm."
+  },
+  {
+   "quantity": "pole shoe width, shoe height and body height (mm): eqs. (3), (2)+(5)+(6), (8) against Table 3",
+   "paper_value": [
+    85.51,
+    13.81,
+    37.14
+   ],
+   "model_value": [
+    85.51,
+    13.81,
+    37.136
+   ],
+   "location": "Table 3",
+   "note": "Eq. (3) gives 85.505 mm and eqs. (2), (5), (6) 13.788 mm; the build takes the table's shoe width and height and eq. (8)'s apothem (74.054 mm), so its shoe tips are 6.270 mm (eq. (5): 6.25)."
+  },
+  {
+   "quantity": "slot top and bottom widths, slot and yoke heights (mm): eqs. (17), (22), (20), (19)",
+   "paper_value": [
+    11.59,
+    14.6,
+    17.2,
+    24.87
+   ],
+   "model_value": [
+    11.594,
+    14.604,
+    17.21,
+    24.872
+   ],
+   "location": "Table 3 against the equations with Table 2",
+   "note": "The build uses the table."
+  },
+  {
+   "quantity": "slot (coil) area and armature conductor surface (mm2): eqs. (24), (31)",
+   "paper_value": [
+    null,
+    4.33
+   ],
+   "model_value": [
+    225.23,
+    4.331
+   ],
+   "location": "Table 3",
+   "note": "Two 112.6 mm2 layers of 13 turns at fill 0.5; the wedge (15.2 mm2) is a region of its own."
+  },
+  {
+   "quantity": "field coil window and turns per pole: eq. (10)",
+   "paper_value": 485,
+   "model_value": 485.0,
+   "location": "Table 3",
+   "note": "37.136 x 27.21 mm x 0.8 / 1.6667 mm2 = 485.0 turns per pole side window: the 485 turns are one pole's."
+  },
+  {
+   "quantity": "turns per phase: eqs. (29)-(30)",
+   "paper_value": 156,
+   "model_value": 156,
+   "location": "Table 3 (13 turns x 2 coils x 6)",
+   "note": "Eq. (29) gives 156.0 turns only with the distribution factor of eq. (28) taken at the mechanical slot angle (10 degrees: 0.9962); at the electrical one (30 degrees: 0.9659, the winding's real factor) it gives 160.9. The design's EMF (230.9 V at I_Fnl) carries that 3% too."
+  },
+  {
+   "quantity": "armature and field resistance at 100 C (ohm): eqs. (36)-(43)",
+   "paper_value": [
+    0.6275,
+    3.8
+   ],
+   "model_value": [
+    0.628,
+    3.8
+   ],
+   "location": "Table 3",
+   "note": "Eq. (39)'s L_Ce is the turn length L_At (787.9 mm). Eq. (41) with T_F = 485 is one pole coil: the six coils in series are 22.8 ohm, so Table 4's 87.5 W field copper loss is 521 W for the whole winding."
+  },
+  {
+   "quantity": "damper bar diameter (mm) and pitch (deg): eqs. (55)-(59)",
+   "paper_value": [
+    4.64,
+    8.11
+   ],
+   "model_value": [
+    4.637,
+    8.0
+   ],
+   "location": "Table 3; Fig. 10",
+   "note": "Eq. (58) gives 16.89 mm2 per bar; the pitch is K_Dp alpha_S (eq. (55) prints alpha_S (1 - K_Dp))."
+  },
+  {
+   "quantity": "the build overlaid on the authors' FE plot (Fig. 10) at its centre and scale",
+   "paper_value": null,
+   "model_value": null,
+   "location": "Fig. 10, p. 18 (bazzo/render/overlay2.png, outside the repository)",
+   "note": "Slots, wedges, teeth, the pole body, shoe, field coil blocks, the hexagonal core's corners, the damper bars and the core's inner arc coincide with the plot's outlines within about a pixel (0.35 mm); the plot's slot divider is a chord across each slot, as built. At the plotted instant a tooth lies on the pole axis."
+  },
+  {
+   "quantity": "Fig. 7's L_2ps extremes halved (mH) against Table 3's L_d and L_q",
+   "paper_value": [
+    40.78,
+    26.1
+   ],
+   "model_value": [
+    40.779,
+    26.107
+   ],
+   "location": "Fig. 7 (vector art)",
+   "note": "Maxima 81.557 mH at 55, 115, 175 degrees; minima 52.213 at 25, 85, 145."
+  },
+  {
+   "quantity": "full-load current (A rms): Table 6 against Fig. 14",
+   "paper_value": 21.19,
+   "model_value": [
+    21.11,
+    21.13,
+    21.18
+   ],
+   "location": "Table 6; Fig. 14",
+   "note": "Fig. 14's phase currents: fundamental 21.11, total 21.18 (THD 8.5%); its Park components' magnitude 21.13. Table 6's value is the total rms."
+  },
+  {
+   "quantity": "full-load line voltage (V rms), power (kW) and torque (N m): Table 6 and the text against Figs. 13 and 15",
+   "paper_value": [
+    405.98,
+    13.22,
+    131.6
+   ],
+   "model_value": [
+    406.6,
+    13.207,
+    131.73
+   ],
+   "location": "Figs. 13, 15",
+   "note": "Fig. 15's torque times 104.72 rad/s is 13.80 kW: 0.59 kW above the output, losses inside the FEA's circuit and bars (about 0.44 ohm per phase if all copper)."
+  },
+  {
+   "quantity": "mesh elements",
+   "paper_value": null,
+   "model_value": 147575,
+   "location": "the build",
+   "note": "About 50k estimated from the regions' areas (2.5 per h^2): the area estimate missed by about 3 times again."
+  }
+ ],
+ "retrospective": [
+  "Time (IST): reading the paper and its figures about 30 minutes (Figs. 7 and 12-15 are vector art, read on their gridlines to 0.05 mH, 1 V and 0.05 A; Fig. 10 is a 464 px raster read at its native resolution for the shaft and damper bars); the new rotor component, the stator options, the field-winding linkage and the dq terminal quantities with their tests about 15 minutes; the generator, pre-solve estimate and freeze about 20 minutes (frozen 15:57); the timed first solve and its fix 2 minutes; run1, the article and ten controls, about 2 h 45 min of solving (139 solves a level at 6-10 s, 107-190k elements); the 14 designs re-run (15 minutes) and the signature diagnostics (40 minutes) ran beside it.",
+  "What decided the outcome was visible before freezing and not acted on. The host-side magnetic circuit gave an EMF of 258 V at the no-load field current, within 1% of FEMM's 259.8 V and 12% above the paper's FEA; it was set aside as crude because the paper's design EMF (230.9 V) and its FEA (230.5 V) agreed. They agree because the design carries a 0.89 leakage factor and a 3% slip in its distribution factor, not because a model of the drawn machine gives 230 V. Proposed for SKILL.md (stage 3): compare the pre-solve estimate with the paper's FE values, not only with its design values; when the estimate misses an FE value by more than its own spread over the assumed inputs, record the expected miss in the coverage before freezing, and look for the input that could close it (here only the iron model could, and the paper names no steel).",
+  "The steel bracket was taken at no load (B_PB within 0.6% across electrical steels) and missed the load point, where M-19's cross-saturation takes a third off L_q and 9% off the torque. Proposed for SKILL.md (stage 3): bracket an assumed material at every operating point the targets use, the load point's q axis included, and read the reference's own load-point equations (V_d = X_q I_q - R I_d) for what its FEA implies (here an unsaturated L_q under load).",
+  "The skill had no rule for a design paper whose FEA runs into a load it does not describe. Driving FEMM with the FEA's own Park currents (read from vector art) made the torque an acceptance target independent of the circuit; the terminal quantities stayed comparators with and without the external elements. Proposed for SKILL.md (stage 4, reference angles): when the paper plots its FEA's d- and q-axis currents, impose them and compare torque; check them against the phase currents' fundamental first.",
+  "Lessons that held: vector figures read exactly (Fig. 7's extremes halve to Table 3's inductances within 0.01 mH; Fig. 14's dq magnitude is the phase currents' fundamental); an overlay of the build on the authors' FE plot settled the coils, core corners, damper bars and shaft; the timed first solve (one step of each kind) caught a metric that divided by zero before it cost a level; reading the discrepancy's signature with single-input diagnostics separated a gap-like no-load excess from a saturation-like load deficit. A lesson that did not settle it: a uniform factor points at a scale - here the no-load factors (1.07-1.13) were not uniform and the load torque went the other way, so no scale, gap, field current or steel reproduced the paper, and no pair tried did.",
+  "The area-based element estimate missed by three times again (50k against 147,575) despite the 2.5 per h^2 rule: fine arcs on four gap circles dominate. Proposed: count elements along fine arcs as (arc length / piece length) x (layers of the thinnest adjoining region) before the area terms, or always size solves_per_process from the timed first solve, as here.",
+  "Generic changes: salient_pole_rotor (pole shoes with concentric or eccentric faces, straight tips and flat undersides, polygon or round cores, field coil blocks sharing the polygon's corners, damper bars, shaft, interpolar closures) with its knowledge record, tests and the synthetic design design-wound-field-salient-pole; trapezoidal_slot_stator wedge closures and labels and a radial layer divider; linkage_prediction for wound-field rotors (the field coils' current distribution as the rotor's source); dq_linkage terminal quantities (v_d, v_q, line voltage, electrical power and terminal power factor with an external resistance and end-winding inductance) and a scale; the schema's wfsm family. Lessons on wound-field construction, metric restriction and element counts, recomputing a design paper's tables from its equations, driving an undisclosed load with the FEA's own currents, and reading the iron's saturation from a load point."
  ],
  "coverage": {
   "scope": "core",
