@@ -1,5 +1,8 @@
 # FEMM second brain
 
+The domain-neutral pattern behind this brain, and how to adapt it to another
+field, is described in the [repository README](../README.md).
+
 For another agent continuing development, read the repository
 [handover](https://github.com/arbi11/research_extender/blob/codex/femm-brain-solver-20261025/detailedREADME.md) for branch relationships, current evidence,
 known failures, protected services and the next milestones.
