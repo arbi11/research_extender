@@ -1,5 +1,9 @@
 # FEMM assistant: detailed development README
 
+> **Branches have changed since this handover was written.** Work now integrates
+> on `develop`, which holds everything from the stacked PRs #3 and #5–#8; see
+> the Branches section of `AGENTS.md`. Branch names below are historical.
+
 Updated 25 October 2026. Read this before continuing the work. This is a
 development handover, not a claim that general paper replication is solved.
 

@@ -46,8 +46,18 @@ Read it before starting a replication, and read `lessons.md` beside it.
 Do not modify or restart the services on ports 8000, 8001 and 8010. Do not
 touch `~/femm-dev/femm_assistant/.env`, editor swap files, or `deploy/compose.yaml`
 (in `~/femm-dev/femm_assistant/` and in `femm_assistant/` here). Never commit
-keys or `.env` files. Do not merge pull requests or deploy; push branches for
-review.
+keys or `.env` files. Do not deploy.
+
+## Branches
+
+`develop` is the integration branch; `main` is the stable branch.
+
+- Start each piece of work on a branch from `develop`: `paper/<paper-id>` for a
+  replication, `feature/<topic>` for anything else.
+- Open one pull request per branch into `develop`, and merge it only after the
+  user approves it. Tests, `validate`, `papers` and the audit must pass first.
+- Never push to `main` or merge into it; the user merges `develop` into `main`.
+- Never force-push a shared branch or rewrite pushed history.
 
 ## Where things live
 
