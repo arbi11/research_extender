@@ -1,4 +1,4 @@
-"""Validated imports and read-only SQLite/FTS5 lookup; no FEMM execution."""
+"""Validated imports and read-only SQLite/FTS5 lookup with optional native evidence."""
 from contextlib import closing
 from datetime import datetime, timezone
 import json
@@ -8,7 +8,7 @@ import re
 import sqlite3
 import tempfile
 
-from .source import DATA, DEFAULT_CACHE, fingerprint, load_sources, lua_definitions, manual_definitions, verified_text
+from .source import DATA, DEFAULT_CACHE, fingerprint, implementation_definitions, load_sources, lua_definitions, manual_definitions, verified_text
 
 APPLICATION_ID = 1178758466
 DEFAULT_DB = Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))) / "femm-brain2/catalogue.sqlite3"
@@ -32,6 +32,8 @@ def validate_batch(batch, sources, cache=DEFAULT_CACHE):
             definitions[source["id"]] = manual_definitions(text)
         elif source["role"] == "lua_binding":
             definitions[source["id"]] = lua_definitions(text)
+        elif source["role"] == "implementation":
+            definitions[source["id"]] = implementation_definitions(text, source)
     for record in batch.get("commands", []):
         name = record.get("name", "<missing>")
         identity = (name, record.get("version"), record.get("binding"))
@@ -51,8 +53,6 @@ def validate_batch(batch, sources, cache=DEFAULT_CACHE):
             errors.append(name + ": invalid command name")
         if record["version"] != batch.get("target", {}).get("version") or record["binding"] != batch.get("target", {}).get("binding"):
             errors.append(name + ": version/binding disagrees with this import batch")
-        if record["review"].get("status") != "source_checked" or record["execution"].get("status") != "not_tested":
-            errors.append(name + ": milestone entries need source_checked and execution not_tested")
         signature = re.fullmatch(re.escape(name) + r"\(([^()]*)\)", record["signature"])
         names = [p.get("name") for p in record["parameters"]]
         if not signature or [n.strip() for n in signature.group(1).split(",") if n.strip()] != names:
@@ -83,6 +83,13 @@ def validate_batch(batch, sources, cache=DEFAULT_CACHE):
                 errors.append(name + ": definition fingerprint or page locator differs from source")
             if reference.get("anchor") != name:
                 errors.append(name + ": source anchor must identify the command")
+            if list(definition.line_range) != reference.get("line_range", []):
+                errors.append(name + ": implementation line locator differs from source")
+            if source["role"] == "lua_binding":
+                exported = re.match(r"function\s+\w+\(([^)]*)\)", definition.text)
+                arguments = [a.strip() for a in exported.group(1).split(",") if a.strip()] if exported else []
+                if len(arguments) != len(names):
+                    errors.append(name + ": parameter count disagrees with the Lua wrapper")
         if not {"api_manual", "lua_binding"} <= roles:
             errors.append(name + ": both manual and Lua binding must be checked")
         if not record["examples"] or any(e.get("origin") != "agent_authored" or e.get("execution_status") != "not_tested"
@@ -111,11 +118,15 @@ def connect_readonly(path=DEFAULT_DB):
     return db
 
 
-def build(path=DEFAULT_DB, *, batch_path=None, sources_path=None, cache=DEFAULT_CACHE):
+def build(path=DEFAULT_DB, *, batch_path=None, sources_path=None, cache=DEFAULT_CACHE, evidence_path=None):
     batch, sources = load_batch(batch_path), load_sources(sources_path)
     validation = validate_batch(batch, sources, cache)
     if validation["errors"]:
         raise ValueError("Import rejected: " + "; ".join(validation["errors"]))
+    executions = {}
+    if evidence_path is not None:
+        from .geometry_check import verify_evidence
+        executions = verify_evidence(evidence_path, batch)
     target = Path(path).resolve()
     if target.exists():
         with closing(connect_readonly(target)):
@@ -131,10 +142,16 @@ def build(path=DEFAULT_DB, *, batch_path=None, sources_path=None, cache=DEFAULT_
                         "batch_sha256": fingerprint(json.dumps(batch, sort_keys=True).encode()),
                         "source_verification": "hashes, definition fingerprints, page locators and Lua exports checked",
                         "inventory_scope": "Detected FEMM command definitions in the pinned manual; inventory entries beyond the reviewed batch are not semantic catalogue entries."}
+            if evidence_path is not None:
+                metadata["native_evidence"] = {"report": str(Path(evidence_path).resolve()),
+                                               "report_sha256": fingerprint(Path(evidence_path).read_bytes()),
+                                               "scope": "Toy geometry API checks; no paper or field-solution validation."}
             db.executemany("INSERT INTO metadata VALUES (?,?)", [(k, json.dumps(v)) for k, v in metadata.items()])
             db.executemany("INSERT INTO sources VALUES (?,?)", [(s["id"], json.dumps(s)) for s in sources])
             db.executemany("INSERT INTO inventory VALUES (?,?)", [(d["name"], json.dumps(d)) for d in validation["inventory"]])
             for record in batch["commands"]:
+                if record["name"] in executions:
+                    record = {**record, "execution": executions[record["name"]]}
                 cursor = db.execute("INSERT INTO commands(name,version,binding,physics,category,data) VALUES (?,?,?,?,?,?)",
                                     (*[record[k] for k in ("name", "version", "binding", "physics", "category")], json.dumps(record)))
                 details = json.dumps({k: record[k] for k in ("parameters", "returns", "preconditions", "effects", "notes")})
@@ -205,4 +222,6 @@ def stats(path=DEFAULT_DB, *, include_pending=False):
             "pending_commands": len(pending), "pending_sample": pending[:10], "sources": sources,
             **({"pending_names": pending} if include_pending else {}),
             "needs_clarification": [r["name"] for r in records if r["review"]["semantic_status"] == "needs_clarification"],
-            "execution_tested_commands": sum(r["execution"]["status"] != "not_tested" for r in records)}
+            "execution_tested_commands": sum(r["execution"]["status"] != "not_tested" for r in records),
+            "execution_passed_commands": sum(r["execution"]["status"] == "passed" for r in records),
+            "execution_failed_commands": [r["name"] for r in records if r["execution"]["status"] == "check_failed"]}

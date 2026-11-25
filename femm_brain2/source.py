@@ -30,10 +30,23 @@ class Definition:
     section: str
     text: str
     additional_pages: tuple = ()
+    line_range: tuple = ()
 
     @property
     def digest(self):
         return fingerprint(normalized(self.text).encode())
+
+
+def implementation_definitions(text, source):
+    """Locate reviewed C++ excerpts in a hash-pinned file, using one-based lines."""
+    lines = text.splitlines()
+    result = {}
+    for name, (first, last) in source.get("anchors", {}).items():
+        if not 1 <= first <= last <= len(lines):
+            raise ValueError("Invalid implementation locator: " + name)
+        result[name] = Definition(name, (), "C++ implementation", "\n".join(lines[first-1:last]),
+                                  line_range=(first, last))
+    return result
 
 
 def manual_definitions(text):

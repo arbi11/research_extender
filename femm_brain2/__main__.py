@@ -12,11 +12,17 @@ from .source import DEFAULT_CACHE, fetch_sources, load_sources
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("fetch-sources", "validate", "build", "search", "get", "stats", "export"):
+    for name in ("fetch-sources", "validate", "build", "search", "get", "stats", "export", "check-geometry"):
         p = commands.add_parser(name)
         p.add_argument("--db", type=Path, default=DEFAULT_DB)
-        if name in ("fetch-sources", "validate", "build"):
+        if name in ("fetch-sources", "validate", "build", "check-geometry"):
             p.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
+        if name == "build":
+            p.add_argument("--evidence", type=Path)
+        if name == "check-geometry":
+            p.add_argument("--output", type=Path, required=True)
+            p.add_argument("--image")
+            p.add_argument("--timeout", type=int, default=120)
         if name in ("search", "get"):
             p.add_argument("--version")
             p.add_argument("--binding")
@@ -36,7 +42,10 @@ def main(argv=None):
             result = validate_batch(load_batch(), load_sources(), args.cache)
             result.pop("inventory", None)
         elif args.command == "build":
-            result = build(args.db, cache=args.cache)
+            result = build(args.db, cache=args.cache, evidence_path=args.evidence)
+        elif args.command == "check-geometry":
+            from .geometry_check import run
+            result = run(args.output, batch=load_batch(), cache=args.cache, image=args.image, timeout=args.timeout)
         elif args.command == "get":
             result = get(args.name, args.db, version=args.version, binding=args.binding)
         elif args.command == "search":

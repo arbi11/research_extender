@@ -145,13 +145,16 @@ class CatalogueTests(unittest.TestCase):
         self.assertIn('Return values continue', definitions['mo_getpointvalues'].text)
         self.assertEqual(len(definitions['mo_getb'].additional_pages), 1)
 
-    def test_review_batch_retains_full_point_value_return_order_and_arc_ambiguity(self):
+    def test_review_batch_retains_full_point_value_return_order_and_resolves_arc(self):
         records = {r['name']: r for r in load_batch()['commands']}
-        self.assertEqual(len(records), 10)
+        self.assertEqual(len(records), 38)
         self.assertEqual([r['name'] for r in records['mo_getpointvalues']['returns']['values']],
                          ['A', 'B1', 'B2', 'Sig', 'E', 'H1', 'H2', 'Je', 'Js', 'Mu1', 'Mu2', 'Pe', 'Ph', 'ff'])
-        self.assertEqual(records['mi_addarc']['review']['semantic_status'], 'needs_clarification')
-        self.assertIsNone(records['mi_addarc']['parameters'][-1]['units'])
+        self.assertEqual(records['mi_addarc']['review']['semantic_status'], 'reviewed')
+        self.assertEqual(records['mi_addarc']['parameters'][-1]['units'], 'degrees_per_element')
+        self.assertEqual(records['mi_copyrotate']['signature'], 'mi_copyrotate(bx, by, angle, copies)')
+        self.assertNotIn('editaction', [p['name'] for p in records['mi_copyrotate']['parameters']])
+        self.assertTrue(all(r['execution']['status'] == 'not_tested' for r in records.values()))
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "milestone": "Ten-command lookup prototype; remaining manual inventory is pending review.",
+  "milestone": "38 reviewed Lua commands, including all 33 geometry, selection, labeling and editing definitions in manual sections 3.6.1, 3.6.2, 3.6.3 and 3.6.6.",
   "target": {
     "software": "FEMM",
     "version": "5.0",
@@ -12,7 +12,8 @@
   "authorship": {
     "semantic_records": "Coding agent reviewed the pinned manual definitions and Lua binding, then authored this JSON import batch.",
     "automation": "Python locates definitions, verifies source fingerprints, validates records and builds the SQLite lookup.",
-    "examples": "Agent-authored fragments, explicitly not execution-tested."
+    "examples": "Agent-authored fragments, explicitly not execution-tested.",
+    "execution": "This source import makes no execution claim. Optional native evidence is separately checked when building SQLite."
   },
   "commands": [
     {
@@ -490,8 +491,8 @@
           "name": "maxseg",
           "type": "number",
           "required": true,
-          "units": null,
-          "description": "Arc subdivision control. The manual wording does not establish a reliable unit for this parameter.",
+          "units": "degrees_per_element",
+          "description": "Maximum angular span per arc mesh element, stored in MaxSideLength; not a segment count.",
           "default": null,
           "default_status": "not_documented",
           "allowed_values": null
@@ -506,8 +507,7 @@
       },
       "preconditions": [
         "A magnetics preprocessor document is active, for example after newdocument(0).",
-        "The intended endpoint nodes already exist.",
-        "Resolve the documented maxseg ambiguity before relying on a mesh discretization interpretation."
+        "The intended endpoint nodes already exist."
       ],
       "effects": [
         "Adds an arc connecting the nearest endpoint nodes."
@@ -519,8 +519,7 @@
           "code": "mi_addarc(0, 0, 10, 0, 90, 5)",
           "requires": [
             "A magnetics preprocessor document is active, for example after newdocument(0).",
-            "The intended endpoint nodes already exist.",
-            "Resolve the documented maxseg ambiguity before relying on a mesh discretization interpretation."
+            "The intended endpoint nodes already exist."
           ],
           "execution_status": "not_tested"
         }
@@ -541,22 +540,43 @@
           "pdf_pages": [],
           "section": "Lua binding function",
           "definition_sha256": "843ad4facc6a04fcef2f762bd636ff70892fd97a225aacc69b4b032568919c15"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_addarc",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "83dbe5fa4f9fcc9808ba2d651199b5ce4339c2d2d22f7f625f37de67c1da6d26",
+          "line_range": [
+            106,
+            115
+          ]
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_addarc",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "3c5df10d3d25502bffb9652fa876f51e7d14ea5560fb56eb0e6830b2b9930656",
+          "line_range": [
+            197,
+            210
+          ]
         }
       ],
       "review": {
         "status": "source_checked",
         "reviewer": "coding_agent",
-        "semantic_status": "needs_clarification",
-        "open_questions": [
-          "Clarify maxseg units and semantics against the matching implementation or an isolated geometry check."
-        ]
+        "semantic_status": "reviewed",
+        "open_questions": []
       },
       "execution": {
         "status": "not_tested"
       },
       "notes": [
-        "The parameter is forwarded unchanged by the Lua wrapper. The manual describes maxseg as a segment count, while its name alone cannot establish its meaning. This catalogue does not silently label it as degrees per segment.",
-        "The numeric maxseg in the illustrative fragment is not an execution-tested recommendation."
+        "The manual phrase divided into maxseg segments conflicts with the implementation.",
+        "The C++ adder stores maxseg in FArcSegment.MaxSideLength. The arc property setter writes the same field, whose documented unit is degrees per mesh element.",
+        "This interpretation is based on the pinned implementation, with container-specific geometry checks supplied separately."
       ]
     },
     {
@@ -1106,6 +1126,2690 @@
         "The ordered 14-value return table continues from PDF page 108 onto page 109.",
         "The Lua binding expands result arrays into multiple return values and supports CComplex numbers. Imaginary parts are zero for magnetostatic problems.",
         "Units for dimensional returned quantities are not stated in this command table and remain null here rather than being guessed."
+      ]
+    },
+    {
+      "name": "mi_drawline",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "geometry",
+      "purpose": "Draw a straight line and create its endpoint nodes.",
+      "signature": "mi_drawline(x1, y1, x2, y2)",
+      "parameters": [
+        {
+          "name": "x1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "x2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Creates the endpoint nodes as needed and connects them with a segment."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_drawline(0, 0, 10, 0)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_drawline",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.1 Object Add/Remove Commands",
+          "definition_sha256": "242f8a7ee3469be201d083375f792a1ed080eb5f73165b65b9caacca89a99753"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_drawline",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "b2284407779fed669628059c58153166e6b5caea6aaa6f3fc0141b22c1c7bfe4"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Unlike mi_addsegment or mi_addarc, the draw convenience commands create their endpoint nodes."
+      ]
+    },
+    {
+      "name": "mi_drawarc",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "geometry",
+      "purpose": "Draw a circular arc and create its endpoint nodes.",
+      "signature": "mi_drawarc(x1, y1, x2, y2, angle, maxseg)",
+      "parameters": [
+        {
+          "name": "x1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "x2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "angle",
+          "type": "number",
+          "required": true,
+          "units": "degrees",
+          "description": "Rotation or arc sweep angle.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "maxseg",
+          "type": "number",
+          "required": true,
+          "units": "degrees_per_element",
+          "description": "Arc mesh discretization limit; see the implementation-checked mi_addarc record.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Creates endpoint nodes as needed and an arc between them."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_drawarc(0, 0, 10, 0, 90, 5)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_drawarc",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.1 Object Add/Remove Commands",
+          "definition_sha256": "b7a64cbb7fc751150860acc7663fe734b2206bc6fbe559f10608613b32ab1c48"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_drawarc",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "50b308f6ba52eacd2127b773aadf06c16327a847d097e2d3dfef11473f0aa120"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Unlike mi_addsegment or mi_addarc, the draw convenience commands create their endpoint nodes."
+      ]
+    },
+    {
+      "name": "mi_drawrectangle",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "geometry",
+      "purpose": "Draw a rectangle from opposite corners, creating four corner nodes and four straight edges.",
+      "signature": "mi_drawrectangle(x1, y1, x2, y2)",
+      "parameters": [
+        {
+          "name": "x1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "x2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Adds the rectangle corners and four connecting segments."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_drawrectangle(0, 0, 10, 5)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_drawrectangle",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.1 Object Add/Remove Commands",
+          "definition_sha256": "ae613ed7fd1650f316ff5c4c5a5c1f0efb6f69cab7b3cd9a4d09adc76dd4a7dc"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_drawrectangle",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "78534bdb1e291486892911bcf8a46b0a6968187b3b38dd33cba5066210ca8d53"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Unlike mi_addsegment or mi_addarc, the draw convenience commands create their endpoint nodes."
+      ]
+    },
+    {
+      "name": "mi_deleteselected",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "geometry",
+      "purpose": "Delete selected objects.",
+      "signature": "mi_deleteselected()",
+      "parameters": [],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Select the intended objects first."
+      ],
+      "effects": [
+        "Removes the selected objects from the model."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_deleteselected()",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Select the intended objects first."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_deleteselected",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.1 Object Add/Remove Commands",
+          "definition_sha256": "e93a0521faeb9becfff954884310f0c6cfb50668d7eb2cba92cc97d99c0069f2"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_deleteselected",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "d9855454598c69ee2d9b48ae22d97dedc321c2561577f748d5335a563bbcc260"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Deleting nodes can also remove their incident edges; clear stale selections before selecting targets."
+      ]
+    },
+    {
+      "name": "mi_deleteselectednodes",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "geometry",
+      "purpose": "Delete selected nodes.",
+      "signature": "mi_deleteselectednodes()",
+      "parameters": [],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Select the intended nodes first."
+      ],
+      "effects": [
+        "Removes the selected nodes from the model."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_deleteselectednodes()",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Select the intended nodes first."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_deleteselectednodes",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.1 Object Add/Remove Commands",
+          "definition_sha256": "15c5ef4689d52a06225f7933601f290a86b6d1b9922d4fff60b8534d3e98d180"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_deleteselectednodes",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "e70b7536131bb9dfbb7220a3323e64e1635c8c437f3213c9df60211d5be8e514"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Deleting nodes can also remove their incident edges; clear stale selections before selecting targets."
+      ]
+    },
+    {
+      "name": "mi_deleteselectedlabels",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "geometry",
+      "purpose": "Delete selected block labels.",
+      "signature": "mi_deleteselectedlabels()",
+      "parameters": [],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Select the intended block labels first."
+      ],
+      "effects": [
+        "Removes the selected block labels from the model."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_deleteselectedlabels()",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Select the intended block labels first."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_deleteselectedlabels",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.1 Object Add/Remove Commands",
+          "definition_sha256": "93487afc0bcca6aa38271760e803b740e2092e11714348914cf8b8e75f93dea8"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_deleteselectedlabels",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "718636c681aee0ef0a7abbdc7295a962b6859fc1b53ea699450bd154339664e1"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Deleting nodes can also remove their incident edges; clear stale selections before selecting targets."
+      ]
+    },
+    {
+      "name": "mi_deleteselectedsegments",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "geometry",
+      "purpose": "Delete selected straight segments.",
+      "signature": "mi_deleteselectedsegments()",
+      "parameters": [],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Select the intended straight segments first."
+      ],
+      "effects": [
+        "Removes the selected straight segments from the model."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_deleteselectedsegments()",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Select the intended straight segments first."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_deleteselectedsegments",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.1 Object Add/Remove Commands",
+          "definition_sha256": "b93d2e3f969826ea66f8e974c475573467320ad5a948a355fd3c8b6821b1b324"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_deleteselectedsegments",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "e14e65010118da5812a8253191138582ce438c04ae29515d97a92d233fd6398c"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Deleting nodes can also remove their incident edges; clear stale selections before selecting targets."
+      ]
+    },
+    {
+      "name": "mi_deleteselectedarcsegments",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "geometry",
+      "purpose": "Delete selected arc segments.",
+      "signature": "mi_deleteselectedarcsegments()",
+      "parameters": [],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Select the intended arc segments first."
+      ],
+      "effects": [
+        "Removes the selected arc segments from the model."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_deleteselectedarcsegments()",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Select the intended arc segments first."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_deleteselectedarcsegments",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.1 Object Add/Remove Commands",
+          "definition_sha256": "0b2452de888738cab7d66139dd62d95388350fec0ac4b12d99db594eaf331641"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_deleteselectedarcsegments",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "cb5ae0991d08ddd0652ee95c609d46ed76f4d7bb9efb793fb4b814e6a29b6fb1"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Deleting nodes can also remove their incident edges; clear stale selections before selecting targets."
+      ]
+    },
+    {
+      "name": "mi_clearselected",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "selection",
+      "purpose": "Clear the selection of all geometry object types.",
+      "signature": "mi_clearselected()",
+      "parameters": [],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Deselects nodes, segments, arcs and block labels."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_clearselected()",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_clearselected",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.2 Geometry Selection Commands",
+          "definition_sha256": "b8b9ace2ce482da097c4a238019a21a393af62b9a4fc0dbd71d1bbf4a65a14c7"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_clearselected",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "e99305b957305214df45d81a8c087c9470c3ac5c825c587304b5862cfc0f897b"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": []
+    },
+    {
+      "name": "mi_selectnode",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "selection",
+      "purpose": "Select the node nearest the specified point.",
+      "signature": "mi_selectnode(x, y)",
+      "parameters": [
+        {
+          "name": "x",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The intended node exists."
+      ],
+      "effects": [
+        "Toggles selection of the nearest node."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_selectnode(0, 0)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The intended node exists."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_selectnode",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.2 Geometry Selection Commands",
+          "definition_sha256": "d26974bf2e2489b7a01007b051d2f4f8f5685e2d3cc4facc2ab8f748f1c0ada5"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_selectnode",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "387b2404258c8af42c1180439d56927056b7bf43e01c9b9722e0a4b52813251e"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_selectnode",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "0be3c145d7c89c3bdd30db33f04d531aa2c3f3e172c58d9896607e9c7b2c73ad",
+          "line_range": [
+            139,
+            146
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The pinned implementation toggles the nearest object: repeating the same selection can deselect it. Use mi_clearselected before constructing a fresh selection.",
+        "The C++ implementation returns the selected coordinates; return handling in this Lua binding has not been separately checked."
+      ]
+    },
+    {
+      "name": "mi_selectsegment",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "selection",
+      "purpose": "Select the straight segment nearest the specified point.",
+      "signature": "mi_selectsegment(x, y)",
+      "parameters": [
+        {
+          "name": "x",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The intended straight segment exists."
+      ],
+      "effects": [
+        "Toggles selection of the nearest straight segment."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_selectsegment(5, 0)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The intended straight segment exists."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_selectsegment",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.2 Geometry Selection Commands",
+          "definition_sha256": "ad1f5de2e85aab6d20aba06810fbcc4e714cf9e4a32b0bea27315bfd98622512"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_selectsegment",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "44e719f88da166a803b890ffb315843aa7911cc413c05a3703245c9ed6bb3e4c"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_selectsegment",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "249d29f099e6704a7500416cb07a8591e231cdd2ae2d76d91a7fcdb915eae776",
+          "line_range": [
+            155,
+            164
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The pinned implementation toggles the nearest object: repeating the same selection can deselect it. Use mi_clearselected before constructing a fresh selection.",
+        "The C++ implementation returns the selected coordinates; return handling in this Lua binding has not been separately checked."
+      ]
+    },
+    {
+      "name": "mi_selectlabel",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "selection",
+      "purpose": "Select the block label nearest the specified point.",
+      "signature": "mi_selectlabel(x, y)",
+      "parameters": [
+        {
+          "name": "x",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The intended block label exists."
+      ],
+      "effects": [
+        "Toggles selection of the nearest block label."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_selectlabel(2, 1)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The intended block label exists."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_selectlabel",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.2 Geometry Selection Commands",
+          "definition_sha256": "423be035a7dc7e7fee9404c9a4881bc85fe61bfdae1c67837834bbe49b9b089b"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_selectlabel",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "b31c636982df24d37254554b7628ea245720d3a80a47d8e4d8270ec869380f7a"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_selectlabel",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "77d3c0fe0bab051d1313d05fac3b8c1c98fe17d29507ae10bd96aac4304adcc0",
+          "line_range": [
+            147,
+            154
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The pinned implementation toggles the nearest object: repeating the same selection can deselect it. Use mi_clearselected before constructing a fresh selection.",
+        "The C++ implementation returns the selected coordinates; return handling in this Lua binding has not been separately checked."
+      ]
+    },
+    {
+      "name": "mi_selectarcsegment",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "selection",
+      "purpose": "Select the arc segment nearest the specified point.",
+      "signature": "mi_selectarcsegment(x, y)",
+      "parameters": [
+        {
+          "name": "x",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The intended arc segment exists."
+      ],
+      "effects": [
+        "Toggles selection of the nearest arc segment."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_selectarcsegment(5, -2)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The intended arc segment exists."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_selectarcsegment",
+          "pdf_pages": [
+            98
+          ],
+          "section": "3.6.2 Geometry Selection Commands",
+          "definition_sha256": "f9052220548d5c6df2c7de269cf40338275ed234ff48ba7d427bb295579e05cf"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_selectarcsegment",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "e61d0c1862e3a7049a9894e467b6c1a3195014b18d8be58c6879fe9c62b2c011"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_selectarcsegment",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "51ddc12f9ce29294242a16a646389de963141d58ce7c1d13cca795cab8ffc771",
+          "line_range": [
+            165,
+            174
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The pinned implementation toggles the nearest object: repeating the same selection can deselect it. Use mi_clearselected before constructing a fresh selection.",
+        "The C++ implementation returns the selected coordinates; return handling in this Lua binding has not been separately checked."
+      ]
+    },
+    {
+      "name": "mi_selectgroup",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "selection",
+      "purpose": "Select geometry objects belonging to a group.",
+      "signature": "mi_selectgroup(n)",
+      "parameters": [
+        {
+          "name": "n",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Group number to select.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Selects all matching nodes, segments, arcs and block labels and sets the current edit mode to group."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_clearselected()\nmi_selectgroup(7)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_selectgroup",
+          "pdf_pages": [
+            98
+          ],
+          "section": "3.6.2 Geometry Selection Commands",
+          "definition_sha256": "4228f6eaed89a1fef0ef5bfd0628d877292c89391dc5ba44ab65173329db48c7"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_selectgroup",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "7f817727fc44d26a981d987e3287966d9f702938566488b01515aa0032ed8f0a"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_selectgroup",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "0f877ba9f75eb588a43629dc21ec4f2eec1723c3da563ed2d8566a53fe9b5871",
+          "line_range": [
+            119,
+            126
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The Lua formal parameter is named gr; the catalogue uses n for readability."
+      ]
+    },
+    {
+      "name": "mi_selectcircle",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "selection",
+      "purpose": "Select geometry objects inside a circular region.",
+      "signature": "mi_selectcircle(x, y, R, editmode)",
+      "parameters": [
+        {
+          "name": "x",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "R",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Selection circle radius.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "editmode",
+          "type": "integer",
+          "required": false,
+          "units": null,
+          "description": "Entity types: 0 nodes, 1 segments, 2 labels, 3 arcs, 4 all; omission uses the current edit mode.",
+          "default": "current_edit_mode",
+          "default_status": "implementation_checked",
+          "allowed_values": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Adds objects inside the circle to the selection."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_clearselected()\nmi_selectcircle(0, 0, 10, 4)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_selectcircle",
+          "pdf_pages": [
+            98
+          ],
+          "section": "3.6.2 Geometry Selection Commands",
+          "definition_sha256": "4f1ae5ba5c064b21fc1010458ba917ce089367936a2390c592106d4249782a2d"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_selectcircle",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "b0e5b794d82a30875df541ae96a666085101d700239fb24a81bfd3e3ced9e452"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_selectcircle",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "ac688357a40cca4f21cc862d453c2067c0e779d39ab56a55b5bf7bfcdee957e0",
+          "line_range": [
+            500,
+            524
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Both endpoints must lie inside for a segment or arc to be selected. The pinned implementation checks arc endpoints, not the complete curved path."
+      ]
+    },
+    {
+      "name": "mi_selectrectangle",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "selection",
+      "purpose": "Select geometry objects inside a rectangular region.",
+      "signature": "mi_selectrectangle(x1, y1, x2, y2, editmode)",
+      "parameters": [
+        {
+          "name": "x1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "x2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "editmode",
+          "type": "integer",
+          "required": false,
+          "units": null,
+          "description": "Entity types: 0 nodes, 1 segments, 2 labels, 3 arcs, 4 all; omission uses the current edit mode.",
+          "default": "current_edit_mode",
+          "default_status": "implementation_checked",
+          "allowed_values": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Adds objects inside the rectangle to the selection."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_clearselected()\nmi_selectrectangle(-1, -1, 11, 6, 4)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_selectrectangle",
+          "pdf_pages": [
+            98
+          ],
+          "section": "3.6.2 Geometry Selection Commands",
+          "definition_sha256": "9e9de401d2cf95eb03bd0410233cc01e25c11709fadeb7a5b791d50a78689c23"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_selectrectangle",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "0078c693607983d0670e28f80b21d48143a81bbc367426a763a44eed1822ab58"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_selectrectangle",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "3e6cf3e099ad74e457c3beceba7e5ba2a6f162eece777b5ea2ba9ef949d2ff7b",
+          "line_range": [
+            474,
+            498
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Both endpoints must lie inside for a segment or arc to be selected. The pinned implementation checks arc endpoints, not the complete curved path."
+      ]
+    },
+    {
+      "name": "mi_setnodeprop",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "properties",
+      "purpose": "Assign a point property and group to selected nodes.",
+      "signature": "mi_setnodeprop(propname, groupno)",
+      "parameters": [
+        {
+          "name": "propname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of an existing matching property; an empty name removes the assignment.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "groupno",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Group number assigned to selected objects.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The intended nodes are selected."
+      ],
+      "effects": [
+        "Changes the point-property assignment and group of selected nodes."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_setnodeprop(\"\", 7)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The intended nodes are selected."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_setnodeprop",
+          "pdf_pages": [
+            98
+          ],
+          "section": "3.6.3 Object Labeling Commands",
+          "definition_sha256": "66990e32f565776746b7127b4438aaaa87aa6d295f1c0de9a4da26ae6222b4dc"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_setnodeprop",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "55b7c900ebbbce79fd0f3db2b2831bee5da4f1a96ee182a38007b0310948d2cc"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The Lua wrapper calls the property argument nodeprop; argument positions match the manual."
+      ]
+    },
+    {
+      "name": "mi_setsegmentprop",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "properties",
+      "purpose": "Assign a boundary property, mesh spacing, visibility and group to selected straight edges.",
+      "signature": "mi_setsegmentprop(propname, elementsize, automesh, hide, group)",
+      "parameters": [
+        {
+          "name": "propname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of an existing matching property; an empty name removes the assignment.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "elementsize",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Maximum local mesh element size when automesh is 0.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "automesh",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "0 uses the element-size constraint, 1 lets the mesher choose.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "hide",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Hide the edge in the postprocessor when 1.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "group",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Group number assigned to selected objects.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The intended straight segments are selected."
+      ],
+      "effects": [
+        "Changes properties of selected straight segments."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_setsegmentprop(\"\", 0.5, 0, 0, 7)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The intended straight segments are selected."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_setsegmentprop",
+          "pdf_pages": [
+            98,
+            99
+          ],
+          "section": "3.6.3 Object Labeling Commands",
+          "definition_sha256": "4c26aabda68f94b4a431e7d4366514f2846c1bba992ee1729ec73f8712316439"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_setsegmentprop",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "58a759fdb2aac42ab8cc22a01358b232ae2502fd8da0cf255db3db3f9317de76"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The Lua wrapper uses the positional names pn, es, am, hi and gr."
+      ]
+    },
+    {
+      "name": "mi_setarcsegmentprop",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "properties",
+      "purpose": "Assign arc mesh angle, boundary property, visibility and group to selected arcs.",
+      "signature": "mi_setarcsegmentprop(maxsegdeg, propname, hide, group)",
+      "parameters": [
+        {
+          "name": "maxsegdeg",
+          "type": "number",
+          "required": true,
+          "units": "degrees_per_element",
+          "description": "Maximum degrees per mesh element along the arc.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "propname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of an existing matching property; an empty name removes the assignment.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "hide",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Hide the edge in the postprocessor when 1.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "group",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Group number assigned to selected objects.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The intended arcs are selected."
+      ],
+      "effects": [
+        "Changes properties of selected arc segments."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_setarcsegmentprop(2, \"\", 0, 7)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The intended arcs are selected."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_setarcsegmentprop",
+          "pdf_pages": [
+            99
+          ],
+          "section": "3.6.3 Object Labeling Commands",
+          "definition_sha256": "25315edbb19849d0911d2050ba5c477335b1f2aeb605960ec655a86949e51777"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_setarcsegmentprop",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "eae53ef2f4db641690cbf4c7f124273773f341750979f6740bbf9a586ae8ee13"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_setarcsegmentprop",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "3c5df10d3d25502bffb9652fa876f51e7d14ea5560fb56eb0e6830b2b9930656",
+          "line_range": [
+            197,
+            210
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The pinned C++ setter clamps values above 10 to 10 and nonpositive values to 1. Do not infer the same clamping for mi_addarc."
+      ]
+    },
+    {
+      "name": "mi_setgroup",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "properties",
+      "purpose": "Assign a group number to all selected geometry objects.",
+      "signature": "mi_setgroup(n)",
+      "parameters": [
+        {
+          "name": "n",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Group number assigned to selected objects.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The intended objects are selected."
+      ],
+      "effects": [
+        "Sets the group of every selected object and then clears the selection in the pinned implementation."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_setgroup(7)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The intended objects are selected."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_setgroup",
+          "pdf_pages": [
+            99
+          ],
+          "section": "3.6.3 Object Labeling Commands",
+          "definition_sha256": "ff2895ca73290b96330c844f50b1d4482737cd0bb67f9524ccd7010cd0897289"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_setgroup",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "fa11fc8dac5f1fa342816326eeb1a6b76be9ec467d28232138eb995126bf4d99"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_setgroup",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "edb1fed13992005b5f880a4172c65c0ff4e5e779162914ee93869375861c5c7b",
+          "line_range": [
+            127,
+            134
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Selection is cleared after grouping; reselect before a subsequent edit."
+      ]
+    },
+    {
+      "name": "mi_copyrotate",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "editing",
+      "purpose": "Copy selected geometry by repeated rotation.",
+      "signature": "mi_copyrotate(bx, by, angle, copies)",
+      "parameters": [
+        {
+          "name": "bx",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "by",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "angle",
+          "type": "number",
+          "required": true,
+          "units": "degrees",
+          "description": "Rotation or arc sweep angle.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "copies",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Number of additional copies.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Select the intended geometry objects first."
+      ],
+      "effects": [
+        "Adds rotated copies of selected geometry."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_copyrotate(0, 0, 30, 3)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Select the intended geometry objects first."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_copyrotate",
+          "pdf_pages": [
+            100
+          ],
+          "section": "3.6.6 Editing Commands",
+          "definition_sha256": "e059a8d71772a1753a594d0f73773170079bd58928e19f32aeb068da6544d493"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_copyrotate",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "bf4bb4e251a8e20e7daa82ddc28125e785181c9d16e25be28a1bbd186dc4a281"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_copyrotate",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "74b7892fc416a326fff651bf7ddbee6e4a20235df87ac0f840717d450916cdf2",
+          "line_range": [
+            219,
+            221
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The manual documents an optional editaction argument, but this pinned Lua wrapper does not forward it.",
+        "The pinned C++ implementation defaults omitted editaction to 4 (all selected entity types), rather than reading mi_seteditmode. Select the exact objects to transform.",
+        "These entries describe this pinned Lua binding; explicit editaction is not part of its callable signature."
+      ]
+    },
+    {
+      "name": "mi_copytranslate",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "editing",
+      "purpose": "Copy selected geometry by repeated translation.",
+      "signature": "mi_copytranslate(dx, dy, copies)",
+      "parameters": [
+        {
+          "name": "dx",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "dy",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "copies",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Number of additional copies.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Select the intended geometry objects first."
+      ],
+      "effects": [
+        "Adds translated copies of selected geometry."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_copytranslate(10, 0, 2)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Select the intended geometry objects first."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_copytranslate",
+          "pdf_pages": [
+            100
+          ],
+          "section": "3.6.6 Editing Commands",
+          "definition_sha256": "08a13adb733195f6a1b1631ae13a227c050c3e332728531d17c5a0cd463176c3"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_copytranslate",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "beea895c9592abd3cbb199d2e2bc9b0fb159d7ef3bd5e139e5459e7b99b0147e"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_copytranslate",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "4bcb1cafced66be011cc1701bfe097b04426517719296c3356b67e60c354c040",
+          "line_range": [
+            216,
+            218
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The manual documents an optional editaction argument, but this pinned Lua wrapper does not forward it.",
+        "The pinned C++ implementation defaults omitted editaction to 4 (all selected entity types), rather than reading mi_seteditmode. Select the exact objects to transform.",
+        "These entries describe this pinned Lua binding; explicit editaction is not part of its callable signature."
+      ]
+    },
+    {
+      "name": "mi_moverotate",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "editing",
+      "purpose": "Rotate selected geometry around a base point.",
+      "signature": "mi_moverotate(bx, by, shiftangle)",
+      "parameters": [
+        {
+          "name": "bx",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "by",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "shiftangle",
+          "type": "number",
+          "required": true,
+          "units": "degrees",
+          "description": "Rotation or arc sweep angle.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Select the intended geometry objects first."
+      ],
+      "effects": [
+        "Rotates selected geometry in place."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_moverotate(0, 0, 90)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Select the intended geometry objects first."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_moverotate",
+          "pdf_pages": [
+            100
+          ],
+          "section": "3.6.6 Editing Commands",
+          "definition_sha256": "5dcaef5468b085ce0bb935bac59a43f962f7a442b4c1014931d1175edec71328"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_moverotate",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "9e1a37c8872018848975f0f056d48439456a2dfd06a8bd54ae5d22ce80cab21f"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_moverotate",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "bfc2175654f163e2480d1927c802348ad694ec0e03ebef7dc99a9edaded0a104",
+          "line_range": [
+            213,
+            215
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The manual documents an optional editaction argument, but this pinned Lua wrapper does not forward it.",
+        "The pinned C++ implementation defaults omitted editaction to 4 (all selected entity types), rather than reading mi_seteditmode. Select the exact objects to transform.",
+        "These entries describe this pinned Lua binding; explicit editaction is not part of its callable signature."
+      ]
+    },
+    {
+      "name": "mi_movetranslate",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "editing",
+      "purpose": "Move selected geometry by a displacement.",
+      "signature": "mi_movetranslate(dx, dy)",
+      "parameters": [
+        {
+          "name": "dx",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "dy",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Select the intended geometry objects first."
+      ],
+      "effects": [
+        "Translates selected geometry in place."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_movetranslate(10, 0)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Select the intended geometry objects first."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_movetranslate",
+          "pdf_pages": [
+            100
+          ],
+          "section": "3.6.6 Editing Commands",
+          "definition_sha256": "90726c3a3667cad08562b79b0101e57dfefa89b4119e14fa6bd2f6df690088ee"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_movetranslate",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "e87c4c94702e59efc9f1d8f0990aeb55b24a6cc33461cd3b1c836c3b836726e5"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_movetranslate",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "9e383b930c04cc23a59a8c397272a811297a0149e5a4328c1d9ab415a00b2129",
+          "line_range": [
+            210,
+            212
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The manual documents an optional editaction argument, but this pinned Lua wrapper does not forward it.",
+        "The pinned C++ implementation defaults omitted editaction to 4 (all selected entity types), rather than reading mi_seteditmode. Select the exact objects to transform.",
+        "These entries describe this pinned Lua binding; explicit editaction is not part of its callable signature."
+      ]
+    },
+    {
+      "name": "mi_scale",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "editing",
+      "purpose": "Scale selected geometry around a base point.",
+      "signature": "mi_scale(bx, by, scalefactor)",
+      "parameters": [
+        {
+          "name": "bx",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "by",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "scalefactor",
+          "type": "number",
+          "required": true,
+          "units": null,
+          "description": "Dimensionless scale multiplier.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Select the intended geometry objects first."
+      ],
+      "effects": [
+        "Scales selected geometry in place."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_scale(0, 0, 2)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Select the intended geometry objects first."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_scale",
+          "pdf_pages": [
+            100
+          ],
+          "section": "3.6.6 Editing Commands",
+          "definition_sha256": "158c6cc4b2f609eae936e0e208e1b5d1cd9edbf193ab917bd1b7d83a0ca93641"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_scale",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "93ffbe970c51ab176356981580a8d580d9bf1134e348ba06358ef13e1540bdad"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_scale",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "13a8e2f861fdca1dcc689daba5600cd5fa1bae96e7464784a897ac935b24c467",
+          "line_range": [
+            225,
+            227
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The manual documents an optional editaction argument, but this pinned Lua wrapper does not forward it.",
+        "The pinned C++ implementation defaults omitted editaction to 4 (all selected entity types), rather than reading mi_seteditmode. Select the exact objects to transform.",
+        "These entries describe this pinned Lua binding; explicit editaction is not part of its callable signature."
+      ]
+    },
+    {
+      "name": "mi_mirror",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "editing",
+      "purpose": "Reflect and copy selected geometry across a line.",
+      "signature": "mi_mirror(x1, y1, x2, y2)",
+      "parameters": [
+        {
+          "name": "x1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "x2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Select the intended geometry objects first."
+      ],
+      "effects": [
+        "Adds reflected copies across the line through the two supplied points."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_mirror(0, -1, 0, 1)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Select the intended geometry objects first."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_mirror",
+          "pdf_pages": [
+            100
+          ],
+          "section": "3.6.6 Editing Commands",
+          "definition_sha256": "f26a14410578251946775ee913444c20a043adffb23037479ace168dc63f6575"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_mirror",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "4229c1c795f4f83dedf76d3489e085972272846592c8755239a468e7436ec7f3"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_mirror",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "91bcaaaab45a8d0844c468c723f5ab078fcf3136d10c78f06818799fd7c627a6",
+          "line_range": [
+            222,
+            224
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The manual documents an optional editaction argument, but this pinned Lua wrapper does not forward it.",
+        "The pinned C++ implementation defaults omitted editaction to 4 (all selected entity types), rather than reading mi_seteditmode. Select the exact objects to transform.",
+        "These entries describe this pinned Lua binding; explicit editaction is not part of its callable signature."
+      ]
+    },
+    {
+      "name": "mi_createradius",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "editing",
+      "purpose": "Replace a geometry corner with a rounded arc of a specified radius.",
+      "signature": "mi_createradius(x, y, r)",
+      "parameters": [
+        {
+          "name": "x",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Coordinate or distance in the model length unit; use r,z for axisymmetric models.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "r",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Desired corner radius.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The point identifies an existing corner with compatible incident edges and enough length for the radius."
+      ],
+      "effects": [
+        "Replaces a supported corner with a fillet arc."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_createradius(0, 0, 1)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The point identifies an existing corner with compatible incident edges and enough length for the radius."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_createradius",
+          "pdf_pages": [
+            100
+          ],
+          "section": "3.6.6 Editing Commands",
+          "definition_sha256": "f65ba5b5f514e92e2b4a4659e806de04adf4e6e16a5c28a43fb9ca01b858ddfc"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_createradius",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "51a370333ae61b4c7be06d02201fe8c54e8d125b24c0f7d2356990c045679c42"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": []
+    },
+    {
+      "name": "mi_seteditmode",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "editing",
+      "purpose": "Set the current geometry selection/edit mode.",
+      "signature": "mi_seteditmode(editmode)",
+      "parameters": [
+        {
+          "name": "editmode",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Entity-type mode.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": [
+            "nodes",
+            "segments",
+            "arcsegments",
+            "blocks",
+            "group"
+          ]
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual does not specify return values for this command; examples do not depend on them."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Changes the current mode used by region selection when its optional mode is omitted."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_seteditmode(\"group\")",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_seteditmode",
+          "pdf_pages": [
+            101
+          ],
+          "section": "3.6.6 Editing Commands",
+          "definition_sha256": "f7e55602028de72099a94bfc7b64d8f7c425cf8e68f78d9a0303b4ce5a54b8a6"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_seteditmode",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "6009114edbc23240cb8d7384b7a1e4a7b7821f91c1a142e4792525b21efa5ad1"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_seteditmode",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "495082edecba9f953b0ffd5c196c3d7e1705bbf8dfd4cdee5f1890b2d2f4e709",
+          "line_range": [
+            461,
+            472
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The manual says this controls transforms with omitted editaction. The pinned C++ transform defaults are instead hard-coded to 4; see the transform records."
       ]
     }
   ]
