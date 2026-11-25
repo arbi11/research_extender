@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "milestone": "38 reviewed Lua commands, including all 33 geometry, selection, labeling and editing definitions in manual sections 3.6.1, 3.6.2, 3.6.3 and 3.6.6.",
+  "milestone": "53 reviewed Lua commands: 33 geometry/selection/labeling/editing, 15 material/boundary/circuit property commands, and five workflow commands.",
   "target": {
     "software": "FEMM",
     "version": "5.0",
@@ -3821,6 +3821,1939 @@
       },
       "notes": [
         "The manual says this controls transforms with omitted editaction. The pinned C++ transform defaults are instead hard-coded to 4; see the transform records."
+      ]
+    },
+    {
+      "name": "mi_getmaterial",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "materials",
+      "purpose": "Load a named material from the FEMM material library into the model.",
+      "signature": "mi_getmaterial(materialname)",
+      "parameters": [
+        {
+          "name": "materialname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the library material.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The named material exists in the material library installed with FEMM."
+      ],
+      "effects": [
+        "Adds the material definition to the current document."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_getmaterial(\"Air\")",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The named material exists in the material library installed with FEMM."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_getmaterial",
+          "pdf_pages": [
+            102
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "78f21c51f13ef3a906b25f551bf3d1690cd3f97814db8389095890c718419cbd"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_getmaterial",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "4f82570fba16f29c05e2a725f0363b4d88cd589575d2c17bd259c6963157cd68"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_getmaterial",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "c5ad3fb9972cd8d9f6dc29d90253f424caae751f0c4935ee33a70d1832cc4d58",
+          "line_range": [
+            526,
+            573
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "This loads a definition; assigning it to geometry uses mi_setblockprop on selected block labels.",
+        "Library contents depend on the installed build; native evidence identifies the exact container."
+      ]
+    },
+    {
+      "name": "mi_addmaterial",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "materials",
+      "purpose": "Create a magnetic material with permeability, coercivity, conductivity, lamination and winding properties.",
+      "signature": "mi_addmaterial(materialname, mu_x, mu_y, H_c, J, Cduct, Lam_d, Phi_hmax, lam_fill, LamType, Phi_hx, Phi_hy, NStrands, WireD)",
+      "parameters": [
+        {
+          "name": "materialname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the new material.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "mu_x",
+          "type": "number",
+          "required": false,
+          "units": "dimensionless",
+          "description": "Relative permeability along x or r.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "mu_y",
+          "type": "number",
+          "required": false,
+          "units": "dimensionless",
+          "description": "Relative permeability along y or z.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "H_c",
+          "type": "number",
+          "required": false,
+          "units": "A/m",
+          "description": "Permanent-magnet coercivity.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "J",
+          "type": "number|complex",
+          "required": false,
+          "units": "A/mm^2",
+          "description": "Applied source current density. The manual describes a real value; the pinned implementation also accepts a complex phasor.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "Cduct",
+          "type": "number",
+          "required": false,
+          "units": "MS/m",
+          "description": "Electrical conductivity.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "Lam_d",
+          "type": "number",
+          "required": false,
+          "units": "mm",
+          "description": "Lamination thickness, independently of model length units.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "Phi_hmax",
+          "type": "number",
+          "required": false,
+          "units": "degrees",
+          "description": "Nonlinear B-H hysteresis lag angle.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "lam_fill",
+          "type": "number",
+          "required": false,
+          "units": "dimensionless",
+          "description": "Iron volume fraction in the lamination.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "LamType",
+          "type": "integer",
+          "required": false,
+          "units": null,
+          "description": "0 none/in-plane, 1 x/r lamination, 2 y/z lamination, 3 magnet wire, 4 stranded, 5 Litz, 6 square, 7 10% CCA, 8 15% CCA.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ]
+        },
+        {
+          "name": "Phi_hx",
+          "type": "number",
+          "required": false,
+          "units": "degrees",
+          "description": "Linear hysteresis lag along x/r.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "Phi_hy",
+          "type": "number",
+          "required": false,
+          "units": "degrees",
+          "description": "Linear hysteresis lag along y/z.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "NStrands",
+          "type": "integer",
+          "required": false,
+          "units": null,
+          "description": "Number of constituent wire strands.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "WireD",
+          "type": "number",
+          "required": false,
+          "units": "mm",
+          "description": "Constituent strand diameter, independently of model length units.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Adds a material definition; it is not assigned to any block label yet."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_addmaterial(\"CoilCopper\", 1, 1, 0, 0, 58, 0, 0, 1, 0, 0, 0, 1, 0.5)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_addmaterial",
+          "pdf_pages": [
+            102
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "e965437c4fc1a5d5779472533df2c0c8e4746b48543ecb99f1b439d3fd0e3853"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_addmaterial",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "91601e2b6a2bb8c6aaf967f05d794e9dc17f44ccdfa6718a0a00d7dd45a6c8ef"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_addmaterial",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "b2b6db168f93ed744b6c3dcba01fd5eba79f146d570ea6f55b59cff576d704fb",
+          "line_range": [
+            213,
+            249
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Optional arguments are trailing: the Lua transport stops at the first nil. Supply earlier arguments to reach a later property.",
+        "The manual mentions a GUI lamination-fill default of 1; that alone does not establish all scripting defaults.",
+        "B-H points are added separately with mi_addbhpoint. Geometry assignment uses mi_setblockprop."
+      ]
+    },
+    {
+      "name": "mi_addbhpoint",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "materials",
+      "purpose": "Add a magnetic B-H curve data point to an existing material.",
+      "signature": "mi_addbhpoint(blockname, b, h)",
+      "parameters": [
+        {
+          "name": "blockname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the existing material.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "b",
+          "type": "number",
+          "required": true,
+          "units": "T",
+          "description": "Flux density.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "h",
+          "type": "number",
+          "required": true,
+          "units": "A/m",
+          "description": "Field intensity.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The named material has already been created or loaded."
+      ],
+      "effects": [
+        "Adds a B-H sample to the named material."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_addbhpoint(\"Core\", 1, 100)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The named material has already been created or loaded."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_addbhpoint",
+          "pdf_pages": [
+            102
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "b261406a5efc64515d59ca95d5b1ec7a9c16768338ecda02560b9cce35f1f02e"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_addbhpoint",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "910a57a89ba4c34341fe90b769c99575e0617c4be8d943b854151a7b7792a574"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_addbhpoint",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "a2900406a646eb2682cf66cb39110ee696e65f663ddc469e8aee35d45ef32a28",
+          "line_range": [
+            251,
+            270
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The pinned implementation inserts the origin when starting a curve, sorts samples by B and ignores an exactly repeated pair.",
+        "A missing material is silently ignored in the pinned implementation; verify the name."
+      ]
+    },
+    {
+      "name": "mi_clearbhpoints",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "materials",
+      "purpose": "Remove all nonlinear B-H curve samples from a material.",
+      "signature": "mi_clearbhpoints(blockname)",
+      "parameters": [
+        {
+          "name": "blockname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the existing material.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The named material exists."
+      ],
+      "effects": [
+        "Clears the named material B-H data."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_clearbhpoints(\"Core\")",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The named material exists."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_clearbhpoints",
+          "pdf_pages": [
+            103
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "d37518cdf81b79377c42ae34d35ab12421379065db9462e9877951f2fe626d54"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_clearbhpoints",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "6e8845c5238304041137cd8ba9d4e81a9bd4c90f045abe0787be711029dab84d"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_clearbhpoints",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "2a48c822dfa6dc5f031e883ee632acb4d835adb926a0d038269a62934811073a",
+          "line_range": [
+            272,
+            281
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "This does not delete the material or change its other properties."
+      ]
+    },
+    {
+      "name": "mi_addpointprop",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "boundary_conditions",
+      "purpose": "Create a point boundary property with prescribed magnetic potential or point current.",
+      "signature": "mi_addpointprop(pointpropname, a, j)",
+      "parameters": [
+        {
+          "name": "pointpropname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the point property.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "a",
+          "type": "number|complex",
+          "required": false,
+          "units": "Wb/m",
+          "description": "Prescribed magnetic vector potential.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "j",
+          "type": "number|complex",
+          "required": false,
+          "units": "A",
+          "description": "Point current.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Creates a point property; assign it to selected nodes using mi_setnodeprop."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_addpointprop(\"PointCurrent\", 0, 2)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_addpointprop",
+          "pdf_pages": [
+            103
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "025b719d74f9c7722bd43925a5fa0448ae0ab68c0947ab3b65bec312d77ac9c2"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_addpointprop",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "cde6893fc359cdf0085fad6035a6d0bcd3dd26cf2ba6b9444b38c7b03bbc22e8"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_addpointprop",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "90b516920218cb15e5028cc33d8718b00df57728a61e23d24be25a43af45a977",
+          "line_range": [
+            355,
+            362
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Set the unused potential or current to zero. Complex values are supported by the pinned implementation.",
+        "The C++ implementation accepts trailing omissions; unstated defaults remain unspecified here."
+      ]
+    },
+    {
+      "name": "mi_addboundprop",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "boundary_conditions",
+      "purpose": "Create a magnetic boundary condition: prescribed A, skin depth, mixed, periodic or air gap.",
+      "signature": "mi_addboundprop(propname, A0, A1, A2, Phi, Mu, Sig, c0, c1, BdryFormat, ia, oa)",
+      "parameters": [
+        {
+          "name": "propname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the boundary condition.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "A0",
+          "type": "number",
+          "required": false,
+          "units": null,
+          "description": "Prescribed-A constant coefficient; unused for other boundary types.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "A1",
+          "type": "number",
+          "required": false,
+          "units": null,
+          "description": "Prescribed-A spatial coefficient; interpretation depends on planar or axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "A2",
+          "type": "number",
+          "required": false,
+          "units": null,
+          "description": "Prescribed-A spatial coefficient; interpretation depends on planar or axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "Phi",
+          "type": "number",
+          "required": false,
+          "units": "degrees",
+          "description": "Prescribed-A phase.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "Mu",
+          "type": "number",
+          "required": false,
+          "units": "dimensionless",
+          "description": "Relative permeability for small-skin-depth conditions.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "Sig",
+          "type": "number",
+          "required": false,
+          "units": "MS/m",
+          "description": "Conductivity for small-skin-depth conditions.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "c0",
+          "type": "number|complex",
+          "required": false,
+          "units": null,
+          "description": "Mixed-boundary coefficient c0.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "c1",
+          "type": "number|complex",
+          "required": false,
+          "units": null,
+          "description": "Mixed-boundary coefficient c1.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "BdryFormat",
+          "type": "integer",
+          "required": false,
+          "units": null,
+          "description": "0 = Prescribed A; 1 = Small skin depth; 2 = Mixed; 3 = Strategic dual image; 4 = Periodic; 5 = Antiperiodic; 6 = Periodic air gap; 7 = Antiperiodic air gap",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ]
+        },
+        {
+          "name": "ia",
+          "type": "number",
+          "required": false,
+          "units": "degrees",
+          "description": "Inner boundary angle for an air-gap boundary.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "oa",
+          "type": "number",
+          "required": false,
+          "units": "degrees",
+          "description": "Outer boundary angle for an air-gap boundary.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Adds a boundary definition; assign it to selected segments or arcs with the corresponding set-property command."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_addboundprop(\"OuterA0\", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_addboundprop",
+          "pdf_pages": [
+            103
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "4a5b845f24a7ee424483cb1374a98107bea588ec6de9627fccaf351727a250a3"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_addboundprop",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "3a0d7057594c687d5fe672969d02a74d1f05bd0b1819bb1840b506c4632b3206"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_addboundprop",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "f887a424327e57f0d074b0cb2e6d731dc4f8f777dac71836a9d1aedcd21a01de",
+          "line_range": [
+            309,
+            329
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Set fields unused by the selected boundary format to zero. Periodic and air-gap definitions also require appropriate paired geometry.",
+        "A persisted boundary definition does not establish that a periodic field problem is correctly posed."
+      ]
+    },
+    {
+      "name": "mi_addcircprop",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "circuits",
+      "purpose": "Create a named circuit with prescribed current and a series or parallel connection type.",
+      "signature": "mi_addcircprop(circuitname, i, circuittype)",
+      "parameters": [
+        {
+          "name": "circuitname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the new circuit.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "i",
+          "type": "number|complex",
+          "required": false,
+          "units": "A",
+          "description": "Prescribed circuit current.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "circuittype",
+          "type": "integer",
+          "required": false,
+          "units": null,
+          "description": "0 parallel-connected; 1 series-connected.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": [
+            0,
+            1
+          ]
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Adds a circuit definition; winding labels refer to it through mi_setblockprop and their turns."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_addcircprop(\"Coil\", 5, 1)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_addcircprop",
+          "pdf_pages": [
+            103
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "39b47873e108bb1336e03cb1dc30e788c08fb6be2f02843b85d750d06102de09"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_addcircprop",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "ac64f09e986f80f892c49e0332c479305e43797be5dafbb4f1371271ca7d14a0"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_addcircprop",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "744f7ec13218f3de967d85bd6c8cac59ea14b7a1fe6465515d28211c58842429",
+          "line_range": [
+            379,
+            390
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The C++ implementation accepts omitted trailing current/type arguments; supply them explicitly for reproducibility.",
+        "Circuit names must be unique. Complex current values are supported by the pinned implementation."
+      ]
+    },
+    {
+      "name": "mi_modifymaterial",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "materials",
+      "purpose": "Modify one material property by its numeric property selector.",
+      "signature": "mi_modifymaterial(name, propnum, value)",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the existing material.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "propnum",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Property selector: 0 BlockName, 1 mu_x, 2 mu_y, 3 H_c, 4 J, 5 Cduct, 6 Lam_d, 7 Phi_hmax, 8 lam_fill, 9 LamType, 10 Phi_hx, 11 Phi_hy, 12 NStrands, 13 WireD.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13
+          ]
+        },
+        {
+          "name": "value",
+          "type": "string|number|complex",
+          "required": true,
+          "units": null,
+          "description": "New value; selector 0 renames the property. Type and units depend on propnum; see property_selectors.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The named material exists."
+      ],
+      "effects": [
+        "Updates the selected field on the named material."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_modifymaterial(\"Core\", 1, 1000)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The named material exists."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_modifymaterial",
+          "pdf_pages": [
+            103,
+            104
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "51ea74d0a3384e054c51e2d162f265a89aedf62b2696a339213552249082570c"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_modifymaterial",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "06a9ace8a0d6114b75b241d72be5ea613cda7f2472fb2720ab3e40f4eb5977a8"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_modifymaterial",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "f380eb8eca2f8cc3541ad077d97acd4151e38201120b425a51ef86dbde274251",
+          "line_range": [
+            283,
+            306
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Missing names are silently ignored in the pinned implementation; check the saved model.",
+        "Selector 0 changes the definition name. Reassign references explicitly rather than assuming existing geometry is renamed.",
+        "The manual expresses source current density as MA/m^2 here and A/mm^2 in mi_addmaterial; these units are numerically equal."
+      ],
+      "property_selectors": [
+        {
+          "index": 0,
+          "name": "BlockName",
+          "type": "string",
+          "units": null
+        },
+        {
+          "index": 1,
+          "name": "mu_x",
+          "type": "number",
+          "units": "dimensionless"
+        },
+        {
+          "index": 2,
+          "name": "mu_y",
+          "type": "number",
+          "units": "dimensionless"
+        },
+        {
+          "index": 3,
+          "name": "H_c",
+          "type": "number",
+          "units": "A/m"
+        },
+        {
+          "index": 4,
+          "name": "J",
+          "type": "number|complex",
+          "units": "MA/m^2"
+        },
+        {
+          "index": 5,
+          "name": "Cduct",
+          "type": "number",
+          "units": "MS/m"
+        },
+        {
+          "index": 6,
+          "name": "Lam_d",
+          "type": "number",
+          "units": "mm"
+        },
+        {
+          "index": 7,
+          "name": "Phi_hmax",
+          "type": "number",
+          "units": "degrees"
+        },
+        {
+          "index": 8,
+          "name": "lam_fill",
+          "type": "number",
+          "units": "dimensionless"
+        },
+        {
+          "index": 9,
+          "name": "LamType",
+          "type": "integer",
+          "units": null
+        },
+        {
+          "index": 10,
+          "name": "Phi_hx",
+          "type": "number",
+          "units": "degrees"
+        },
+        {
+          "index": 11,
+          "name": "Phi_hy",
+          "type": "number",
+          "units": "degrees"
+        },
+        {
+          "index": 12,
+          "name": "NStrands",
+          "type": "integer",
+          "units": null
+        },
+        {
+          "index": 13,
+          "name": "WireD",
+          "type": "number",
+          "units": "mm"
+        }
+      ]
+    },
+    {
+      "name": "mi_modifyboundprop",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "boundary_conditions",
+      "purpose": "Modify one boundary condition property by its numeric property selector.",
+      "signature": "mi_modifyboundprop(name, propnum, value)",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the existing boundary condition.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "propnum",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Property selector: 0 BdryName, 1 A0, 2 A1, 3 A2, 4 Phi, 5 Mu, 6 Sig, 7 c0, 8 c1, 9 BdryFormat, 10 ia, 11 oa.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ]
+        },
+        {
+          "name": "value",
+          "type": "string|number|complex",
+          "required": true,
+          "units": null,
+          "description": "New value; selector 0 renames the property. Type and units depend on propnum; see property_selectors.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The named boundary condition exists."
+      ],
+      "effects": [
+        "Updates the selected field on the named boundary condition."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_modifyboundprop(\"OuterA0\", 1, 0)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The named boundary condition exists."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_modifyboundprop",
+          "pdf_pages": [
+            104
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "9e9e830db8e194c08148781fc89c22afe0abef5cb585c0a923e1b6736f38dac5"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_modifyboundprop",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "c72abb6d5cffa0017db8870da2aa2c3c879244eb324fd31989f9b374afa997e5"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_modifyboundprop",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "ab5cd222b353e903e6ac64a3d9632ff6afd17678f4e7bbbef70a72412b85f5b3",
+          "line_range": [
+            331,
+            352
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Missing names are silently ignored in the pinned implementation; check the saved model.",
+        "Selector 0 changes the definition name. Reassign references explicitly rather than assuming existing geometry is renamed."
+      ],
+      "property_selectors": [
+        {
+          "index": 0,
+          "name": "BdryName",
+          "type": "string",
+          "units": null
+        },
+        {
+          "index": 1,
+          "name": "A0",
+          "type": "number",
+          "units": null
+        },
+        {
+          "index": 2,
+          "name": "A1",
+          "type": "number",
+          "units": null
+        },
+        {
+          "index": 3,
+          "name": "A2",
+          "type": "number",
+          "units": null
+        },
+        {
+          "index": 4,
+          "name": "Phi",
+          "type": "number",
+          "units": "degrees"
+        },
+        {
+          "index": 5,
+          "name": "Mu",
+          "type": "number",
+          "units": "dimensionless"
+        },
+        {
+          "index": 6,
+          "name": "Sig",
+          "type": "number",
+          "units": "MS/m"
+        },
+        {
+          "index": 7,
+          "name": "c0",
+          "type": "number|complex",
+          "units": null
+        },
+        {
+          "index": 8,
+          "name": "c1",
+          "type": "number|complex",
+          "units": null
+        },
+        {
+          "index": 9,
+          "name": "BdryFormat",
+          "type": "integer",
+          "units": null
+        },
+        {
+          "index": 10,
+          "name": "ia",
+          "type": "number",
+          "units": "degrees"
+        },
+        {
+          "index": 11,
+          "name": "oa",
+          "type": "number",
+          "units": "degrees"
+        }
+      ]
+    },
+    {
+      "name": "mi_modifypointprop",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "boundary_conditions",
+      "purpose": "Modify one point property property by its numeric property selector.",
+      "signature": "mi_modifypointprop(name, propnum, value)",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the existing point property.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "propnum",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Property selector: 0 PointName, 1 A, 2 J.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": [
+            0,
+            1,
+            2
+          ]
+        },
+        {
+          "name": "value",
+          "type": "string|number|complex",
+          "required": true,
+          "units": null,
+          "description": "New value; selector 0 renames the property. Type and units depend on propnum; see property_selectors.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The named point property exists."
+      ],
+      "effects": [
+        "Updates the selected field on the named point property."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_modifypointprop(\"PointCurrent\", 2, 3)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The named point property exists."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_modifypointprop",
+          "pdf_pages": [
+            105
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "1f81d0740520b4a71eecf2f2f387e0aefa323a17dfd7979c252df83cd5667306"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_modifypointprop",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "8b6a78f88c757779c5f8a45edab2ae9589d15ed38d890eabe140659d35c47af4"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_modifypointprop",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "3d7a646cceb0bc71c160153f7e388cfaf3db87d2f2218b1951cc04ca25793533",
+          "line_range": [
+            364,
+            376
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Missing names are silently ignored in the pinned implementation; check the saved model.",
+        "Selector 0 changes the definition name. Reassign references explicitly rather than assuming existing geometry is renamed."
+      ],
+      "property_selectors": [
+        {
+          "index": 0,
+          "name": "PointName",
+          "type": "string",
+          "units": null
+        },
+        {
+          "index": 1,
+          "name": "A",
+          "type": "number|complex",
+          "units": "Wb/m"
+        },
+        {
+          "index": 2,
+          "name": "J",
+          "type": "number|complex",
+          "units": "A"
+        }
+      ]
+    },
+    {
+      "name": "mi_modifycircprop",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "circuits",
+      "purpose": "Modify one circuit property by its numeric property selector.",
+      "signature": "mi_modifycircprop(name, propnum, value)",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the existing circuit.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "propnum",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Property selector: 0 CircName, 1 i, 2 CircType.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": [
+            0,
+            1,
+            2
+          ]
+        },
+        {
+          "name": "value",
+          "type": "string|number|complex",
+          "required": true,
+          "units": null,
+          "description": "New value; selector 0 renames the property. Type and units depend on propnum; see property_selectors.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The named circuit exists."
+      ],
+      "effects": [
+        "Updates the selected field on the named circuit."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_modifycircprop(\"Coil\", 1, 10)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The named circuit exists."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_modifycircprop",
+          "pdf_pages": [
+            105
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "c134454bd5cbb8f13bf3a7b71d40222fc56245f29720e2ffc37072fed3c59cb1"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_modifycircprop",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "b16a739d8e3182640440ecc622c285f7db72bb8f9b43f2ff0a631add4df7beca"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_modifycircprop",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "78e755b16d4d75d95b903f5c5d14c1917a7f990e41f19aaeee9005efca2b2aea",
+          "line_range": [
+            392,
+            404
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Missing names are silently ignored in the pinned implementation; check the saved model.",
+        "Selector 0 changes the definition name. Reassign references explicitly rather than assuming existing geometry is renamed."
+      ],
+      "property_selectors": [
+        {
+          "index": 0,
+          "name": "CircName",
+          "type": "string",
+          "units": null
+        },
+        {
+          "index": 1,
+          "name": "i",
+          "type": "number|complex",
+          "units": "A"
+        },
+        {
+          "index": 2,
+          "name": "CircType",
+          "type": "integer",
+          "units": null
+        }
+      ]
+    },
+    {
+      "name": "mi_deletematerial",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "materials",
+      "purpose": "Delete a named material definition.",
+      "signature": "mi_deletematerial(materialname)",
+      "parameters": [
+        {
+          "name": "materialname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the material.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Remove or reassign geometry references to this definition before deleting it."
+      ],
+      "effects": [
+        "Removes the named material definition."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_deletematerial(\"TemporaryCore\")",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Remove or reassign geometry references to this definition before deleting it."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_deletematerial",
+          "pdf_pages": [
+            103
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "5676b7cffc1a1294d77966bde11a9753d6d342e080ecf6ccf89fc5ee2ddf0b80"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_deletematerial",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "3e61c13bfd6f671231cc463978e25705187f8e09245118ab2a96257091996490"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_deletematerial",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "63f2f33c6d7725924295ded3af0b8a06d6d0fe8a1f3e3e4b94e7480d270efd95",
+          "line_range": [
+            190,
+            195
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "This deletes the definition, not the geometry objects. Missing names are ignored in the pinned implementation."
+      ]
+    },
+    {
+      "name": "mi_deleteboundprop",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "boundary_conditions",
+      "purpose": "Delete a named boundary condition definition.",
+      "signature": "mi_deleteboundprop(propname)",
+      "parameters": [
+        {
+          "name": "propname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the boundary condition.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Remove or reassign geometry references to this definition before deleting it."
+      ],
+      "effects": [
+        "Removes the named boundary condition definition."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_deleteboundprop(\"TemporaryBoundary\")",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Remove or reassign geometry references to this definition before deleting it."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_deleteboundprop",
+          "pdf_pages": [
+            103
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "48ceafa9faebf215e3cf7c7bad514d6ae6291ce9f07d0e4c4930a5b46982e7ba"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_deleteboundprop",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "39cc383c210c1d986998045acc63b8e1edcded7f848c3822fb03416ea4705ea8"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_deleteboundprop",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "05052496ed0b6c936ff08136a80a37e8200e1904b20bb634d77723681672e0b3",
+          "line_range": [
+            196,
+            201
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "This deletes the definition, not the geometry objects. Missing names are ignored in the pinned implementation."
+      ]
+    },
+    {
+      "name": "mi_deletepointprop",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "boundary_conditions",
+      "purpose": "Delete a named point property definition.",
+      "signature": "mi_deletepointprop(pointpropname)",
+      "parameters": [
+        {
+          "name": "pointpropname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the point property.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Remove or reassign geometry references to this definition before deleting it."
+      ],
+      "effects": [
+        "Removes the named point property definition."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_deletepointprop(\"TemporaryPoint\")",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Remove or reassign geometry references to this definition before deleting it."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_deletepointprop",
+          "pdf_pages": [
+            103
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "4e093bd6d1c5069012b64aae2d26f47327518808697d435349e767f3f57782ec"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_deletepointprop",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "b3212748d68bed55b3cbf3ee1321a2d7f7161586c0d48e96ad86a919a0fd7d11"
+        },
+        {
+          "source_id": "femm5-common-implementation",
+          "anchor": "mi_deletepointprop",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "16fee33b379c87ed160b0f9b25fb5839d0691500047ec7cdb3ad5f0ec83e9cc6",
+          "line_range": [
+            202,
+            207
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "This deletes the definition, not the geometry objects. Missing names are ignored in the pinned implementation."
+      ]
+    },
+    {
+      "name": "mi_deletecircuit",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "circuits",
+      "purpose": "Delete a named circuit definition.",
+      "signature": "mi_deletecircuit(circuitname)",
+      "parameters": [
+        {
+          "name": "circuitname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the circuit.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": "The manual specifies a model mutation, not a return-value contract."
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "Remove or reassign geometry references to this definition before deleting it."
+      ],
+      "effects": [
+        "Removes the named circuit definition."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_deletecircuit(\"TemporaryCoil\")",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "Remove or reassign geometry references to this definition before deleting it."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_deletecircuit",
+          "pdf_pages": [
+            103
+          ],
+          "section": "3.6.9 Object Properties",
+          "definition_sha256": "69ff8c16426b0324d56d245b8e09f66a28a5d3e85c831b08865dec4b898b6371"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_deletecircuit",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "f31b45be2d8e798ffca67281bb71d210f4199f55d63eb7b048e5a7168838f1bd"
+        },
+        {
+          "source_id": "femm5-magnetic-implementation",
+          "anchor": "mi_deletecircuit",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "77f2875e5a68c5577dddebbfde0d583cf628dbaa6aaa0b13be2afad416d13013",
+          "line_range": [
+            406,
+            411
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "This deletes the definition, not the geometry objects. Missing names are ignored in the pinned implementation."
       ]
     }
   ]

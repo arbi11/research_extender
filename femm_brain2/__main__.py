@@ -12,14 +12,14 @@ from .source import DEFAULT_CACHE, fetch_sources, load_sources
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("fetch-sources", "validate", "build", "search", "get", "stats", "export", "check-geometry"):
+    for name in ("fetch-sources", "validate", "build", "search", "get", "stats", "export", "check-geometry", "check-properties"):
         p = commands.add_parser(name)
         p.add_argument("--db", type=Path, default=DEFAULT_DB)
-        if name in ("fetch-sources", "validate", "build", "check-geometry"):
+        if name in ("fetch-sources", "validate", "build", "check-geometry", "check-properties"):
             p.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
         if name == "build":
-            p.add_argument("--evidence", type=Path)
-        if name == "check-geometry":
+            p.add_argument("--evidence", type=Path, action="append")
+        if name in ("check-geometry", "check-properties"):
             p.add_argument("--output", type=Path, required=True)
             p.add_argument("--image")
             p.add_argument("--timeout", type=int, default=120)
@@ -43,9 +43,10 @@ def main(argv=None):
             result.pop("inventory", None)
         elif args.command == "build":
             result = build(args.db, cache=args.cache, evidence_path=args.evidence)
-        elif args.command == "check-geometry":
+        elif args.command in ("check-geometry", "check-properties"):
             from .geometry_check import run
-            result = run(args.output, batch=load_batch(), cache=args.cache, image=args.image, timeout=args.timeout)
+            result = run(args.output, batch=load_batch(), cache=args.cache, image=args.image, timeout=args.timeout,
+                         suite="properties" if args.command == "check-properties" else "geometry")
         elif args.command == "get":
             result = get(args.name, args.db, version=args.version, binding=args.binding)
         elif args.command == "search":

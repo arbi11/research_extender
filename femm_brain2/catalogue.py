@@ -124,9 +124,14 @@ def build(path=DEFAULT_DB, *, batch_path=None, sources_path=None, cache=DEFAULT_
     if validation["errors"]:
         raise ValueError("Import rejected: " + "; ".join(validation["errors"]))
     executions = {}
+    evidence_paths = [] if evidence_path is None else (list(evidence_path) if isinstance(evidence_path, (list, tuple)) else [evidence_path])
     if evidence_path is not None:
         from .geometry_check import verify_evidence
-        executions = verify_evidence(evidence_path, batch)
+        for evidence in evidence_paths:
+            verified = verify_evidence(evidence, batch)
+            if executions.keys() & verified.keys():
+                raise ValueError("Overlapping native evidence; select one report per command")
+            executions.update(verified)
     target = Path(path).resolve()
     if target.exists():
         with closing(connect_readonly(target)):
@@ -143,9 +148,9 @@ def build(path=DEFAULT_DB, *, batch_path=None, sources_path=None, cache=DEFAULT_
                         "source_verification": "hashes, definition fingerprints, page locators and Lua exports checked",
                         "inventory_scope": "Detected FEMM command definitions in the pinned manual; inventory entries beyond the reviewed batch are not semantic catalogue entries."}
             if evidence_path is not None:
-                metadata["native_evidence"] = {"report": str(Path(evidence_path).resolve()),
-                                               "report_sha256": fingerprint(Path(evidence_path).read_bytes()),
-                                               "scope": "Toy geometry API checks; no paper or field-solution validation."}
+                metadata["native_evidence"] = {"reports": [{"report": str(Path(p).resolve()),
+                    "report_sha256": fingerprint(Path(p).read_bytes())} for p in evidence_paths],
+                    "scope": "Native geometry and property API checks; no field-solution or paper validation."}
             db.executemany("INSERT INTO metadata VALUES (?,?)", [(k, json.dumps(v)) for k, v in metadata.items()])
             db.executemany("INSERT INTO sources VALUES (?,?)", [(s["id"], json.dumps(s)) for s in sources])
             db.executemany("INSERT INTO inventory VALUES (?,?)", [(d["name"], json.dumps(d)) for d in validation["inventory"]])
@@ -155,6 +160,8 @@ def build(path=DEFAULT_DB, *, batch_path=None, sources_path=None, cache=DEFAULT_
                 cursor = db.execute("INSERT INTO commands(name,version,binding,physics,category,data) VALUES (?,?,?,?,?,?)",
                                     (*[record[k] for k in ("name", "version", "binding", "physics", "category")], json.dumps(record)))
                 details = json.dumps({k: record[k] for k in ("parameters", "returns", "preconditions", "effects", "notes")})
+                if "property_selectors" in record:
+                    details += " " + json.dumps(record["property_selectors"])
                 db.execute("INSERT INTO search_index(rowid,name,purpose,details) VALUES (?,?,?,?)",
                            (cursor.lastrowid, record["name"], record["purpose"], details))
             if db.execute("PRAGMA integrity_check").fetchone()[0] != "ok":

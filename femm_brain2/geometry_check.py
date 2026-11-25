@@ -12,6 +12,7 @@ import uuid
 from .source import DEFAULT_CACHE, fingerprint, load_sources, source_file, verified_text
 
 FIXTURES = Path(__file__).with_name("tests") / "native_geometry"
+SUITES = {"geometry": FIXTURES, "properties": FIXTURES.with_name("native_properties")}
 SECTIONS = {"points": "NumPoints", "segments": "NumSegments", "arcs": "NumArcSegments", "labels": "NumBlockLabels"}
 
 
@@ -84,6 +85,11 @@ def evaluate(folder, protocol):
                     for column, value in expected["fields"].items():
                         if abs(matches[0][int(column)]-value) > tolerance:
                             errors.append("Segment property mismatch at " + str(expected["endpoints"]) + ", column " + column)
+            if "expected_properties" in case:
+                from .property_check import evaluate_properties
+                properties, failures = evaluate_properties(Path(folder) / case["file"], case["expected_properties"], tolerance)
+                observed["properties"] = properties
+                errors.extend(failures)
         except (OSError, ValueError) as exc:
             errors.append(str(exc))
         results.append({"id": case["id"], "status": "failed" if errors else "passed", "errors": errors,
@@ -91,10 +97,12 @@ def evaluate(folder, protocol):
     return results
 
 
-def run(output, *, batch, image=None, cache=DEFAULT_CACHE, timeout=120):
+def run(output, *, batch, image=None, cache=DEFAULT_CACHE, timeout=120, suite="geometry"):
     if not isinstance(timeout, int) or timeout < 1:
         raise ValueError("timeout must be a positive integer")
-    protocol = json.loads((FIXTURES / "protocol.json").read_text())
+    fixtures = SUITES[suite]
+    protocol = json.loads((fixtures / "protocol.json").read_text())
+    script = protocol.get("script", "geometry.lua")
     source = next(s for s in load_sources() if s["id"] == protocol["binding_source_id"])
     verified_text(source, cache)
     probe = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}}", image or protocol["reference_image"]],
@@ -106,17 +114,17 @@ def run(output, *, batch, image=None, cache=DEFAULT_CACHE, timeout=120):
     folder.mkdir(parents=True, exist_ok=True)
     if any(folder.iterdir()):
         raise ValueError("Native output must be an empty directory; earlier evidence is never overwritten")
-    for filename in ("geometry.lua", "protocol.json"):
-        shutil.copyfile(FIXTURES / filename, folder / filename)
+    for filename in (script, "protocol.json"):
+        shutil.copyfile(fixtures / filename, folder / filename)
     # Execute the exact reviewed binding, rather than the older copy bundled in the image.
     shutil.copyfile(source_file(source, cache), folder / "binding.lua")
-    name = "femm-brain2-geometry-" + uuid.uuid4().hex[:12]
+    name = "femm-brain2-" + suite + "-" + uuid.uuid4().hex[:12]
     arguments = ["docker", "run", "--rm", "--init", "--name", name, "--network", "none", "--read-only",
                  "--memory", "2g", "--cpus", "2", "--pids-limit", "256", "--tmpfs", "/tmp:rw,size=512m",
                  "--user", f"{os.getuid()}:{os.getgid()}", "-e", "HOME=/tmp", "-e", "QT_QPA_PLATFORM=offscreen",
                  "-e", "FEMM_DIR=/opt/femm/bin", "-v", f"{folder}:/work", "-w", "/work", image_id,
                  "/opt/femm/bin/lua4", "-e", "dofile('/work/binding.lua'); _femm_port=48015; openfemm(1)",
-                 "-f", "geometry.lua"]
+                 "-f", script]
     started = datetime.now(timezone.utc).isoformat()
     try:
         process = subprocess.run(arguments, capture_output=True, text=True, timeout=timeout)
@@ -125,7 +133,7 @@ def run(output, *, batch, image=None, cache=DEFAULT_CACHE, timeout=120):
         subprocess.run(["docker", "rm", "-f", name], capture_output=True, timeout=30)
         chunks = (exc.stdout or b"", exc.stderr or b"")
         log = "\n".join(c.decode(errors="replace") if isinstance(c, bytes) else c for c in chunks)
-        log += "\nNative geometry run exceeded its time limit.\n"
+        log += "\nNative API run exceeded its time limit.\n"
         returncode = -1
     (folder / "native.log").write_text(log)
     checks = evaluate(folder, protocol)
@@ -148,9 +156,13 @@ def verify_evidence(path, batch):
     """Recheck artifacts and observations before attaching execution claims to lookup."""
     path = Path(path).resolve()
     report = json.loads(path.read_text())
-    protocol_bytes = (FIXTURES / "protocol.json").read_bytes()
-    script_bytes = (FIXTURES / "geometry.lua").read_bytes()
+    fixtures = next((p for p in SUITES.values() if json.loads((p / "protocol.json").read_text())["id"] == report.get("protocol_id")), None)
+    if fixtures is None:
+        raise ValueError("Unknown native evidence protocol")
+    protocol_bytes = (fixtures / "protocol.json").read_bytes()
     protocol = json.loads(protocol_bytes)
+    script = protocol.get("script", "geometry.lua")
+    script_bytes = (fixtures / script).read_bytes()
     engine = report["engine"]
     if report.get("batch_sha256") != batch_digest(batch):
         raise ValueError("Native evidence belongs to another reviewed command batch")
@@ -160,9 +172,9 @@ def verify_evidence(path, batch):
     if engine.get("kind") != "native_femm_docker" or engine.get("image_id") != protocol["reference_image"] or engine.get("network") != "none" or engine.get("read_only") is not True:
         raise ValueError("Native evidence does not match the frozen container configuration")
     artifacts = report["artifacts"]
-    required = {"protocol.json", "geometry.lua", "native.log"} | {c["file"] for c in protocol["cases"]}
+    required = {"protocol.json", script, "native.log"} | {c["file"] for c in protocol["cases"]}
     # Missing native models are permitted only as explicitly failed scenario observations.
-    if not {"protocol.json", "geometry.lua", "native.log"} <= artifacts.keys():
+    if not {"protocol.json", script, "native.log"} <= artifacts.keys():
         raise ValueError("Native evidence is missing its protocol, script or log")
     if any((path.parent / c["file"]).is_file() and c["file"] not in artifacts for c in protocol["cases"]):
         raise ValueError("Native evidence contains an unhashed model")
@@ -171,7 +183,7 @@ def verify_evidence(path, batch):
             raise ValueError("Unexpected native evidence artifact: " + filename)
         if fingerprint((path.parent / filename).read_bytes()) != digest:
             raise ValueError("Native artifact hash mismatch: " + filename)
-    for filename, content in (("protocol.json", protocol_bytes), ("geometry.lua", script_bytes)):
+    for filename, content in (("protocol.json", protocol_bytes), (script, script_bytes)):
         if artifacts[filename] != fingerprint(content):
             raise ValueError("Native evidence uses a different frozen " + filename)
     checks = evaluate(path.parent, protocol)
