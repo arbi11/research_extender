@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "uniform-field-v1",
   "script": "uniform_field.lua",
-  "scope": "Analytical magnetostatic field, energy, pickup-circuit and file/mesh API validation in native FEMM; not a paper benchmark.",
+  "scope": "Native planar DC API and analytical uniform-field checks, including all six line-integral selectors, contour reversal, bent-contour subdivision length and contour clearing. No AC, axisymmetric or paper-replication claim.",
   "reference_image": "sha256:e927378c714cca415c6471122a73b34bae0cebf0ab00381b01a4a5f1199aa0c3",
   "binding_source_id": "femm5-lua-binding",
   "absolute_tolerance": 1e-10,
@@ -53,7 +53,11 @@
         "mo_selectblock",
         "mo_clearblock",
         "mo_blockintegral",
-        "mo_close"
+        "mo_close",
+        "mo_addcontour",
+        "mo_clearcontour",
+        "mo_bendcontour",
+        "mo_lineintegral"
       ],
       "expected_counts": {
         "points": 6,
@@ -601,6 +605,502 @@
           "imaginary_tolerance": 0,
           "provenance": "derived",
           "expression": "all file and postprocessor close commands returned"
+        },
+        "contour.vertical.flux": {
+          "value": -2e-05,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.avg_Bn": {
+          "value": -0.2,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.mmf": {
+          "value": 0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.avg_Ht": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.length": {
+          "value": 0.01,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.area": {
+          "value": 0.0001,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.Fx": {
+          "value": -1.5915494309189537,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.Fy": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.torque": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.Bn2": {
+          "value": 0.0004000000000000001,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.avg_Bn2": {
+          "value": 0.04000000000000001,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.flux": {
+          "value": 2e-05,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.avg_Bn": {
+          "value": 0.2,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.mmf": {
+          "value": 0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.avg_Ht": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.length": {
+          "value": 0.01,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.area": {
+          "value": 0.0001,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.Fx": {
+          "value": 1.5915494309189537,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.Fy": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.torque": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.Bn2": {
+          "value": 0.0004000000000000001,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.avg_Bn2": {
+          "value": 0.04000000000000001,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.mmf": {
+          "value": 3183.098861837907,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.avg_Ht": {
+          "value": 159154.94309189534,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.length": {
+          "value": 0.02,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.area": {
+          "value": 0.0002,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.Fx": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.Fy": {
+          "value": -3.1830988618379075,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.torque": {
+          "value": -0.06366197723675815,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.Bn2": {
+          "value": 0,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.avg_Bn2": {
+          "value": 0,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.closed.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.mmf": {
+          "value": 0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.avg_Ht": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.length": {
+          "value": 0.076,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.area": {
+          "value": 0.00076,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.Fx": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.Fy": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.torque": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.Bn2": {
+          "value": 0.0011200000000000003,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.avg_Bn2": {
+          "value": 0.014736842105263163,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.bend_positive.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.mmf": {
+          "value": 2546.4790894703256,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.avg_Ht": {
+          "value": 102487.9132760191,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.length": {
+          "value": 0.024846628329841993,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.area": {
+          "value": 0.0002484662832984199,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.mmf": {
+          "value": 2546.4790894703256,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.avg_Ht": {
+          "value": 102487.9132760191,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.length": {
+          "value": 0.024846628329841993,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.area": {
+          "value": 0.0002484662832984199,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.cleared.length": {
+          "value": 0,
+          "units": "m",
+          "absolute_tolerance": 0,
+          "imaginary_tolerance": 0,
+          "provenance": "derived",
+          "expression": "length of an empty contour"
+        },
+        "contour.cleared.area": {
+          "value": 0,
+          "units": "m^2",
+          "absolute_tolerance": 0,
+          "imaginary_tolerance": 0,
+          "provenance": "derived",
+          "expression": "empty contour length times depth"
         }
       },
       "observation_keys": [
@@ -675,7 +1175,69 @@
         "p1.ff",
         "p2.ff",
         "p3.ff",
-        "mesh.has_return"
+        "mesh.has_return",
+        "contour.vertical.flux",
+        "contour.vertical.avg_Bn",
+        "contour.vertical.mmf",
+        "contour.vertical.avg_Ht",
+        "contour.vertical.length",
+        "contour.vertical.area",
+        "contour.vertical.Fx",
+        "contour.vertical.Fy",
+        "contour.vertical.torque",
+        "contour.vertical.torque_2x",
+        "contour.vertical.Bn2",
+        "contour.vertical.avg_Bn2",
+        "contour.reverse.flux",
+        "contour.reverse.avg_Bn",
+        "contour.reverse.mmf",
+        "contour.reverse.avg_Ht",
+        "contour.reverse.length",
+        "contour.reverse.area",
+        "contour.reverse.Fx",
+        "contour.reverse.Fy",
+        "contour.reverse.torque",
+        "contour.reverse.torque_2x",
+        "contour.reverse.Bn2",
+        "contour.reverse.avg_Bn2",
+        "contour.horizontal.flux",
+        "contour.horizontal.avg_Bn",
+        "contour.horizontal.mmf",
+        "contour.horizontal.avg_Ht",
+        "contour.horizontal.length",
+        "contour.horizontal.area",
+        "contour.horizontal.Fx",
+        "contour.horizontal.Fy",
+        "contour.horizontal.torque",
+        "contour.horizontal.torque_2x",
+        "contour.horizontal.Bn2",
+        "contour.horizontal.avg_Bn2",
+        "contour.closed.flux",
+        "contour.closed.avg_Bn",
+        "contour.closed.mmf",
+        "contour.closed.avg_Ht",
+        "contour.closed.length",
+        "contour.closed.area",
+        "contour.closed.Fx",
+        "contour.closed.Fy",
+        "contour.closed.torque",
+        "contour.closed.torque_2x",
+        "contour.closed.Bn2",
+        "contour.closed.avg_Bn2",
+        "contour.bend_positive.flux",
+        "contour.bend_positive.avg_Bn",
+        "contour.bend_positive.mmf",
+        "contour.bend_positive.avg_Ht",
+        "contour.bend_positive.length",
+        "contour.bend_positive.area",
+        "contour.bend_negative.flux",
+        "contour.bend_negative.avg_Bn",
+        "contour.bend_negative.mmf",
+        "contour.bend_negative.avg_Ht",
+        "contour.bend_negative.length",
+        "contour.bend_negative.area",
+        "contour.cleared.length",
+        "contour.cleared.area"
       ],
       "analytical": {
         "Bx": 0.2,
@@ -712,7 +1274,11 @@
         "mo_selectblock",
         "mo_clearblock",
         "mo_blockintegral",
-        "mo_close"
+        "mo_close",
+        "mo_addcontour",
+        "mo_clearcontour",
+        "mo_bendcontour",
+        "mo_lineintegral"
       ],
       "expected_counts": {
         "points": 6,
@@ -1260,6 +1826,502 @@
           "imaginary_tolerance": 0,
           "provenance": "derived",
           "expression": "all file and postprocessor close commands returned"
+        },
+        "contour.vertical.flux": {
+          "value": 2e-05,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.avg_Bn": {
+          "value": 0.2,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.mmf": {
+          "value": 0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.avg_Ht": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.length": {
+          "value": 0.01,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.area": {
+          "value": 0.0001,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.Fx": {
+          "value": -1.5915494309189537,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.Fy": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.torque": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.Bn2": {
+          "value": 0.0004000000000000001,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.avg_Bn2": {
+          "value": 0.04000000000000001,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.flux": {
+          "value": -2e-05,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.avg_Bn": {
+          "value": -0.2,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.mmf": {
+          "value": 0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.avg_Ht": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.length": {
+          "value": 0.01,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.area": {
+          "value": 0.0001,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.Fx": {
+          "value": 1.5915494309189537,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.Fy": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.torque": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.Bn2": {
+          "value": 0.0004000000000000001,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.avg_Bn2": {
+          "value": 0.04000000000000001,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.mmf": {
+          "value": -3183.098861837907,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.avg_Ht": {
+          "value": -159154.94309189534,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.length": {
+          "value": 0.02,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.area": {
+          "value": 0.0002,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.Fx": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.Fy": {
+          "value": -3.1830988618379075,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.torque": {
+          "value": -0.06366197723675815,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.Bn2": {
+          "value": 0,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.avg_Bn2": {
+          "value": 0,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.closed.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.mmf": {
+          "value": 0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.avg_Ht": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.length": {
+          "value": 0.076,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.area": {
+          "value": 0.00076,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.Fx": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.Fy": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.torque": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.Bn2": {
+          "value": 0.0011200000000000003,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.avg_Bn2": {
+          "value": 0.014736842105263163,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.bend_positive.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.mmf": {
+          "value": -2546.4790894703256,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.avg_Ht": {
+          "value": -102487.9132760191,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.length": {
+          "value": 0.024846628329841993,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.area": {
+          "value": 0.0002484662832984199,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.mmf": {
+          "value": -2546.4790894703256,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.avg_Ht": {
+          "value": -102487.9132760191,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.length": {
+          "value": 0.024846628329841993,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.area": {
+          "value": 0.0002484662832984199,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.cleared.length": {
+          "value": 0,
+          "units": "m",
+          "absolute_tolerance": 0,
+          "imaginary_tolerance": 0,
+          "provenance": "derived",
+          "expression": "length of an empty contour"
+        },
+        "contour.cleared.area": {
+          "value": 0,
+          "units": "m^2",
+          "absolute_tolerance": 0,
+          "imaginary_tolerance": 0,
+          "provenance": "derived",
+          "expression": "empty contour length times depth"
         }
       },
       "observation_keys": [
@@ -1334,7 +2396,69 @@
         "p1.ff",
         "p2.ff",
         "p3.ff",
-        "mesh.has_return"
+        "mesh.has_return",
+        "contour.vertical.flux",
+        "contour.vertical.avg_Bn",
+        "contour.vertical.mmf",
+        "contour.vertical.avg_Ht",
+        "contour.vertical.length",
+        "contour.vertical.area",
+        "contour.vertical.Fx",
+        "contour.vertical.Fy",
+        "contour.vertical.torque",
+        "contour.vertical.torque_2x",
+        "contour.vertical.Bn2",
+        "contour.vertical.avg_Bn2",
+        "contour.reverse.flux",
+        "contour.reverse.avg_Bn",
+        "contour.reverse.mmf",
+        "contour.reverse.avg_Ht",
+        "contour.reverse.length",
+        "contour.reverse.area",
+        "contour.reverse.Fx",
+        "contour.reverse.Fy",
+        "contour.reverse.torque",
+        "contour.reverse.torque_2x",
+        "contour.reverse.Bn2",
+        "contour.reverse.avg_Bn2",
+        "contour.horizontal.flux",
+        "contour.horizontal.avg_Bn",
+        "contour.horizontal.mmf",
+        "contour.horizontal.avg_Ht",
+        "contour.horizontal.length",
+        "contour.horizontal.area",
+        "contour.horizontal.Fx",
+        "contour.horizontal.Fy",
+        "contour.horizontal.torque",
+        "contour.horizontal.torque_2x",
+        "contour.horizontal.Bn2",
+        "contour.horizontal.avg_Bn2",
+        "contour.closed.flux",
+        "contour.closed.avg_Bn",
+        "contour.closed.mmf",
+        "contour.closed.avg_Ht",
+        "contour.closed.length",
+        "contour.closed.area",
+        "contour.closed.Fx",
+        "contour.closed.Fy",
+        "contour.closed.torque",
+        "contour.closed.torque_2x",
+        "contour.closed.Bn2",
+        "contour.closed.avg_Bn2",
+        "contour.bend_positive.flux",
+        "contour.bend_positive.avg_Bn",
+        "contour.bend_positive.mmf",
+        "contour.bend_positive.avg_Ht",
+        "contour.bend_positive.length",
+        "contour.bend_positive.area",
+        "contour.bend_negative.flux",
+        "contour.bend_negative.avg_Bn",
+        "contour.bend_negative.mmf",
+        "contour.bend_negative.avg_Ht",
+        "contour.bend_negative.length",
+        "contour.bend_negative.area",
+        "contour.cleared.length",
+        "contour.cleared.area"
       ],
       "analytical": {
         "Bx": -0.2,
@@ -1371,7 +2495,11 @@
         "mo_selectblock",
         "mo_clearblock",
         "mo_blockintegral",
-        "mo_close"
+        "mo_close",
+        "mo_addcontour",
+        "mo_clearcontour",
+        "mo_bendcontour",
+        "mo_lineintegral"
       ],
       "expected_counts": {
         "points": 6,
@@ -1919,6 +3047,502 @@
           "imaginary_tolerance": 0,
           "provenance": "derived",
           "expression": "all file and postprocessor close commands returned"
+        },
+        "contour.vertical.flux": {
+          "value": 0.0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.mmf": {
+          "value": 0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.avg_Ht": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.length": {
+          "value": 0.01,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.area": {
+          "value": 0.0001,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.Fx": {
+          "value": -0.0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.Fy": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.torque": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.Bn2": {
+          "value": 0.0,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.avg_Bn2": {
+          "value": 0,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.flux": {
+          "value": 0.0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.mmf": {
+          "value": 0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.avg_Ht": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.length": {
+          "value": 0.01,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.area": {
+          "value": 0.0001,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.Fx": {
+          "value": 0.0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.Fy": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.torque": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.Bn2": {
+          "value": 0.0,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.avg_Bn2": {
+          "value": 0,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.mmf": {
+          "value": 0.0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.avg_Ht": {
+          "value": 0.0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.length": {
+          "value": 0.02,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.area": {
+          "value": 0.0002,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.Fx": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.Fy": {
+          "value": -0.0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.torque": {
+          "value": -0.0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.Bn2": {
+          "value": 0,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.avg_Bn2": {
+          "value": 0,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.closed.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.mmf": {
+          "value": 0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.avg_Ht": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.length": {
+          "value": 0.076,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.area": {
+          "value": 0.00076,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.Fx": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.Fy": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.torque": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.Bn2": {
+          "value": 0.0,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.avg_Bn2": {
+          "value": 0.0,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.bend_positive.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.mmf": {
+          "value": 0.0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.avg_Ht": {
+          "value": 0.0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.length": {
+          "value": 0.024846628329841993,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.area": {
+          "value": 0.0002484662832984199,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.mmf": {
+          "value": 0.0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.avg_Ht": {
+          "value": 0.0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.length": {
+          "value": 0.024846628329841993,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.area": {
+          "value": 0.0002484662832984199,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.cleared.length": {
+          "value": 0,
+          "units": "m",
+          "absolute_tolerance": 0,
+          "imaginary_tolerance": 0,
+          "provenance": "derived",
+          "expression": "length of an empty contour"
+        },
+        "contour.cleared.area": {
+          "value": 0,
+          "units": "m^2",
+          "absolute_tolerance": 0,
+          "imaginary_tolerance": 0,
+          "provenance": "derived",
+          "expression": "empty contour length times depth"
         }
       },
       "observation_keys": [
@@ -1993,7 +3617,69 @@
         "p1.ff",
         "p2.ff",
         "p3.ff",
-        "mesh.has_return"
+        "mesh.has_return",
+        "contour.vertical.flux",
+        "contour.vertical.avg_Bn",
+        "contour.vertical.mmf",
+        "contour.vertical.avg_Ht",
+        "contour.vertical.length",
+        "contour.vertical.area",
+        "contour.vertical.Fx",
+        "contour.vertical.Fy",
+        "contour.vertical.torque",
+        "contour.vertical.torque_2x",
+        "contour.vertical.Bn2",
+        "contour.vertical.avg_Bn2",
+        "contour.reverse.flux",
+        "contour.reverse.avg_Bn",
+        "contour.reverse.mmf",
+        "contour.reverse.avg_Ht",
+        "contour.reverse.length",
+        "contour.reverse.area",
+        "contour.reverse.Fx",
+        "contour.reverse.Fy",
+        "contour.reverse.torque",
+        "contour.reverse.torque_2x",
+        "contour.reverse.Bn2",
+        "contour.reverse.avg_Bn2",
+        "contour.horizontal.flux",
+        "contour.horizontal.avg_Bn",
+        "contour.horizontal.mmf",
+        "contour.horizontal.avg_Ht",
+        "contour.horizontal.length",
+        "contour.horizontal.area",
+        "contour.horizontal.Fx",
+        "contour.horizontal.Fy",
+        "contour.horizontal.torque",
+        "contour.horizontal.torque_2x",
+        "contour.horizontal.Bn2",
+        "contour.horizontal.avg_Bn2",
+        "contour.closed.flux",
+        "contour.closed.avg_Bn",
+        "contour.closed.mmf",
+        "contour.closed.avg_Ht",
+        "contour.closed.length",
+        "contour.closed.area",
+        "contour.closed.Fx",
+        "contour.closed.Fy",
+        "contour.closed.torque",
+        "contour.closed.torque_2x",
+        "contour.closed.Bn2",
+        "contour.closed.avg_Bn2",
+        "contour.bend_positive.flux",
+        "contour.bend_positive.avg_Bn",
+        "contour.bend_positive.mmf",
+        "contour.bend_positive.avg_Ht",
+        "contour.bend_positive.length",
+        "contour.bend_positive.area",
+        "contour.bend_negative.flux",
+        "contour.bend_negative.avg_Bn",
+        "contour.bend_negative.mmf",
+        "contour.bend_negative.avg_Ht",
+        "contour.bend_negative.length",
+        "contour.bend_negative.area",
+        "contour.cleared.length",
+        "contour.cleared.area"
       ],
       "analytical": {
         "Bx": 0,
@@ -2572,6 +4258,502 @@
           "imaginary_tolerance": 0,
           "provenance": "source_checked",
           "expression": "The pinned C++ mi_createmesh returns a node count; nil is a failed capability check."
+        },
+        "contour.vertical.flux": {
+          "value": -2e-05,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.avg_Bn": {
+          "value": -0.2,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.mmf": {
+          "value": 0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.avg_Ht": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.length": {
+          "value": 0.01,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.area": {
+          "value": 0.0001,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.Fx": {
+          "value": -1.5915494309189537,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.Fy": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.torque": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.Bn2": {
+          "value": 0.0004000000000000001,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.vertical.avg_Bn2": {
+          "value": 0.04000000000000001,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to vertical and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.flux": {
+          "value": 2e-05,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.avg_Bn": {
+          "value": 0.2,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.mmf": {
+          "value": 0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.avg_Ht": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.length": {
+          "value": 0.01,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.area": {
+          "value": 0.0001,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.Fx": {
+          "value": 1.5915494309189537,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.Fy": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.torque": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.Bn2": {
+          "value": 0.0004000000000000001,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.reverse.avg_Bn2": {
+          "value": 0.04000000000000001,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to reverse and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.mmf": {
+          "value": 3183.098861837907,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.avg_Ht": {
+          "value": 159154.94309189534,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.length": {
+          "value": 0.02,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.area": {
+          "value": 0.0002,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.Fx": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.Fy": {
+          "value": -3.1830988618379075,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.torque": {
+          "value": -0.06366197723675815,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.Bn2": {
+          "value": 0,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.horizontal.avg_Bn2": {
+          "value": 0,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to horizontal and analytical Bx, mu0, depth"
+        },
+        "contour.closed.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.mmf": {
+          "value": 0,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.avg_Ht": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.length": {
+          "value": 0.076,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.area": {
+          "value": 0.00076,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.Fx": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.Fy": {
+          "value": 0,
+          "units": "N",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.torque": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-05,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.torque_2x": {
+          "value": 0,
+          "units": "N*m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.Bn2": {
+          "value": 0.0011200000000000003,
+          "units": "T^2*m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.closed.avg_Bn2": {
+          "value": 0.014736842105263163,
+          "units": "T^2",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae applied to closed and analytical Bx, mu0, depth"
+        },
+        "contour.bend_positive.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.mmf": {
+          "value": 2546.4790894703256,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.avg_Ht": {
+          "value": 102487.9132760191,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.length": {
+          "value": 0.024846628329841993,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_positive.area": {
+          "value": 0.0002484662832984199,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.flux": {
+          "value": 0,
+          "units": "Wb",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.avg_Bn": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.mmf": {
+          "value": 2546.4790894703256,
+          "units": "A",
+          "absolute_tolerance": 0.0001,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.avg_Ht": {
+          "value": 102487.9132760191,
+          "units": "A/m",
+          "absolute_tolerance": 0.01,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.length": {
+          "value": 0.024846628329841993,
+          "units": "m",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.bend_negative.area": {
+          "value": 0.0002484662832984199,
+          "units": "m^2",
+          "absolute_tolerance": 1e-12,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "measurement_inputs.formulae: six straight bend subdivisions; endpoint A and x difference"
+        },
+        "contour.cleared.length": {
+          "value": 0,
+          "units": "m",
+          "absolute_tolerance": 0,
+          "imaginary_tolerance": 0,
+          "provenance": "derived",
+          "expression": "length of an empty contour"
+        },
+        "contour.cleared.area": {
+          "value": 0,
+          "units": "m^2",
+          "absolute_tolerance": 0,
+          "imaginary_tolerance": 0,
+          "provenance": "derived",
+          "expression": "empty contour length times depth"
         }
       },
       "observation_keys": [
@@ -2646,7 +4828,69 @@
         "p1.ff",
         "p2.ff",
         "p3.ff",
-        "mesh.has_return"
+        "mesh.has_return",
+        "contour.vertical.flux",
+        "contour.vertical.avg_Bn",
+        "contour.vertical.mmf",
+        "contour.vertical.avg_Ht",
+        "contour.vertical.length",
+        "contour.vertical.area",
+        "contour.vertical.Fx",
+        "contour.vertical.Fy",
+        "contour.vertical.torque",
+        "contour.vertical.torque_2x",
+        "contour.vertical.Bn2",
+        "contour.vertical.avg_Bn2",
+        "contour.reverse.flux",
+        "contour.reverse.avg_Bn",
+        "contour.reverse.mmf",
+        "contour.reverse.avg_Ht",
+        "contour.reverse.length",
+        "contour.reverse.area",
+        "contour.reverse.Fx",
+        "contour.reverse.Fy",
+        "contour.reverse.torque",
+        "contour.reverse.torque_2x",
+        "contour.reverse.Bn2",
+        "contour.reverse.avg_Bn2",
+        "contour.horizontal.flux",
+        "contour.horizontal.avg_Bn",
+        "contour.horizontal.mmf",
+        "contour.horizontal.avg_Ht",
+        "contour.horizontal.length",
+        "contour.horizontal.area",
+        "contour.horizontal.Fx",
+        "contour.horizontal.Fy",
+        "contour.horizontal.torque",
+        "contour.horizontal.torque_2x",
+        "contour.horizontal.Bn2",
+        "contour.horizontal.avg_Bn2",
+        "contour.closed.flux",
+        "contour.closed.avg_Bn",
+        "contour.closed.mmf",
+        "contour.closed.avg_Ht",
+        "contour.closed.length",
+        "contour.closed.area",
+        "contour.closed.Fx",
+        "contour.closed.Fy",
+        "contour.closed.torque",
+        "contour.closed.torque_2x",
+        "contour.closed.Bn2",
+        "contour.closed.avg_Bn2",
+        "contour.bend_positive.flux",
+        "contour.bend_positive.avg_Bn",
+        "contour.bend_positive.mmf",
+        "contour.bend_positive.avg_Ht",
+        "contour.bend_positive.length",
+        "contour.bend_positive.area",
+        "contour.bend_negative.flux",
+        "contour.bend_negative.avg_Bn",
+        "contour.bend_negative.mmf",
+        "contour.bend_negative.avg_Ht",
+        "contour.bend_negative.length",
+        "contour.bend_negative.area",
+        "contour.cleared.length",
+        "contour.cleared.area"
       ],
       "analytical": {
         "Bx": 0.2,
@@ -2664,9 +4908,173 @@
       "require_mesh_return": true
     }
   ],
-  "measurement_revision": "The native mesh-count return is backported. Every field case now also requires the returned count to match the real solver mesh. Physical inputs, analytical targets and tolerances are unchanged; prior failed runs are preserved.",
+  "measurement_revision": "Added contour measurements only. Existing physical inputs, analytical targets and tolerances remain unchanged.",
   "runtime_manifest": {
     "file": "runtime-build.json",
     "sha256": "87cf09b7b78f70934803fadc0b08119cb60c3844fb147c36bfa8ad4b51f65e11"
+  },
+  "measurement_inputs": {
+    "provenance": "assumed",
+    "reason": "Interior contours in the already frozen analytical uniform-field domain; no physical model input changes.",
+    "coordinate_units": "m",
+    "vertical": [
+      [
+        0.02,
+        -0.005
+      ],
+      [
+        0.02,
+        0.005
+      ]
+    ],
+    "reverse": [
+      [
+        0.02,
+        0.005
+      ],
+      [
+        0.02,
+        -0.005
+      ]
+    ],
+    "horizontal": [
+      [
+        0.01,
+        -0.005
+      ],
+      [
+        0.03,
+        -0.005
+      ]
+    ],
+    "closed": [
+      [
+        0.008,
+        -0.007
+      ],
+      [
+        0.008,
+        0.007
+      ],
+      [
+        0.032,
+        0.007
+      ],
+      [
+        0.032,
+        -0.007
+      ],
+      [
+        0.008,
+        -0.007
+      ]
+    ],
+    "bend_endpoints": [
+      [
+        0.012,
+        0.001
+      ],
+      [
+        0.028,
+        0.001
+      ]
+    ],
+    "bend_angles_degrees": [
+      180,
+      -180
+    ],
+    "bend_step_degrees": 30,
+    "normal_convention": "n=(-dy,dx)/length (left normal)",
+    "formulae": {
+      "flux": "depth*integral(B.n ds) = depth*(A_start-A_end)",
+      "mmf": "integral(H.t ds) = Hx*(x_end-x_start)",
+      "stress": "T=B^2/(2*mu0)*diag(1,-1); F=depth*integral(T.n ds); torque=depth*integral(x*(T.n)_y-y*(T.n)_x ds)",
+      "bend_length": "6*2*0.008*sin(pi/12), the six straight subdivisions of a 180-degree bend",
+      "Bn2": "integral((B.n)^2 ds); average is integral/contour_length"
+    },
+    "tolerance_rationale": "Fixed absolute bounds allow roundoff and existing finite-element field error; signed nonzero values and a zero-field control prevent vacuous passes."
+  },
+  "contour_inputs": {
+    "provenance": "assumed",
+    "reason": "Interior contours in the frozen uniform-air model provide analytical signed, zero and curved-length controls. No physical model input changes.",
+    "coordinates_units": "m",
+    "vertical": [
+      [
+        0.02,
+        -0.005
+      ],
+      [
+        0.02,
+        0.005
+      ]
+    ],
+    "reverse": [
+      [
+        0.02,
+        0.005
+      ],
+      [
+        0.02,
+        -0.005
+      ]
+    ],
+    "horizontal": [
+      [
+        0.01,
+        -0.005
+      ],
+      [
+        0.03,
+        -0.005
+      ]
+    ],
+    "closed": [
+      [
+        0.008,
+        -0.007
+      ],
+      [
+        0.008,
+        0.007
+      ],
+      [
+        0.032,
+        0.007
+      ],
+      [
+        0.032,
+        -0.007
+      ],
+      [
+        0.008,
+        -0.007
+      ]
+    ],
+    "bends": {
+      "endpoints": [
+        [
+          0.012,
+          0.001
+        ],
+        [
+          0.028,
+          0.001
+        ]
+      ],
+      "angle_degrees": [
+        180,
+        -180
+      ],
+      "step_degrees": 30,
+      "segments": 6,
+      "polygon_length_expression": "6*2*(0.016/2)*sin(pi/12)"
+    },
+    "formulae": {
+      "flux": "depth*Bx*(-dy); average=flux/(depth*length)",
+      "mmf": "Hx*dx with Hx=Bx/mu0; average=mmf/length",
+      "length": "sum of straight segment lengths; surface_area=depth*length",
+      "stress": "T=diag(Bx^2/(2*mu0),-Bx^2/(2*mu0)); n=(-dy,dx)/length; F=depth*integral(T*n dl); torque=integral(x*dFy-y*dFx)",
+      "Bn2": "integral((Bx*n_x)^2 dl); average=total/length"
+    }
   }
 }

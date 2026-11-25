@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "milestone": "64 reviewed Lua commands covering magnetic geometry, properties, file I/O, meshing, solving and postprocessing.",
+  "milestone": "68 reviewed Lua commands covering magnetic geometry, properties, file I/O, meshing, solving, results contours and line integrals.",
   "target": {
     "software": "FEMM",
     "version": "5.0",
@@ -6907,6 +6907,641 @@
           "name": "1x Lorentz torque",
           "type": "number|complex",
           "units": null
+        }
+      ]
+    },
+    {
+      "name": "mo_addcontour",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "results",
+      "purpose": "Append a point to the magnetic results contour; join it to the previous point with a straight line.",
+      "signature": "mo_addcontour(x, y)",
+      "parameters": [
+        {
+          "name": "x",
+          "type": "number",
+          "required": true,
+          "units": "model length unit",
+          "description": "Horizontal coordinate in the model length unit.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "required": true,
+          "units": "model length unit",
+          "description": "Vertical coordinate in the model length unit.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "implementation_checked",
+        "values": [],
+        "notes": "The command changes the active contour; it has no measurement return."
+      },
+      "preconditions": [
+        "A solved magnetic model is loaded in the postprocessor."
+      ],
+      "effects": [
+        "Starts a contour if empty; otherwise appends a straight segment.",
+        "An immediately repeated identical point is ignored by the checked implementation."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mo_clearcontour()\nmo_addcontour(0.02, -0.005)\nmo_addcontour(0.02, 0.005)",
+          "requires": [
+            "A solved magnetic model is loaded in the postprocessor."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mo_addcontour",
+          "pdf_pages": [
+            111
+          ],
+          "section": "3.7.2 Selection Commands",
+          "definition_sha256": "64d63ad62adc8f0654912830baa738bfd0c0a8cc52ce59616115c42855fac7a3"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mo_addcontour",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "8af3c6e08948a4390e43b8787d19bcfa792743cfff2f0644df37d6656ce3a555"
+        },
+        {
+          "source_id": "femm5-magnetic-postprocessor",
+          "anchor": "mo_addcontour",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "6869f70bbd4a8cd56c15a877569e732a98b23cd66f6f69a9d644f9acbdf068c4",
+          "line_range": [
+            175,
+            180
+          ]
+        },
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mo_addcontour",
+          "pdf_pages": [
+            111
+          ],
+          "section": "3.7.2 Selection Commands",
+          "definition_sha256": "64d63ad62adc8f0654912830baa738bfd0c0a8cc52ce59616115c42855fac7a3"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mo_addcontour",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "8af3c6e08948a4390e43b8787d19bcfa792743cfff2f0644df37d6656ce3a555"
+        },
+        {
+          "source_id": "femm5-magnetic-postprocessor",
+          "anchor": "mo_addcontour",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "6869f70bbd4a8cd56c15a877569e732a98b23cd66f6f69a9d644f9acbdf068c4",
+          "line_range": [
+            175,
+            180
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": []
+    },
+    {
+      "name": "mo_clearcontour",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "results",
+      "purpose": "Clear all points from the magnetic results contour.",
+      "signature": "mo_clearcontour()",
+      "parameters": [],
+      "returns": {
+        "status": "implementation_checked",
+        "values": [],
+        "notes": "The command changes the active contour; it has no measurement return."
+      },
+      "preconditions": [
+        "A solved magnetic model is loaded in the postprocessor."
+      ],
+      "effects": [
+        "Removes the active contour without changing the solved model."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mo_clearcontour()",
+          "requires": [
+            "A solved magnetic model is loaded in the postprocessor."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mo_clearcontour",
+          "pdf_pages": [
+            111
+          ],
+          "section": "3.7.2 Selection Commands",
+          "definition_sha256": "a46de0c0d789f65375267aaa03a84cce1ce27383a6e840c08895f03ce4af8a31"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mo_clearcontour",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "4199badd939fdbd0400463733e851e0cb633476ea76defca3a1e471095d4717a"
+        },
+        {
+          "source_id": "femm5-magnetic-postprocessor",
+          "anchor": "mo_clearcontour",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "47cf22757ddbd61322d7c4c844827fb4d305d06443e499282326076c3689bca6",
+          "line_range": [
+            185,
+            188
+          ]
+        },
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mo_clearcontour",
+          "pdf_pages": [
+            111
+          ],
+          "section": "3.7.2 Selection Commands",
+          "definition_sha256": "a46de0c0d789f65375267aaa03a84cce1ce27383a6e840c08895f03ce4af8a31"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mo_clearcontour",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "4199badd939fdbd0400463733e851e0cb633476ea76defca3a1e471095d4717a"
+        },
+        {
+          "source_id": "femm5-magnetic-postprocessor",
+          "anchor": "mo_clearcontour",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "47cf22757ddbd61322d7c4c844827fb4d305d06443e499282326076c3689bca6",
+          "line_range": [
+            185,
+            188
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": []
+    },
+    {
+      "name": "mo_bendcontour",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "results",
+      "purpose": "Replace the last straight contour segment with a polyline approximating a circular arc.",
+      "signature": "mo_bendcontour(angle, anglestep)",
+      "parameters": [
+        {
+          "name": "angle",
+          "type": "number",
+          "required": true,
+          "units": "degrees",
+          "description": "Signed arc span, from -180 to 180 degrees.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": {
+            "minimum": -180,
+            "maximum": 180
+          }
+        },
+        {
+          "name": "anglestep",
+          "type": "number",
+          "required": false,
+          "units": "degrees",
+          "description": "Maximum angular span per straight subdivision; use a positive value.",
+          "default": 1.0,
+          "default_status": "implementation_checked",
+          "allowed_values": {
+            "exclusive_minimum": 0
+          }
+        }
+      ],
+      "returns": {
+        "status": "implementation_checked",
+        "values": [],
+        "notes": "The command changes the active contour; it has no measurement return."
+      },
+      "preconditions": [
+        "A solved magnetic model is loaded in the postprocessor."
+      ],
+      "effects": [
+        "Replaces the last segment with arc subdivisions.",
+        "Ignored when fewer than two contour points exist."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mo_clearcontour()\nmo_addcontour(0.012, 0.001)\nmo_addcontour(0.028, 0.001)\nmo_bendcontour(180, 30)",
+          "requires": [
+            "A solved magnetic model is loaded in the postprocessor."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mo_bendcontour",
+          "pdf_pages": [
+            111
+          ],
+          "section": "3.7.2 Selection Commands",
+          "definition_sha256": "aa6049d7ee44c10b4258adf9033a4e5d0304a2a859c5b0c1860dc16e7efce8c6"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mo_bendcontour",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "b933472328923872a6caa2dff3dd0207ca71b2ceba48d95b95a0f9f4d63eebea"
+        },
+        {
+          "source_id": "femm5-magnetic-postprocessor",
+          "anchor": "mo_bendcontour",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "22ca60c08fad466daecd417e32b9e394f67ea2abfeb5cf145af25e90eed753ba",
+          "line_range": [
+            189,
+            192
+          ]
+        },
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mo_bendcontour",
+          "pdf_pages": [
+            111
+          ],
+          "section": "3.7.2 Selection Commands",
+          "definition_sha256": "aa6049d7ee44c10b4258adf9033a4e5d0304a2a859c5b0c1860dc16e7efce8c6"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mo_bendcontour",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "b933472328923872a6caa2dff3dd0207ca71b2ceba48d95b95a0f9f4d63eebea"
+        },
+        {
+          "source_id": "femm5-magnetic-postprocessor",
+          "anchor": "mo_bendcontour",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "22ca60c08fad466daecd417e32b9e394f67ea2abfeb5cf145af25e90eed753ba",
+          "line_range": [
+            189,
+            192
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The manual lists both arguments; the checked native binding makes anglestep optional with default 1 degree. Native checks use explicit positive steps.",
+        "Reported contour length is the sum of straight subdivision lengths, not the ideal circular-arc length.",
+        "Native evidence covers subdivision length and endpoint integrals for +180 and -180 degrees; it does not establish arc-side placement."
+      ]
+    },
+    {
+      "name": "mo_lineintegral",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "results",
+      "purpose": "Measure contour flux, magnetomotive force, length, squared normal field, Maxwell stress force or torque.",
+      "signature": "mo_lineintegral(type)",
+      "parameters": [
+        {
+          "name": "type",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Line-integral selector; see result_selectors for ordered returns.",
+          "default": null,
+          "default_status": "not_applicable",
+          "allowed_values": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "returns": {
+        "status": "implementation_checked",
+        "values": [
+          {
+            "name": "result_1",
+            "type": "number|complex",
+            "units": null,
+            "description": "Selector-dependent first value; see result_selectors."
+          },
+          {
+            "name": "result_2",
+            "type": "number|complex",
+            "units": null,
+            "description": "Selector-dependent second value; see result_selectors."
+          }
+        ],
+        "notes": "Two values except AC force (selector 3), which returns four. Units below describe the planar problem; AC paths are not execution-tested."
+      },
+      "preconditions": [
+        "A solved magnetic model is loaded in the postprocessor.",
+        "Define at least two contour points before integrating."
+      ],
+      "effects": [
+        "Reads the active contour in the loaded solution.",
+        "Does not change the contour or model."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mo_clearcontour()\nmo_addcontour(0.02, -0.005)\nmo_addcontour(0.02, 0.005)\nflux, average_Bn = mo_lineintegral(0)",
+          "requires": [
+            "A solved magnetic model is loaded in the postprocessor.",
+            "Define at least two contour points before integrating."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mo_lineintegral",
+          "pdf_pages": [
+            107
+          ],
+          "section": "3.7.1 Data Extraction Commands",
+          "definition_sha256": "d1cd69856ffa6998bb1ef1e2769c8e82d6dc54ea5ebf9a2d654cb044b1231fce"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mo_lineintegral",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "5b7215ae982043522398f6ecf47f5c3416b138ee30e43254081cf6c42426946c"
+        },
+        {
+          "source_id": "femm5-magnetic-postprocessor",
+          "anchor": "mo_lineintegral",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "9f3888c1530868e395d7d21a9a5add64e20c9049507497d4feabecbdeccae58a",
+          "line_range": [
+            128,
+            159
+          ]
+        },
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mo_lineintegral",
+          "pdf_pages": [
+            107
+          ],
+          "section": "3.7.1 Data Extraction Commands",
+          "definition_sha256": "d1cd69856ffa6998bb1ef1e2769c8e82d6dc54ea5ebf9a2d654cb044b1231fce"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mo_lineintegral",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "5b7215ae982043522398f6ecf47f5c3416b138ee30e43254081cf6c42426946c"
+        },
+        {
+          "source_id": "femm5-magnetic-postprocessor",
+          "anchor": "mo_lineintegral",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "9f3888c1530868e395d7d21a9a5add64e20c9049507497d4feabecbdeccae58a",
+          "line_range": [
+            128,
+            159
+          ]
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Native checks cover all selectors in planar DC uniform fields only. AC, incremental-permeability and axisymmetric behaviour is source-reviewed but untested.",
+        "Planar normal is to the left of contour travel. Reversing the contour reverses signed flux, H.t and stress integrals.",
+        "For net body force or torque, use a closed contour through air around the body. An open-line stress integral is only that surface contribution.",
+        "The manual contour-length row is misaligned; the checked binding returns length then swept surface area.",
+        "At DC, force returns Fx,Fy; torque returns steady torque and a second zero value. At AC, force returns four values and torque two, as listed below."
+      ],
+      "result_selectors": [
+        {
+          "index": 0,
+          "name": "normal magnetic flux B.n",
+          "returns": [
+            {
+              "name": "total_flux",
+              "type": "number|complex",
+              "units": "Wb",
+              "description": "Depth times integral of B.n along the contour."
+            },
+            {
+              "name": "average_Bn",
+              "type": "number|complex",
+              "units": "T",
+              "description": "Average normal magnetic flux density."
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "name": "tangential magnetic field H.t",
+          "returns": [
+            {
+              "name": "mmf",
+              "type": "number|complex",
+              "units": "A",
+              "description": "Integral of H.t along the contour (magnetomotive force)."
+            },
+            {
+              "name": "average_Ht",
+              "type": "number|complex",
+              "units": "A/m",
+              "description": "Average tangential field strength."
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "name": "contour length and swept surface area",
+          "returns": [
+            {
+              "name": "length",
+              "type": "number",
+              "units": "m",
+              "description": "Sum of straight contour segment lengths."
+            },
+            {
+              "name": "surface_area",
+              "type": "number",
+              "units": "m^2",
+              "description": "Planar length times model depth; axisymmetric swept area."
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "name": "Maxwell stress tensor force",
+          "dc_returns": [
+            {
+              "name": "Fx",
+              "type": "number",
+              "units": "N",
+              "description": "Steady x/r force."
+            },
+            {
+              "name": "Fy",
+              "type": "number",
+              "units": "N",
+              "description": "Steady y/z force."
+            }
+          ],
+          "ac_returns": [
+            {
+              "name": "Fx_DC",
+              "type": "number",
+              "units": "N",
+              "description": "Time-average x/r force."
+            },
+            {
+              "name": "Fy_DC",
+              "type": "number",
+              "units": "N",
+              "description": "Time-average y/z force."
+            },
+            {
+              "name": "Fx_2x",
+              "type": "number|complex",
+              "units": "N",
+              "description": "Twice-frequency x/r force."
+            },
+            {
+              "name": "Fy_2x",
+              "type": "number|complex",
+              "units": "N",
+              "description": "Twice-frequency y/z force."
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "name": "Maxwell stress tensor torque",
+          "dc_returns": [
+            {
+              "name": "torque_DC",
+              "type": "number",
+              "units": "N*m",
+              "description": "Steady torque about the origin."
+            },
+            {
+              "name": "torque_2x",
+              "type": "number",
+              "units": "N*m",
+              "description": "Zero at DC."
+            }
+          ],
+          "ac_returns": [
+            {
+              "name": "torque_DC",
+              "type": "number",
+              "units": "N*m",
+              "description": "Time-average torque."
+            },
+            {
+              "name": "torque_2x",
+              "type": "number|complex",
+              "units": "N*m",
+              "description": "Twice-frequency torque."
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "name": "squared normal flux density (B.n)^2",
+          "returns": [
+            {
+              "name": "total_Bn2",
+              "type": "number|complex",
+              "units": "T^2*m",
+              "description": "Integral of |B.n| squared over length; no planar depth multiplier."
+            },
+            {
+              "name": "average_Bn2",
+              "type": "number|complex",
+              "units": "T^2",
+              "description": "Length-averaged |B.n| squared."
+            }
+          ]
         }
       ]
     }

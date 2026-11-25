@@ -160,8 +160,9 @@ def build(path=DEFAULT_DB, *, batch_path=None, sources_path=None, cache=DEFAULT_
                 cursor = db.execute("INSERT INTO commands(name,version,binding,physics,category,data) VALUES (?,?,?,?,?,?)",
                                     (*[record[k] for k in ("name", "version", "binding", "physics", "category")], json.dumps(record)))
                 details = json.dumps({k: record[k] for k in ("parameters", "returns", "preconditions", "effects", "notes")})
-                if "property_selectors" in record:
-                    details += " " + json.dumps(record["property_selectors"])
+                for selectors in ("property_selectors", "result_selectors"):
+                    if selectors in record:
+                        details += " " + json.dumps(record[selectors])
                 db.execute("INSERT INTO search_index(rowid,name,purpose,details) VALUES (?,?,?,?)",
                            (cursor.lastrowid, record["name"], record["purpose"], details))
             if db.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
