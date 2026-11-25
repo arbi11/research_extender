@@ -63,6 +63,7 @@ The official source set is pinned in [sources.json](data/sources.json):
    upstream revision `31ee4bf6a8cae1a1860c108e7934ab3403bfd6e3`.
 3. The matching common and magnetic C++ API implementations, with line locators
    and definition hashes for the reviewed excerpts.
+4. The geometry implementation that confirms mirroring creates copies.
 
 The coding agent read the manual definitions and binding source and authored
 the semantic records in [commands.json](data/commands.json). PDF text
@@ -117,6 +118,15 @@ newer, so the observations establish only the tested behavior in that image.
 frozen expectations before attaching results to command lookup. Source JSON cannot
 assert an execution pass. A plain `build` imports documentation alone, so execution
 status remains `not_tested`. Example fragments remain separately untested.
+
+The November 25 run passed **16/16 native scenarios covering 33 commands**.
+[Saved models and reports](data/verification/README.md) include the initial
+14/16 run and explain the two checker corrections made before rerunning.
+To attach this recorded evidence to your database:
+
+```bash
+python3 -m femm_brain2 build --evidence femm_brain2/data/verification/geometry-20261125-run2/report.json
+```
 
 ## Code map
 

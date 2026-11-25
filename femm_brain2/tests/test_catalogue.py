@@ -100,6 +100,15 @@ class CatalogueTests(unittest.TestCase):
         result = validate_batch(self.batch, self.sources, self.cache)
         self.assertTrue(any('execution success' in error for error in result['errors']))
 
+    def test_manual_arguments_dropped_by_the_lua_wrapper_are_rejected(self):
+        arc = self.batch['commands'][1]
+        extra = deepcopy(arc['parameters'][-1])
+        extra['name'] = 'invented_extra_argument'
+        arc['parameters'].append(extra)
+        arc['signature'] = arc['signature'][:-1] + ', invented_extra_argument)'
+        result = validate_batch(self.batch, self.sources, self.cache)
+        self.assertTrue(any('Lua wrapper' in error for error in result['errors']))
+
     def test_failed_rebuild_preserves_the_database(self):
         self.built()
         before = self.db.read_bytes()

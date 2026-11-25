@@ -16,4 +16,4 @@ CREATE TABLE commands (
   data TEXT NOT NULL CHECK(json_valid(data)),
   UNIQUE(name, version, binding)
 );
-CREATE VIRTUAL TABLE search_index USING fts5(name, purpose, details);
+CREATE VIRTUAL TABLE search_index USING fts5(name, purpose, details, tokenize='porter unicode61');
