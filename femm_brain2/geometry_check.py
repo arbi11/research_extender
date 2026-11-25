@@ -122,6 +122,13 @@ def run(output, *, batch, image=None, cache=DEFAULT_CACHE, timeout=120, suite="g
         raise ValueError("Native output must be an empty directory; earlier evidence is never overwritten")
     for filename in (script, "protocol.json"):
         shutil.copyfile(fixtures / filename, folder / filename)
+    if "runtime_manifest" in protocol:
+        expected = protocol["runtime_manifest"]
+        result = subprocess.run(["docker", "run", "--rm", "--network", "none", "--read-only", "--entrypoint", "cat",
+                                 image_id, "/opt/femm/mesh-count-manifest.json"], capture_output=True, check=True, timeout=15)
+        if fingerprint(result.stdout) != expected["sha256"]:
+            raise ValueError("Runtime build manifest differs from the frozen profile")
+        (folder / expected["file"]).write_bytes(result.stdout)
     # Execute the exact reviewed binding, rather than the older copy bundled in the image.
     shutil.copyfile(source_file(source, cache), folder / "binding.lua")
     name = "femm-brain2-" + suite + "-" + uuid.uuid4().hex[:12]
@@ -179,6 +186,16 @@ def verify_evidence(path, batch):
         raise ValueError("Native evidence does not match the frozen container configuration")
     artifacts = report["artifacts"]
     required = {"protocol.json", script, "native.log"} | {c["file"] for c in protocol["cases"]}
+    if "runtime_manifest" in protocol:
+        expected = protocol["runtime_manifest"]
+        required.add(expected["file"])
+        content = (path.parent / expected["file"]).read_bytes()
+        if fingerprint(content) != expected["sha256"]:
+            raise ValueError("Runtime build manifest differs from the frozen profile")
+        manifest = json.loads(content)
+        patch = Path(__file__).with_name("runtime") / "patch_mesh_count.py"
+        if manifest["mesh_count_patch_sha256"] != fingerprint(patch.read_bytes()):
+            raise ValueError("Runtime mesh-count patch differs from the reviewed code")
     for case in protocol["cases"]:
         required.update(case[k] for k in ("solution_file", "observations_file") if k in case)
     allowed = required | {Path(c["file"]).stem + suffix for c in protocol["cases"]

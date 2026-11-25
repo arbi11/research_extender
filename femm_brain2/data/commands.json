@@ -6025,13 +6025,13 @@
       "signature": "mi_createmesh()",
       "parameters": [],
       "returns": {
-        "status": "build_dependent",
+        "status": "implementation_checked",
         "values": [
           {
             "name": "nodes",
-            "type": "integer|null",
+            "type": "integer",
             "units": "count",
-            "description": "The pinned C++ implementation returns a node count; the tested native image returns nil."
+            "description": "Number of vertices in the actual mesh, returned before solving."
           }
         ],
         "notes": "See source references and native execution scope."
@@ -6087,10 +6087,8 @@
       "review": {
         "status": "source_checked",
         "reviewer": "coding_agent",
-        "semantic_status": "needs_clarification",
-        "open_questions": [
-          "Align the container engine build with the pinned implementation before relying on mi_createmesh return counts."
-        ]
+        "semantic_status": "reviewed",
+        "open_questions": []
       },
       "execution": {
         "status": "not_tested"
@@ -6098,7 +6096,7 @@
       "notes": [
         "The manual says the return value is an element count; the pinned C++ implementation returns the node count. Native checks compare it against both the solution file and mo_numnodes.",
         "mi_analyze also creates or updates the mesh; an explicit mi_createmesh call is optional before solving.",
-        "Native image sha256:85f07dce379bff58dc539f8ed49ffba53a94eba332fbf81d4c9fd6c3df94725d accepts this call but returns nil. The explicit return-count probe is kept failed. Use mi_analyze for automatic meshing and mo_numnodes/mo_numelements for solved mesh counts."
+        "The original container omitted the native return. The isolated mesh-count runtime backports the actual node count through the C++ helper and binding; its build manifest records source, patch and binary fingerprints. Historical failed checks remain preserved."
       ]
     },
     {

@@ -8,10 +8,11 @@ and the binding. It follows the node-count contract in the pinned API source.
 Build a separate image using locally available, digest-pinned images:
 
 ```bash
-docker build --network none -f femm_brain2/runtime/Dockerfile.mesh-count \
-  -t femm-brain2:mesh-count-20261125 femm_brain2/runtime
+python3 femm_brain2/runtime/build.py
 ```
 
+The build helper checks the exact local image IDs and gives BuildKit private
+named references; bare config IDs cannot be used as Dockerfile image names.
 The compiler image supplies an existing toolchain and build cache. Source is
 restored from the original runtime's hash-checked archive; its existing mesh
 export patch is reapplied, then three hash-checked files receive the return fix.
