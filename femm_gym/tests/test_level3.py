@@ -1,13 +1,14 @@
 """Level 3 host tests: sampling, the paper and its quotes, flag credit, case files (no FEMM needed)."""
 from __future__ import annotations
 
+import math
 import os
 from pathlib import Path
 import random
 import tempfile
 import unittest
 
-from femm_gym import level3, level3_score, level3_set
+from femm_gym import bench, level3, level3_score, level3_set
 
 
 def _key(seed):
@@ -46,6 +47,102 @@ class Sampling(unittest.TestCase):
         for seed in range(40):
             m = level3.sample(random.Random(seed))
             self.assertEqual((m["slots"] // 3) % m["parallel_paths"], 0)
+
+    def test_slot_area_is_the_drawn_slot(self):
+        # The two coil sides of the slot after tooth 1, measured on the drawing itself.
+        for slots, poles in level3.COMBOS:
+            machine = dict(level3.sample(random.Random(0)), slots=slots, poles=poles, pole_pairs=poles // 2)
+            machine["magnet_arc"] = 0.8 * 360 / poles
+            model = level3.build(machine, level=0)
+            pitch = 2 * math.pi / slots
+            sides = [l for l in model["labels"] if l["material"] == "Copper"
+                     and 0 < math.atan2(l["y"], l["x"]) % (2 * math.pi) < pitch]
+            self.assertEqual(len(sides), 2)
+            drawn = sum(_region_area(model, (l["x"], l["y"])) for l in sides)
+            self.assertAlmostEqual(level3._slot_area(machine) / drawn, 1, places=9, msg=f"{slots}/{poles}")
+
+    def test_printed_fill_and_density_give_the_drawn_slot(self):
+        for seed in range(30):
+            m = level3.sample(random.Random(seed))
+            implied = 2 * m["turns_per_coil"] * m["rated_current"] / m["parallel_paths"] / (
+                m["current_density"] * m["fill_factor"])
+            # Rounding: current to 3 figures, density to 0.1 A/mm2 (>= 4), fill to 0.01 (>= 0.40).
+            self.assertLess(abs(implied / level3._slot_area(m) - 1), 0.031, msg=f"seed {seed}")
+
+
+def _region_area(model, point):
+    """Area of the drawn region holding `point`: the smallest bounded face of the drawing around it.
+
+    The faces are traced from the model's segments and arcs (an arc runs counter-clockwise from n0
+    to n1); each arc adds its circular segment to the polygon of its chord. The region has no holes.
+    """
+    nodes = [(n["x"], n["y"]) for n in model["nodes"]]
+    edges = [(s["n0"], s["n1"], 0.0) for s in model["segments"]] + [(a["n0"], a["n1"], a["angle"]) for a in model["arcs"]]
+    out = {}  # node -> [(departure angle, half-edge)]
+    for k, (a, b, angle) in enumerate(edges):
+        (xa, ya), (xb, yb) = nodes[a], nodes[b]
+        chord = math.atan2(yb - ya, xb - xa)
+        turn = math.radians(angle) / 2  # an arc leaves n0 turned right of its chord by half its angle
+        out.setdefault(a, []).append((chord - turn, (k, 1)))
+        out.setdefault(b, []).append((chord + math.pi + turn, (k, -1)))
+    for v in out:
+        out[v].sort(key=lambda t: t[0] % (2 * math.pi))
+
+    def ends(h):
+        a, b, _ = edges[h[0]]
+        return (a, b) if h[1] == 1 else (b, a)
+
+    def follow(h):
+        """The next half-edge with the face on the left: clockwise after the reverse of h at its end."""
+        v = ends(h)[1]
+        ring = [e for _, e in out[v]]
+        return ring[(ring.index((h[0], -h[1])) - 1) % len(ring)]
+
+    def polyline(h):
+        a, b, angle = edges[h[0]]
+        (xa, ya), (xb, yb) = nodes[a], nodes[b]
+        if not angle:
+            pts = [(xa, ya), (xb, yb)]
+        else:
+            t = math.radians(angle)
+            half = math.hypot(xb - xa, yb - ya) / 2
+            r, mx, my = half / math.sin(t / 2), (xa + xb) / 2, (ya + yb) / 2
+            d = half / math.tan(t / 2)
+            ux, uy = (xb - xa) / (2 * half), (yb - ya) / (2 * half)
+            cx, cy = mx - uy * d, my + ux * d
+            a0 = math.atan2(ya - cy, xa - cx)
+            pts = [(cx + r * math.cos(a0 + t * i / 64), cy + r * math.sin(a0 + t * i / 64)) for i in range(65)]
+        return pts if h[1] == 1 else pts[::-1]
+
+    best, seen = None, set()
+    for start in [(k, s) for k in range(len(edges)) for s in (1, -1)]:
+        if start in seen:
+            continue
+        face, h = [], start
+        while h not in seen:
+            seen.add(h)
+            face.append(h)
+            h = follow(h)
+        area = 0.0
+        for h in face:
+            a, b = ends(h)
+            (x1, y1), (x2, y2) = nodes[a], nodes[b]
+            area += (x1 * y2 - x2 * y1) / 2
+            angle = edges[h[0]][2]
+            if angle:
+                t = math.radians(angle)
+                r = math.hypot(x2 - x1, y2 - y1) / 2 / math.sin(t / 2)
+                area += h[1] * r * r / 2 * (t - math.sin(t))
+        if area <= 0:
+            continue
+        ring = [p for h in face for p in polyline(h)]
+        inside = False
+        for (x1, y1), (x2, y2) in zip(ring, ring[1:] + ring[:1]):
+            if (y1 > point[1]) != (y2 > point[1]) and point[0] < x1 + (point[1] - y1) * (x2 - x1) / (y2 - y1):
+                inside = not inside
+        if inside and (best is None or area < best):
+            best = area
+    return best
 
 
 class Paper(unittest.TestCase):
@@ -168,6 +265,29 @@ class Submission(unittest.TestCase):
             self.assertTrue(any("entities.json" in p for p in problems))
             self.assertTrue((taken / "model.fem").is_file())
             self.assertFalse((taken / "entities.json").exists())
+
+
+class BenchScorer(unittest.TestCase):
+    """The benchmark's own scorer, as Level 3 uses it (skipped without a daro_bench folder)."""
+
+    def setUp(self):
+        try:
+            self.score = bench.scorer()
+        except FileNotFoundError as error:
+            self.skipTest(str(error))
+
+    def test_moving_groups_move_together(self):
+        # Moved one group at a time, a label of the first could sit for a moment on a label of
+        # the second, and FEMM drops it (the Level 3 check, 2026-11-25).
+        drive = {"id": "d", "measure": ["torque"], "axes": {"p": [0, 11.25]}, "position": "p"}
+        model = {"header": {"LengthUnits": "millimeters"}, "boundaries": [], "circuits": []}
+        for kind, extra in (("rotate", {"center": [0, 0]}), ("translate", {"axis": "x"})):
+            entry = {"motion": {"kind": kind, "groups": [1, 2], **extra}}
+            lua = self.score.drive_lua(drive, self.score.expand_states(drive), entry, model, "model.fem")
+            steps = [line.strip() for line in lua[lua.index("function solve"):].splitlines()
+                     if line.strip().startswith(("mi_selectgroup", "mi_move", "mi_clearselected"))]
+            self.assertEqual(steps, ["mi_selectgroup(1)", "mi_selectgroup(2)", steps[2], "mi_clearselected()"], kind)
+            self.assertTrue(steps[2].startswith("mi_move" + kind), kind)
 
 
 if __name__ == "__main__":

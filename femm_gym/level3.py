@@ -72,10 +72,26 @@ def coil_sequence(machine):
 # --- sampling ------------------------------------------------------------------------------
 
 def _slot_area(m):
-    """Approximate area of one slot (both coil sides), mm^2."""
-    r_in = m["stator_inner_radius"] + m["tooth_tip_depth"]
-    r_out = m["slot_bottom_radius"]
-    return math.pi * (r_out ** 2 - r_in ** 2) / m["slots"] - m["tooth_width"] * (r_out - r_in)
+    """Area of one slot as `build` draws it (both coil sides), mm^2.
+
+    The slot lies between two parallel-sided teeth. Inside, it ends at the flat shoe undersides
+    (bore + tip depth along each tooth's axis) and the chord that closes it across the shoe
+    corners; outside, at the slot-bottom arc. Until 2026-11-25 this was an annular sector minus
+    the tooth body, which ignored the shoes, so the printed fill factor and current density
+    implied a larger slot than the drawn one.
+    """
+    bore, bottom, half = m["stator_inner_radius"], m["slot_bottom_radius"], m["tooth_width"] / 2
+    pitch = 2 * math.pi / m["slots"]
+    shoe = bore + m["tooth_tip_depth"]
+    corner = shoe * math.tan((pitch * bore - m["slot_opening"]) / (2 * bore))
+    bottom_x = math.sqrt(bottom ** 2 - half ** 2)
+    c, s = math.cos(pitch), math.sin(pitch)
+    # Counter-clockwise from tooth 1 to tooth 2: side, shoe underside, closing chord, shoe, side.
+    points = [(bottom_x, half), (shoe, half), (shoe, corner)] + [
+        (x * c - y * s, x * s + y * c) for x, y in ((shoe, -corner), (shoe, -half), (bottom_x, -half))]
+    polygon = abs(sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(points, points[1:] + points[:1]))) / 2
+    span = pitch - 2 * math.asin(half / bottom)
+    return polygon + bottom ** 2 / 2 * (span - math.sin(span))  # plus the segment beyond the bottom chord
 
 
 def sample(rng):
