@@ -22,7 +22,7 @@ def main(argv=None):
             p.add_argument("--knowledge", action="store_true")
             p.add_argument("--paper-evidence", type=Path)
         if name == "brain":
-            p.add_argument('action', choices=['validate','tree','show','search','plan','run','audit'])
+            p.add_argument('action', choices=['validate','tree','show','search','plan','run','audit','html'])
             p.add_argument('subject', nargs='?')
             p.add_argument('--output', type=Path)
         if name in ("check-geometry", "check-properties", "check-solve"):
@@ -65,6 +65,10 @@ def main(argv=None):
             elif args.action == 'plan':
                 if not args.subject:raise ValueError('Supply a paper ID')
                 result = knowledge.plan_from_store(args.subject,args.db)
+            elif args.action == 'html':
+                if not args.subject or args.output is None:raise ValueError('Supply a paper ID and --output')
+                from .viewer import export
+                result = export(args.subject,args.output,args.db)
             elif args.action == 'run':
                 if not args.subject or args.output is None:raise ValueError('Supply a paper ID and --output')
                 from .knowledge_run import run
