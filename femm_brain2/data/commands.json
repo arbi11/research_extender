@@ -6025,13 +6025,13 @@
       "signature": "mi_createmesh()",
       "parameters": [],
       "returns": {
-        "status": "implementation_checked",
+        "status": "build_dependent",
         "values": [
           {
             "name": "nodes",
-            "type": "integer",
+            "type": "integer|null",
             "units": "count",
-            "description": "Mesh node count returned by the pinned implementation."
+            "description": "The pinned C++ implementation returns a node count; the tested native image returns nil."
           }
         ],
         "notes": "See source references and native execution scope."
@@ -6087,15 +6087,18 @@
       "review": {
         "status": "source_checked",
         "reviewer": "coding_agent",
-        "semantic_status": "reviewed",
-        "open_questions": []
+        "semantic_status": "needs_clarification",
+        "open_questions": [
+          "Align the container engine build with the pinned implementation before relying on mi_createmesh return counts."
+        ]
       },
       "execution": {
         "status": "not_tested"
       },
       "notes": [
         "The manual says the return value is an element count; the pinned C++ implementation returns the node count. Native checks compare it against both the solution file and mo_numnodes.",
-        "mi_analyze also creates or updates the mesh; an explicit mi_createmesh call is optional before solving."
+        "mi_analyze also creates or updates the mesh; an explicit mi_createmesh call is optional before solving.",
+        "Native image sha256:85f07dce379bff58dc539f8ed49ffba53a94eba332fbf81d4c9fd6c3df94725d accepts this call but returns nil. The explicit return-count probe is kept failed. Use mi_analyze for automatic meshing and mo_numnodes/mo_numelements for solved mesh counts."
       ]
     },
     {
