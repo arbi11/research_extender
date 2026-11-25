@@ -87,7 +87,10 @@ def evaluate_solution(folder, case):
             errors.append("Native model header mismatch: " + key)
     analytical = case["analytical"]
     mesh = read_static_solution(folder / case["solution_file"], analytical)
-    for key, target in (("mesh.created_nodes", mesh["nodes"]), ("mesh.solved_nodes", mesh["nodes"]), ("mesh.solved_elements", mesh["elements"])):
+    mesh_counts = [("mesh.solved_nodes", mesh["nodes"]), ("mesh.solved_elements", mesh["elements"])]
+    if case.get("require_mesh_return", True):
+        mesh_counts.append(("mesh.created_nodes", mesh["nodes"]))
+    for key, target in mesh_counts:
         if key not in values or values[key] != [target, 0.0]:
             errors.append("Native mesh count mismatch: " + key)
     if mesh["max_potential_error"] > analytical["potential_tolerance"]:

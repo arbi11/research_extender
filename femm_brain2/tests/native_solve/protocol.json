@@ -44,7 +44,6 @@
         "open",
         "mi_saveas",
         "mi_close",
-        "mi_createmesh",
         "mi_analyze",
         "mi_loadsolution",
         "mo_getpointvalues",
@@ -675,7 +674,8 @@
         "p0.ff",
         "p1.ff",
         "p2.ff",
-        "p3.ff"
+        "p3.ff",
+        "mesh.has_return"
       ],
       "analytical": {
         "Bx": 0.2,
@@ -689,7 +689,8 @@
         "potential_tolerance": 1e-08,
         "field_tolerance": 1e-06,
         "energy_tolerance": 5e-06
-      }
+      },
+      "require_mesh_return": false
     },
     {
       "id": "negative",
@@ -702,7 +703,6 @@
         "open",
         "mi_saveas",
         "mi_close",
-        "mi_createmesh",
         "mi_analyze",
         "mi_loadsolution",
         "mo_getpointvalues",
@@ -1333,7 +1333,8 @@
         "p0.ff",
         "p1.ff",
         "p2.ff",
-        "p3.ff"
+        "p3.ff",
+        "mesh.has_return"
       ],
       "analytical": {
         "Bx": -0.2,
@@ -1347,7 +1348,8 @@
         "potential_tolerance": 1e-08,
         "field_tolerance": 1e-06,
         "energy_tolerance": 5e-06
-      }
+      },
+      "require_mesh_return": false
     },
     {
       "id": "zero",
@@ -1360,7 +1362,6 @@
         "open",
         "mi_saveas",
         "mi_close",
-        "mi_createmesh",
         "mi_analyze",
         "mi_loadsolution",
         "mo_getpointvalues",
@@ -1991,7 +1992,8 @@
         "p0.ff",
         "p1.ff",
         "p2.ff",
-        "p3.ff"
+        "p3.ff",
+        "mesh.has_return"
       ],
       "analytical": {
         "Bx": 0,
@@ -2005,7 +2007,662 @@
         "potential_tolerance": 1e-08,
         "field_tolerance": 1e-06,
         "energy_tolerance": 5e-06
-      }
+      },
+      "require_mesh_return": false
+    },
+    {
+      "id": "explicit_mesh_return",
+      "file": "positive.fem",
+      "solution_file": "positive.ans",
+      "observations_file": "positive.obs",
+      "tested_commands": [
+        "mi_createmesh"
+      ],
+      "expected_counts": {
+        "points": 6,
+        "segments": 7,
+        "arcs": 0,
+        "labels": 2
+      },
+      "expected_rows": {},
+      "expected_headers": {
+        "Frequency": 0,
+        "LengthUnits": "meters",
+        "ProblemType": "planar",
+        "Depth": 0.01,
+        "Precision": 1e-10
+      },
+      "physical_inputs": {
+        "Bx": {
+          "value": 0.2,
+          "units": "T",
+          "provenance": "assumed",
+          "reason": "positive, reversed and zero-field controls"
+        },
+        "A0": {
+          "value": 0,
+          "units": "Wb/m",
+          "provenance": "assumed",
+          "reason": "gauge offset control"
+        },
+        "mesh_size": {
+          "value": 0.003,
+          "units": "m",
+          "provenance": "assumed",
+          "reason": "two small fixed mesh sizes"
+        }
+      },
+      "expected_values": {
+        "p0.A": {
+          "value": -0.001,
+          "units": "Wb/m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "A0 + Bx*y"
+        },
+        "p0.B1": {
+          "value": 0.2,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-06,
+          "provenance": "derived",
+          "expression": "dA/dy"
+        },
+        "p0.B2": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-06,
+          "provenance": "derived",
+          "expression": "-dA/dx"
+        },
+        "p0.Sig": {
+          "value": 0,
+          "units": "MS/m",
+          "absolute_tolerance": 1e-10,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "ReferenceAir conductivity"
+        },
+        "p0.E": {
+          "value": 15915.494309189537,
+          "units": "J/m^3",
+          "absolute_tolerance": 0.1,
+          "imaginary_tolerance": 0.1,
+          "provenance": "derived",
+          "expression": "Bx^2/(2*mu0)"
+        },
+        "p0.H1": {
+          "value": 159154.94309189534,
+          "units": "A/m",
+          "absolute_tolerance": 1,
+          "imaginary_tolerance": 1,
+          "provenance": "derived",
+          "expression": "Bx/mu0"
+        },
+        "p0.H2": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 1,
+          "imaginary_tolerance": 1,
+          "provenance": "derived",
+          "expression": "By/mu0"
+        },
+        "p0.Je": {
+          "value": 0,
+          "units": "A/m^2",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "static nonconducting material"
+        },
+        "p0.Js": {
+          "value": 0,
+          "units": "A/m^2",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "zero circuit/source current"
+        },
+        "p0.Mu1": {
+          "value": 1,
+          "units": "dimensionless",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "ReferenceAir relative permeability"
+        },
+        "p0.Mu2": {
+          "value": 1,
+          "units": "dimensionless",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "ReferenceAir relative permeability"
+        },
+        "p0.Pe": {
+          "value": 0,
+          "units": "W/m^3",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "zero conductivity and current"
+        },
+        "p0.Ph": {
+          "value": 0,
+          "units": "W/m^3",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "zero hysteresis angles"
+        },
+        "p1.A": {
+          "value": 0.001,
+          "units": "Wb/m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "A0 + Bx*y"
+        },
+        "p1.B1": {
+          "value": 0.2,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-06,
+          "provenance": "derived",
+          "expression": "dA/dy"
+        },
+        "p1.B2": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-06,
+          "provenance": "derived",
+          "expression": "-dA/dx"
+        },
+        "p1.Sig": {
+          "value": 0,
+          "units": "MS/m",
+          "absolute_tolerance": 1e-10,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "ReferenceAir conductivity"
+        },
+        "p1.E": {
+          "value": 15915.494309189537,
+          "units": "J/m^3",
+          "absolute_tolerance": 0.1,
+          "imaginary_tolerance": 0.1,
+          "provenance": "derived",
+          "expression": "Bx^2/(2*mu0)"
+        },
+        "p1.H1": {
+          "value": 159154.94309189534,
+          "units": "A/m",
+          "absolute_tolerance": 1,
+          "imaginary_tolerance": 1,
+          "provenance": "derived",
+          "expression": "Bx/mu0"
+        },
+        "p1.H2": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 1,
+          "imaginary_tolerance": 1,
+          "provenance": "derived",
+          "expression": "By/mu0"
+        },
+        "p1.Je": {
+          "value": 0,
+          "units": "A/m^2",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "static nonconducting material"
+        },
+        "p1.Js": {
+          "value": 0,
+          "units": "A/m^2",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "zero circuit/source current"
+        },
+        "p1.Mu1": {
+          "value": 1,
+          "units": "dimensionless",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "ReferenceAir relative permeability"
+        },
+        "p1.Mu2": {
+          "value": 1,
+          "units": "dimensionless",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "ReferenceAir relative permeability"
+        },
+        "p1.Pe": {
+          "value": 0,
+          "units": "W/m^3",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "zero conductivity and current"
+        },
+        "p1.Ph": {
+          "value": 0,
+          "units": "W/m^3",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "zero hysteresis angles"
+        },
+        "p2.A": {
+          "value": 0.0006000000000000001,
+          "units": "Wb/m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "A0 + Bx*y"
+        },
+        "p2.B1": {
+          "value": 0.2,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-06,
+          "provenance": "derived",
+          "expression": "dA/dy"
+        },
+        "p2.B2": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-06,
+          "provenance": "derived",
+          "expression": "-dA/dx"
+        },
+        "p2.Sig": {
+          "value": 0,
+          "units": "MS/m",
+          "absolute_tolerance": 1e-10,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "ReferenceAir conductivity"
+        },
+        "p2.E": {
+          "value": 15915.494309189537,
+          "units": "J/m^3",
+          "absolute_tolerance": 0.1,
+          "imaginary_tolerance": 0.1,
+          "provenance": "derived",
+          "expression": "Bx^2/(2*mu0)"
+        },
+        "p2.H1": {
+          "value": 159154.94309189534,
+          "units": "A/m",
+          "absolute_tolerance": 1,
+          "imaginary_tolerance": 1,
+          "provenance": "derived",
+          "expression": "Bx/mu0"
+        },
+        "p2.H2": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 1,
+          "imaginary_tolerance": 1,
+          "provenance": "derived",
+          "expression": "By/mu0"
+        },
+        "p2.Je": {
+          "value": 0,
+          "units": "A/m^2",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "static nonconducting material"
+        },
+        "p2.Js": {
+          "value": 0,
+          "units": "A/m^2",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "zero circuit/source current"
+        },
+        "p2.Mu1": {
+          "value": 1,
+          "units": "dimensionless",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "ReferenceAir relative permeability"
+        },
+        "p2.Mu2": {
+          "value": 1,
+          "units": "dimensionless",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "ReferenceAir relative permeability"
+        },
+        "p2.Pe": {
+          "value": 0,
+          "units": "W/m^3",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "zero conductivity and current"
+        },
+        "p2.Ph": {
+          "value": 0,
+          "units": "W/m^3",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "zero hysteresis angles"
+        },
+        "p3.A": {
+          "value": -0.0008,
+          "units": "Wb/m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "A0 + Bx*y"
+        },
+        "p3.B1": {
+          "value": 0.2,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-06,
+          "provenance": "derived",
+          "expression": "dA/dy"
+        },
+        "p3.B2": {
+          "value": 0,
+          "units": "T",
+          "absolute_tolerance": 1e-06,
+          "imaginary_tolerance": 1e-06,
+          "provenance": "derived",
+          "expression": "-dA/dx"
+        },
+        "p3.Sig": {
+          "value": 0,
+          "units": "MS/m",
+          "absolute_tolerance": 1e-10,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "ReferenceAir conductivity"
+        },
+        "p3.E": {
+          "value": 15915.494309189537,
+          "units": "J/m^3",
+          "absolute_tolerance": 0.1,
+          "imaginary_tolerance": 0.1,
+          "provenance": "derived",
+          "expression": "Bx^2/(2*mu0)"
+        },
+        "p3.H1": {
+          "value": 159154.94309189534,
+          "units": "A/m",
+          "absolute_tolerance": 1,
+          "imaginary_tolerance": 1,
+          "provenance": "derived",
+          "expression": "Bx/mu0"
+        },
+        "p3.H2": {
+          "value": 0,
+          "units": "A/m",
+          "absolute_tolerance": 1,
+          "imaginary_tolerance": 1,
+          "provenance": "derived",
+          "expression": "By/mu0"
+        },
+        "p3.Je": {
+          "value": 0,
+          "units": "A/m^2",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "static nonconducting material"
+        },
+        "p3.Js": {
+          "value": 0,
+          "units": "A/m^2",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "zero circuit/source current"
+        },
+        "p3.Mu1": {
+          "value": 1,
+          "units": "dimensionless",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "ReferenceAir relative permeability"
+        },
+        "p3.Mu2": {
+          "value": 1,
+          "units": "dimensionless",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "ReferenceAir relative permeability"
+        },
+        "p3.Pe": {
+          "value": 0,
+          "units": "W/m^3",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "zero conductivity and current"
+        },
+        "p3.Ph": {
+          "value": 0,
+          "units": "W/m^3",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "zero hysteresis angles"
+        },
+        "top.area": {
+          "value": 0.0004,
+          "units": "m^2",
+          "absolute_tolerance": 1e-10,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "width*height/2"
+        },
+        "top.energy": {
+          "value": 0.06366197723675816,
+          "units": "J",
+          "absolute_tolerance": 5e-06,
+          "imaginary_tolerance": 5e-06,
+          "provenance": "derived",
+          "expression": "energy_density*volume/2"
+        },
+        "all.area": {
+          "value": 0.0008,
+          "units": "m^2",
+          "absolute_tolerance": 1e-10,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "width*height"
+        },
+        "all.volume": {
+          "value": 8.000000000000001e-06,
+          "units": "m^3",
+          "absolute_tolerance": 1e-10,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "width*height*depth"
+        },
+        "all.energy": {
+          "value": 0.12732395447351633,
+          "units": "J",
+          "absolute_tolerance": 5e-06,
+          "imaginary_tolerance": 5e-06,
+          "provenance": "derived",
+          "expression": "Bx^2/(2*mu0)*volume"
+        },
+        "bottom.area": {
+          "value": 0.0004,
+          "units": "m^2",
+          "absolute_tolerance": 1e-10,
+          "imaginary_tolerance": 1e-10,
+          "provenance": "derived",
+          "expression": "width*height/2 after clearing selection"
+        },
+        "bottom.energy": {
+          "value": 0.06366197723675816,
+          "units": "J",
+          "absolute_tolerance": 5e-06,
+          "imaginary_tolerance": 5e-06,
+          "provenance": "derived",
+          "expression": "energy_density*volume/2 after clearing selection"
+        },
+        "circuit.current": {
+          "value": 0,
+          "units": "A",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-09,
+          "provenance": "derived",
+          "expression": "prescribed zero pickup current"
+        },
+        "circuit.volts": {
+          "value": 0,
+          "units": "V",
+          "absolute_tolerance": 1e-09,
+          "imaginary_tolerance": 1e-09,
+          "provenance": "derived",
+          "expression": "static zero-current circuit"
+        },
+        "circuit.linkage": {
+          "value": 0.00020000000000000004,
+          "units": "Wb-turn",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "N*depth*Bx*(mean_y_top-mean_y_bottom)"
+        },
+        "reloaded.A": {
+          "value": -0.001,
+          "units": "Wb/m",
+          "absolute_tolerance": 1e-08,
+          "imaginary_tolerance": 1e-08,
+          "provenance": "derived",
+          "expression": "A0+Bx*y after closing/reloading results"
+        },
+        "completed": {
+          "value": 1,
+          "units": "marker",
+          "absolute_tolerance": 0,
+          "imaginary_tolerance": 0,
+          "provenance": "derived",
+          "expression": "all file and postprocessor close commands returned"
+        },
+        "mesh.has_return": {
+          "value": 1,
+          "units": "boolean",
+          "absolute_tolerance": 0,
+          "imaginary_tolerance": 0,
+          "provenance": "source_checked",
+          "expression": "The pinned C++ mi_createmesh returns a node count; nil is a failed capability check."
+        }
+      },
+      "observation_keys": [
+        "p0.A",
+        "p0.B1",
+        "p0.B2",
+        "p0.Sig",
+        "p0.E",
+        "p0.H1",
+        "p0.H2",
+        "p0.Je",
+        "p0.Js",
+        "p0.Mu1",
+        "p0.Mu2",
+        "p0.Pe",
+        "p0.Ph",
+        "p1.A",
+        "p1.B1",
+        "p1.B2",
+        "p1.Sig",
+        "p1.E",
+        "p1.H1",
+        "p1.H2",
+        "p1.Je",
+        "p1.Js",
+        "p1.Mu1",
+        "p1.Mu2",
+        "p1.Pe",
+        "p1.Ph",
+        "p2.A",
+        "p2.B1",
+        "p2.B2",
+        "p2.Sig",
+        "p2.E",
+        "p2.H1",
+        "p2.H2",
+        "p2.Je",
+        "p2.Js",
+        "p2.Mu1",
+        "p2.Mu2",
+        "p2.Pe",
+        "p2.Ph",
+        "p3.A",
+        "p3.B1",
+        "p3.B2",
+        "p3.Sig",
+        "p3.E",
+        "p3.H1",
+        "p3.H2",
+        "p3.Je",
+        "p3.Js",
+        "p3.Mu1",
+        "p3.Mu2",
+        "p3.Pe",
+        "p3.Ph",
+        "top.area",
+        "top.energy",
+        "all.area",
+        "all.volume",
+        "all.energy",
+        "bottom.area",
+        "bottom.energy",
+        "circuit.current",
+        "circuit.volts",
+        "circuit.linkage",
+        "reloaded.A",
+        "completed",
+        "mesh.created_nodes",
+        "mesh.solved_nodes",
+        "mesh.solved_elements",
+        "p0.ff",
+        "p1.ff",
+        "p2.ff",
+        "p3.ff",
+        "mesh.has_return"
+      ],
+      "analytical": {
+        "Bx": 0.2,
+        "A0": 0,
+        "width": 0.04,
+        "height": 0.02,
+        "depth": 0.01,
+        "mu0": 1.2566370614359173e-06,
+        "mu_r": 1,
+        "energy": 0.12732395447351633,
+        "potential_tolerance": 1e-08,
+        "field_tolerance": 1e-06,
+        "energy_tolerance": 5e-06
+      },
+      "require_mesh_return": true
     }
-  ]
+  ],
+  "measurement_revision": "Preserves the first failed run. Record a nil mesh return instead of aborting; retain a strict separate count check. Field expectations and all physical inputs/tolerances are unchanged."
 }

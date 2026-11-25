@@ -32,7 +32,14 @@ mi_saveas("/work/positive.fem")
 mi_close()
 open("/work/positive.fem")
 local file = openfile("/work/positive.obs", "w")
-emit(file, "mesh.created_nodes", mi_createmesh())
+local created = mi_createmesh()
+if created == nil then
+    emit(file, "mesh.has_return", 0)
+    emit(file, "mesh.created_nodes", 0)
+else
+    emit(file, "mesh.has_return", 1)
+    emit(file, "mesh.created_nodes", created)
+end
 mi_analyze(1)
 mi_loadsolution()
 emit(file, "mesh.solved_nodes", mo_numnodes())
@@ -151,7 +158,14 @@ mi_saveas("/work/negative.fem")
 mi_close()
 open("/work/negative.fem")
 local file = openfile("/work/negative.obs", "w")
-emit(file, "mesh.created_nodes", mi_createmesh())
+local created = mi_createmesh()
+if created == nil then
+    emit(file, "mesh.has_return", 0)
+    emit(file, "mesh.created_nodes", 0)
+else
+    emit(file, "mesh.has_return", 1)
+    emit(file, "mesh.created_nodes", created)
+end
 mi_analyze(1)
 mi_loadsolution()
 emit(file, "mesh.solved_nodes", mo_numnodes())
@@ -270,7 +284,14 @@ mi_saveas("/work/zero.fem")
 mi_close()
 open("/work/zero.fem")
 local file = openfile("/work/zero.obs", "w")
-emit(file, "mesh.created_nodes", mi_createmesh())
+local created = mi_createmesh()
+if created == nil then
+    emit(file, "mesh.has_return", 0)
+    emit(file, "mesh.created_nodes", 0)
+else
+    emit(file, "mesh.has_return", 1)
+    emit(file, "mesh.created_nodes", created)
+end
 mi_analyze(1)
 mi_loadsolution()
 emit(file, "mesh.solved_nodes", mo_numnodes())

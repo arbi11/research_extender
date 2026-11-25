@@ -128,7 +128,7 @@ def run(output, *, batch, image=None, cache=DEFAULT_CACHE, timeout=120, suite="g
     arguments = ["docker", "run", "--rm", "--init", "--name", name, "--network", "none", "--read-only",
                  "--memory", "2g", "--cpus", "2", "--pids-limit", "256", "--tmpfs", "/tmp:rw,size=512m",
                  "--user", f"{os.getuid()}:{os.getgid()}", "-e", "HOME=/tmp", "-e", "QT_QPA_PLATFORM=offscreen",
-                 "-e", "FEMM_DIR=/opt/femm/bin", "-v", f"{folder}:/work", "-w", "/work", image_id,
+                 "-e", "FEMM_DIR=/opt/femm/bin", "-e", "FEMM_MESH_EXPORT=1", "-v", f"{folder}:/work", "-w", "/work", image_id,
                  "/opt/femm/bin/lua4", "-e", "dofile('/work/binding.lua'); _femm_port=48015; openfemm(1)",
                  "-f", script]
     started = datetime.now(timezone.utc).isoformat()
