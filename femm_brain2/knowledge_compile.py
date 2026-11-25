@@ -104,6 +104,13 @@ def generate(knowledge, paper_id, control):
             p.call('mo_getpointvalues',[radius/math.sqrt(2),radius/math.sqrt(2)],prefix='local A, B1, B2 = ')
             p.lines += ['emit(file,"probe.B1",B1)','emit(file,"probe.B2",B2)']
         p.call('mo_close')
+        if i+1 < count and (i+1) % 12 == 0:
+            # Bound FEMM process memory without changing any physical input.
+            # pkill runs only in this container's private PID namespace.
+            p.call('mi_close')
+            p.lines += ['closefemm()', 'execute("/usr/bin/pkill -x femm_headless")',
+                        'execute("sleep 0.1")', 'openfemm(1)']
+            p.call('open',['/work/'+stem+'.fem'])
     p.call('mi_close')
     p.lines += ['emit(file,"completed",1)','closefile(file)','closefemm()']
     return '\n'.join(p.lines)+'\n', p.trace, g

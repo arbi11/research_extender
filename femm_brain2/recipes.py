@@ -66,6 +66,8 @@ def semi_closed_radial_stator(g, *, slots, bore_radius, opening_radius, bottom_r
                       polar(opening_radius, c + sign*opening_angle/2))
             g.segment(polar(opening_radius, c + sign*slot_angle/2),
                       polar(bottom_radius, c + sign*slot_angle/2))
+        # Mesh partition only: air on both sides, no physical boundary condition.
+        g.arc(bore_radius, c-opening_angle/2, opening_angle, gap_arc)
         g.arc(bore_radius, c+opening_angle/2, pitch-opening_angle, gap_arc)
         g.arc(opening_radius, c-slot_angle/2, (slot_angle-opening_angle)/2, arc_step)
         g.arc(opening_radius, c-opening_angle/2, opening_angle, arc_step)
