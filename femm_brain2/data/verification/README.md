@@ -1,5 +1,34 @@
 # Native geometry evidence, November 25, 2026
 
+## Current catalogue: geometry and properties
+
+The expanded 53-command catalogue has two current native reports:
+
+- `geometry-20261125-property-refresh/`: 16/16 geometry scenarios passed,
+  covering the existing 33 geometry commands against the new command batch.
+- `properties-20261125-run1/`: 16/16 material, boundary and circuit scenarios
+  passed, covering the 15 new property commands.
+
+The property suite checks material fields and every modification selector,
+sorted/deduplicated B-H samples and clearing, all eight boundary formats,
+complex coefficients and currents, point properties, series/parallel circuits,
+deleting named definitions, geometry assignments, and closing/reopening the
+assigned model. Expected values and tolerance were committed in `ca7883a`
+before execution. No field solve or paper replication is claimed.
+
+To attach the current reports:
+
+```bash
+python3 -m femm_brain2 build \
+  --evidence femm_brain2/data/verification/geometry-20261125-property-refresh/report.json \
+  --evidence femm_brain2/data/verification/properties-20261125-run1/report.json
+```
+
+The historical reports below belong to the earlier 38-command batch and are
+preserved as recorded; the importer rejects attaching them to a different batch.
+
+## Historical geometry runs
+
 These are real saved FEMM models, Lua fixtures, logs and hash manifests. They
 check the geometry API in one pinned container with the exact reviewed Lua
 binding. They do not validate a magnetic field solution or replicate a paper.
@@ -22,12 +51,6 @@ The first run exposed two errors in the agent-authored checker expectations:
 Both corrections were committed before the second native run. No coordinates,
 physical properties or tolerances were changed. The first failed run, its
 original protocol and all its model files are preserved here.
-
-To rebuild the lookup with verified evidence:
-
-```bash
-python3 -m femm_brain2 build --evidence femm_brain2/data/verification/geometry-20261125-run2/report.json
-```
 
 To repeat the native checks, select an empty output folder:
 

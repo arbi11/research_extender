@@ -1,8 +1,8 @@
 # FEMM API lookup catalogue
 
-The catalogue contains 38 reviewed FEMM 5.0 API entries for the Lua 4 binding,
-including the 33 commands for geometry, selection, labeling and editing in
-manual sections 3.6.1, 3.6.2, 3.6.3 and 3.6.6.
+The catalogue contains 53 reviewed FEMM 5.0 API entries for the Lua 4 binding:
+33 geometry, selection, labeling and editing commands; all 15 material, boundary
+and circuit property commands in section 3.6.9; and five workflow commands.
 
 SQLite is the working lookup database. Commands return JSON. The versioned
 `data/commands.json` file is the reviewed import batch used to reproduce this
@@ -26,7 +26,8 @@ python3 -m femm_brain2 stats
 The default database is `~/.local/share/femm-brain2/catalogue.sqlite3` (or the
 equivalent under `XDG_DATA_HOME`). Every command accepts `--db /path/to/file`.
 Source downloads use `~/.cache/femm-brain2/sources/`, respecting `XDG_CACHE_HOME`.
-`fetch-sources`, `validate`, `build` and `check-geometry` accept `--cache`.
+`fetch-sources`, `validate`, `build`, `check-geometry` and `check-properties`
+accept `--cache`.
 
 `get` and `search` support `--version 5.0 --binding lua4`. Search also accepts
 `--physics` and `--limit`. Exact lookup returns the complete contract. Search
@@ -48,7 +49,7 @@ reviewed entry returns `not_reviewed`, rather than an invented API contract.
 - Review status, unresolved questions and explicitly labelled example fragments.
 - An independent execution status, with optional verified native evidence.
 
-The importer detects 558 distinct manual definitions; 520 remain an inventory for later
+The importer detects 558 distinct manual definitions; 505 remain an inventory for later
 work. This count describes this pinned manual's detected definitions, not a
 claim that every alias, convenience wrapper or undocumented function is covered.
 Repeated definitions retain their additional page locations in the inventory.
@@ -119,14 +120,43 @@ frozen expectations before attaching results to command lookup. Source JSON cann
 assert an execution pass. A plain `build` imports documentation alone, so execution
 status remains `not_tested`. Example fragments remain separately untested.
 
-The November 25 run passed **16/16 native scenarios covering 33 commands**.
-[Saved models and reports](data/verification/README.md) include the initial
-14/16 run and explain the two checker corrections made before rerunning.
-To attach this recorded evidence to your database:
+The geometry checks passed **16/16 native scenarios covering 33 commands**,
+including a fresh run against the expanded 53-command catalogue.
+[Saved models and reports](data/verification/README.md) also retain the original
+14/16 run and explain its two checker corrections.
+
+## Materials, boundaries and circuits
+
+The 15 property entries cover adding, modifying and deleting definitions,
+library material loading, and adding/clearing B-H curve points. Modification
+commands include a `property_selectors` table with each numeric selector,
+its meaning, type and units where established by the source.
+
+Sixteen additional native scenarios passed. They read back all material
+arguments, nonlinear curve samples, all eight boundary formats, complex point
+and circuit values, property edits and deletions, geometry assignments, and
+the same assignments after closing and reopening the saved model.
+These checks establish property persistence and assignment in the pinned
+container; they do not solve a field problem.
 
 ```bash
-python3 -m femm_brain2 build --evidence femm_brain2/data/verification/geometry-20261125-run2/report.json
+python3 -m femm_brain2 get mi_addmaterial
+python3 -m femm_brain2 search "series circuit"
+python3 -m femm_brain2 check-properties --output /tmp/femm-brain2-properties-new
 ```
+
+Attach both current reports to retain execution evidence for 48 commands:
+
+```bash
+python3 -m femm_brain2 build \
+  --evidence femm_brain2/data/verification/geometry-20261125-property-refresh/report.json \
+  --evidence femm_brain2/data/verification/properties-20261125-run1/report.json
+```
+
+Each report is tied to the exact command batch. Historical reports remain
+readable, but a changed catalogue requires a new native run before execution
+claims can be attached. Repeat `--evidence` for distinct suites; overlapping
+reports for the same command are rejected.
 
 ## Code map
 
@@ -138,7 +168,9 @@ python3 -m femm_brain2 build --evidence femm_brain2/data/verification/geometry-2
 | `catalogue.py` | Validate/import records and perform read-only searches/lookups |
 | `__main__.py` | JSON command-line interface |
 | `geometry_check.py` | Isolated native runner and saved-model evidence checks |
+| `property_check.py` | Read and compare saved material, boundary, point and circuit records |
 | `tests/native_geometry/` | Frozen Lua fixtures and expected observations |
+| `tests/native_properties/` | Frozen property fixtures and expected observations |
 
 There are no imports from the original `femm_brain` package. There is no component
 library, hierarchy, paper reconstruction or background service in this milestone.
