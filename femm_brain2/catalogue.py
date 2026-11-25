@@ -150,7 +150,7 @@ def build(path=DEFAULT_DB, *, batch_path=None, sources_path=None, cache=DEFAULT_
             if evidence_path is not None:
                 metadata["native_evidence"] = {"reports": [{"report": str(Path(p).resolve()),
                     "report_sha256": fingerprint(Path(p).read_bytes())} for p in evidence_paths],
-                    "scope": "Native geometry and property API checks; no field-solution or paper validation."}
+                    "scope": "Native API checks and, where supplied, analytical field-solution checks. See individual reports for coverage."}
             db.executemany("INSERT INTO metadata VALUES (?,?)", [(k, json.dumps(v)) for k, v in metadata.items()])
             db.executemany("INSERT INTO sources VALUES (?,?)", [(s["id"], json.dumps(s)) for s in sources])
             db.executemany("INSERT INTO inventory VALUES (?,?)", [(d["name"], json.dumps(d)) for d in validation["inventory"]])

@@ -12,7 +12,8 @@ import uuid
 from .source import DEFAULT_CACHE, fingerprint, load_sources, source_file, verified_text
 
 FIXTURES = Path(__file__).with_name("tests") / "native_geometry"
-SUITES = {"geometry": FIXTURES, "properties": FIXTURES.with_name("native_properties")}
+SUITES = {"geometry": FIXTURES, "properties": FIXTURES.with_name("native_properties"),
+          "solve": FIXTURES.with_name("native_solve")}
 SECTIONS = {"points": "NumPoints", "segments": "NumSegments", "arcs": "NumArcSegments", "labels": "NumBlockLabels"}
 
 
@@ -89,6 +90,11 @@ def evaluate(folder, protocol):
                 from .property_check import evaluate_properties
                 properties, failures = evaluate_properties(Path(folder) / case["file"], case["expected_properties"], tolerance)
                 observed["properties"] = properties
+                errors.extend(failures)
+            if "solution_file" in case:
+                from .solve_check import evaluate_solution
+                solution, failures = evaluate_solution(folder, case)
+                observed["solution"] = solution
                 errors.extend(failures)
         except (OSError, ValueError) as exc:
             errors.append(str(exc))
@@ -173,13 +179,17 @@ def verify_evidence(path, batch):
         raise ValueError("Native evidence does not match the frozen container configuration")
     artifacts = report["artifacts"]
     required = {"protocol.json", script, "native.log"} | {c["file"] for c in protocol["cases"]}
+    for case in protocol["cases"]:
+        required.update(case[k] for k in ("solution_file", "observations_file") if k in case)
+    allowed = required | {Path(c["file"]).stem + suffix for c in protocol["cases"]
+                          for suffix in protocol.get("optional_artifact_suffixes", [])}
     # Missing native models are permitted only as explicitly failed scenario observations.
     if not {"protocol.json", script, "native.log"} <= artifacts.keys():
         raise ValueError("Native evidence is missing its protocol, script or log")
-    if any((path.parent / c["file"]).is_file() and c["file"] not in artifacts for c in protocol["cases"]):
-        raise ValueError("Native evidence contains an unhashed model")
+    if any((path.parent / name).is_file() and name not in artifacts for name in required):
+        raise ValueError("Native evidence contains an unhashed model or solution")
     for filename, digest in artifacts.items():
-        if Path(filename).name != filename or filename not in required:
+        if Path(filename).name != filename or filename not in allowed:
             raise ValueError("Unexpected native evidence artifact: " + filename)
         if fingerprint((path.parent / filename).read_bytes()) != digest:
             raise ValueError("Native artifact hash mismatch: " + filename)
