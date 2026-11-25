@@ -3,7 +3,8 @@
 The catalogue contains 64 source-checked FEMM 5.0 API entries for the Lua 4 binding:
 33 geometry, selection, labeling and editing commands; all 15 material, boundary
 and circuit property commands in section 3.6.9; and 16 file, mesh, solve and
-postprocessing commands. One mesh return contract remains flagged for clarification.
+postprocessing commands. All 64 have passed the recorded native checks for
+their tested cases.
 
 SQLite is the working lookup database. Commands return JSON. The versioned
 `data/commands.json` file is the reviewed import batch used to reproduce this
@@ -150,9 +151,9 @@ Attach all three current reports to retain the measured outcomes for 64 commands
 
 ```bash
 python3 -m femm_brain2 build \
-  --evidence femm_brain2/data/verification/geometry-20261125-field-refresh/report.json \
-  --evidence femm_brain2/data/verification/properties-20261125-field-refresh/report.json \
-  --evidence femm_brain2/data/verification/solve-20261125-run3/report.json
+  --evidence femm_brain2/data/verification/geometry-20261125-mesh-count-fixed/report.json \
+  --evidence femm_brain2/data/verification/properties-20261125-mesh-count-fixed/report.json \
+  --evidence femm_brain2/data/verification/solve-20261125-mesh-count-fixed/report.json
 ```
 
 Each report is tied to the exact command batch. Historical reports remain
@@ -178,15 +179,19 @@ analytical formulas and tolerances were committed before solving.
 python3 -m femm_brain2 check-solve --output /tmp/femm-brain2-solve-new
 ```
 
-The separate `explicit_mesh_return` check fails in the pinned container:
-`mi_createmesh` returns nil, while the newer pinned implementation returns a
-node count. The first run stopped on this mismatch and is preserved. The revised
-driver records nil and continues solving, retaining a strict failed count check.
-Physical inputs and analytical tolerances were unchanged. `mi_analyze` creates
-the solution mesh, and postprocessor node/element counts match the `.ans` file.
-`check-solve` therefore reports 3/4 checks passed and exits with code 2. The
-catalogue records 63 commands passed and `mi_createmesh` as
-`check_failed`/`needs_clarification`.
+The separate `explicit_mesh_return` check now passes. The original FEMM build
+created a mesh but omitted the native return. The isolated runtime
+`femm-brain2:mesh-count-20261125` returns the actual mesh vertex count through
+the C++ helper and binding. Its source patch, image IDs and binary fingerprints
+are recorded in the build manifest copied into each run.
+
+All three field controls now require the returned count to match both the
+postprocessor count and the `.ans` mesh. Each returns 3,847 nodes, distinct from
+the 7,440 elements. `check-solve` reports 4/4 passed with exit code 0; the complete
+native check set is 36/36 passed. Physical inputs, analytical values and
+tolerances are unchanged, and all non-count observations equal the earlier run.
+Historical nil-return failures remain preserved. To rebuild the isolated image,
+see [runtime/README.md](runtime/README.md).
 
 These are analytical reference problems, not journal-paper replications.
 
@@ -205,6 +210,7 @@ These are analytical reference problems, not journal-paper replications.
 | `tests/native_geometry/` | Frozen Lua fixtures and expected observations |
 | `tests/native_properties/` | Frozen property fixtures and expected observations |
 | `tests/native_solve/` | Frozen analytical model inputs, Lua driver and expected results |
+| `runtime/` | Pinned container build and native mesh-count return backport |
 
 There are no imports from the original `femm_brain` package. There is no component
 library, hierarchy, paper reconstruction or background service in this milestone.

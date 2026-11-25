@@ -1,18 +1,17 @@
 # Native FEMM evidence, November 25, 2026
 
 The current 64-command catalogue has three reports. Geometry and property
-checks each passed 16/16 scenarios. All three analytical field solves passed;
-one separate mesh-return capability check failed and remains visible.
+checks each passed 16/16 scenarios. The three analytical field solves and the
+separate mesh-return capability check also passed: 36/36 native checks total.
 
 | Current report | Outcome |
 | --- | --- |
-| `geometry-20261125-field-refresh/report.json` | 16/16 geometry scenarios passed, covering 33 commands |
-| `properties-20261125-field-refresh/report.json` | 16/16 property scenarios passed, covering 15 commands |
-| `solve-20261125-run3/report.json` | 3/3 analytical field cases passed; separate mesh return-count check failed |
+| `geometry-20261125-mesh-count-fixed/report.json` | 16/16 geometry scenarios passed, covering 33 commands |
+| `properties-20261125-mesh-count-fixed/report.json` | 16/16 property scenarios passed, covering 15 commands |
+| `solve-20261125-mesh-count-fixed/report.json` | 4/4 field and mesh-return checks passed, covering 16 commands |
 
 To attach all three reports, use the build command in the package README.
-The database records 63 commands passed and `mi_createmesh` as `check_failed`
-with its source interpretation flagged `needs_clarification`. Each report is
+The database records all 64 commands passed for the tested cases. Each report is
 bound to its exact reviewed command batch, binding source and container digest.
 The importer rechecks artifact hashes and recomputes the observations.
 
@@ -57,11 +56,25 @@ native solving. They were not changed to obtain agreement.
   explicitly documents the native return mismatch. Results remain 3/3 field
   cases passed plus the failed count case.
 
-The newer pinned C++ source returns a mesh node count, but this older container
-returns no value for `mi_createmesh`. `mi_analyze` still constructs the mesh and
-solves successfully. Solved counts are available through `mo_numnodes` and
-`mo_numelements`. `check-solve` reports 3/4 passed with exit code 2; the failed
-capability is not relabeled a pass.
+Those historical runs used a FEMM build whose mesh-creation binding omitted
+the native return. Their 3/4 results and failed capability remain unchanged.
+
+## Mesh-count fix and rerun
+
+The separate image `femm-brain2:mesh-count-20261125` backports the actual mesh
+vertex count through the shared C++ helper and the API binding. The original
+runtime and source archive are retained. The solver executable is byte-identical
+to the original; the headless API executable is rebuilt from the retained source
+and the checked patch. Build details are in `runtime/` and each new run's
+`runtime-build.json`.
+
+The new profile pins image
+`sha256:e927378c714cca415c6471122a73b34bae0cebf0ab00381b01a4a5f1199aa0c3`.
+Every field control requires a real returned count and comparison with the
+postprocessor and solver file: 3,847 nodes and 7,440 elements. All four solve
+checks passed. All physical inputs, analytical values and tolerances were kept;
+every non-count observation exactly equals the earlier run. The geometry and
+property checks were rerun in the same new image and all passed.
 
 ## Geometry and property history
 
