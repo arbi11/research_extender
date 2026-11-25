@@ -6,8 +6,7 @@
     "version": "5.0",
     "binding": "lua4",
     "binding_guide_source": "femm5-lua-guide",
-    "reference_container_image": "sha256:85f07dce379bff58dc539f8ed49ffba53a94eba332fbf81d4c9fd6c3df94725d",
-    "execution_verified": false
+    "reference_container_image": "sha256:85f07dce379bff58dc539f8ed49ffba53a94eba332fbf81d4c9fd6c3df94725d"
   },
   "authorship": {
     "semantic_records": "Coding agent reviewed the pinned manual definitions and Lua binding, then authored this JSON import batch.",
@@ -3517,7 +3516,7 @@
       "binding": "lua4",
       "physics": "magnetics",
       "category": "editing",
-      "purpose": "Reflect and copy selected geometry across a line.",
+      "purpose": "Create mirrored copies of selected geometry about a line, keeping the originals.",
       "signature": "mi_mirror(x1, y1, x2, y2)",
       "parameters": [
         {
@@ -3571,7 +3570,7 @@
         "Select the intended geometry objects first."
       ],
       "effects": [
-        "Adds reflected copies across the line through the two supplied points."
+        "Adds mirrored duplicates of the selected geometry; original objects remain."
       ],
       "examples": [
         {
@@ -3612,6 +3611,17 @@
             222,
             224
           ]
+        },
+        {
+          "source_id": "femm5-geometry-implementation",
+          "anchor": "mi_mirror",
+          "pdf_pages": [],
+          "section": "C++ implementation",
+          "definition_sha256": "e27b98ac5319f8a03a4866dd573d7d79aab405b2cf57742f5be1fc75c1e1d871",
+          "line_range": [
+            1266,
+            1310
+          ]
         }
       ],
       "review": {
@@ -3626,7 +3636,8 @@
       "notes": [
         "The manual documents an optional editaction argument, but this pinned Lua wrapper does not forward it.",
         "The pinned C++ implementation defaults omitted editaction to 4 (all selected entity types), rather than reading mi_seteditmode. Select the exact objects to transform.",
-        "These entries describe this pinned Lua binding; explicit editaction is not part of its callable signature."
+        "These entries describe this pinned Lua binding; explicit editaction is not part of its callable signature.",
+        "The pinned DocumentBase::MirrorSelected implementation explicitly implements mirroring as a copy operation. Native run 1 exposed an incorrect move-only expectation in our initial checker; that failed run is retained."
       ]
     },
     {

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "id": "geometry-api-v1",
+  "id": "geometry-api-v2",
   "scope": "Native Lua API geometry checks, not field-solution validation or a paper benchmark.",
   "input_provenance": "Agent-authored toy geometries; all coordinates, groups and properties below are frozen before execution. Lengths are millimeters; static planar model, depth 1 mm, solver precision 1e-8. Air is a setup material, not an evaluated catalogue command.",
   "absolute_tolerance": 1e-08,
@@ -123,13 +123,6 @@
             "3": 7
           }
         },
-        "segments": {
-          "0": {
-            "2": 0.25,
-            "4": 1,
-            "5": 8
-          }
-        },
         "arcs": {
           "0": {
             "2": 90,
@@ -147,7 +140,26 @@
             "7": 12
           }
         }
-      }
+      },
+      "expected_segments": [
+        {
+          "endpoints": [
+            [
+              0,
+              0
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          "fields": {
+            "2": 0.25,
+            "4": 1,
+            "5": 8
+          }
+        }
+      ]
     },
     {
       "id": "region_selection",
@@ -396,12 +408,20 @@
         "mi_mirror"
       ],
       "expected_counts": {
-        "points": 2,
-        "segments": 1,
+        "points": 4,
+        "segments": 2,
         "arcs": 0,
         "labels": 0
       },
       "expected_points": [
+        [
+          1,
+          0
+        ],
+        [
+          2,
+          0
+        ],
         [
           -1,
           0
@@ -414,6 +434,9 @@
       "expected_rows": {
         "segments": {
           "0": {
+            "5": 30
+          },
+          "1": {
             "5": 30
           }
         }
@@ -527,5 +550,10 @@
       },
       "expected_rows": {}
     }
+  ],
+  "revision_notes": [
+    "v1 is frozen in commit 881950dcc94d569f46a014962000827e5c3b6234 and retained in work/femm-brain2/geometry-20261125-run1: 14/16 passed.",
+    "v2 corrects the property measurement to identify the selected edge by its endpoints rather than assuming a serialization row index.",
+    "v2 corrects the mirror oracle using pinned implementation lines 1266-1310: mirroring creates copies and keeps originals. Inputs and Lua calls are unchanged."
   ]
 }

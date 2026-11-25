@@ -70,6 +70,20 @@ def evaluate(folder, protocol):
                             continue
                         if abs(actual-expected) > tolerance:
                             errors.append(f"{section}[{index}][{column}]: expected {expected}, observed {actual}")
+            for expected in case.get("expected_segments", []):
+                matches = []
+                for row in observed["segments"]:
+                    endpoints = [observed["points"][int(n)][:2] for n in row[:2]]
+                    if any(all(all(abs(a-b) <= tolerance for a, b in zip(point, target))
+                               for point, target in zip(endpoints, order))
+                           for order in (expected["endpoints"], expected["endpoints"][::-1])):
+                        matches.append(row)
+                if len(matches) != 1:
+                    errors.append("Expected one segment at " + str(expected["endpoints"]))
+                else:
+                    for column, value in expected["fields"].items():
+                        if abs(matches[0][int(column)]-value) > tolerance:
+                            errors.append("Segment property mismatch at " + str(expected["endpoints"]) + ", column " + column)
         except (OSError, ValueError) as exc:
             errors.append(str(exc))
         results.append({"id": case["id"], "status": "failed" if errors else "passed", "errors": errors,
