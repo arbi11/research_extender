@@ -1,0 +1,1112 @@
+{
+  "schema_version": 1,
+  "milestone": "Ten-command lookup prototype; remaining manual inventory is pending review.",
+  "target": {
+    "software": "FEMM",
+    "version": "5.0",
+    "binding": "lua4",
+    "binding_guide_source": "femm5-lua-guide",
+    "reference_container_image": "sha256:85f07dce379bff58dc539f8ed49ffba53a94eba332fbf81d4c9fd6c3df94725d",
+    "execution_verified": false
+  },
+  "authorship": {
+    "semantic_records": "Coding agent reviewed the pinned manual definitions and Lua binding, then authored this JSON import batch.",
+    "automation": "Python locates definitions, verifies source fingerprints, validates records and builds the SQLite lookup.",
+    "examples": "Agent-authored fragments, explicitly not execution-tested."
+  },
+  "commands": [
+    {
+      "name": "newdocument",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "common",
+      "category": "session",
+      "purpose": "Create and open a new problem document.",
+      "signature": "newdocument(doctype)",
+      "parameters": [
+        {
+          "name": "doctype",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Problem family selector.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": [
+          "The cited definition does not specify a return value; do not rely on one."
+        ]
+      },
+      "preconditions": [],
+      "effects": [
+        "A new preprocessor document becomes available."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "newdocument(0)",
+          "requires": [],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "newdocument",
+          "pdf_pages": [
+            96
+          ],
+          "section": "3.5 Common Scripting Command Set",
+          "definition_sha256": "9e056eb45c29b42c00319273f3f9eb9c38c4084bd055c1d23890fe199a6ba4c6"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "newdocument",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "0a1efe4d7487176d085926c376a5484924139e8624a2385fc1f8a5afcc6874c3"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Document types: 0 magnetics, 1 electrostatics, 2 heat flow, 3 current flow. Availability in a particular solver build is not execution-tested here.",
+        "The manual also names create(doctype); the Lua binding forwards newdocument to create."
+      ]
+    },
+    {
+      "name": "mi_probdef",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "problem_definition",
+      "purpose": "Configure magnetic problem frequency, length units, coordinate type and solver precision.",
+      "signature": "mi_probdef(frequency, units, type, precision, depth, minangle, acsolver)",
+      "parameters": [
+        {
+          "name": "frequency",
+          "type": "number",
+          "required": true,
+          "units": "Hz",
+          "description": "Excitation frequency; zero denotes a static problem.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "units",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Length-unit name for the model.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": [
+            "inches",
+            "millimeters",
+            "centimeters",
+            "mils",
+            "meters",
+            "micrometers"
+          ]
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Planar or axisymmetric model.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": [
+            "planar",
+            "axi"
+          ]
+        },
+        {
+          "name": "precision",
+          "type": "number",
+          "required": true,
+          "units": "dimensionless",
+          "description": "Requested solver residual tolerance.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "depth",
+          "type": "number",
+          "required": false,
+          "units": "problem_length_unit",
+          "description": "Into-page model depth for a planar problem.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "minangle",
+          "type": "number",
+          "required": false,
+          "units": "degrees",
+          "description": "Mesher minimum-angle constraint.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "acsolver",
+          "type": "integer",
+          "required": false,
+          "units": null,
+          "description": "AC solver selector; numeric encoding is not given in this command definition.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": [
+          "The cited definition does not specify a return value; do not rely on one."
+        ]
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Updates the magnetic problem definition."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_probdef(0, \"millimeters\", \"planar\", 1e-8)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_probdef",
+          "pdf_pages": [
+            99
+          ],
+          "section": "3.6.4 Problem Commands",
+          "definition_sha256": "cae69ba26d6bb65bc7b451d2e18e386fc2bb1ebf3c341e139e4051ac0d377154"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_probdef",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "1870a95ceac4a071aa1f63ef91d2c665474ef31641c51f2b4cdad31d492b0244"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The signature is normalized: the printed manual omits its final outer closing parenthesis and uses parentheses to mark optional arguments.",
+        "Defaults for depth, minangle and acsolver are not stated in the cited command definition.",
+        "The printed units list has a missing quotation mark around meters; the value is stored without that typographical error."
+      ]
+    },
+    {
+      "name": "mi_addnode",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "geometry",
+      "purpose": "Create a point node used by magnetic geometry.",
+      "signature": "mi_addnode(x, y)",
+      "parameters": [
+        {
+          "name": "x",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "First coordinate; x for planar geometry or radial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Second coordinate; y for planar geometry or axial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": [
+          "The cited definition does not specify a return value; do not rely on one."
+        ]
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Adds a geometry node at the supplied coordinates."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_addnode(0, 0)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_addnode",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.1 Object Add/Remove Commands",
+          "definition_sha256": "041f98603419323924f65f1a0f30ad75776d2746592c9cb645ade6bb148f0d0f"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_addnode",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "54253dcbddf8f7dba2b292c7112a5691635bee10b67cde036e5f480e5a6f6c61"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": []
+    },
+    {
+      "name": "mi_addsegment",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "geometry",
+      "purpose": "Draw a straight line segment between existing geometry nodes nearest the supplied endpoints.",
+      "signature": "mi_addsegment(x1, y1, x2, y2)",
+      "parameters": [
+        {
+          "name": "x1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "First coordinate; x for planar geometry or radial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "y1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Second coordinate; y for planar geometry or axial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "x2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "First coordinate; x for planar geometry or radial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "y2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Second coordinate; y for planar geometry or axial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": [
+          "The cited definition does not specify a return value; do not rely on one."
+        ]
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The intended endpoint nodes already exist."
+      ],
+      "effects": [
+        "Adds a straight segment connecting the nearest endpoint nodes."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_addsegment(0, 0, 10, 0)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The intended endpoint nodes already exist."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_addsegment",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.1 Object Add/Remove Commands",
+          "definition_sha256": "6b90efe74d42c5d74fb679debe0cbe244a42934d1ef2a68a883f26ade6647abd"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_addsegment",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "cc34a6525b19ada7869eaaf5506d2f1bcff06d483e442cbdb61d0affbfe4431c"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": []
+    },
+    {
+      "name": "mi_addarc",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "geometry",
+      "purpose": "Draw a circular arc between existing geometry nodes near two endpoints.",
+      "signature": "mi_addarc(x1, y1, x2, y2, angle, maxseg)",
+      "parameters": [
+        {
+          "name": "x1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "First coordinate; x for planar geometry or radial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "y1",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Second coordinate; y for planar geometry or axial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "x2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "First coordinate; x for planar geometry or radial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "y2",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Second coordinate; y for planar geometry or axial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "angle",
+          "type": "number",
+          "required": true,
+          "units": "degrees",
+          "description": "Arc sweep angle.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "maxseg",
+          "type": "number",
+          "required": true,
+          "units": null,
+          "description": "Arc subdivision control. The manual wording does not establish a reliable unit for this parameter.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": [
+          "The cited definition does not specify a return value; do not rely on one."
+        ]
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The intended endpoint nodes already exist.",
+        "Resolve the documented maxseg ambiguity before relying on a mesh discretization interpretation."
+      ],
+      "effects": [
+        "Adds an arc connecting the nearest endpoint nodes."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_addarc(0, 0, 10, 0, 90, 5)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The intended endpoint nodes already exist.",
+            "Resolve the documented maxseg ambiguity before relying on a mesh discretization interpretation."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_addarc",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.1 Object Add/Remove Commands",
+          "definition_sha256": "e12dfbcc67225fa27f06aed3d6be121dec9afdbcee782b6d260b6310e8af5845"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_addarc",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "843ad4facc6a04fcef2f762bd636ff70892fd97a225aacc69b4b032568919c15"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "needs_clarification",
+        "open_questions": [
+          "Clarify maxseg units and semantics against the matching implementation or an isolated geometry check."
+        ]
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The parameter is forwarded unchanged by the Lua wrapper. The manual describes maxseg as a segment count, while its name alone cannot establish its meaning. This catalogue does not silently label it as degrees per segment.",
+        "The numeric maxseg in the illustrative fragment is not an execution-tested recommendation."
+      ]
+    },
+    {
+      "name": "mi_addblocklabel",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "geometry",
+      "purpose": "Create a block label that identifies a material region.",
+      "signature": "mi_addblocklabel(x, y)",
+      "parameters": [
+        {
+          "name": "x",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "First coordinate; x for planar geometry or radial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Second coordinate; y for planar geometry or axial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": [
+          "The cited definition does not specify a return value; do not rely on one."
+        ]
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0)."
+      ],
+      "effects": [
+        "Adds a block label at the supplied coordinates."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_addblocklabel(5, 5)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0)."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_addblocklabel",
+          "pdf_pages": [
+            97
+          ],
+          "section": "3.6.1 Object Add/Remove Commands",
+          "definition_sha256": "4bcd9521136adeb65bbd83b1aa9960d4616cc7a716ba97cee2d63cd49693a4cd"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_addblocklabel",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "23d5245627b9009ba5670dfe2d69351d83f6ea55bac33a444eddbb04a3bb29e1"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Creating a label does not by itself assign a material or prove that its region is closed."
+      ]
+    },
+    {
+      "name": "mi_setblockprop",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "region_properties",
+      "purpose": "Assign material, mesh settings, circuit, magnetization direction, group and winding turns to selected block labels.",
+      "signature": "mi_setblockprop(blockname, automesh, meshsize, incircuit, magdirection, group, turns)",
+      "parameters": [
+        {
+          "name": "blockname",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the block/material property.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "automesh",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Use the given mesh-size constraint (0) or automatic mesh density (1).",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "meshsize",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Mesh-size constraint for the labelled region.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "incircuit",
+          "type": "string",
+          "required": true,
+          "units": null,
+          "description": "Name of the associated circuit.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "magdirection",
+          "type": "number_or_string",
+          "required": true,
+          "units": "degrees",
+          "description": "Magnetization angle in degrees, or a position-dependent angle expression.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "group",
+          "type": "integer",
+          "required": true,
+          "units": null,
+          "description": "Group number assigned to the label.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "turns",
+          "type": "number",
+          "required": true,
+          "units": "turns",
+          "description": "Winding-turn count associated with the label.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": [
+          "The cited definition does not specify a return value; do not rely on one."
+        ]
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "The intended block labels are selected.",
+        "Referenced material and circuit property names are available in the active model."
+      ],
+      "effects": [
+        "Updates the properties of the selected block labels."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_setblockprop(\"Copper\", 1, 0, \"phase_A\", 0, 1, 100)",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "The intended block labels are selected.",
+            "Referenced material and circuit property names are available in the active model.",
+            "This fragment assumes the material Copper and the circuit phase_A are defined."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_setblockprop",
+          "pdf_pages": [
+            98
+          ],
+          "section": "3.6.3 Object Labeling Commands",
+          "definition_sha256": "d3def6ec5fffd7920c1eb053dd1cf402347e2e4846a7ad6021fbb9374856d9f1"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_setblockprop",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "5b9231ff973d505ebf344b60054293f9e0b844cc6033a25d13d3c62149add1ac"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "Angle expressions may use theta, R, x and y; axisymmetric expressions use r and z in place of x and y.",
+        "The fragment illustrates argument positions; it is not a complete machine model."
+      ]
+    },
+    {
+      "name": "mi_analyze",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "analysis",
+      "purpose": "Run the magnetic field solver for the current problem.",
+      "signature": "mi_analyze(flag)",
+      "parameters": [
+        {
+          "name": "flag",
+          "type": "integer",
+          "required": false,
+          "units": null,
+          "description": "Solver window presentation: 0 visible, 1 minimized.",
+          "default": 0,
+          "default_status": "documented",
+          "allowed_values": [
+            0,
+            1
+          ]
+        }
+      ],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": [
+          "The cited definition does not specify a return value; do not rely on one."
+        ]
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "A solvable magnetic model is defined."
+      ],
+      "effects": [
+        "Starts the field analysis."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_analyze()",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "A solvable magnetic model is defined."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_analyze",
+          "pdf_pages": [
+            99
+          ],
+          "section": "3.6.4 Problem Commands",
+          "definition_sha256": "09cf4259d0f1525e14a4c5df7e8d5b5f6a2148540cb03170e9e528b4d642fef3"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_analyze",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "0a9991b8a66df425619ed78961993908b49771b39191f0b6c787de61dfcfb308"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The manual states that mi_analyze ensures the mesh is current; a separate mi_createmesh call is not required just to analyze.",
+        "Window presentation is documented GUI behavior; headless behavior is not execution-tested here."
+      ]
+    },
+    {
+      "name": "mi_loadsolution",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "analysis",
+      "purpose": "Open the solution associated with the current magnetic geometry for postprocessing.",
+      "signature": "mi_loadsolution()",
+      "parameters": [],
+      "returns": {
+        "status": "not_documented",
+        "values": [],
+        "notes": [
+          "The cited definition does not specify a return value; do not rely on one."
+        ]
+      },
+      "preconditions": [
+        "A magnetics preprocessor document is active, for example after newdocument(0).",
+        "A corresponding solution has been produced."
+      ],
+      "effects": [
+        "Loads the magnetic solution for postprocessor queries."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "mi_loadsolution()",
+          "requires": [
+            "A magnetics preprocessor document is active, for example after newdocument(0).",
+            "A corresponding solution has been produced."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mi_loadsolution",
+          "pdf_pages": [
+            99
+          ],
+          "section": "3.6.4 Problem Commands",
+          "definition_sha256": "e2ede76a4d9bf1d5c5eb7e72577fc4d67ad72ca49de233e0714a046a45cd59c5"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mi_loadsolution",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "d5b05213ac13d269ad3c51f0201b48626a110e52b0e734f2cd6426c53c98357e"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": []
+    },
+    {
+      "name": "mo_getpointvalues",
+      "version": "5.0",
+      "binding": "lua4",
+      "physics": "magnetics",
+      "category": "postprocessing",
+      "purpose": "Read magnetic field, potential, material and loss quantities at a point in a loaded solution.",
+      "signature": "mo_getpointvalues(x, y)",
+      "parameters": [
+        {
+          "name": "x",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "First coordinate; x for planar geometry or radial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "required": true,
+          "units": "problem_length_unit",
+          "description": "Second coordinate; y for planar geometry or axial coordinate for axisymmetric geometry.",
+          "default": null,
+          "default_status": "not_documented",
+          "allowed_values": null
+        }
+      ],
+      "returns": {
+        "status": "documented",
+        "values": [
+          {
+            "name": "A",
+            "type": "number_or_CComplex",
+            "description": "Vector potential in planar problems, or flux in axisymmetric problems.",
+            "units": null
+          },
+          {
+            "name": "B1",
+            "type": "number_or_CComplex",
+            "description": "x component of flux density, or radial component if axisymmetric.",
+            "units": null
+          },
+          {
+            "name": "B2",
+            "type": "number_or_CComplex",
+            "description": "y component of flux density, or axial component if axisymmetric.",
+            "units": null
+          },
+          {
+            "name": "Sig",
+            "type": "number_or_CComplex",
+            "description": "Electrical conductivity.",
+            "units": null
+          },
+          {
+            "name": "E",
+            "type": "number_or_CComplex",
+            "description": "Stored energy density.",
+            "units": null
+          },
+          {
+            "name": "H1",
+            "type": "number_or_CComplex",
+            "description": "x component of field intensity, or radial component if axisymmetric.",
+            "units": null
+          },
+          {
+            "name": "H2",
+            "type": "number_or_CComplex",
+            "description": "y component of field intensity, or axial component if axisymmetric.",
+            "units": null
+          },
+          {
+            "name": "Je",
+            "type": "number_or_CComplex",
+            "description": "Eddy-current density.",
+            "units": null
+          },
+          {
+            "name": "Js",
+            "type": "number_or_CComplex",
+            "description": "Source-current density.",
+            "units": null
+          },
+          {
+            "name": "Mu1",
+            "type": "number_or_CComplex",
+            "description": "First directional relative permeability.",
+            "units": "dimensionless"
+          },
+          {
+            "name": "Mu2",
+            "type": "number_or_CComplex",
+            "description": "Second directional relative permeability.",
+            "units": "dimensionless"
+          },
+          {
+            "name": "Pe",
+            "type": "number_or_CComplex",
+            "description": "Power density of ohmic losses.",
+            "units": null
+          },
+          {
+            "name": "Ph",
+            "type": "number_or_CComplex",
+            "description": "Power density of hysteresis losses.",
+            "units": null
+          },
+          {
+            "name": "ff",
+            "type": "number_or_CComplex",
+            "description": "Laminated-material fill factor.",
+            "units": "dimensionless"
+          }
+        ],
+        "notes": [
+          "Coordinate names follow the problem type: x/y for planar and r/z for axisymmetric."
+        ]
+      },
+      "preconditions": [
+        "A magnetic solution is loaded, for example using mi_loadsolution().",
+        "The queried point lies in the solved model."
+      ],
+      "effects": [
+        "Returns point quantities; does not construct geometry."
+      ],
+      "examples": [
+        {
+          "origin": "agent_authored",
+          "scope": "fragment",
+          "code": "A, B1, B2, Sig, E, H1, H2, Je, Js, Mu1, Mu2, Pe, Ph, ff = mo_getpointvalues(1, 0)",
+          "requires": [
+            "A magnetic solution is loaded, for example using mi_loadsolution().",
+            "The queried point lies in the solved model."
+          ],
+          "execution_status": "not_tested"
+        }
+      ],
+      "references": [
+        {
+          "source_id": "femm5-manual",
+          "anchor": "mo_getpointvalues",
+          "pdf_pages": [
+            108,
+            109
+          ],
+          "section": "3.7.1 Data Extraction Commands",
+          "definition_sha256": "30fb5b2217dfbb624ea9d5ce400375e7874f455d3e6960dcf6ef243b64dedeba"
+        },
+        {
+          "source_id": "femm5-lua-binding",
+          "anchor": "mo_getpointvalues",
+          "pdf_pages": [],
+          "section": "Lua binding function",
+          "definition_sha256": "a147361b6157db3d4df732bf0fbb73b15f1d173fcec48ff6899b664b89e40f02"
+        }
+      ],
+      "review": {
+        "status": "source_checked",
+        "reviewer": "coding_agent",
+        "semantic_status": "reviewed",
+        "open_questions": []
+      },
+      "execution": {
+        "status": "not_tested"
+      },
+      "notes": [
+        "The ordered 14-value return table continues from PDF page 108 onto page 109.",
+        "The Lua binding expands result arrays into multiple return values and supports CComplex numbers. Imaginary parts are zero for magnetostatic problems.",
+        "Units for dimensional returned quantities are not stated in this command table and remain null here rather than being guessed."
+      ]
+    }
+  ]
+}
