@@ -11,7 +11,7 @@ the second brain) on the same tasks.
 |---|---|---|---|
 | 1. FEMM basics | Draw a described part (stator, rotor, pot core) | Which material lies where, compared point by point | **here** |
 | 2. One result | Build a small device; the scorer measures one quantity | Inductance, flux linkage or force against the key | **here** |
-| 3. Synthetic papers | Rebuild a generated machine from a paper-like write-up with gaps | Frozen targets, plus credit for flagging what was hidden | next |
+| 3. Synthetic papers | Rebuild a generated machine from a paper-like write-up with gaps | Frozen targets, plus credit for flagging what was hidden | **built**; test set not frozen yet |
 | 4. Real papers | The second brain's paper cases (training only) | As in `daro_bench` | later |
 | 5. Design | Improve a published design within limits | A gain that holds on a finer mesh | later |
 
@@ -31,6 +31,18 @@ The `daro_bench` papers are never used for training; they stay the held-out exam
 
 Each device is built from `femm_brain`'s tested components, with random dimensions inside
 stated ranges. Every input is in the task text: Levels 1 and 2 have no gaps.
+
+## Level 3: generated papers with gaps
+
+The player gets a paper about a generated surface-magnet machine with a tooth-coil winding
+(`l3_spm`: 6/4 to 24/20 slots and poles, library or specified magnets, laminated or solid rotor
+steel) and works in the benchmark's layout: it submits `model.fem`, `entities.json` and
+`inputs.json`, and is scored by the benchmark's own `score.py`, imported read-only. Three targets
+at 2%: the no-load back-EMF fundamental and the rated torque, both printed in the paper, and the
+torque at three times rated current, held out. Each paper hides at least four inputs: some can be
+derived from stated values, others are absent and were checked not to matter. A quarter of the
+reward is credit for recording honestly which inputs were quoted, derived or assumed: a quote
+must be copied from the paper and contain the value. Design, rules and changes: `LEVEL3.md`.
 
 ## Rules it keeps
 
@@ -73,6 +85,15 @@ python3 -m femm_gym score --testset femm_gym/testsets/test-v1 --task l2_coil_ind
 python3 -m femm_gym play --runner path/to/daro_bench/sandbox_run.py --out ~/.cache/femm-gym/plays/coil-0 \
   --model claude-opus-5-5 --family l2_coil_inductance --index 0 --split check
 python3 -m unittest discover -s femm_gym/tests
+
+# Level 3 (the daro_bench folder from --bench or $DARO_BENCH)
+python3 -m femm_gym l3-sample --index 0 --key
+python3 -m femm_gym l3-selfcheck --count 2 --jobs 2
+python3 -m femm_gym l3-freeze --out femm_gym/testsets/l3-test-v1 --count 24 --jobs 3
+python3 -m femm_gym l3-verify --testset femm_gym/testsets/l3-test-v1
+python3 -m femm_gym l3-score --testset femm_gym/testsets/l3-test-v1 --task l3_spm-000 --submission path/to/submission
+python3 -m femm_gym l3-play --runner path/to/daro_bench/sandbox_run.py --out ~/.cache/femm-gym/plays/l3-0 \
+  --model claude-opus-5-5 --index 0 --split l3-check
 ```
 
 Work files (solutions, scorer scripts) go to `~/.cache/femm-gym/work/` unless `--work` is given.
@@ -92,6 +113,10 @@ on one task per family, passed 7 of 7 in about a minute each (`CHECK_PLAN.md`, `
 Levels 1 and 2 are a warm-up and a floor check, not a test that separates frontier agents.
 
 ## Known gaps
+
+- A Level 3 key costs 20 to 40 minutes of one low-priority CPU (three mesh levels and the
+  insensitivity checks, 36 rotor positions each), so Level 3 training needs a pool of keyed
+  tasks made ahead of time.
 
 - `play` borrows the benchmark's FEMM relay, which gives each run 2 CPUs and 2 GB; the scorer
   gives a solve 1 CPU and 768 MB at low priority. A model near those limits could solve for
