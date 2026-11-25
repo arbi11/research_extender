@@ -1,63 +1,85 @@
-# Native geometry evidence, November 25, 2026
+# Native FEMM evidence, November 25, 2026
 
-## Current catalogue: geometry and properties
+The current 64-command catalogue has three reports. Geometry and property
+checks each passed 16/16 scenarios. All three analytical field solves passed;
+one separate mesh-return capability check failed and remains visible.
 
-The expanded 53-command catalogue has two current native reports:
+| Current report | Outcome |
+| --- | --- |
+| `geometry-20261125-field-refresh/report.json` | 16/16 geometry scenarios passed, covering 33 commands |
+| `properties-20261125-field-refresh/report.json` | 16/16 property scenarios passed, covering 15 commands |
+| `solve-20261125-run3/report.json` | 3/3 analytical field cases passed; separate mesh return-count check failed |
 
-- `geometry-20261125-property-refresh/`: 16/16 geometry scenarios passed,
-  covering the existing 33 geometry commands against the new command batch.
-- `properties-20261125-run1/`: 16/16 material, boundary and circuit scenarios
-  passed, covering the 15 new property commands.
+To attach all three reports, use the build command in the package README.
+The database records 63 commands passed and `mi_createmesh` as `check_failed`
+with its source interpretation flagged `needs_clarification`. Each report is
+bound to its exact reviewed command batch, binding source and container digest.
+The importer rechecks artifact hashes and recomputes the observations.
 
-The property suite checks material fields and every modification selector,
-sorted/deduplicated B-H samples and clearing, all eight boundary formats,
-complex coefficients and currents, point properties, series/parallel circuits,
-deleting named definitions, geometry assignments, and closing/reopening the
-assigned model. Expected values and tolerance were committed in `ca7883a`
-before execution. No field solve or paper replication is claimed.
+## Analytical field results
 
-To attach the current reports:
+A 0.04 m by 0.02 m linear region has depth 0.01 m, relative permeability 1,
+and zero source current. Prescribed outer potential `A=A0+Bx*y` produces a
+uniform field. Two equal-area pickup legs carry +10/-10 turns with zero current.
+Their flux linkage is `10*depth*Bx*0.01`, independent of the offset A0.
 
-```bash
-python3 -m femm_brain2 build \
-  --evidence femm_brain2/data/verification/geometry-20261125-property-refresh/report.json \
-  --evidence femm_brain2/data/verification/properties-20261125-run1/report.json
-```
-
-The historical reports below belong to the earlier 38-command batch and are
-preserved as recorded; the importer rejects attaching them to a different batch.
-
-## Historical geometry runs
-
-These are real saved FEMM models, Lua fixtures, logs and hash manifests. They
-check the geometry API in one pinned container with the exact reviewed Lua
-binding. They do not validate a magnetic field solution or replicate a paper.
-
-| Run | Frozen commit | Outcome |
+| Quantity, positive case | Analytical target | Native FEMM |
 | --- | --- | --- |
-| `geometry-20261125-run1` | `881950d` | 14/16 scenarios passed; original failures retained |
-| `geometry-20261125-run2` | `ad3efa1` | 16/16 scenarios passed, covering 33 geometry commands |
+| Bx, T | 0.2 | 0.200000000028984 |
+| Hx, A/m | 159154.943091895 | 159154.943114960 |
+| Total energy, J | 0.127323954473516 | 0.127323954472177 |
+| Pickup flux linkage, Wb-turn | 0.0002 | 0.000200000000000045 |
 
-The first run exposed two errors in the agent-authored checker expectations:
+The reversed-field and zero-field controls also passed. Checks cover four
+interior query points, potential/flux density/field intensity/energy density,
+block area/volume/energy, zero circuit current and voltage, flux linkage, and
+reloading the solution. Field values and tolerances are frozen in the protocol.
+This is an analytical reference problem, not a journal-paper replication.
 
-- Property assignment checked segment row 0, assuming it was the lower edge of
-  a rectangle. FEMM saved that edge as row 3. The corrected checker identifies
-  the edge by its endpoints and verifies the same frozen mesh size, hide flag
-  and group values.
-- The mirror expectation assumed that the original line would be removed.
-  The pinned C++ `DocumentBase::MirrorSelected` explicitly implements mirroring
-  as a copy. The corrected contract and expectation retain both lines.
+The independent `.ans` reader checks all solver nodal potentials against
+`A0+Bx*y`, derives each triangle's B from nodal A, and integrates magnetic
+energy. Each model has 3,847 nodes and 7,440 elements. The postprocessor counts
+match the saved solver mesh.
 
-Both corrections were committed before the second native run. No coordinates,
-physical properties or tolerances were changed. The first failed run, its
-original protocol and all its model files are preserved here.
+## Preserved solve runs and mesh limitation
 
-To repeat the native checks, select an empty output folder:
+Physical inputs, analytical targets and tolerances were committed before
+native solving. They were not changed to obtain agreement.
 
-```bash
-python3 -m femm_brain2 check-geometry --output /tmp/femm-brain2-new-run
-```
+- `solve-20261125-run1`: stopped before the first solve because `mi_createmesh`
+  returned nil and the observation writer expected a number. The incomplete
+  models, original protocol, script, log and failed report remain preserved.
+- `solve-20261125-run2`: the driver records nil without aborting, and a separate
+  strict capability case still requires the implementation count. All three
+  field cases passed; the count case failed. Mesh export was enabled using
+  the container's existing `FEMM_MESH_EXPORT=1` option.
+- `solve-20261125-run3`: repeats the same physical cases after the catalogue
+  explicitly documents the native return mismatch. Results remain 3/3 field
+  cases passed plus the failed count case.
 
-The manifest records the actual original Docker invocation and output path.
-The files copied here are byte-identical artifacts. Full downloaded binding
-source stays in the local cache and is not included in this evidence directory.
+The newer pinned C++ source returns a mesh node count, but this older container
+returns no value for `mi_createmesh`. `mi_analyze` still constructs the mesh and
+solves successfully. Solved counts are available through `mo_numnodes` and
+`mo_numelements`. `check-solve` reports 3/4 passed with exit code 2; the failed
+capability is not relabeled a pass.
+
+## Geometry and property history
+
+All older reports and superseded refreshes remain preserved. The historical
+38-command geometry run passed 14/16 initially, then 16/16 after two checker
+corrections committed before rerunning: locate the assigned rectangle edge by
+endpoints rather than row number, and expect mirroring to retain the original
+geometry as well as its copies. Original failures and expectations remain.
+
+Property scenarios verify all material arguments and modification selectors,
+sorted/deduplicated B-H points and clearing, all eight boundary formats,
+complex coefficients/currents, point properties, series/parallel circuits,
+deletion, assignments and assignment persistence after reopening models.
+
+Reports named `*-property-refresh`, `properties-20261125-run1` and the earlier
+`*-solve-refresh` belong to prior command batches. They remain readable but
+cannot be attached to the current batch.
+
+Every run retains its script, protocol, actual saved models, captured log and
+artifact fingerprints. Downloaded binding source is not committed. All native
+runs use a networkless, read-only container with a writable output directory.

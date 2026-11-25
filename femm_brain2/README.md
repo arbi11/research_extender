@@ -1,8 +1,9 @@
 # FEMM API lookup catalogue
 
-The catalogue contains 53 reviewed FEMM 5.0 API entries for the Lua 4 binding:
+The catalogue contains 64 source-checked FEMM 5.0 API entries for the Lua 4 binding:
 33 geometry, selection, labeling and editing commands; all 15 material, boundary
-and circuit property commands in section 3.6.9; and five workflow commands.
+and circuit property commands in section 3.6.9; and 16 file, mesh, solve and
+postprocessing commands. One mesh return contract remains flagged for clarification.
 
 SQLite is the working lookup database. Commands return JSON. The versioned
 `data/commands.json` file is the reviewed import batch used to reproduce this
@@ -49,7 +50,7 @@ reviewed entry returns `not_reviewed`, rather than an invented API contract.
 - Review status, unresolved questions and explicitly labelled example fragments.
 - An independent execution status, with optional verified native evidence.
 
-The importer detects 558 distinct manual definitions; 505 remain an inventory for later
+The importer detects 558 distinct manual definitions; 494 remain an inventory for later
 work. This count describes this pinned manual's detected definitions, not a
 claim that every alias, convenience wrapper or undocumented function is covered.
 Repeated definitions retain their additional page locations in the inventory.
@@ -145,18 +146,49 @@ python3 -m femm_brain2 search "series circuit"
 python3 -m femm_brain2 check-properties --output /tmp/femm-brain2-properties-new
 ```
 
-Attach both current reports to retain execution evidence for 48 commands:
+Attach all three current reports to retain the measured outcomes for 64 commands:
 
 ```bash
 python3 -m femm_brain2 build \
-  --evidence femm_brain2/data/verification/geometry-20261125-property-refresh/report.json \
-  --evidence femm_brain2/data/verification/properties-20261125-run1/report.json
+  --evidence femm_brain2/data/verification/geometry-20261125-field-refresh/report.json \
+  --evidence femm_brain2/data/verification/properties-20261125-field-refresh/report.json \
+  --evidence femm_brain2/data/verification/solve-20261125-run3/report.json
 ```
 
 Each report is tied to the exact command batch. Historical reports remain
 readable, but a changed catalogue requires a new native run before execution
 claims can be attached. Repeat `--evidence` for distinct suites; overlapping
 reports for the same command are rejected.
+
+## Analytical field solution checks
+
+Three planar magnetostatic cases use +0.2 T, -0.2 T with a potential offset,
+and zero field with the same offset. An explicit linear material has relative
+permeability 1 and zero source current. Prescribed outer potential `A=A0+Bx*y`
+gives the analytical uniform field. Two equal-area pickup legs have +10/-10
+turns and zero current, making flux linkage independent of the potential offset.
+
+All three field cases passed. Checks cover point A/B/H, energy density, block
+area/volume/energy, circuit current/voltage/flux linkage, and reloading the saved
+solution. An independent reader checks nodal potentials in the real `.ans`
+files and derives element B and total energy from those nodes. Inputs,
+analytical formulas and tolerances were committed before solving.
+
+```bash
+python3 -m femm_brain2 check-solve --output /tmp/femm-brain2-solve-new
+```
+
+The separate `explicit_mesh_return` check fails in the pinned container:
+`mi_createmesh` returns nil, while the newer pinned implementation returns a
+node count. The first run stopped on this mismatch and is preserved. The revised
+driver records nil and continues solving, retaining a strict failed count check.
+Physical inputs and analytical tolerances were unchanged. `mi_analyze` creates
+the solution mesh, and postprocessor node/element counts match the `.ans` file.
+`check-solve` therefore reports 3/4 checks passed and exits with code 2. The
+catalogue records 63 commands passed and `mi_createmesh` as
+`check_failed`/`needs_clarification`.
+
+These are analytical reference problems, not journal-paper replications.
 
 ## Code map
 
@@ -169,8 +201,10 @@ reports for the same command are rejected.
 | `__main__.py` | JSON command-line interface |
 | `geometry_check.py` | Isolated native runner and saved-model evidence checks |
 | `property_check.py` | Read and compare saved material, boundary, point and circuit records |
+| `solve_check.py` | Compare native observations and derive fields/energy directly from solver nodes |
 | `tests/native_geometry/` | Frozen Lua fixtures and expected observations |
 | `tests/native_properties/` | Frozen property fixtures and expected observations |
+| `tests/native_solve/` | Frozen analytical model inputs, Lua driver and expected results |
 
 There are no imports from the original `femm_brain` package. There is no component
 library, hierarchy, paper reconstruction or background service in this milestone.
@@ -185,6 +219,7 @@ python3 -m unittest discover -s femm_brain2/tests -v
 python3 -m femm_brain2 validate
 ```
 
-The offline software tests use explicitly synthetic documentation to exercise
-search, import rejection, provenance checks and database handling. The separate
-`validate` command checks the real pinned sources. Neither is a FEMM physics test.
+Catalogue software tests use synthetic documentation for search and import
+checks. Evidence tests re-read saved real FEMM artifacts, including solver
+nodes; they do not launch a fresh solver. `check-solve` launches native FEMM,
+and `validate` checks the real pinned sources.
