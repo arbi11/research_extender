@@ -158,6 +158,7 @@ def validate_knowledge(knowledge, *, source_check=False):
     if {n['level'] for n in nodes.values()} != {1,2,3,4,5}:
         raise ValueError('Hierarchy must contain L1 through L5')
     api_names = {c['name'] for c in load_batch()['commands']}
+    cited_ids={p['source'].get('id',p['id']) for p in knowledge['papers']}
     for edge in knowledge['edges']:
         if edge['parent'] not in nodes or edge['child'] not in nodes:
             raise ValueError('Dangling knowledge link')
@@ -172,7 +173,12 @@ def validate_knowledge(knowledge, *, source_check=False):
     if reached != nodes.keys(): raise ValueError('Unreachable hierarchy entries')
     for node in nodes.values():
         if not node.get('references'): raise ValueError('Hierarchy entry has no source: '+node['id'])
+        if any(r['source_id'] not in cited_ids or type(r['pdf_page']) is not int or r['pdf_page']<1 for r in node['references']):
+            raise ValueError('Invalid hierarchy source locator: '+node['id'])
         if node['level']==5:
+            implementation=node['implementation']
+            if implementation['module']!='femm_brain2.recipes' or implementation['path']!='femm_brain2/recipes.py' or implementation['function'] not in PROCEDURES:
+                raise ValueError('Procedure must reference reviewed local code')
             if node['execution']['status'] != 'not_tested': raise ValueError('Source records cannot assert native success')
             if not set(node['api_commands']) <= api_names: raise ValueError('Unreviewed API link')
     for paper in knowledge['papers']:
@@ -233,9 +239,16 @@ def show(node_id='electric_motor', path=DEFAULT_DB):
     ids = descendants(knowledge, node_id)
     with closing(connect_readonly(path)) as db:
         row = db.execute("SELECT value FROM metadata WHERE key='knowledge_native_evidence'").fetchone()
-    return {'nodes': [n for n in knowledge['nodes'] if n['id'] in ids],
+    evidence=json.loads(row[0]) if row else {'status':'not_attached'}
+    selected=[n for n in knowledge['nodes'] if n['id'] in ids]
+    for node in selected:
+        if node['level']==5 and node['id'] in evidence.get('procedures',[]):
+            node['execution']={'status':evidence['status'],'scope':evidence['scope'],
+                               'paper_id':evidence['paper_id'],'report':evidence['report'],
+                               'report_sha256':evidence['report_sha256']}
+    return {'nodes': selected,
             'relationships': [e for e in knowledge['edges'] if e['parent'] in ids and e['child'] in ids],
-            'native_evidence': json.loads(row[0]) if row else {'status': 'not_attached'}}
+            'native_evidence': evidence}
 
 
 def tree(path=DEFAULT_DB):

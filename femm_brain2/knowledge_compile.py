@@ -86,6 +86,11 @@ def generate(knowledge, paper_id, control):
             p.call('mi_selectgroup',[1],owner)
             p.call('mi_moverotate',[0,0,step],owner)
             p.call('mi_clearselected',owner=owner)
+            # Geometry cleanup in the pinned runtime can clear node group tags.
+            # Restore rotor membership spatially; no geometry or material is changed.
+            p.call('mi_selectcircle',[0,0,values['r2_mm']+values['air_gap_mm']/4,4],owner)
+            p.call('mi_setgroup',[1],owner)
+            p.call('mi_clearselected',owner=owner)
         # Retain first and final models/solutions; all position results remain in observations.obs.
         stem='model-000' if i==0 else 'model-last'
         p.call('mi_saveas',['/work/'+stem+'.fem'])
