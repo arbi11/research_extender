@@ -1,0 +1,20 @@
+ARG FEMM_RUNTIME=femm-brain2-build-base:85f07dce379b
+ARG FEMM_COMPILER=femm-brain2-compiler:77ff8c6affdd
+FROM ${FEMM_RUNTIME} AS original
+FROM ${FEMM_COMPILER} AS build
+USER root
+COPY --from=original /opt/femm/upstream-source.zip /tmp/femm-original.zip
+COPY --from=original /opt/femm/patch_femm_mesh.py /tmp/retained_mesh_export.py
+COPY patch_mesh_count.py /tmp/patch_mesh_count.py
+RUN python3 /tmp/patch_mesh_count.py \
+    --source /opt/femm-source --archive /tmp/femm-original.zip \
+    --export-patch /tmp/retained_mesh_export.py --manifest /tmp/mesh-count-manifest.json
+RUN cmake -S /opt/femm-source -B /opt/femm-source/build -G Ninja -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build /opt/femm-source/build --target femm_headless --parallel 2
+RUN python3 -c 'import hashlib,json,pathlib; p=pathlib.Path("/tmp/mesh-count-manifest.json"); m=json.loads(p.read_text()); m["femm_headless_sha256"]=hashlib.sha256(pathlib.Path("/opt/femm-source/build/bin/femm_headless").read_bytes()).hexdigest(); p.write_text(json.dumps(m,indent=2)+"\n")'
+FROM ${FEMM_RUNTIME}
+USER root
+COPY --from=build /opt/femm-source/build/bin/femm_headless /opt/femm/bin/femm_headless
+COPY --from=build /tmp/mesh-count-manifest.json /opt/femm/mesh-count-manifest.json
+COPY patch_mesh_count.py /opt/femm/patch_mesh_count.py
+USER assistant

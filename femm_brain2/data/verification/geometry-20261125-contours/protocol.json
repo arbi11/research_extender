@@ -1,0 +1,563 @@
+{
+  "schema_version": 1,
+  "id": "geometry-api-v2",
+  "scope": "Native Lua API geometry checks, not field-solution validation or a paper benchmark.",
+  "input_provenance": "Agent-authored toy geometries; all coordinates, groups and properties below are frozen before execution. Lengths are millimeters; static planar model, depth 1 mm, solver precision 1e-8. Air is a setup material, not an evaluated catalogue command.",
+  "absolute_tolerance": 1e-08,
+  "reference_image": "sha256:e927378c714cca415c6471122a73b34bae0cebf0ab00381b01a4a5f1199aa0c3",
+  "binding_source_id": "femm5-lua-binding",
+  "cases": [
+    {
+      "id": "add_primitives",
+      "file": "add_primitives.fem",
+      "tested_commands": [
+        "mi_addnode",
+        "mi_addsegment",
+        "mi_addarc",
+        "mi_addblocklabel"
+      ],
+      "expected_counts": {
+        "points": 2,
+        "segments": 1,
+        "arcs": 1,
+        "labels": 1
+      },
+      "expected_points": [
+        [
+          0,
+          0
+        ],
+        [
+          10,
+          0
+        ]
+      ],
+      "expected_rows": {
+        "arcs": {
+          "0": {
+            "2": 90,
+            "3": 5
+          }
+        }
+      }
+    },
+    {
+      "id": "draw_wrappers",
+      "file": "draw_wrappers.fem",
+      "tested_commands": [
+        "mi_drawrectangle",
+        "mi_drawline",
+        "mi_drawarc"
+      ],
+      "expected_counts": {
+        "points": 8,
+        "segments": 5,
+        "arcs": 1,
+        "labels": 0
+      },
+      "expected_points": [
+        [
+          0,
+          0
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          10,
+          0
+        ],
+        [
+          12,
+          0
+        ],
+        [
+          20,
+          0
+        ],
+        [
+          30,
+          0
+        ]
+      ],
+      "expected_rows": {
+        "arcs": {
+          "0": {
+            "2": 90,
+            "3": 5
+          }
+        }
+      }
+    },
+    {
+      "id": "assign_properties",
+      "file": "assign_properties.fem",
+      "tested_commands": [
+        "mi_selectnode",
+        "mi_selectsegment",
+        "mi_selectarcsegment",
+        "mi_selectlabel",
+        "mi_setnodeprop",
+        "mi_setsegmentprop",
+        "mi_setarcsegmentprop",
+        "mi_setblockprop"
+      ],
+      "expected_counts": {
+        "points": 6,
+        "segments": 4,
+        "arcs": 1,
+        "labels": 1
+      },
+      "expected_rows": {
+        "points": {
+          "0": {
+            "3": 7
+          }
+        },
+        "arcs": {
+          "0": {
+            "2": 90,
+            "3": 2,
+            "5": 1,
+            "6": 9
+          }
+        },
+        "labels": {
+          "0": {
+            "2": 1,
+            "3": 0.5,
+            "5": 30,
+            "6": 10,
+            "7": 12
+          }
+        }
+      },
+      "expected_segments": [
+        {
+          "endpoints": [
+            [
+              0,
+              0
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          "fields": {
+            "2": 0.25,
+            "4": 1,
+            "5": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "region_selection",
+      "file": "region_selection.fem",
+      "tested_commands": [
+        "mi_seteditmode",
+        "mi_selectcircle",
+        "mi_selectrectangle",
+        "mi_setgroup",
+        "mi_clearselected"
+      ],
+      "expected_counts": {
+        "points": 3,
+        "segments": 1,
+        "arcs": 0,
+        "labels": 1
+      },
+      "expected_rows": {
+        "points": {
+          "0": {
+            "3": 21
+          },
+          "1": {
+            "3": 0
+          },
+          "2": {
+            "3": 0
+          }
+        },
+        "segments": {
+          "0": {
+            "5": 22
+          }
+        },
+        "labels": {
+          "0": {
+            "6": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "copy_translate",
+      "file": "copy_translate.fem",
+      "tested_commands": [
+        "mi_selectgroup",
+        "mi_copytranslate"
+      ],
+      "expected_counts": {
+        "points": 6,
+        "segments": 3,
+        "arcs": 0,
+        "labels": 0
+      },
+      "expected_points": [
+        [
+          1,
+          0
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          6
+        ],
+        [
+          2,
+          6
+        ]
+      ],
+      "expected_rows": {
+        "segments": {
+          "0": {
+            "5": 30
+          },
+          "1": {
+            "5": 30
+          },
+          "2": {
+            "5": 30
+          }
+        }
+      }
+    },
+    {
+      "id": "copy_rotate",
+      "file": "copy_rotate.fem",
+      "tested_commands": [
+        "mi_selectgroup",
+        "mi_copyrotate"
+      ],
+      "expected_counts": {
+        "points": 6,
+        "segments": 3,
+        "arcs": 0,
+        "labels": 0
+      },
+      "expected_points": [
+        [
+          1,
+          0
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          -1,
+          0
+        ],
+        [
+          -2,
+          0
+        ]
+      ],
+      "expected_rows": {
+        "segments": {
+          "0": {
+            "5": 30
+          },
+          "1": {
+            "5": 30
+          },
+          "2": {
+            "5": 30
+          }
+        }
+      }
+    },
+    {
+      "id": "move_translate",
+      "file": "move_translate.fem",
+      "tested_commands": [
+        "mi_selectgroup",
+        "mi_movetranslate"
+      ],
+      "expected_counts": {
+        "points": 2,
+        "segments": 1,
+        "arcs": 0,
+        "labels": 0
+      },
+      "expected_points": [
+        [
+          11,
+          3
+        ],
+        [
+          12,
+          3
+        ]
+      ],
+      "expected_rows": {
+        "segments": {
+          "0": {
+            "5": 30
+          }
+        }
+      }
+    },
+    {
+      "id": "move_rotate",
+      "file": "move_rotate.fem",
+      "tested_commands": [
+        "mi_selectgroup",
+        "mi_moverotate"
+      ],
+      "expected_counts": {
+        "points": 2,
+        "segments": 1,
+        "arcs": 0,
+        "labels": 0
+      },
+      "expected_points": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ]
+      ],
+      "expected_rows": {
+        "segments": {
+          "0": {
+            "5": 30
+          }
+        }
+      }
+    },
+    {
+      "id": "scale",
+      "file": "scale.fem",
+      "tested_commands": [
+        "mi_selectgroup",
+        "mi_scale"
+      ],
+      "expected_counts": {
+        "points": 2,
+        "segments": 1,
+        "arcs": 0,
+        "labels": 0
+      },
+      "expected_points": [
+        [
+          2,
+          0
+        ],
+        [
+          4,
+          0
+        ]
+      ],
+      "expected_rows": {
+        "segments": {
+          "0": {
+            "5": 30
+          }
+        }
+      }
+    },
+    {
+      "id": "mirror",
+      "file": "mirror.fem",
+      "tested_commands": [
+        "mi_selectgroup",
+        "mi_mirror"
+      ],
+      "expected_counts": {
+        "points": 4,
+        "segments": 2,
+        "arcs": 0,
+        "labels": 0
+      },
+      "expected_points": [
+        [
+          1,
+          0
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          -1,
+          0
+        ],
+        [
+          -2,
+          0
+        ]
+      ],
+      "expected_rows": {
+        "segments": {
+          "0": {
+            "5": 30
+          },
+          "1": {
+            "5": 30
+          }
+        }
+      }
+    },
+    {
+      "id": "corner_radius",
+      "file": "corner_radius.fem",
+      "tested_commands": [
+        "mi_createradius"
+      ],
+      "expected_counts": {
+        "points": 4,
+        "segments": 2,
+        "arcs": 1,
+        "labels": 0
+      },
+      "expected_points": [
+        [
+          5,
+          0
+        ],
+        [
+          0,
+          5
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "expected_rows": {
+        "arcs": {
+          "0": {
+            "2": 90
+          }
+        }
+      }
+    },
+    {
+      "id": "delete_nodes",
+      "file": "delete_nodes.fem",
+      "tested_commands": [
+        "mi_deleteselectednodes"
+      ],
+      "expected_counts": {
+        "points": 4,
+        "segments": 1,
+        "arcs": 1,
+        "labels": 1
+      },
+      "expected_rows": {}
+    },
+    {
+      "id": "delete_segments",
+      "file": "delete_segments.fem",
+      "tested_commands": [
+        "mi_deleteselectedsegments"
+      ],
+      "expected_counts": {
+        "points": 5,
+        "segments": 0,
+        "arcs": 1,
+        "labels": 1
+      },
+      "expected_rows": {}
+    },
+    {
+      "id": "delete_arcs",
+      "file": "delete_arcs.fem",
+      "tested_commands": [
+        "mi_deleteselectedarcsegments"
+      ],
+      "expected_counts": {
+        "points": 5,
+        "segments": 1,
+        "arcs": 0,
+        "labels": 1
+      },
+      "expected_rows": {}
+    },
+    {
+      "id": "delete_labels",
+      "file": "delete_labels.fem",
+      "tested_commands": [
+        "mi_deleteselectedlabels"
+      ],
+      "expected_counts": {
+        "points": 5,
+        "segments": 1,
+        "arcs": 1,
+        "labels": 0
+      },
+      "expected_rows": {}
+    },
+    {
+      "id": "delete_all",
+      "file": "delete_all.fem",
+      "tested_commands": [
+        "mi_deleteselected"
+      ],
+      "expected_counts": {
+        "points": 0,
+        "segments": 0,
+        "arcs": 0,
+        "labels": 0
+      },
+      "expected_rows": {}
+    }
+  ],
+  "revision_notes": [
+    "v1 is frozen in commit 881950dcc94d569f46a014962000827e5c3b6234 and retained in work/femm-brain2/geometry-20261125-run1: 14/16 passed.",
+    "v2 corrects the property measurement to identify the selected edge by its endpoints rather than assuming a serialization row index.",
+    "v2 corrects the mirror oracle using pinned implementation lines 1266-1310: mirroring creates copies and keeps originals. Inputs and Lua calls are unchanged."
+  ],
+  "runtime_manifest": {
+    "file": "runtime-build.json",
+    "sha256": "87cf09b7b78f70934803fadc0b08119cb60c3844fb147c36bfa8ad4b51f65e11"
+  }
+}

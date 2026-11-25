@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>FEMM second brain · L1–L5</title>
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#f6f7f9,#181b21);--card:light-dark(#fff,#242932);--ink:light-dark(#202936,#e2e8f0);--muted:light-dark(#586777,#b0becd);--line:light-dark(#d6dce4,#454e5c);--accent:light-dark(#155bb4,#8abfff);--tint:light-dark(#eaf2ff,#253b54)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,sans-serif}
+header{padding:20px 24px 16px;border-bottom:1px solid var(--line)}h1{font-size:21px;margin:0 0 5px}h2{font-size:19px;line-height:1.35;margin:6px 0 12px}h3{font-size:14px;margin:22px 0 8px}p{margin:8px 0}small,.muted{color:var(--muted)}a{color:var(--accent)}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.intro{display:flex;justify-content:space-between;align-items:center;gap:20px}.badge{font-size:12px;padding:5px 10px;background:var(--tint);border-radius:5px;white-space:nowrap}.paper{font-size:13px;max-width:920px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 380px;height:calc(100vh - 125px);min-height:550px}.map{min-width:0;display:flex;flex-direction:column}.toolbar{padding:12px 20px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}.scroll{overflow:auto;flex:1}#graph{position:relative;min-width:920px;min-height:640px}#graph svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.column-label{position:absolute;top:15px;width:164px;font-size:12px;font-weight:650;color:var(--muted)}
+.node{position:absolute;width:164px;height:86px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink);text-align:left;padding:9px 11px;font-size:12px;line-height:1.3;display:flex;flex-direction:column;justify-content:center;gap:5px}.node small{font-size:10px;font-weight:650}.node:hover{border-color:var(--accent)}.node[aria-pressed="true"]{border:2px solid var(--accent);background:var(--tint);padding:8px 10px}.node.related{border-color:var(--accent)}.edge{fill:none;stroke:var(--line);stroke-width:1.5}.edge.related{stroke:var(--accent);stroke-width:2}
+aside{overflow:auto;background:var(--card);border-left:1px solid var(--line);padding:22px}.eyebrow{color:var(--accent);font-size:12px;font-weight:650}code,pre{font:12px/1.5 ui-monospace,monospace}code{overflow-wrap:anywhere}pre{white-space:pre;overflow:auto;background:var(--bg);padding:12px;border-radius:5px;max-height:430px}details{margin-top:20px}summary{cursor:pointer;font-weight:650}table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}td{padding:9px 5px;border-bottom:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}td:first-child{width:44%}.nav{display:block;text-align:left;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--accent);padding:6px 9px;margin:6px 0;width:100%;font-size:12px}.source{font-size:12px;color:var(--muted);margin:4px 0 10px}.count{padding:8px 20px;font-size:12px;border-top:1px solid var(--line);color:var(--muted)}li{margin:5px 0}
+@media(max-width:1000px){main{display:block;height:auto;min-height:0}.scroll{max-height:660px}aside{border-left:0;border-top:1px solid var(--line);overflow:visible}.intro{align-items:flex-start;flex-direction:column;gap:8px}header{padding:16px}}
+</style>
+</head>
+<body>
+<header><div class="intro"><div><h1>FEMM second brain</h1><div class="muted">Explore the paper → motor → features → construction code</div></div><span id="evidence-status" class="badge"></span></div><p id="paper-title" class="paper"></p></header>
+<main><section class="map" aria-label="L1 to L5 knowledge graph"><div class="toolbar">Click any node. Blue lines trace its parents and children. Shared code appears once.</div><div class="scroll"><div id="graph"></div></div><div id="count" class="count"></div></section><aside id="details" aria-label="Selected record details" aria-live="polite"></aside></main>
+<noscript>This offline viewer needs JavaScript enabled to display the embedded records.</noscript>
+<script id="brain-data" type="application/json">__BRAIN_DATA__</script>
+<script>
+'use strict';
+const data=JSON.parse(document.getElementById('brain-data').textContent);
+const nodes=new Map(data.nodes.map(n=>[n.id,n]));
+const edges=data.edges.filter(e=>e.relation==='contains');
+const children=id=>edges.filter(e=>e.parent===id).map(e=>e.child);
+const parents=id=>edges.filter(e=>e.child===id).map(e=>e.parent);
+const labels=['Domain','Motor type','Components','Features','Construction code'];
+let selected=data.nodes.find(n=>n.id==='semi_closed_radial_slot')?.id||data.nodes[0].id;
+function el(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e}
+function visit(id,next,found=new Set()){if(found.has(id))return found;found.add(id);next(id).forEach(n=>visit(n,next,found));return found}
+function link(id){const b=el('button',nodes.get(id).title,'nav');b.type='button';b.onclick=()=>select(id);return b}
+function section(title,ids){const f=document.createDocumentFragment();if(ids.length){f.append(el('h3',title));ids.forEach(id=>f.append(link(id)))}return f}
+function fold(title){const d=el('details');d.append(el('summary',title));return d}
+function table(values){const t=el('table');Object.entries(values).forEach(([k,v])=>{const tr=el('tr');tr.append(el('td',k),el('td',typeof v==='object'?JSON.stringify(v):String(v)));t.append(tr)});return t}
+function showDetails(){
+  const n=nodes.get(selected),panel=document.getElementById('details');panel.replaceChildren();
+  panel.append(el('div',`L${n.level} · ${labels[n.level-1]}`,'eyebrow'),el('h2',n.title),el('p',n.description),el('code',n.id));
+  panel.append(section(parents(n.id).length>1?'Shared by':'Parent',parents(n.id)),section('Contains',children(n.id)));
+  panel.append(section('Build these first',data.edges.filter(e=>e.relation==='requires'&&e.parent===n.id).map(e=>e.child)));
+  if(n.runtime_note)panel.append(el('h3','Finding from FEMM execution'),el('p',n.runtime_note));
+  if(n.arguments){const d=fold('Inputs passed to this function');d.open=true;d.append(table(n.arguments));panel.append(d)}
+  if(Object.keys(n.parameters).length){
+    const d=fold('Paper values and their sources');d.open=n.level===4;
+    Object.entries(n.parameters).forEach(([name,p])=>{
+      d.append(el('h3',name),el('p',`${typeof p.value==='object'?JSON.stringify(p.value):p.value} ${p.unit||''} · ${p.provenance}`));
+      if(p.expression)d.append(el('code',p.expression));
+      if(p.quote)d.append(el('p',p.quote,'source'));
+      if(p.location||p.reason)d.append(el('p',`${p.pdf_page?'PDF p. '+p.pdf_page+' · ':''}${p.location||p.reason}`,'source'));
+    });panel.append(d);
+  }
+  if(n.code){
+    panel.append(el('h3','Actual Python construction code'),el('code',`${n.implementation.path} · ${n.implementation.function}`));
+    const pre=el('pre');pre.append(el('code',n.code));panel.append(pre);
+    const d=fold(`FEMM API commands (${n.api_commands.length})`);
+    n.api_commands.forEach(name=>{d.append(el('h3',name),el('code',data.api[name].signature),el('p',data.api[name].purpose))});panel.append(d);
+  }
+  const refs=fold('Paper references');
+  (n.references||[]).forEach(r=>refs.append(el('p',`PDF p. ${r.pdf_page} · ${r.location}`)));
+  const url=new URL(data.paper.source.url);if(url.protocol==='https:'){const a=el('a','Open source paper');a.href=url.href;a.target='_blank';a.rel='noopener noreferrer';refs.append(a)}panel.append(refs);
+  const proof=fold('Existing FEMM validation');
+  if(data.evidence){
+    const e=data.evidence;proof.append(el('p',`${e.status.toUpperCase()} · ${e.solves} real solves across ${e.checks.length} checks.`),el('p',e.scope,'source'),table(Object.fromEntries(e.checks.map(c=>[c.id,c.status]))),table(e.assessment.measurements),el('p','Previously recorded results; audited when this HTML was exported.','source'),el('code',e.report),el('p',`Report SHA-256: ${e.report_sha256}`,'source'));
+  }else proof.append(el('p','No audited evidence is attached to this paper.'));
+  panel.append(proof);
+  const scope=fold('Scope of this learning case');scope.append(el('p',data.paper.scope));const ul=el('ul');data.paper.excluded.forEach(x=>ul.append(el('li',x)));scope.append(el('p','Outside this case:'),ul);panel.append(scope);
+  const raw=fold('Original structured record'),pre=el('pre');pre.textContent=JSON.stringify(Object.fromEntries(Object.entries(n).filter(([k])=>!['parameters','arguments','code','procedures'].includes(k))),null,2);raw.append(pre);panel.append(raw);
+  panel.scrollTop=0;
+}
+function select(id){selected=id;showDetails();draw()}
+function draw(){
+  const graph=document.getElementById('graph');graph.replaceChildren();
+  const columns=Array.from({length:5},(_,i)=>data.nodes.filter(n=>n.level===i+1));
+  const rank=new Map(columns[3].map((n,i)=>[n.id,i]));
+  const order=n=>parents(n.id).reduce((sum,id)=>sum+rank.get(id),0)/parents(n.id).length;
+  columns[4].sort((a,b)=>order(a)-order(b));
+  const height=Math.max(640,Math.max(...columns.map(c=>c.length))*102+60);graph.style.height=height+'px';
+  const points=new Map();
+  columns.forEach((column,i)=>column.forEach((n,j)=>points.set(n.id,{x:20+i*180,y:48+(j+.5)*(height-60)/column.length})));
+  const related=new Set([...visit(selected,parents),...visit(selected,children)]);
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('aria-hidden','true');graph.append(svg);
+  edges.forEach(e=>{const a=points.get(e.parent),b=points.get(e.child),p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',`M${a.x+164},${a.y} C${a.x+172},${a.y} ${b.x-8},${b.y} ${b.x},${b.y}`);p.setAttribute('class','edge'+(related.has(e.parent)&&related.has(e.child)?' related':''));svg.append(p)});
+  columns.forEach((column,i)=>{
+    const label=el('div',`L${i+1} · ${labels[i]}`,'column-label');label.style.left=(20+i*180)+'px';graph.append(label);
+    column.forEach(n=>{const p=points.get(n.id),b=el('button',undefined,'node'+(related.has(n.id)?' related':''));b.type='button';b.dataset.id=n.id;b.style.left=p.x+'px';b.style.top=(p.y-43)+'px';b.setAttribute('aria-pressed',String(n.id===selected));b.title=n.title;b.append(el('small',`L${n.level}`),el('span',n.title));b.onclick=()=>select(n.id);graph.append(b)});
+  });
+  document.getElementById('count').textContent=`${data.nodes.length} records · ${edges.length} hierarchy links · shared procedures stored once`;
+}
+document.getElementById('paper-title').textContent=`${data.paper.source.authors.join(', ')} (${data.paper.source.year}) · ${data.paper.source.title}`;
+document.getElementById('evidence-status').textContent=data.evidence?.status==='passed'?'Example 1 · geometry + no-load checks passed':'No passing evidence attached';
+showDetails();draw();
+</script>
+</body>
+</html>
