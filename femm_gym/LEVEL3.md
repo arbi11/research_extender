@@ -160,3 +160,22 @@ expected. Errors are relative to the key (the finest reference, level 2); tolera
 
 The tasks and keys are kept in `~/.cache/femm-gym/work/l3-selfcheck-1/`. That folder has the
 layout of a frozen set, for the check in `CHECK_PLAN_L3.md`.
+
+## The frozen set `l3-test-v1`, 2026-11-25
+
+`l3-freeze --count 24 --jobs 4` ran from 20:22 IST for about two hours. It froze 24 tasks and dropped none,
+and `l3-verify` passes.
+
+- **Code.** The manifest records HEAD `62e0ce3` with uncommitted generator files, because the
+  freeze started before the Level 3 commit. Its generator digests match the files committed in
+  `bb5da1d`, so that commit is the code that made the set.
+- **Machines.** 9 slot and pole combinations, from 6/4 to 24/20. Every key converged at level 2.
+- **Hidden inputs.** 4 to 9 per paper, 6.4 on average.
+- **T02.** Between 0.56 and 0.98 of three times T01, so the held-out target ranges from nearly
+  linear to strongly saturated.
+- **Absent inputs.**
+  - The shaft radius was checked 14 times and the rotor steel 10 times. They never moved a
+    target by 0.4 of its tolerance, so they stayed hidden.
+  - The tooth-tip depth moved a target by more than that in all 10 papers that had left it
+    out, so those papers state it. In practice the tip depth is never hidden. A narrower
+    plausible range would have to be argued from practice, not chosen to keep the gap.

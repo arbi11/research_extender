@@ -11,7 +11,7 @@ the second brain) on the same tasks.
 |---|---|---|---|
 | 1. FEMM basics | Draw a described part (stator, rotor, pot core) | Which material lies where, compared point by point | **here** |
 | 2. One result | Build a small device; the scorer measures one quantity | Inductance, flux linkage or force against the key | **here** |
-| 3. Synthetic papers | Rebuild a generated machine from a paper-like write-up with gaps | Frozen targets, plus credit for flagging what was hidden | **built**; test set not frozen yet |
+| 3. Synthetic papers | Rebuild a generated machine from a paper-like write-up with gaps | Frozen targets, plus credit for flagging what was hidden | **here**; `l3-test-v1` frozen (24 tasks) |
 | 4. Real papers | The second brain's paper cases (training only) | As in `daro_bench` | later |
 | 5. Design | Improve a published design within limits | A gain that holds on a finer mesh | later |
 

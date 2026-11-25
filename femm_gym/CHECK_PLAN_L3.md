@@ -36,3 +36,15 @@ The level passes the check if no point lost is in the scorer class. A fault in t
 task text or the scorer is fixed in the generator before anything is trained on, and if
 `l3-test-v1` is already frozen it is frozen again as `l3-test-v2`, with v1 kept and marked as
 superseded with the reason. The agent's score is a first baseline, not a criterion.
+
+## Added before the first trial (2026-11-25, 20:50 IST)
+
+When the check was approved, the benchmark's repeats were running their last pair. So:
+
+- The first trial waits for the benchmark to finish.
+- A trial starts only when the sign-in token outlasts its time limit by 20 minutes. This is the
+  benchmark runner's own rule, and its `ensure_token` is used unchanged. Otherwise the check waits
+  for the token to expire and be refreshed.
+
+A trial that outlived the token would refresh it inside the sandbox while other sessions refresh
+it outside, and one of them could lose its sign-in.
