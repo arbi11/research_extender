@@ -1,5 +1,10 @@
 # Native FEMM evidence, November 25, 2026
 
+The first L1–L5 learning case is now recorded separately from the API checks:
+[Lubin 2011, Example 1 geometry and no-load EMF](lubin-2011-learning.md).
+Its five checks pass across 75 real solves, with earlier failures retained.
+This is one learning paper, not a held-out benchmark or complete-paper replication.
+
 The current 68-command catalogue has three reports. Geometry and property
 checks each passed 16/16 scenarios. The three analytical field solves and the
 separate mesh-return capability check also passed: 36/36 native checks total.

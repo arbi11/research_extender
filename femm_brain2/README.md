@@ -6,6 +6,10 @@ and circuit property commands in section 3.6.9; and 20 file, mesh, solve and
 postprocessing commands. All 68 have passed the recorded native checks for
 their tested cases.
 
+The first L1–L5 learning graph is now implemented for Lubin 2011, Example 1.
+See [SECOND_BRAIN.md](SECOND_BRAIN.md) for its records, code, retrieval commands
+and real FEMM evidence. Start with `python3 -m femm_brain2 brain tree`.
+
 SQLite is the working lookup database. Commands return JSON. The versioned
 `data/commands.json` file is the reviewed import batch used to reproduce this
 milestone; updates go through validation and a rebuild, rather than independent
@@ -225,8 +229,8 @@ python3 -m femm_brain2 search "contour flux torque"
 python3 -m femm_brain2 get mo_lineintegral
 ```
 
-This finishes the agreed catalogue exercise. Hierarchical knowledge-base design
-is a separate next discussion.
+This completed the catalogue foundation. The first hierarchical learning case
+now links motor features to parameterized construction code and this API catalogue.
 
 
 ## Code map
@@ -246,8 +250,9 @@ is a separate next discussion.
 | `tests/native_solve/` | Frozen analytical model inputs, Lua driver and expected results |
 | `runtime/` | Pinned container build and native mesh-count return backport |
 
-There are no imports from the original `femm_brain` package. There is no component
-library, hierarchy, paper reconstruction or background service in this milestone.
+There are no imports from the original `femm_brain` package. The new hierarchy,
+construction procedures and first paper case are described in [SECOND_BRAIN.md](SECOND_BRAIN.md).
+No background service is required.
 
 ## Check the implementation
 
