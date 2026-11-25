@@ -8,7 +8,7 @@ from .catalogue import DEFAULT_DB, connect_readonly
 from .knowledge import construction_plan, descendants, snapshot, validate_knowledge
 from .recipes import PROCEDURES
 
-TEMPLATE = Path(__file__).with_name('viewer.html')
+TEMPLATE = Path(__file__).with_name('viewer.html.in')
 
 
 def export(paper_id, output, db_path=DEFAULT_DB):

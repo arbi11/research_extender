@@ -19,6 +19,9 @@ xdg-open /home/akhan/code/research_extender/femm_brain2/lubin-2011-viewer.html
 Click a node to see its dimensions, sources, Python code, FEMM API commands and
 existing validation evidence. The single HTML file includes its data and code;
 it needs no server or network. Shared procedures appear once with both links.
+`viewer.html` also opens this graph. The exporter template is `viewer.html.in`.
+Use an external browser for offline `file://` pages; the in-app browser requires
+an HTTP preview.
 To regenerate it from the indexed records and re-audit the attached evidence:
 
 ```bash
