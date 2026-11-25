@@ -18,7 +18,7 @@ class NativeEvidenceTests(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.folder = Path(temporary.name) / 'evidence'
-        shutil.copytree(EVIDENCE / 'geometry-20261125-mesh-count-fixed', self.folder)
+        shutil.copytree(EVIDENCE / 'geometry-20261125-contours', self.folder)
         self.path = self.folder / 'report.json'
 
     def test_verified_geometry_evidence_covers_33_commands_and_no_solve(self):
@@ -66,7 +66,7 @@ class PropertyEvidenceTests(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.folder = Path(temporary.name) / 'properties'
-        shutil.copytree(EVIDENCE / 'properties-20261125-mesh-count-fixed', self.folder)
+        shutil.copytree(EVIDENCE / 'properties-20261125-contours', self.folder)
         self.path = self.folder / 'report.json'
 
     def test_native_property_evidence_covers_15_new_commands(self):

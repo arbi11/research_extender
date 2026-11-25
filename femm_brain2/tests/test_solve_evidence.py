@@ -10,7 +10,7 @@ from femm_brain2.geometry_check import evaluate, verify_evidence
 from femm_brain2.solve_check import evaluate_solution
 from femm_brain2.source import fingerprint
 
-EVIDENCE = Path(__file__).resolve().parents[1] / 'data/verification/solve-20261125-mesh-count-fixed'
+EVIDENCE = Path(__file__).resolve().parents[1] / 'data/verification/solve-20261125-contours'
 
 
 class SolveEvidenceTests(unittest.TestCase):
@@ -24,7 +24,7 @@ class SolveEvidenceTests(unittest.TestCase):
 
     def test_real_mesh_count_return_matches_solver_nodes_in_every_control(self):
         executions = verify_evidence(self.path, load_batch())
-        self.assertEqual(len(executions), 16)
+        self.assertEqual(len(executions), 20)
         self.assertTrue(all(r['status'] == 'passed' for r in executions.values()))
         report = json.loads(self.path.read_text())
         self.assertEqual(report['status'], 'passed')
@@ -61,8 +61,10 @@ class SolveEvidenceTests(unittest.TestCase):
         original = {c['id']: c for c in old['cases']}
         self.assertNotEqual(old['reference_image'], self.protocol['reference_image'])
         for case in self.protocol['cases']:
-            for field in ['physical_inputs', 'expected_values', 'analytical', 'expected_headers', 'expected_counts']:
+            for field in ['physical_inputs', 'analytical', 'expected_headers', 'expected_counts']:
                 self.assertEqual(case[field], original[case['id']][field])
+            for key, target in original[case['id']]['expected_values'].items():
+                self.assertEqual(case['expected_values'][key], target)
 
     def test_field_polarity_and_gauge_offset_controls_match_physics(self):
         checks = {c['id']: c for c in json.loads(self.path.read_text())['checks']}
@@ -87,6 +89,40 @@ class SolveEvidenceTests(unittest.TestCase):
         observed, failures = evaluate_solution(self.folder, case)
         self.assertGreater(observed['solution_mesh']['max_potential_error'], case['analytical']['potential_tolerance'])
         self.assertIn('Solver nodal potentials differ from analytical A', failures)
+        report = json.loads(self.path.read_text())
+        report['artifacts'][file.name] = fingerprint(file.read_bytes())
+        self.path.write_text(json.dumps(report))
+        with self.assertRaisesRegex(ValueError, 'observations do not agree'):
+            verify_evidence(self.path, load_batch())
+
+    def test_contours_check_signed_flux_and_nonzero_force_and_torque(self):
+        checks = {c['id']: c for c in json.loads(self.path.read_text())['checks']}
+        values = {n: checks[n]['observed']['solution']['values'] for n in ['positive', 'negative', 'zero']}
+        for name, field in [('positive', 0.2), ('negative', -0.2), ('zero', 0)]:
+            v = values[name]
+            self.assertAlmostEqual(v['contour.vertical.flux'][0], -field * 0.01 * 0.01, delta=1e-9)
+            self.assertAlmostEqual(v['contour.reverse.flux'][0], -v['contour.vertical.flux'][0], delta=1e-9)
+            self.assertAlmostEqual(v['contour.reverse.Fx'][0], -v['contour.vertical.Fx'][0], delta=1e-4)
+            for key in ['Fx', 'Fy', 'torque', 'flux']:
+                self.assertAlmostEqual(v['contour.closed.' + key][0], 0, delta=1e-5)
+        self.assertAlmostEqual(values['positive']['contour.horizontal.Fy'][0], -3.1830988618379075, delta=1e-4)
+        self.assertAlmostEqual(values['positive']['contour.horizontal.torque'][0], -0.06366197723675815, delta=1e-5)
+        self.assertAlmostEqual(values['negative']['contour.horizontal.Fy'][0], values['positive']['contour.horizontal.Fy'][0], delta=1e-4)
+
+    def test_rehashed_but_wrong_contour_observation_is_rejected(self):
+        case = self.protocol['cases'][0]
+        file = self.folder / case['observations_file']
+        lines = file.read_text().splitlines()
+        key = 'contour.vertical.flux'
+        for i, line in enumerate(lines):
+            fields = line.split()
+            if fields[0] == key:
+                fields[1] = str(-float(fields[1]))
+                lines[i] = ' '.join(fields)
+                break
+        else:
+            self.fail('Real contour observation is missing')
+        file.write_text('\n'.join(lines) + '\n')
         report = json.loads(self.path.read_text())
         report['artifacts'][file.name] = fingerprint(file.read_bytes())
         self.path.write_text(json.dumps(report))

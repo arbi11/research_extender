@@ -1,9 +1,9 @@
 # FEMM API lookup catalogue
 
-The catalogue contains 64 source-checked FEMM 5.0 API entries for the Lua 4 binding:
+The catalogue contains 68 source-checked FEMM 5.0 API entries for the Lua 4 binding:
 33 geometry, selection, labeling and editing commands; all 15 material, boundary
-and circuit property commands in section 3.6.9; and 16 file, mesh, solve and
-postprocessing commands. All 64 have passed the recorded native checks for
+and circuit property commands in section 3.6.9; and 20 file, mesh, solve and
+postprocessing commands. All 68 have passed the recorded native checks for
 their tested cases.
 
 SQLite is the working lookup database. Commands return JSON. The versioned
@@ -28,8 +28,8 @@ python3 -m femm_brain2 stats
 The default database is `~/.local/share/femm-brain2/catalogue.sqlite3` (or the
 equivalent under `XDG_DATA_HOME`). Every command accepts `--db /path/to/file`.
 Source downloads use `~/.cache/femm-brain2/sources/`, respecting `XDG_CACHE_HOME`.
-`fetch-sources`, `validate`, `build`, `check-geometry` and `check-properties`
-accept `--cache`.
+`fetch-sources`, `validate`, `build` and all three `check-*` commands accept
+`--cache`.
 
 `get` and `search` support `--version 5.0 --binding lua4`. Search also accepts
 `--physics` and `--limit`. Exact lookup returns the complete contract. Search
@@ -51,7 +51,7 @@ reviewed entry returns `not_reviewed`, rather than an invented API contract.
 - Review status, unresolved questions and explicitly labelled example fragments.
 - An independent execution status, with optional verified native evidence.
 
-The importer detects 558 distinct manual definitions; 494 remain an inventory for later
+The importer detects 558 distinct manual definitions; 490 remain an inventory for later
 work. This count describes this pinned manual's detected definitions, not a
 claim that every alias, convenience wrapper or undocumented function is covered.
 Repeated definitions retain their additional page locations in the inventory.
@@ -112,10 +112,9 @@ python3 -m femm_brain2 get mi_addarc
 
 Each run requires an empty output folder and preserves its models, log, protocol
 and hash manifest. It uses the frozen image and exact reviewed Lua binding inside
-a networkless, read-only container. The binding bundled in the older image differs;
-the runner explicitly loads the reviewed binding from the verified source cache.
-The C++ engine is identified by its image digest; the reviewed source snapshot is
-newer, so the observations establish only the tested behavior in that image.
+a networkless, read-only container. The runner explicitly loads the reviewed Lua binding from the verified source
+cache. The image digest identifies the FEMM program used; observations establish
+only the tested behaviour in that container.
 
 `build --evidence` rechecks artifact hashes and compares the saved models with the
 frozen expectations before attaching results to command lookup. Source JSON cannot
@@ -123,7 +122,7 @@ assert an execution pass. A plain `build` imports documentation alone, so execut
 status remains `not_tested`. Example fragments remain separately untested.
 
 The geometry checks passed **16/16 native scenarios covering 33 commands**,
-including a fresh run against the expanded 53-command catalogue.
+including a fresh run against the final 68-command catalogue.
 [Saved models and reports](data/verification/README.md) also retain the original
 14/16 run and explain its two checker corrections.
 
@@ -147,13 +146,13 @@ python3 -m femm_brain2 search "series circuit"
 python3 -m femm_brain2 check-properties --output /tmp/femm-brain2-properties-new
 ```
 
-Attach all three current reports to retain the measured outcomes for 64 commands:
+Attach all three current reports to retain the measured outcomes for 68 commands:
 
 ```bash
 python3 -m femm_brain2 build \
-  --evidence femm_brain2/data/verification/geometry-20261125-mesh-count-fixed/report.json \
-  --evidence femm_brain2/data/verification/properties-20261125-mesh-count-fixed/report.json \
-  --evidence femm_brain2/data/verification/solve-20261125-mesh-count-fixed/report.json
+  --evidence femm_brain2/data/verification/geometry-20261125-contours/report.json \
+  --evidence femm_brain2/data/verification/properties-20261125-contours/report.json \
+  --evidence femm_brain2/data/verification/solve-20261125-contours/report.json
 ```
 
 Each report is tied to the exact command batch. Historical reports remain
@@ -194,6 +193,41 @@ Historical nil-return failures remain preserved. To rebuild the isolated image,
 see [runtime/README.md](runtime/README.md).
 
 These are analytical reference problems, not journal-paper replications.
+
+## Contours and line integrals — final catalogue exercise
+
+Four additional entries cover `mo_addcontour`, `mo_clearcontour`,
+`mo_bendcontour` and `mo_lineintegral`. The last includes a searchable
+`result_selectors` table: selectors 0–5, ordered return values, units and the
+DC/AC return differences found in the pinned source.
+
+The same three field solutions now each check 62 additional contour quantities:
+forward/reverse flux, H.t, length/swept area, squared normal field, force and
+torque on straight lines, cancellation around a closed rectangle, and the
+subdivision length and endpoint integrals of two bent contours. Empty-contour
+length and area must return zero. Every expected value and tolerance was
+committed before running FEMM; the existing physical inputs and targets remain
+unchanged. All new measurements passed in real FEMM.
+
+For the positive field, FEMM returned flux -2.00000000038e-5 Wb (target -2e-5),
+horizontal-line force -3.18309886065 N (target -3.18309886184), and torque
+-0.0636619772055 N*m (target -0.0636619772368). Reversing the contour reverses
+signed flux and stress contributions. The closed contour gives near-zero net
+force and torque, as expected in a uniform field.
+
+An open-line stress result is a surface contribution. Net force on a body
+requires a suitable closed contour around that body. Native evidence here covers
+planar DC only; AC, axisymmetric behaviour and bent-contour side placement are
+not execution-verified.
+
+```bash
+python3 -m femm_brain2 search "contour flux torque"
+python3 -m femm_brain2 get mo_lineintegral
+```
+
+This finishes the agreed catalogue exercise. Hierarchical knowledge-base design
+is a separate next discussion.
+
 
 ## Code map
 

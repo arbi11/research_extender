@@ -156,7 +156,7 @@ class CatalogueTests(unittest.TestCase):
 
     def test_review_batch_retains_full_point_value_return_order_and_resolves_arc(self):
         records = {r['name']: r for r in load_batch()['commands']}
-        self.assertEqual(len(records), 64)
+        self.assertEqual(len(records), 68)
         self.assertEqual([r['name'] for r in records['mo_getpointvalues']['returns']['values']],
                          ['A', 'B1', 'B2', 'Sig', 'E', 'H1', 'H2', 'Je', 'Js', 'Mu1', 'Mu2', 'Pe', 'Ph', 'ff'])
         self.assertEqual(records['mi_addarc']['review']['semantic_status'], 'reviewed')
