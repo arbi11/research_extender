@@ -118,11 +118,19 @@ def connect_readonly(path=DEFAULT_DB):
     return db
 
 
-def build(path=DEFAULT_DB, *, batch_path=None, sources_path=None, cache=DEFAULT_CACHE, evidence_path=None):
+def build(path=DEFAULT_DB, *, batch_path=None, sources_path=None, cache=DEFAULT_CACHE, evidence_path=None,
+          knowledge_path=None, paper_evidence=None):
     batch, sources = load_batch(batch_path), load_sources(sources_path)
     validation = validate_batch(batch, sources, cache)
     if validation["errors"]:
         raise ValueError("Import rejected: " + "; ".join(validation["errors"]))
+    knowledge = None
+    if knowledge_path is not None:
+        from .knowledge import KNOWLEDGE, load_knowledge, validate_knowledge
+        knowledge = load_knowledge(KNOWLEDGE if knowledge_path is True else knowledge_path)
+        validate_knowledge(knowledge, source_check=True)
+    elif paper_evidence is not None:
+        raise ValueError('Paper evidence requires --knowledge')
     executions = {}
     evidence_paths = [] if evidence_path is None else (list(evidence_path) if isinstance(evidence_path, (list, tuple)) else [evidence_path])
     if evidence_path is not None:
@@ -141,6 +149,7 @@ def build(path=DEFAULT_DB, *, batch_path=None, sources_path=None, cache=DEFAULT_
     with tempfile.TemporaryDirectory(prefix=".femm-brain2-", dir=target.parent) as temporary:
         staging = Path(temporary) / "catalogue.sqlite3"
         with closing(sqlite3.connect(staging)) as db, db:
+            db.execute('PRAGMA foreign_keys=ON')
             db.executescript(Path(__file__).with_name("schema.sql").read_text())
             metadata = {"schema_version": 1, "target": batch["target"], "milestone": batch["milestone"],
                         "built_at": datetime.now(timezone.utc).isoformat(),
@@ -165,6 +174,15 @@ def build(path=DEFAULT_DB, *, batch_path=None, sources_path=None, cache=DEFAULT_
                         details += " " + json.dumps(record[selectors])
                 db.execute("INSERT INTO search_index(rowid,name,purpose,details) VALUES (?,?,?,?)",
                            (cursor.lastrowid, record["name"], record["purpose"], details))
+            if knowledge is not None:
+                from .knowledge import install
+                install(db, knowledge)
+                if paper_evidence is not None:
+                    from .knowledge_run import audit
+                    report = audit(paper_evidence, knowledge)
+                    db.execute('INSERT INTO metadata VALUES (?,?)',('knowledge_native_evidence',json.dumps(report)))
+            if db.execute('PRAGMA foreign_key_check').fetchone() is not None:
+                raise ValueError('SQLite relationship integrity check failed')
             if db.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                 raise ValueError("SQLite integrity check failed")
         staging.replace(target)
